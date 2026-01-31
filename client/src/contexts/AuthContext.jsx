@@ -1,5 +1,9 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import authService from '../services/authService';
+
+// Session timeout duration (30 minutes in milliseconds)
+const SESSION_TIMEOUT = 30 * 60 * 1000;
+const TOKEN_REFRESH_INTERVAL = 25 * 60 * 1000; // Refresh token every 25 minutes
 
 // Initial state
 const initialState = {
@@ -92,6 +96,86 @@ const AuthContext = createContext();
 // Auth provider component
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
+  const sessionTimeoutRef = useRef(null);
+  const refreshIntervalRef = useRef(null);
+  const lastActivityRef = useRef(Date.now());
+
+  // Reset session timeout
+  const resetSessionTimeout = useCallback(() => {
+    lastActivityRef.current = Date.now();
+
+    if (sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current);
+    }
+
+    if (state.isAuthenticated) {
+      sessionTimeoutRef.current = setTimeout(() => {
+        console.log('Session timeout - logging out');
+        logout();
+        alert('Your session has expired due to inactivity. Please login again.');
+      }, SESSION_TIMEOUT);
+    }
+  }, [state.isAuthenticated]);
+
+  // Refresh token periodically
+  const startTokenRefresh = useCallback(() => {
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+    }
+
+    if (state.isAuthenticated) {
+      refreshIntervalRef.current = setInterval(async () => {
+        try {
+          const result = await authService.refreshToken();
+          if (result.success) {
+            dispatch({
+              type: AUTH_ACTIONS.LOGIN_SUCCESS,
+              payload: { user: result.user, token: result.token }
+            });
+          } else {
+            console.error('Token refresh failed:', result.error);
+            logout();
+          }
+        } catch (error) {
+          console.error('Token refresh error:', error);
+          logout();
+        }
+      }, TOKEN_REFRESH_INTERVAL);
+    }
+  }, [state.isAuthenticated]);
+
+  // Track user activity
+  useEffect(() => {
+    const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];
+
+    const handleActivity = () => {
+      const now = Date.now();
+      if (now - lastActivityRef.current > 60000) { // Only reset if > 1 minute since last activity
+        resetSessionTimeout();
+      }
+    };
+
+    if (state.isAuthenticated) {
+      activityEvents.forEach(event => {
+        window.addEventListener(event, handleActivity);
+      });
+
+      resetSessionTimeout();
+      startTokenRefresh();
+    }
+
+    return () => {
+      activityEvents.forEach(event => {
+        window.removeEventListener(event, handleActivity);
+      });
+      if (sessionTimeoutRef.current) {
+        clearTimeout(sessionTimeoutRef.current);
+      }
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+    };
+  }, [state.isAuthenticated, resetSessionTimeout, startTokenRefresh]);
 
   // Initialize auth state on app load
   useEffect(() => {
@@ -165,10 +249,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Logout function
-  const logout = () => {
+  const logout = useCallback(() => {
     authService.logout();
     dispatch({ type: AUTH_ACTIONS.LOGOUT });
-  };
+    if (sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current);
+    }
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+    }
+  }, []);
 
   // Clear error function
   const clearError = () => {
@@ -186,14 +276,29 @@ export const AuthProvider = ({ children }) => {
 
   // Check if user is admin
   const isAdmin = () => {
-    return state.user?.role === 'admin';
+    return state.user?.role === 'Admin' || state.user?.staffRole === 'Admin';
   };
 
-  // Check if user has a role in allowedRoles array
+  // Check if user has a specific role
   const hasRole = (roles) => {
     if (!Array.isArray(roles) || !roles.length) return false;
-    const role = state.user?.role || null;
-    return !!role && roles.includes(role);
+    const userRole = state.user?.role || state.user?.staffRole || null;
+    return !!userRole && roles.includes(userRole);
+  };
+
+  // Get user role
+  const getUserRole = () => {
+    return state.user?.role || state.user?.staffRole || null;
+  };
+
+  // Check if user is staff
+  const isStaff = () => {
+    return state.user?.type === 'Staff';
+  };
+
+  // Check if user is customer
+  const isCustomer = () => {
+    return state.user?.type === 'Customer';
   };
 
   const value = {
@@ -204,7 +309,11 @@ export const AuthProvider = ({ children }) => {
     clearError,
     isAdmin,
     hasRole,
-    updateUser
+    getUserRole,
+    isStaff,
+    isCustomer,
+    updateUser,
+    resetSessionTimeout
   };
 
   return (

@@ -1,16 +1,75 @@
 import { realApi } from './backendApi';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 class AuthService {
-  // Register new user
+  // Staff Login (Admin, Cashier, Kitchen, Delivery)
+  async staffLogin(email, password) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/staff/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      const { user, token } = data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('tokenExpiry', Date.now() + 30 * 60 * 1000); // 30 minutes
+
+      return { success: true, user, token };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Login failed'
+      };
+    }
+  }
+
+  // Customer Login
+  async customerLogin(email, password) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/customer/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Login failed');
+      }
+
+      const { user, token } = data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('tokenExpiry', Date.now() + 30 * 60 * 1000);
+
+      return { success: true, user, token };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Login failed'
+      };
+    }
+  }
+
+  // Register new customer
   async register(userData) {
     try {
       const response = await realApi.register(userData);
       const { user, token } = response.data;
-      console.log('Client Received Token (Register):', token); // SHOW TOKEN IN CONSOLE
 
-      // Store in localStorage
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('tokenExpiry', Date.now() + 30 * 60 * 1000);
 
       return { success: true, user, token };
     } catch (error) {
@@ -21,22 +80,130 @@ class AuthService {
     }
   }
 
-  // Login user
+  // Login user (legacy - determines user type automatically)
   async login(credentials) {
+    const { email, password, userType } = credentials;
+
+    // If userType specified, use specific login
+    if (userType === 'staff') {
+      return this.staffLogin(email, password);
+    } else if (userType === 'customer') {
+      return this.customerLogin(email, password);
+    }
+
+    // Otherwise, try staff first, then customer
+    const staffResult = await this.staffLogin(email, password);
+    if (staffResult.success) {
+      return staffResult;
+    }
+
+    return this.customerLogin(email, password);
+  }
+
+  // Refresh token
+  async refreshToken() {
     try {
-      const response = await realApi.login(credentials.email, credentials.password);
-      const { user, token } = response.data;
-      console.log('Client Received Token (Login):', token); // SHOW TOKEN IN CONSOLE
+      const token = this.getToken();
+      if (!token) {
+        throw new Error('No token available');
+      }
 
-      // Store in localStorage
-      localStorage.setItem('token', token);
+      const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Token refresh failed');
+      }
+
+      const { user, token: newToken } = data;
+      localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('tokenExpiry', Date.now() + 30 * 60 * 1000);
 
-      return { success: true, user, token };
+      return { success: true, user, token: newToken };
     } catch (error) {
       return {
         success: false,
-        error: error.response?.data?.error || error.message || 'Login failed'
+        error: error.message || 'Token refresh failed'
+      };
+    }
+  }
+
+  // Request password reset
+  async requestPasswordReset(email, userType = 'Customer') {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/password-reset/request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, userType })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Password reset request failed');
+      }
+
+      return { success: true, ...data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Password reset request failed'
+      };
+    }
+  }
+
+  // Verify OTP
+  async verifyResetOTP(email, otp, userType = 'Customer') {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/password-reset/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp, userType })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'OTP verification failed');
+      }
+
+      return { success: true, ...data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'OTP verification failed'
+      };
+    }
+  }
+
+  // Reset password
+  async resetPassword(email, otp, newPassword, userType = 'Customer') {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/password-reset/reset`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp, newPassword, userType })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Password reset failed');
+      }
+
+      return { success: true, ...data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Password reset failed'
       };
     }
   }

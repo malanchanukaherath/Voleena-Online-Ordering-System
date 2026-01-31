@@ -1,8 +1,10 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import ProtectedRoute from './ProtectedRoute';
+import ProtectedRoute, { PublicRoute } from '../components/ProtectedRoute';
 import Login from '../pages/Login';
 import Register from '../pages/Register';
+import ForgotPassword from '../pages/ForgotPassword';
+import ResetPassword from '../pages/ResetPassword';
 import Home from '../pages/Home';
 import Menu from '../pages/Menu';
 import MenuItemDetail from '../pages/MenuItemDetail';
@@ -40,8 +42,12 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/menu" element={<Menu />} />
       <Route path="/menu/:itemId" element={<MenuItemDetail />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      
+      {/* Auth Routes - redirect if already logged in */}
+      <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+      <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+      <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
       {/* Customer Protected Routes */}
       <Route
@@ -102,164 +108,35 @@ const AppRoutes = () => {
       />
 
       {/* Admin Protected Routes */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <AdminDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/orders"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <OrderManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/customers"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <CustomerManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/staff"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <StaffManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/menu"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <MenuManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/categories"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <CategoryManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/combos"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <ComboManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/promotions"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <PromotionManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/stock"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <StockManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/feedback"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <FeedbackManagement />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/analytics"
-        element={
-          <ProtectedRoute allowedRoles={['Admin']}>
-            <SalesAnalytics />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['Admin']}><AdminDashboard /></ProtectedRoute>} />
+      <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/admin/orders" element={<ProtectedRoute allowedRoles={['Admin']}><OrderManagement /></ProtectedRoute>} />
+      <Route path="/admin/customers" element={<ProtectedRoute allowedRoles={['Admin']}><CustomerManagement /></ProtectedRoute>} />
+      <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={['Admin']}><StaffManagement /></ProtectedRoute>} />
+      <Route path="/admin/menu" element={<ProtectedRoute allowedRoles={['Admin']}><MenuManagement /></ProtectedRoute>} />
+      <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['Admin']}><CategoryManagement /></ProtectedRoute>} />
+      <Route path="/admin/combos" element={<ProtectedRoute allowedRoles={['Admin']}><ComboManagement /></ProtectedRoute>} />
+      <Route path="/admin/promotions" element={<ProtectedRoute allowedRoles={['Admin']}><PromotionManagement /></ProtectedRoute>} />
+      <Route path="/admin/stock" element={<ProtectedRoute allowedRoles={['Admin']}><StockManagement /></ProtectedRoute>} />
+      <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['Admin']}><FeedbackManagement /></ProtectedRoute>} />
+      <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['Admin']}><SalesAnalytics /></ProtectedRoute>} />
 
       {/* Cashier Protected Routes */}
-      <Route
-        path="/cashier"
-        element={
-          <ProtectedRoute allowedRoles={['Cashier']}>
-            <CashierDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/cashier/orders"
-        element={
-          <ProtectedRoute allowedRoles={['Cashier']}>
-            <CashierOrders />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/cashier/customers/new"
-        element={
-          <ProtectedRoute allowedRoles={['Cashier']}>
-            <CustomerRegistration />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/cashier/dashboard" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CashierDashboard /></ProtectedRoute>} />
+      <Route path="/cashier" element={<Navigate to="/cashier/dashboard" replace />} />
+      <Route path="/cashier/orders" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CashierOrders /></ProtectedRoute>} />
+      <Route path="/cashier/customers/new" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CustomerRegistration /></ProtectedRoute>} />
 
       {/* Kitchen Protected Routes */}
-      <Route
-        path="/kitchen"
-        element={
-          <ProtectedRoute allowedRoles={['Kitchen']}>
-            <KitchenDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/kitchen/orders"
-        element={
-          <ProtectedRoute allowedRoles={['Kitchen']}>
-            <KitchenOrders />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/kitchen/dashboard" element={<ProtectedRoute allowedRoles={['Kitchen', 'Admin']}><KitchenDashboard /></ProtectedRoute>} />
+      <Route path="/kitchen" element={<Navigate to="/kitchen/dashboard" replace />} />
+      <Route path="/kitchen/orders" element={<ProtectedRoute allowedRoles={['Kitchen', 'Admin']}><KitchenOrders /></ProtectedRoute>} />
 
       {/* Delivery Protected Routes */}
-      <Route
-        path="/delivery"
-        element={
-          <ProtectedRoute allowedRoles={['Delivery']}>
-            <DeliveryDashboard />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/delivery/active"
-        element={
-          <ProtectedRoute allowedRoles={['Delivery']}>
-            <ActiveDeliveries />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/delivery/map"
-        element={
-          <ProtectedRoute allowedRoles={['Delivery']}>
-            <DeliveryMap />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/delivery/dashboard" element={<ProtectedRoute allowedRoles={['Delivery', 'Admin']}><DeliveryDashboard /></ProtectedRoute>} />
+      <Route path="/delivery" element={<Navigate to="/delivery/dashboard" replace />} />
+      <Route path="/delivery/active" element={<ProtectedRoute allowedRoles={['Delivery', 'Admin']}><ActiveDeliveries /></ProtectedRoute>} />
+      <Route path="/delivery/map" element={<ProtectedRoute allowedRoles={['Delivery', 'Admin']}><DeliveryMap /></ProtectedRoute>} />
 
       {/* Catch all 404 */}
       <Route

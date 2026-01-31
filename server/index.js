@@ -10,7 +10,14 @@ app.use('/uploads', express.static(path.join(__dirname, 'Assets')));
 
 const db = require('./models');
 const { requireAuth, requireRole } = require('./middleware/auth');
+
+// Import routes
 const authRouter = require('./routes/Auth');
+const authRoutes = require('./routes/authRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const cashierRoutes = require('./routes/cashierRoutes');
+const kitchenRoutes = require('./routes/kitchenRoutes');
+const deliveryRoutes = require('./routes/deliveryRoutes');
 const menuItemsRouter = require('./routes/menuItems');
 const comboPacksRouter = require('./routes/comboPacks');
 const categoriesRouter = require('./routes/categories');
@@ -23,7 +30,19 @@ app.get('/health', (req, res) => {
   res.json({ status: 'healthy', service: 'voleena-api' });
 });
 
+// Authentication routes (new)
+app.use('/api/auth', authRoutes);
+
+// Role-based dashboard routes
+app.use('/api/admin', adminRoutes);
+app.use('/api/cashier', cashierRoutes);
+app.use('/api/kitchen', kitchenRoutes);
+app.use('/api/delivery', deliveryRoutes);
+
+// Legacy auth route (keep for backward compatibility)
 app.use('/auth', authRouter);
+
+// Existing routes
 app.use('/api/menu-items', menuItemsRouter);
 app.use('/api/combo-packs', comboPacksRouter);
 app.use('/api/categories', categoriesRouter);
