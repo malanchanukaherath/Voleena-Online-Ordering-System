@@ -6,15 +6,17 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'ComboID'
+            field: 'combo_id'
         },
         Name: {
             type: DataTypes.STRING(200),
-            allowNull: false
+            allowNull: false,
+            field: 'name'
         },
         Description: {
             type: DataTypes.TEXT,
-            allowNull: true
+            allowNull: true,
+            field: 'description'
         },
         Price: {
             type: DataTypes.DECIMAL(10, 2),
@@ -22,26 +24,27 @@ module.exports = (sequelize) => {
             validate: {
                 min: 0
             },
-            field: 'Price'
+            field: 'price'
         },
         DiscountType: {
             type: DataTypes.ENUM('PERCENTAGE', 'FIXED_PRICE'),
             defaultValue: 'FIXED_PRICE',
-            field: 'DiscountType'
+            field: 'discount_type'
         },
         DiscountValue: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: true,
-            field: 'DiscountValue'
+            field: 'discount_value'
         },
         ImageURL: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            field: 'ImageURL'
+            field: 'image_url'
         },
         ScheduleStartDate: {
             type: DataTypes.DATEONLY,
-            allowNull: false
+            allowNull: false,
+            field: 'schedule_start_date'
         },
         ScheduleEndDate: {
             type: DataTypes.DATEONLY,
@@ -52,7 +55,8 @@ module.exports = (sequelize) => {
                         throw new Error('End date must be after start date');
                     }
                 }
-            }
+            },
+            field: 'schedule_end_date'
         },
         IsActive: {
             type: DataTypes.BOOLEAN,
@@ -64,21 +68,24 @@ module.exports = (sequelize) => {
             references: {
                 model: 'Staff',
                 key: 'StaffID'
-            }
+            },
+            field: 'created_by'
         },
         CreatedAt: {
             type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW
+            defaultValue: DataTypes.NOW,
+            field: 'created_at'
         },
         UpdatedAt: {
             type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW
+            defaultValue: DataTypes.NOW,
+            field: 'updated_at'
         }
     }, {
-        tableName: 'ComboPack',
+        tableName: 'combo_pack',
         timestamps: true,
-        createdAt: 'CreatedAt',
-        updatedAt: 'UpdatedAt'
+        createdAt: 'created_at',
+        updatedAt: 'updated_at'
     });
 
     ComboPack.associate = (models) => {

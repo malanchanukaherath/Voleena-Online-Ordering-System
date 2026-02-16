@@ -1,42 +1,25 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaCalendar, FaImage } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
+import Select from '../components/ui/Select';
 import Toast from '../components/ui/Toast';
+import { comboPackService, menuItemService } from '../services/menuService';
 
 const ComboManagement = () => {
-    const [combos, setCombos] = useState([
-        {
-            id: 1,
-            name: 'Sunday Special',
-            description: 'Rice, curry, and drink',
-            price: 750,
-            discount: 15,
-            startDate: '2024-01-21',
-            endDate: '2024-12-31',
-            image: null,
-            isActive: true
-        },
-        {
-            id: 2,
-            name: 'Family Pack',
-            description: '2 burgers, fries, 2 drinks',
-            price: 1200,
-            discount: 20,
-            startDate: '2024-01-01',
-            endDate: '2024-12-31',
-            image: null,
-            isActive: true
-        },
-    ]);
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const [combos, setCombos] = useState([]);
+    const [menuItems, setMenuItems] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
 
     const [showModal, setShowModal] = useState(false);
     const [editingCombo, setEditingCombo] = useState(null);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
+    const [imageFile, setImageFile] = useState(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -46,11 +29,81 @@ const ComboManagement = () => {
         startDate: '',
         endDate: '',
         image: null,
-        isActive: true
+        isActive: true,
+        items: [{ menuItemId: '', quantity: '1' }]
     });
 
     const [errors, setErrors] = useState({});
     const [imagePreview, setImagePreview] = useState(null);
+
+    const resolveImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return null;
+        }
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        return `${apiBaseUrl}${imagePath}`;
+    };
+
+    const mapComboFromApi = (combo) => ({
+        id: combo.ComboID || combo.ComboPackID,
+        name: combo.Name,
+        description: combo.Description || '',
+        price: Number(combo.Price) || 0,
+        discount: combo.DiscountPercentage ? Number(combo.DiscountPercentage) : 0,
+        startDate: combo.ScheduleStartDate,
+        endDate: combo.ScheduleEndDate,
+        image: resolveImageUrl(combo.ImageURL || combo.Image_URL || null),
+        isActive: !!combo.IsActive,
+        items: Array.isArray(combo.items)
+            ? combo.items.map((item) => ({
+                menuItemId: item.MenuItemID || item.menuItem?.ItemID || item.menuItem?.MenuItemID || '',
+                quantity: item.Quantity?.toString() || '1',
+                name: item.menuItem?.Name || ''
+            }))
+            : []
+    });
+
+    const fetchCombos = async () => {
+        setIsLoading(true);
+        try {
+            const response = await comboPackService.getAll();
+            if (response.success && Array.isArray(response.data)) {
+                setCombos(response.data.map(mapComboFromApi));
+            } else {
+                setCombos([]);
+            }
+        } catch (error) {
+            console.error('Error loading combos:', error);
+            setCombos([]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const fetchMenuItems = async () => {
+        try {
+            const response = await menuItemService.getAll({ isActive: 'true' });
+            if (response.success && Array.isArray(response.data)) {
+                const mapped = response.data.map((item) => ({
+                    value: item.MenuItemID || item.ItemID,
+                    label: item.Name
+                }));
+                setMenuItems(mapped);
+            } else {
+                setMenuItems([]);
+            }
+        } catch (error) {
+            console.error('Error loading menu items:', error);
+            setMenuItems([]);
+        }
+    };
+
+    useEffect(() => {
+        fetchCombos();
+        fetchMenuItems();
+    }, []);
 
     const handleOpenCreate = () => {
         setEditingCombo(null);
@@ -62,9 +115,11 @@ const ComboManagement = () => {
             startDate: '',
             endDate: '',
             image: null,
-            isActive: true
+            isActive: true,
+            items: [{ menuItemId: '', quantity: '1' }]
         });
         setImagePreview(null);
+        setImageFile(null);
         setErrors({});
         setShowModal(true);
     };
@@ -79,9 +134,11 @@ const ComboManagement = () => {
             startDate: combo.startDate,
             endDate: combo.endDate,
             image: combo.image,
-            isActive: combo.isActive
+            isActive: combo.isActive,
+            items: combo.items.length ? combo.items : [{ menuItemId: '', quantity: '1' }]
         });
         setImagePreview(combo.image);
+        setImageFile(null);
         setErrors({});
         setShowModal(true);
     };
@@ -100,14 +157,37 @@ const ComboManagement = () => {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Local image preview
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result);
-                setFormData(prev => ({ ...prev, image: reader.result }));
-            };
-            reader.readAsDataURL(file);
+            const previewUrl = URL.createObjectURL(file);
+            setImagePreview(previewUrl);
+            setImageFile(file);
+            setFormData(prev => ({ ...prev, image: previewUrl }));
         }
+    };
+
+    const handleItemChange = (index, field, value) => {
+        setFormData(prev => ({
+            ...prev,
+            items: prev.items.map((item, itemIndex) =>
+                itemIndex === index ? { ...item, [field]: value } : item
+            )
+        }));
+        if (errors.items) {
+            setErrors(prev => ({ ...prev, items: '' }));
+        }
+    };
+
+    const handleAddItemRow = () => {
+        setFormData(prev => ({
+            ...prev,
+            items: [...prev.items, { menuItemId: '', quantity: '1' }]
+        }));
+    };
+
+    const handleRemoveItemRow = (index) => {
+        setFormData(prev => ({
+            ...prev,
+            items: prev.items.filter((_, itemIndex) => itemIndex !== index)
+        }));
     };
 
     const validateForm = () => {
@@ -125,7 +205,7 @@ const ComboManagement = () => {
             newErrors.price = 'Valid price is required';
         }
 
-        if (!formData.discount || parseFloat(formData.discount) < 0 || parseFloat(formData.discount) > 100) {
+        if (formData.discount && (parseFloat(formData.discount) < 0 || parseFloat(formData.discount) > 100)) {
             newErrors.discount = 'Discount must be between 0-100%';
         }
 
@@ -141,67 +221,93 @@ const ComboManagement = () => {
             newErrors.endDate = 'End date must be after start date';
         }
 
+        const validItems = formData.items.filter(item => item.menuItemId && Number(item.quantity) >= 1);
+        if (validItems.length < 2) {
+            newErrors.items = 'Combo must include at least 2 items with quantities';
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!validateForm()) return;
 
-        const comboData = {
-            name: formData.name.trim(),
-            description: formData.description.trim(),
-            price: parseFloat(formData.price),
-            discount: parseFloat(formData.discount),
-            startDate: formData.startDate,
-            endDate: formData.endDate,
-            image: formData.image,
-            isActive: formData.isActive
+        const payload = {
+            Name: formData.name.trim(),
+            Description: formData.description.trim(),
+            Price: parseFloat(formData.price),
+            ScheduleStartDate: formData.startDate,
+            ScheduleEndDate: formData.endDate,
+            IsActive: formData.isActive,
+            items: formData.items
+                .filter(item => item.menuItemId && Number(item.quantity) >= 1)
+                .map(item => ({
+                    MenuItemID: Number(item.menuItemId),
+                    ItemID: Number(item.menuItemId),
+                    Quantity: Number(item.quantity)
+                }))
         };
 
-        if (editingCombo) {
-            // Update existing combo
-            setCombos(prev => prev.map(combo =>
-                combo.id === editingCombo.id
-                    ? { ...combo, ...comboData }
-                    : combo
-            ));
-            setToastMessage('Combo updated successfully!');
-        } else {
-            // Create new combo
-            const newCombo = {
-                id: Date.now(),
-                ...comboData
-            };
-            setCombos(prev => [...prev, newCombo]);
-            setToastMessage('Combo created successfully!');
-        }
+        try {
+            let comboId = editingCombo?.id;
 
-        setToastType('success');
-        setShowToast(true);
-        setShowModal(false);
-    };
+            if (editingCombo) {
+                await comboPackService.update(comboId, payload);
+                setToastMessage('Combo updated successfully!');
+            } else {
+                const response = await comboPackService.create(payload);
+                comboId = response?.data?.ComboID || response?.data?.ComboPackID;
+                setToastMessage('Combo created successfully!');
+            }
 
-    const handleDelete = (comboId) => {
-        if (confirm('Are you sure you want to delete this combo pack?')) {
-            setCombos(prev => prev.filter(c => c.id !== comboId));
-            setToastMessage('Combo deleted successfully!');
+            if (comboId && imageFile) {
+                await comboPackService.uploadImage(comboId, imageFile);
+            }
+
+            await fetchCombos();
             setToastType('success');
+            setShowToast(true);
+            setShowModal(false);
+        } catch (error) {
+            console.error('Combo save error:', error);
+            setToastMessage(error.response?.data?.error || 'Failed to save combo');
+            setToastType('error');
             setShowToast(true);
         }
     };
 
-    const handleToggleStatus = (comboId) => {
-        setCombos(prev => prev.map(combo =>
-            combo.id === comboId
-                ? { ...combo, isActive: !combo.isActive }
-                : combo
-        ));
-        setToastMessage('Combo status updated!');
-        setToastType('success');
-        setShowToast(true);
+    const handleDelete = async (comboId) => {
+        if (!confirm('Are you sure you want to delete this combo pack?')) return;
+        try {
+            await comboPackService.delete(comboId);
+            await fetchCombos();
+            setToastMessage('Combo deleted successfully!');
+            setToastType('success');
+            setShowToast(true);
+        } catch (error) {
+            console.error('Combo delete error:', error);
+            setToastMessage(error.response?.data?.error || 'Failed to delete combo');
+            setToastType('error');
+            setShowToast(true);
+        }
+    };
+
+    const handleToggleStatus = async (comboId, nextActive) => {
+        try {
+            await comboPackService.update(comboId, { IsActive: nextActive });
+            await fetchCombos();
+            setToastMessage('Combo status updated!');
+            setToastType('success');
+            setShowToast(true);
+        } catch (error) {
+            console.error('Combo status error:', error);
+            setToastMessage(error.response?.data?.error || 'Failed to update status');
+            setToastType('error');
+            setShowToast(true);
+        }
     };
 
     // Check if combo is currently active based on dates
@@ -225,6 +331,11 @@ const ComboManagement = () => {
             </div>
 
             <div className="bg-white rounded-lg shadow overflow-hidden">
+                {isLoading ? (
+                    <div className="p-6 text-gray-600">Loading combo packs...</div>
+                ) : combos.length === 0 ? (
+                    <div className="p-6 text-gray-600">No combo packs found.</div>
+                ) : (
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
@@ -283,7 +394,7 @@ const ComboManagement = () => {
                                             <FaEdit />
                                         </button>
                                         <button
-                                            onClick={() => handleToggleStatus(combo.id)}
+                                            onClick={() => handleToggleStatus(combo.id, !combo.isActive)}
                                             className="text-yellow-600 hover:text-yellow-900"
                                             title={combo.isActive ? 'Deactivate' : 'Activate'}
                                         >
@@ -302,6 +413,7 @@ const ComboManagement = () => {
                         ))}
                     </tbody>
                 </table>
+                )}
             </div>
 
             {/* Create/Edit Modal */}
@@ -353,8 +465,56 @@ const ComboManagement = () => {
                                 value={formData.discount}
                                 onChange={handleChange}
                                 error={errors.discount}
-                                required
                             />
+                        </div>
+
+                        <div>
+                            <div className="flex items-center justify-between mb-2">
+                                <label className="block text-sm font-medium text-gray-700">
+                                    Combo Items
+                                </label>
+                                <Button type="button" variant="outline" onClick={handleAddItemRow}>
+                                    Add Item
+                                </Button>
+                            </div>
+                            <div className="space-y-3">
+                                {formData.items.map((item, index) => (
+                                    <div key={index} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                                        <div className="md:col-span-7">
+                                            <Select
+                                                label="Menu Item"
+                                                name={`menuItem-${index}`}
+                                                value={item.menuItemId}
+                                                onChange={(e) => handleItemChange(index, 'menuItemId', e.target.value)}
+                                                options={menuItems}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="md:col-span-3">
+                                            <Input
+                                                label="Quantity"
+                                                type="number"
+                                                min="1"
+                                                value={item.quantity}
+                                                onChange={(e) => handleItemChange(index, 'quantity', e.target.value)}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2 flex gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={() => handleRemoveItemRow(index)}
+                                                className="w-full"
+                                                disabled={formData.items.length <= 1}
+                                            >
+                                                Remove
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                            {errors.items && <p className="mt-2 text-sm text-red-600">{errors.items}</p>}
                         </div>
 
                         <div className="grid grid-cols-2 gap-4">
@@ -444,8 +604,6 @@ const ComboManagement = () => {
                 />
             )}
 
-            {/* Export combos to localStorage for customer menu */}
-            {typeof window !== 'undefined' && localStorage.setItem('voleena_combos', JSON.stringify(combos.filter(c => c.isActive)))}
         </div>
     );
 };

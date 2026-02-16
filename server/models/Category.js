@@ -5,29 +5,41 @@ module.exports = (sequelize) => {
         CategoryID: {
             type: DataTypes.INTEGER,
             primaryKey: true,
-            autoIncrement: true
+            autoIncrement: true,
+            field: 'category_id'
         },
         Name: {
             type: DataTypes.STRING(100),
             allowNull: false,
             unique: true,
-            field: 'Name'
+            field: 'name'
         },
         Description: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'Description'
+            field: 'description'
         },
         ImageURL: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            field: 'ImageURL'
+            field: 'image_url'
+        },
+        DisplayOrder: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+            field: 'display_order'
+        },
+        IsActive: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true,
+            field: 'is_active'
         }
     }, {
-        tableName: 'Category',
+        tableName: 'category',
         timestamps: true,
-        createdAt: 'CreatedAt',
-        updatedAt: 'UpdatedAt'
+        createdAt: 'created_at',
+        updatedAt: 'updated_at'
     });
 
     return Category;

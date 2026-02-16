@@ -180,9 +180,9 @@ export const AuthProvider = ({ children }) => {
   // Initialize auth state on app load
   useEffect(() => {
     const initAuth = () => {
-      const user = authService.getCurrentUser();
       const token = authService.getToken();
-      const isAuthenticated = authService.isAuthenticated();
+      const user = token ? authService.getCurrentUser() : null;
+      const isAuthenticated = !!(token && user);
 
       dispatch({
         type: AUTH_ACTIONS.INIT_AUTH,

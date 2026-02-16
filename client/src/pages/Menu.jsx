@@ -4,17 +4,28 @@ import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
-import { menuItemService } from '../services/menuService';
+import { comboPackService, menuItemService } from '../services/menuService';
 import { toast } from 'react-toastify';
 import { addToCart } from '../utils/cartStorage';
 
 const Menu = () => {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [loading, setLoading] = useState(true);
     const [comboPacks, setComboPacks] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
     const [error, setError] = useState(null);
+
+    const resolveImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return null;
+        }
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        return `${apiBaseUrl}${imagePath}`;
+    };
 
     // Load menu items from API
     useEffect(() => {
@@ -34,7 +45,7 @@ const Menu = () => {
                         description: item.Description || 'No description available',
                         price: parseFloat(item.Price),
                         category: item.category?.Name?.toLowerCase() || 'other',
-                        image: item.ImageURL || item.Image_URL || null,
+                        image: resolveImageUrl(item.ImageURL || item.Image_URL || null),
                         stockQuantity: item.StockQuantity ?? null,
                         isAvailable: !!item.IsActive,
                     }));
@@ -55,29 +66,35 @@ const Menu = () => {
         fetchMenuItems();
     }, []);
 
-    // Load combo packs from localStorage
+    // Load combo packs from API
     useEffect(() => {
-        const loadCombos = () => {
+        const fetchCombos = async () => {
             try {
-                const stored = localStorage.getItem('voleena_combos');
-                if (stored) {
-                    const combos = JSON.parse(stored);
-                    const now = new Date();
-                    const activeCombos = combos.filter(combo => {
-                        const start = new Date(combo.startDate);
-                        const end = new Date(combo.endDate);
-                        return combo.isActive && now >= start && now <= end;
-                    });
-                    setComboPacks(activeCombos);
+                const response = await comboPackService.getActive();
+                if (response.success && Array.isArray(response.data)) {
+                    const mapped = response.data.map(combo => ({
+                        id: combo.ComboID || combo.ComboPackID,
+                        name: combo.Name,
+                        description: combo.Description || 'No description available',
+                        price: parseFloat(combo.Price),
+                        originalPrice: combo.OriginalPrice ? parseFloat(combo.OriginalPrice) : null,
+                        discount: combo.DiscountPercentage ? parseFloat(combo.DiscountPercentage) : 0,
+                        image: resolveImageUrl(combo.ImageURL || combo.Image_URL || null),
+                        isActive: !!combo.IsActive,
+                        scheduleStartDate: combo.ScheduleStartDate,
+                        scheduleEndDate: combo.ScheduleEndDate
+                    }));
+                    setComboPacks(mapped);
+                } else {
+                    setComboPacks([]);
                 }
             } catch (error) {
                 console.error('Error loading combos:', error);
+                setComboPacks([]);
             }
         };
 
-        loadCombos();
-        const interval = setInterval(loadCombos, 10000);
-        return () => clearInterval(interval);
+        fetchCombos();
     }, []);
 
     const categories = [
@@ -98,7 +115,7 @@ const Menu = () => {
         name: combo.name,
         description: combo.description,
         price: combo.price,
-        originalPrice: combo.price / (1 - combo.discount / 100),
+        originalPrice: combo.originalPrice,
         discount: combo.discount,
         category: 'combos',
         image: combo.image,

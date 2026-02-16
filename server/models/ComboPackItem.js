@@ -5,25 +5,26 @@ module.exports = (sequelize) => {
         ComboPackItemID: {
             type: DataTypes.INTEGER,
             primaryKey: true,
-            autoIncrement: true
+            autoIncrement: true,
+            field: 'combo_pack_item_id'
         },
         ComboID: {
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'ComboPack',
-                key: 'ComboID'
+                model: 'combo_pack',
+                key: 'combo_id'
             },
-            field: 'ComboID'
+            field: 'combo_id'
         },
         MenuItemID: {
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'Menu_Item',
-                key: 'MenuItemID'
+                model: 'menu_item',
+                key: 'menu_item_id'
             },
-            field: 'MenuItemID'
+            field: 'menu_item_id'
         },
         Quantity: {
             type: DataTypes.INTEGER,
@@ -31,10 +32,11 @@ module.exports = (sequelize) => {
             defaultValue: 1,
             validate: {
                 min: 1
-            }
+            },
+            field: 'quantity'
         }
     }, {
-        tableName: 'ComboPackItem',
+        tableName: 'combo_pack_item',
         timestamps: false
     });
 

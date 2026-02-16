@@ -13,7 +13,7 @@ const {
 } = require('../controllers/comboPackController');
 
 router.post('/', requireAuth, requireRole('Admin'), createComboPack);
-router.get('/active', requireAuth, getActiveComboPacks);
+router.get('/active', getActiveComboPacks);
 router.get('/', requireAuth, requireRole('Admin', 'Kitchen', 'Cashier'), getAllComboPacks);
 router.get('/:id', requireAuth, getComboPack);
 router.put('/:id', requireAuth, requireRole('Admin'), updateComboPack);

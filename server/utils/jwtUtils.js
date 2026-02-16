@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { TokenBlacklist } = require('../models');
+const { Op } = require('sequelize');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET;
@@ -60,6 +61,9 @@ function hashToken(token) {
  * Check if token is blacklisted
  */
 async function isTokenBlacklisted(token) {
+    if (!TokenBlacklist) {
+        return false;
+    }
     const tokenHash = hashToken(token);
     const blacklisted = await TokenBlacklist.findOne({
         where: { token_hash: tokenHash }
@@ -71,6 +75,9 @@ async function isTokenBlacklisted(token) {
  * Blacklist a token
  */
 async function blacklistToken(token, userType, userId, reason = 'LOGOUT') {
+    if (!TokenBlacklist) {
+        return;
+    }
     const tokenHash = hashToken(token);
     const decoded = jwt.decode(token);
 
@@ -93,6 +100,9 @@ async function blacklistToken(token, userType, userId, reason = 'LOGOUT') {
  * Clean expired blacklisted tokens (run periodically)
  */
 async function cleanExpiredBlacklistedTokens() {
+    if (!TokenBlacklist) {
+        return 0;
+    }
     await TokenBlacklist.destroy({
         where: {
             expires_at: { [Op.lt]: new Date() }

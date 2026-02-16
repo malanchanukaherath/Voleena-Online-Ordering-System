@@ -89,7 +89,7 @@ const getMenuItem = async (req, res) => {
             include: [{
                 model: Category,
                 as: 'category',
-                attributes: ['CategoryID', 'CategoryName']
+                attributes: ['CategoryID', 'Name']
             }]
         });
 

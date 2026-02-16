@@ -6,11 +6,12 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'MenuItemID'
+            field: 'menu_item_id'
         },
         Name: {
             type: DataTypes.STRING(200),
-            allowNull: false
+            allowNull: false,
+            field: 'name'
         },
         Description: {
             type: DataTypes.TEXT,
@@ -21,7 +22,8 @@ module.exports = (sequelize) => {
             allowNull: false,
             validate: {
                 min: 0
-            }
+            },
+            field: 'price'
         },
         CategoryID: {
             type: DataTypes.INTEGER,
@@ -29,17 +31,23 @@ module.exports = (sequelize) => {
             references: {
                 model: 'Category',
                 key: 'CategoryID'
-            }
+            },
+            field: 'category_id'
         },
         ImageURL: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            field: 'ImageURL'
+            field: 'image_url'
         },
         IsActive: {
             type: DataTypes.BOOLEAN,
             defaultValue: true,
-            field: 'IsActive'
+            field: 'is_active'
+        },
+        IsAvailable: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true,
+            field: 'is_available'
         },
         CreatedBy: {
             type: DataTypes.INTEGER,
@@ -47,7 +55,8 @@ module.exports = (sequelize) => {
             references: {
                 model: 'Staff',
                 key: 'StaffID'
-            }
+            },
+            field: 'created_by'
         },
         CreatedAt: {
             type: DataTypes.DATE,
@@ -58,10 +67,10 @@ module.exports = (sequelize) => {
             defaultValue: DataTypes.NOW
         }
     }, {
-        tableName: 'Menu_Item',
+        tableName: 'menu_item',
         timestamps: true,
-        createdAt: 'CreatedAt',
-        updatedAt: 'UpdatedAt'
+        createdAt: 'created_at',
+        updatedAt: 'updated_at'
     });
 
     MenuItem.associate = (models) => {

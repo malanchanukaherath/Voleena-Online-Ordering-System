@@ -3,6 +3,18 @@ import { FaTag, FaClock } from 'react-icons/fa';
 import Button from './ui/Button';
 
 const ComboPackCard = ({ combo, onAddToCart }) => {
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+    const resolveImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return null;
+        }
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        return `${apiBaseUrl}${imagePath}`;
+    };
+
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
@@ -10,6 +22,8 @@ const ComboPackCard = ({ combo, onAddToCart }) => {
             year: 'numeric'
         });
     };
+
+    const imageUrl = resolveImageUrl(combo.Image_URL || combo.ImageURL || null);
 
     const discountBadge = combo.DiscountPercentage > 0 && (
         <div className="absolute top-3 right-3 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
@@ -21,9 +35,9 @@ const ComboPackCard = ({ combo, onAddToCart }) => {
     return (
         <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-orange-300 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
             <div className="relative">
-                {combo.Image_URL ? (
+                {imageUrl ? (
                     <img
-                        src={`http://localhost:3001${combo.Image_URL}`}
+                        src={imageUrl}
                         alt={combo.Name}
                         className="w-full h-48 object-cover"
                     />

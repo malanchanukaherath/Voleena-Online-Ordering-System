@@ -1,11 +1,74 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Button from '../components/ui/Button';
 import { FaUtensils, FaTruck, FaClock, FaStar } from 'react-icons/fa';
+import { menuItemService } from '../services/menuService';
+import { addToCart } from '../utils/cartStorage';
+import { toast } from 'react-toastify';
 
 const Home = () => {
     const { isAuthenticated } = useAuth();
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+    const [featuredItems, setFeaturedItems] = useState([]);
+    const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
+
+    const resolveImageUrl = (imagePath) => {
+        if (!imagePath) {
+            return null;
+        }
+        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+            return imagePath;
+        }
+        return `${apiBaseUrl}${imagePath}`;
+    };
+
+    useEffect(() => {
+        const loadFeatured = async () => {
+            try {
+                const response = await menuItemService.getAll({ isActive: 'true' });
+                if (response.success && Array.isArray(response.data)) {
+                    const items = response.data.slice(0, 4).map(item => ({
+                        id: item.MenuItemID || item.ItemID,
+                        name: item.Name,
+                        description: item.Description || 'No description available',
+                        price: parseFloat(item.Price),
+                        image: resolveImageUrl(item.ImageURL || item.Image_URL || null),
+                        isAvailable: !!item.IsActive
+                    }));
+                    setFeaturedItems(items);
+                } else {
+                    setFeaturedItems([]);
+                }
+            } catch (error) {
+                console.error('Error loading featured items:', error);
+                setFeaturedItems([]);
+            } finally {
+                setIsLoadingFeatured(false);
+            }
+        };
+
+        loadFeatured();
+    }, []);
+
+    const handleAddToCart = (item) => {
+        if (!item.isAvailable) {
+            toast.error('This item is not available right now');
+            return;
+        }
+
+        addToCart({
+            id: item.id,
+            type: 'menu',
+            menuItemId: item.id,
+            comboId: null,
+            name: item.name,
+            price: item.price,
+            image: item.image || null
+        }, 1);
+
+        toast.success('Added to cart');
+    };
 
     const features = [
         {
@@ -94,26 +157,52 @@ const Home = () => {
                             View All →
                         </Link>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {[1, 2, 3, 4].map((item) => (
-                            <div
-                                key={item}
-                                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-                            >
-                                <div className="h-48 bg-gray-200 flex items-center justify-center">
-                                    <span className="text-gray-400">Menu Item {item}</span>
-                                </div>
-                                <div className="p-4">
-                                    <h3 className="font-semibold mb-2">Sample Item {item}</h3>
-                                    <p className="text-sm text-gray-600 mb-3">Delicious food description</p>
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-lg font-bold text-primary-600">LKR 450.00</span>
-                                        <Button size="sm">Add to Cart</Button>
+                    {isLoadingFeatured ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {Array.from({ length: 4 }).map((_, index) => (
+                                <div
+                                    key={index}
+                                    className="bg-white rounded-lg shadow-md overflow-hidden"
+                                >
+                                    <div className="h-48 bg-gray-200" />
+                                    <div className="p-4">
+                                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
+                                        <div className="h-3 bg-gray-200 rounded w-full mb-3" />
+                                        <div className="h-8 bg-gray-200 rounded" />
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    ) : featuredItems.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {featuredItems.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                                >
+                                    <div className="h-48 bg-gray-200 flex items-center justify-center">
+                                        {item.image ? (
+                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <span className="text-gray-400">No image available</span>
+                                        )}
+                                    </div>
+                                    <div className="p-4">
+                                        <h3 className="font-semibold mb-2">{item.name}</h3>
+                                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
+                                        <div className="flex justify-between items-center">
+                                            <span className="text-lg font-bold text-primary-600">LKR {item.price.toFixed(2)}</span>
+                                            <Button size="sm" onClick={() => handleAddToCart(item)}>Add to Cart</Button>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="bg-white rounded-lg shadow-md p-6 text-center text-gray-600">
+                            No featured items yet. Check back soon!
+                        </div>
+                    )}
                 </div>
             </section>
 
@@ -125,7 +214,7 @@ const Home = () => {
                         Explore our menu and place your order in just a few clicks!
                     </p>
                     <Link to="/menu">
-                        <Button size="lg" className="bg-white text-primary-600 hover:bg-gray-100">
+                        <Button size="lg" className="bg-yellow-400 text-red-900 hover:bg-yellow-300">
                             Order Now
                         </Button>
                     </Link>

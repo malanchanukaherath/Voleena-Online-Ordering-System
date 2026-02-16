@@ -3,6 +3,31 @@ import { realApi } from './backendApi';
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 class AuthService {
+  getTokenExpiry() {
+    const raw = localStorage.getItem('tokenExpiry');
+    if (!raw) {
+      return null;
+    }
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  isTokenExpired() {
+    const expiry = this.getTokenExpiry();
+    if (!expiry) {
+      return false;
+    }
+    return Date.now() > expiry;
+  }
+
+  setTokenExpiry(expiresInSeconds) {
+    const parsed = Number(expiresInSeconds);
+    const expiresMs = Number.isFinite(parsed)
+      ? parsed * 1000
+      : 30 * 60 * 1000;
+    localStorage.setItem('tokenExpiry', Date.now() + expiresMs);
+  }
+
   // Staff Login (Admin, Cashier, Kitchen, Delivery)
   async staffLogin(email, password) {
     try {
@@ -21,7 +46,7 @@ class AuthService {
       const { user, token } = data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('tokenExpiry', Date.now() + 30 * 60 * 1000); // 30 minutes
+      this.setTokenExpiry(data.expiresIn);
 
       return { success: true, user, token };
     } catch (error) {
@@ -50,7 +75,7 @@ class AuthService {
       const { user, token } = data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('tokenExpiry', Date.now() + 30 * 60 * 1000);
+      this.setTokenExpiry(data.expiresIn);
 
       return { success: true, user, token };
     } catch (error) {
@@ -69,7 +94,7 @@ class AuthService {
 
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('tokenExpiry', Date.now() + 30 * 60 * 1000);
+      this.setTokenExpiry(response.data?.expiresIn);
 
       return { success: true, user, token };
     } catch (error) {
@@ -125,7 +150,7 @@ class AuthService {
       const { user, token: newToken } = data;
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('tokenExpiry', Date.now() + 30 * 60 * 1000);
+      this.setTokenExpiry(data.expiresIn);
 
       return { success: true, user, token: newToken };
     } catch (error) {
@@ -212,6 +237,7 @@ class AuthService {
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    localStorage.removeItem('tokenExpiry');
   }
 
   // Get current user from localStorage
@@ -222,7 +248,15 @@ class AuthService {
 
   // Get token from localStorage
   getToken() {
-    return localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    if (!token) {
+      return null;
+    }
+    if (this.isTokenExpired()) {
+      this.logout();
+      return null;
+    }
+    return token;
   }
 
   // Check if user is authenticated

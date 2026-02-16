@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api`;
+const API_BASE_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/v1`;
 
 const getAuthHeader = () => {
     const token = localStorage.getItem('token');
@@ -9,7 +9,7 @@ const getAuthHeader = () => {
 
 export const menuItemService = {
     getAll: async (params = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/menu-items`, {
+        const response = await axios.get(`${API_BASE_URL}/menu`, {
             headers: getAuthHeader(),
             params
         });
@@ -17,28 +17,28 @@ export const menuItemService = {
     },
 
     getById: async (id) => {
-        const response = await axios.get(`${API_BASE_URL}/menu-items/${id}`, {
+        const response = await axios.get(`${API_BASE_URL}/menu/${id}`, {
             headers: getAuthHeader()
         });
         return response.data;
     },
 
     create: async (data) => {
-        const response = await axios.post(`${API_BASE_URL}/menu-items`, data, {
+        const response = await axios.post(`${API_BASE_URL}/menu`, data, {
             headers: getAuthHeader()
         });
         return response.data;
     },
 
     update: async (id, data) => {
-        const response = await axios.put(`${API_BASE_URL}/menu-items/${id}`, data, {
+        const response = await axios.put(`${API_BASE_URL}/menu/${id}`, data, {
             headers: getAuthHeader()
         });
         return response.data;
     },
 
     delete: async (id) => {
-        const response = await axios.delete(`${API_BASE_URL}/menu-items/${id}`, {
+        const response = await axios.delete(`${API_BASE_URL}/menu/${id}`, {
             headers: getAuthHeader()
         });
         return response.data;
@@ -48,7 +48,7 @@ export const menuItemService = {
         const formData = new FormData();
         formData.append('image', file);
 
-        const response = await axios.post(`${API_BASE_URL}/menu-items/${id}/image`, formData, {
+        const response = await axios.post(`${API_BASE_URL}/menu/${id}/image`, formData, {
             headers: {
                 ...getAuthHeader(),
                 'Content-Type': 'multipart/form-data'
@@ -60,7 +60,7 @@ export const menuItemService = {
 
 export const comboPackService = {
     getAll: async (params = {}) => {
-        const response = await axios.get(`${API_BASE_URL}/combo-packs`, {
+        const response = await axios.get(`${API_BASE_URL}/combos`, {
             headers: getAuthHeader(),
             params
         });
@@ -68,35 +68,35 @@ export const comboPackService = {
     },
 
     getActive: async () => {
-        const response = await axios.get(`${API_BASE_URL}/combo-packs/active`, {
+        const response = await axios.get(`${API_BASE_URL}/combos/active`, {
             headers: getAuthHeader()
         });
         return response.data;
     },
 
     getById: async (id) => {
-        const response = await axios.get(`${API_BASE_URL}/combo-packs/${id}`, {
+        const response = await axios.get(`${API_BASE_URL}/combos/${id}`, {
             headers: getAuthHeader()
         });
         return response.data;
     },
 
     create: async (data) => {
-        const response = await axios.post(`${API_BASE_URL}/combo-packs`, data, {
+        const response = await axios.post(`${API_BASE_URL}/combos`, data, {
             headers: getAuthHeader()
         });
         return response.data;
     },
 
     update: async (id, data) => {
-        const response = await axios.put(`${API_BASE_URL}/combo-packs/${id}`, data, {
+        const response = await axios.put(`${API_BASE_URL}/combos/${id}`, data, {
             headers: getAuthHeader()
         });
         return response.data;
     },
 
     delete: async (id) => {
-        const response = await axios.delete(`${API_BASE_URL}/combo-packs/${id}`, {
+        const response = await axios.delete(`${API_BASE_URL}/combos/${id}`, {
             headers: getAuthHeader()
         });
         return response.data;
@@ -106,7 +106,7 @@ export const comboPackService = {
         const formData = new FormData();
         formData.append('image', file);
 
-        const response = await axios.post(`${API_BASE_URL}/combo-packs/${id}/image`, formData, {
+        const response = await axios.post(`${API_BASE_URL}/combos/${id}/image`, formData, {
             headers: {
                 ...getAuthHeader(),
                 'Content-Type': 'multipart/form-data'
