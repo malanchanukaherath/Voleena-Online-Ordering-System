@@ -17,6 +17,7 @@ const Feedback = () => {
     const [errors, setErrors] = useState({});
     const [hoveredStar, setHoveredStar] = useState(0);
     const [submitted, setSubmitted] = useState(false);
+    const [submitError, setSubmitError] = useState('');
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -45,14 +46,7 @@ const Feedback = () => {
         e.preventDefault();
         if (!validateForm()) return;
 
-        // Mock submission - in production, call API
-        console.log('Feedback submitted:', formData);
-        setSubmitted(true);
-
-        // Redirect after 2 seconds
-        setTimeout(() => {
-            navigate('/');
-        }, 2000);
+        setSubmitError('Feedback submission is not available yet. Please try again later.');
     };
 
     if (submitted) {
@@ -169,6 +163,9 @@ const Feedback = () => {
                         Cancel
                     </Button>
                 </div>
+                {submitError && (
+                    <p className="text-sm text-red-600">{submitError}</p>
+                )}
             </form>
 
             {/* Info Box */}

@@ -4,31 +4,25 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'RoleID'
+            field: 'role_id'
         },
 
         RoleName: {
             type: DataTypes.STRING(50),
             allowNull: false,
             unique: true,
-            field: 'RoleName'
+            field: 'role_name'
         },
 
         Description: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            field: 'Description'
-        },
-
-        Permissions: {
-            type: DataTypes.JSON,
-            allowNull: true,
-            field: 'Permissions'
+            field: 'description'
         }
     }, {
-        tableName: 'Role',
+        tableName: 'role',
         timestamps: true,
-        createdAt: 'CreatedAt',
+        createdAt: 'created_at',
         updatedAt: false
     });
 

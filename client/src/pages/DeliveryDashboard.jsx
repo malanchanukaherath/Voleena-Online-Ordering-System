@@ -1,19 +1,54 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaTruck, FaMapMarkedAlt, FaCheckCircle, FaClock } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
+import { deliveryService } from '../services/dashboardService';
 
 const DeliveryDashboard = () => {
-    const stats = {
-        activeDeliveries: 6,
-        completedToday: 23,
-        pendingPickup: 2,
-    };
+    const [stats, setStats] = useState({
+        activeDeliveries: 0,
+        completedToday: 0,
+        pendingPickup: 0,
+    });
+    const [activeDeliveries, setActiveDeliveries] = useState([]);
 
-    const activeDeliveries = [
-        { id: 1, orderNumber: 'ORD-001', customer: 'John Doe', address: '123 Main St', status: 'IN_TRANSIT' },
-        { id: 2, orderNumber: 'ORD-002', customer: 'Jane Smith', address: '456 Oak Ave', status: 'PICKED_UP' },
-    ];
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadDashboard = async () => {
+            try {
+                const [statsResponse, deliveriesResponse] = await Promise.all([
+                    deliveryService.getDashboardStats(),
+                    deliveryService.getMyDeliveries()
+                ]);
+
+                if (isMounted) {
+                    setStats(statsResponse.stats || statsResponse.data?.stats || statsResponse.data || stats);
+                    const deliveries = deliveriesResponse.data || deliveriesResponse?.data?.data || [];
+                    const mapped = deliveries.map((delivery) => ({
+                        id: delivery.DeliveryID,
+                        orderNumber: delivery.order?.OrderNumber || 'N/A',
+                        customer: delivery.order?.customer?.Name || 'Unknown',
+                        address: delivery.address
+                            ? [delivery.address.AddressLine1, delivery.address.City].filter(Boolean).join(', ')
+                            : 'N/A',
+                        status: delivery.Status
+                    }));
+                    setActiveDeliveries(mapped);
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setActiveDeliveries([]);
+                }
+            }
+        };
+
+        loadDashboard();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     return (
         <div className="p-6">
@@ -41,7 +76,9 @@ const DeliveryDashboard = () => {
                 <div className="bg-white rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4">Active Deliveries</h3>
                     <div className="space-y-3">
-                        {activeDeliveries.map(delivery => (
+                        {activeDeliveries.length === 0 ? (
+                            <div className="text-sm text-gray-500">No active deliveries.</div>
+                        ) : activeDeliveries.map(delivery => (
                             <div key={delivery.id} className="p-4 bg-gray-50 rounded-lg">
                                 <div className="flex justify-between items-start mb-2">
                                     <div>

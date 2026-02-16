@@ -1,23 +1,84 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
+import { kitchenService } from '../services/dashboardService';
 
 const KitchenOrders = () => {
-    const orders = [
-        { id: 1, orderNumber: 'ORD-001', items: ['2x Chicken Burger', '1x Fries'], time: '5 mins ago', status: 'CONFIRMED', priority: 'high' },
-        { id: 2, orderNumber: 'ORD-002', items: ['1x Rice & Curry'], time: '8 mins ago', status: 'PREPARING', priority: 'normal' },
-    ];
+    const [orders, setOrders] = useState([]);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadOrders = async () => {
+            try {
+                const response = await kitchenService.getAssignedOrders();
+                const data = response.data || response?.data?.data || [];
+                const mapped = data.map((order) => ({
+                    id: order.OrderID,
+                    orderNumber: order.OrderNumber,
+                    items: (order.orderItems || []).map((item) => `${item.Quantity}x ${item.menuItem?.Name || 'Item'}`),
+                    time: order.CreatedAt,
+                    status: order.Status,
+                    priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
+                }));
+
+                if (isMounted) {
+                    setOrders(mapped);
+                    setError('');
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setError(err.message || 'Failed to load kitchen orders');
+                }
+            }
+        };
+
+        loadOrders();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const getNextStatus = (status) => {
+        const map = {
+            CONFIRMED: 'PREPARING',
+            PREPARING: 'READY'
+        };
+        return map[status];
+    };
+
+    const handleStatusUpdate = async (orderId, status) => {
+        const nextStatus = getNextStatus(status);
+        if (!nextStatus) return;
+
+        try {
+            await kitchenService.updateOrderStatus(orderId, nextStatus);
+            setOrders((prev) => prev.map((order) => (
+                order.id === orderId ? { ...order, status: nextStatus } : order
+            )));
+        } catch (err) {
+            setError(err.message || 'Failed to update order status');
+        }
+    };
 
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-6">Kitchen Orders</h1>
             <div className="space-y-4">
-                {orders.map(order => (
+                {orders.length === 0 ? (
+                    <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500">
+                        {error || 'No kitchen orders assigned.'}
+                    </div>
+                ) : orders.map(order => (
                     <div key={order.id} className={`bg-white rounded-lg shadow p-6 ${order.priority === 'high' ? 'border-l-4 border-red-500' : ''}`}>
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <h3 className="font-bold text-lg">{order.orderNumber}</h3>
-                                <p className="text-sm text-gray-500">{order.time}</p>
+                                <p className="text-sm text-gray-500">
+                                    {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
+                                </p>
                             </div>
                             <StatusBadge status={order.status} />
                         </div>
@@ -28,8 +89,9 @@ const KitchenOrders = () => {
                             </ul>
                         </div>
                         <div className="flex gap-2">
-                            <Button size="sm">Start Preparing</Button>
-                            <Button size="sm" variant="outline">Mark Ready</Button>
+                            <Button size="sm" onClick={() => handleStatusUpdate(order.id, order.status)} disabled={!getNextStatus(order.status)}>
+                                {order.status === 'CONFIRMED' ? 'Start Preparing' : 'Mark Ready'}
+                            </Button>
                         </div>
                     </div>
                 ))}

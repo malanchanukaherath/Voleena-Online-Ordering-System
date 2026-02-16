@@ -5,11 +5,7 @@ import Select from '../components/ui/Select';
 const FeedbackManagement = () => {
     const [typeFilter, setTypeFilter] = useState('');
 
-    const feedbacks = [
-        { id: 1, customer: 'John Doe', rating: 5, type: 'ORDER', comment: 'Excellent service and food!', orderNumber: 'ORD-001', date: '2024-01-20', replied: false },
-        { id: 2, customer: 'Jane Smith', rating: 4, type: 'DELIVERY', comment: 'Fast delivery, great driver', orderNumber: 'ORD-002', date: '2024-01-21', replied: true },
-        { id: 3, customer: 'Bob Wilson', rating: 2, type: 'GENERAL', comment: 'Food was cold', orderNumber: 'ORD-003', date: '2024-01-22', replied: false },
-    ];
+    const feedbacks = [];
 
     const filteredFeedback = typeFilter ? feedbacks.filter(f => f.type === typeFilter) : feedbacks;
 
@@ -41,7 +37,11 @@ const FeedbackManagement = () => {
             </div>
 
             <div className="space-y-4">
-                {filteredFeedback.map(feedback => (
+                {filteredFeedback.length === 0 ? (
+                    <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500">
+                        No feedback records available yet.
+                    </div>
+                ) : filteredFeedback.map(feedback => (
                     <div key={feedback.id} className={`bg-white rounded-lg shadow p-6 ${!feedback.replied ? 'border-l-4 border-yellow-400' : ''}`}>
                         <div className="flex justify-between items-start mb-4">
                             <div>

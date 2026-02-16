@@ -4,6 +4,7 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Card from '../components/ui/Card';
 import Toast from '../components/ui/Toast';
+import authService from '../services/authService';
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
@@ -15,6 +16,8 @@ const ForgotPassword = () => {
     const [errors, setErrors] = useState({});
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
+    const [toastType, setToastType] = useState('success');
+    const [loading, setLoading] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -27,7 +30,9 @@ const ForgotPassword = () => {
     const validateStep1 = () => {
         const newErrors = {};
         if (!formData.identifier.trim()) {
-            newErrors.identifier = 'Email or phone number is required';
+            newErrors.identifier = 'Email is required';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.identifier.trim())) {
+            newErrors.identifier = 'Enter a valid email address';
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -39,24 +44,32 @@ const ForgotPassword = () => {
         setStep(2);
     };
 
-    const handleSendOTP = () => {
-        // Mock OTP sending
-        const mockOTP = '123456';
-        console.log(`Mock OTP sent via ${formData.method}: ${mockOTP}`);
+    const handleSendOTP = async () => {
+        setLoading(true);
+        const email = formData.identifier.trim();
+        const result = await authService.requestPasswordReset(email, 'Customer');
+        setLoading(false);
+
+        if (!result.success) {
+            setToastMessage(result.error || 'Failed to send OTP');
+            setToastType('error');
+            setShowToast(true);
+            return;
+        }
 
         setToastMessage(`OTP sent to your ${formData.method === 'email' ? 'email' : 'phone'}!`);
+        setToastType('success');
         setShowToast(true);
 
-        // Navigate to reset password page with OTP
         setTimeout(() => {
             navigate('/reset-password', {
                 state: {
-                    identifier: formData.identifier,
+                    identifier: email,
                     method: formData.method,
-                    mockOTP: mockOTP
+                    userType: 'Customer'
                 }
             });
-        }, 1500);
+        }, 800);
     };
 
     return (
@@ -72,13 +85,13 @@ const ForgotPassword = () => {
                 {step === 1 ? (
                     <form onSubmit={handleStep1Submit} className="space-y-6">
                         <Input
-                            label="Email or Phone Number"
+                            label="Email Address"
                             name="identifier"
                             type="text"
                             value={formData.identifier}
                             onChange={handleChange}
                             error={errors.identifier}
-                            placeholder="email@example.com or +94 71 234 5678"
+                            placeholder="email@example.com"
                             required
                         />
 
@@ -146,8 +159,9 @@ const ForgotPassword = () => {
                             <Button
                                 onClick={handleSendOTP}
                                 className="flex-1"
+                                disabled={loading}
                             >
-                                Send OTP
+                                {loading ? 'Sending...' : 'Send OTP'}
                             </Button>
                         </div>
                     </div>
@@ -157,7 +171,7 @@ const ForgotPassword = () => {
             {showToast && (
                 <Toast
                     message={toastMessage}
-                    type="success"
+                    type={toastType}
                     onClose={() => setShowToast(false)}
                 />
             )}

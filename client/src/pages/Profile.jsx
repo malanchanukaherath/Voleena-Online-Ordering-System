@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Toast from '../components/ui/Toast';
 import { FaUser, FaEnvelope, FaPhone, FaLock, FaClipboardList } from 'react-icons/fa';
+import { getOrders } from '../services/orderApi';
 
 const Profile = () => {
     const { user, updateUser } = useAuth();
@@ -123,12 +124,42 @@ const Profile = () => {
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
     };
 
-    // Mock stats
-    const stats = {
-        totalOrders: 12,
-        totalSpent: 15420.00,
-        memberSince: 'January 2024',
-    };
+    const [stats, setStats] = useState({
+        totalOrders: 0,
+        totalSpent: 0,
+        memberSince: '—'
+    });
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadStats = async () => {
+            try {
+                const response = await getOrders();
+                const orders = response.data?.data || response.data || [];
+                const totalOrders = orders.length;
+                const totalSpent = orders.reduce((sum, order) => sum + parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0), 0);
+
+                if (isMounted) {
+                    setStats({
+                        totalOrders,
+                        totalSpent,
+                        memberSince: user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '—'
+                    });
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setStats((prev) => ({ ...prev }));
+                }
+            }
+        };
+
+        loadStats();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [user]);
 
     return (
         <div className="max-w-4xl mx-auto">

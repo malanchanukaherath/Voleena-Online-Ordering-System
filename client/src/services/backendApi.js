@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Backend API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 // Create axios instance for backend API
 const backendApi = axios.create({
@@ -46,21 +46,21 @@ export const realApi = {
    * Login user
    */
   login: async (email, password) => {
-    return await backendApi.post('/auth/login', { email, password });
+    return await backendApi.post('/api/auth/login', { email, password });
   },
 
   /**
    * Register new customer
    */
   register: async (userData) => {
-    return await backendApi.post('/auth/register', userData);
+    return await backendApi.post('/api/auth/register', userData);
   },
 
   /**
    * Verify JWT token
    */
   verifyToken: async () => {
-    return await backendApi.get('/auth/me');
+    return await backendApi.get('/api/auth/verify');
   },
 };
 

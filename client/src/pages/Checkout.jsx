@@ -139,7 +139,7 @@ const Checkout = () => {
         }
     };
 
-    // Mock cart summary
+    // Cart summary
     const cartSummary = {
         subtotal: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
         deliveryFee: formData.orderType === 'DELIVERY' ? 100.00 : 0,
@@ -319,15 +319,22 @@ const Checkout = () => {
                                 </div>
                             </div>
 
-                            <Button type="submit" size="lg" className="w-full mb-3">
-                                Place Order
                             {errors.submit && (
                                 <p className="text-sm text-red-600 mb-3">{errors.submit}</p>
                             )}
                             <Button
-
-                            <Link to="/cart" className="block text-center text-sm text-gray-600 hover:text-gray-900">
+                                type="submit"
+                                size="lg"
+                                className="w-full mb-3"
                                 disabled={cartItems.length === 0}
+                            >
+                                Place Order
+                            </Button>
+
+                            <Link
+                                to="/cart"
+                                className="block text-center text-sm text-gray-600 hover:text-gray-900"
+                            >
                                 ← Back to Cart
                             </Link>
                         </div>

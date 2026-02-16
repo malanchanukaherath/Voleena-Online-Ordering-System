@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { adminService } from '../services/dashboardService';
+import { getOrders } from '../services/orderApi';
 import {
     FaClipboardList,
     FaUsers,
@@ -12,76 +14,83 @@ import {
 } from 'react-icons/fa';
 
 const AdminDashboard = () => {
-    // Mock data - will be replaced with real API calls
-    const stats = [
+    const [statsData, setStatsData] = useState(null);
+    const [recentOrders, setRecentOrders] = useState([]);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadDashboard = async () => {
+            try {
+                const [statsResponse, ordersResponse] = await Promise.all([
+                    adminService.getDashboardStats(),
+                    getOrders()
+                ]);
+
+                const stats = statsResponse?.stats || statsResponse?.data?.stats || statsResponse?.data || {};
+                const apiOrders = ordersResponse.data?.data || ordersResponse.data || [];
+                const mappedOrders = apiOrders.slice(0, 4).map((order) => ({
+                    id: order.OrderID,
+                    orderNumber: order.OrderNumber,
+                    customer: order.customer?.Name || 'Unknown',
+                    total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
+                    status: order.Status,
+                    time: order.CreatedAt
+                }));
+
+                if (isMounted) {
+                    setStatsData(stats);
+                    setRecentOrders(mappedOrders);
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setStatsData(null);
+                    setRecentOrders([]);
+                }
+            }
+        };
+
+        loadDashboard();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const stats = useMemo(() => ([
         {
             title: 'Total Orders',
-            value: '156',
-            change: '+12%',
+            value: statsData?.totalOrders ?? 0,
+            change: statsData?.todayOrders ? `+${statsData.todayOrders} today` : '—',
             icon: FaClipboardList,
             color: 'bg-blue-500',
             link: '/admin/orders',
         },
         {
             title: 'Active Customers',
-            value: '342',
-            change: '+8%',
+            value: statsData?.activeCustomers ?? 0,
+            change: '—',
             icon: FaUsers,
             color: 'bg-green-500',
             link: '/admin/customers',
         },
         {
             title: 'Total Revenue',
-            value: 'LKR 45,280',
-            change: '+23%',
+            value: `LKR ${(statsData?.totalRevenue ?? 0).toLocaleString()}`,
+            change: statsData?.todayRevenue ? `+LKR ${statsData.todayRevenue.toLocaleString()} today` : '—',
             icon: FaDollarSign,
             color: 'bg-yellow-500',
             link: '/admin/analytics',
         },
         {
             title: 'Staff Members',
-            value: '12',
-            change: '+2',
+            value: statsData?.totalStaff ?? 0,
+            change: '—',
             icon: FaUserTie,
             color: 'bg-purple-500',
             link: '/admin/staff',
         },
-    ];
-
-    const recentOrders = [
-        {
-            id: 1,
-            orderNumber: 'ORD-2024-001',
-            customer: 'John Doe',
-            total: 1250.00,
-            status: 'PENDING',
-            time: '5 mins ago',
-        },
-        {
-            id: 2,
-            orderNumber: 'ORD-2024-002',
-            customer: 'Jane Smith',
-            total: 850.00,
-            status: 'PREPARING',
-            time: '15 mins ago',
-        },
-        {
-            id: 3,
-            orderNumber: 'ORD-2024-003',
-            customer: 'Bob Wilson',
-            total: 450.00,
-            status: 'OUT_FOR_DELIVERY',
-            time: '30 mins ago',
-        },
-        {
-            id: 4,
-            orderNumber: 'ORD-2024-004',
-            customer: 'Alice Brown',
-            total: 1650.00,
-            status: 'DELIVERED',
-            time: '1 hour ago',
-        },
-    ];
+    ]), [statsData]);
 
     const getStatusIcon = (status) => {
         switch (status) {
@@ -119,7 +128,7 @@ const AdminDashboard = () => {
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
                                     <p className="text-2xl font-bold">{stat.value}</p>
-                                    <p className="text-sm text-green-600 mt-1">{stat.change} from last week</p>
+                                        <p className="text-sm text-green-600 mt-1">{stat.change}</p>
                                 </div>
                                 <div className={`${stat.color} p-3 rounded-lg`}>
                                     <Icon className="w-6 h-6 text-white" />
@@ -142,7 +151,9 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                     <div className="divide-y">
-                        {recentOrders.map((order) => (
+                        {recentOrders.length === 0 ? (
+                            <div className="p-6 text-sm text-gray-500">No recent orders yet.</div>
+                        ) : recentOrders.map((order) => (
                             <div key={order.id} className="p-4 hover:bg-gray-50">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center space-x-3">
@@ -156,7 +167,9 @@ const AdminDashboard = () => {
                                     </div>
                                     <div className="text-right">
                                         <p className="font-semibold">LKR {order.total.toFixed(2)}</p>
-                                        <p className="text-xs text-gray-500">{order.time}</p>
+                                        <p className="text-xs text-gray-500">
+                                            {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -206,15 +219,15 @@ const AdminDashboard = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                         <p className="text-primary-200 text-sm">Orders Today</p>
-                        <p className="text-3xl font-bold">24</p>
+                        <p className="text-3xl font-bold">{statsData?.todayOrders ?? 0}</p>
                     </div>
                     <div>
                         <p className="text-primary-200 text-sm">Revenue Today</p>
-                        <p className="text-3xl font-bold">LKR 12,450</p>
+                        <p className="text-3xl font-bold">LKR {(statsData?.todayRevenue ?? 0).toLocaleString()}</p>
                     </div>
                     <div>
                         <p className="text-primary-200 text-sm">Pending Orders</p>
-                        <p className="text-3xl font-bold">7</p>
+                        <p className="text-3xl font-bold">{statsData?.pendingOrders ?? 0}</p>
                     </div>
                 </div>
             </div>

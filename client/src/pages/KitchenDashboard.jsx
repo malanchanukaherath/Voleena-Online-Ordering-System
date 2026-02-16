@@ -1,20 +1,55 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaClipboardList, FaBoxes, FaClock } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
+import { kitchenService } from '../services/dashboardService';
 
 const KitchenDashboard = () => {
-    const stats = {
-        activeOrders: 12,
-        preparingOrders: 5,
-        readyOrders: 3,
-    };
+    const [stats, setStats] = useState({
+        activeOrders: 0,
+        preparingOrders: 0,
+        readyOrders: 0,
+    });
+    const [activeOrders, setActiveOrders] = useState([]);
 
-    const activeOrders = [
-        { id: 1, orderNumber: 'ORD-001', items: 3, time: '5 mins ago', priority: 'high' },
-        { id: 2, orderNumber: 'ORD-002', items: 2, time: '8 mins ago', priority: 'normal' },
-        { id: 3, orderNumber: 'ORD-003', items: 5, time: '12 mins ago', priority: 'high' },
-    ];
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadDashboard = async () => {
+            try {
+                const [statsResponse, ordersResponse] = await Promise.all([
+                    kitchenService.getDashboardStats(),
+                    kitchenService.getAssignedOrders()
+                ]);
+
+                const statsData = statsResponse.stats || statsResponse.data?.stats || statsResponse.data || stats;
+                const orders = ordersResponse.data || ordersResponse?.data?.data || [];
+                const mappedOrders = orders.map((order) => ({
+                    id: order.OrderID,
+                    orderNumber: order.OrderNumber,
+                    items: order.orderItems?.reduce((sum, item) => sum + (item.Quantity || 0), 0) || 0,
+                    time: order.CreatedAt,
+                    status: order.Status,
+                    priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
+                }));
+
+                if (isMounted) {
+                    setStats(statsData);
+                    setActiveOrders(mappedOrders);
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setActiveOrders([]);
+                }
+            }
+        };
+
+        loadDashboard();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     return (
         <div className="p-6">
@@ -41,15 +76,19 @@ const KitchenDashboard = () => {
             <div className="bg-white rounded-lg shadow p-6">
                 <h3 className="text-lg font-semibold mb-4">Current Orders</h3>
                 <div className="space-y-3">
-                    {activeOrders.map(order => (
+                    {activeOrders.length === 0 ? (
+                        <div className="text-sm text-gray-500">No active kitchen orders.</div>
+                    ) : activeOrders.map(order => (
                         <div key={order.id} className={`p-4 rounded-lg border-2 ${order.priority === 'high' ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'
                             }`}>
                             <div className="flex justify-between items-center">
                                 <div>
                                     <p className="font-bold">{order.orderNumber}</p>
-                                    <p className="text-sm text-gray-600">{order.items} items • {order.time}</p>
+                                    <p className="text-sm text-gray-600">
+                                        {order.items} items • {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
+                                    </p>
                                 </div>
-                                <StatusBadge status="PREPARING" />
+                                <StatusBadge status={order.status} />
                             </div>
                         </div>
                     ))}

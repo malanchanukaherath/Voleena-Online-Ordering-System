@@ -5,11 +5,12 @@ import Input from '../components/ui/Input';
 import Card from '../components/ui/Card';
 import Toast from '../components/ui/Toast';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import authService from '../services/authService';
 
 const ResetPassword = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { identifier, method, mockOTP } = location.state || {};
+    const { identifier, method, userType } = location.state || {};
 
     const [step, setStep] = useState(1); // 1: Enter OTP, 2: Set new password
     const [formData, setFormData] = useState({
@@ -24,6 +25,8 @@ const ResetPassword = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // OTP expiry timer
     useEffect(() => {
@@ -49,25 +52,36 @@ const ResetPassword = () => {
 
     const handleResendOTP = () => {
         setTimeLeft(300);
-        setToastMessage(`New OTP sent to your ${method}! (Mock: ${mockOTP})`);
-        setToastType('success');
-        setShowToast(true);
+        const email = identifier?.trim();
+        if (!email) return;
+        authService.requestPasswordReset(email, userType || 'Customer').then((result) => {
+            setToastMessage(result.success ? `New OTP sent to your ${method || 'email'}!` : (result.error || 'Failed to resend OTP'));
+            setToastType(result.success ? 'success' : 'error');
+            setShowToast(true);
+        });
     };
 
     const validateOTP = () => {
         const newErrors = {};
         if (!formData.otp.trim()) {
             newErrors.otp = 'OTP is required';
-        } else if (formData.otp !== mockOTP) {
-            newErrors.otp = 'Invalid OTP. Please try again.';
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleOTPSubmit = (e) => {
+    const handleOTPSubmit = async (e) => {
         e.preventDefault();
         if (!validateOTP()) return;
+        setIsVerifying(true);
+        const result = await authService.verifyResetOTP(identifier, formData.otp, userType || 'Customer');
+        setIsVerifying(false);
+
+        if (!result.success) {
+            setErrors(prev => ({ ...prev, otp: result.error || 'OTP verification failed' }));
+            return;
+        }
+
         setStep(2);
     };
 
@@ -87,21 +101,25 @@ const ResetPassword = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handlePasswordSubmit = (e) => {
+    const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         if (!validatePassword()) return;
+        setIsSubmitting(true);
+        const result = await authService.resetPassword(identifier, formData.otp, formData.newPassword, userType || 'Customer');
+        setIsSubmitting(false);
 
-        // Mock password reset
-        setToastMessage('Password reset successfully!');
-        setToastType('success');
+        setToastMessage(result.success ? 'Password reset successfully!' : (result.error || 'Password reset failed'));
+        setToastType(result.success ? 'success' : 'error');
         setShowToast(true);
 
-        setTimeout(() => {
-            navigate('/login');
-        }, 2000);
+        if (result.success) {
+            setTimeout(() => {
+                navigate('/login');
+            }, 1500);
+        }
     };
 
-    if (!identifier || !mockOTP) {
+    if (!identifier) {
         return (
             <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
                 <Card className="w-full max-w-md text-center">
@@ -154,7 +172,7 @@ const ResetPassword = () => {
                         </div>
 
                         <Button type="submit" className="w-full">
-                            Verify OTP
+                            {isVerifying ? 'Verifying...' : 'Verify OTP'}
                         </Button>
 
                         <div className="text-center text-sm">
@@ -215,7 +233,7 @@ const ResetPassword = () => {
                         </div>
 
                         <Button type="submit" className="w-full">
-                            Reset Password
+                            {isSubmitting ? 'Resetting...' : 'Reset Password'}
                         </Button>
                     </form>
                 )}

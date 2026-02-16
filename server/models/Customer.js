@@ -6,13 +6,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-      field: 'CustomerID'
+      field: 'customer_id'
     },
 
     Name: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      field: 'Name',
+      field: 'name',
       validate: {
         len: {
           args: [2, 100],
@@ -23,9 +23,9 @@ module.exports = (sequelize, DataTypes) => {
 
     Email: {
       type: DataTypes.STRING(255),
-      allowNull: false,
+      allowNull: true,
       unique: true,
-      field: 'Email',
+      field: 'email',
       validate: {
         isEmail: {
           msg: 'Invalid email format'
@@ -36,7 +36,7 @@ module.exports = (sequelize, DataTypes) => {
     Phone: {
       type: DataTypes.STRING(15),
       allowNull: false,
-      field: 'Phone',
+      field: 'phone',
       validate: {
         is: {
           args: /^[+]?[0-9]{9,15}$/,
@@ -48,49 +48,49 @@ module.exports = (sequelize, DataTypes) => {
     ProfileImageURL: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      field: 'ProfileImageURL'
+      field: 'profile_image_url'
     },
 
     Password: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      field: 'Password'
+      field: 'password'
     },
 
     IsEmailVerified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-      field: 'IsEmailVerified'
+      field: 'is_email_verified'
     },
 
     IsPhoneVerified: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
-      field: 'IsPhoneVerified'
+      field: 'is_phone_verified'
     },
 
     AccountStatus: {
       type: DataTypes.ENUM('ACTIVE', 'INACTIVE', 'BLOCKED'),
       defaultValue: 'ACTIVE',
-      field: 'AccountStatus'
+      field: 'account_status'
     },
 
     PreferredNotification: {
       type: DataTypes.ENUM('EMAIL', 'SMS', 'BOTH'),
       defaultValue: 'BOTH',
-      field: 'PreferredNotification'
+      field: 'preferred_notification'
     },
 
     IsActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      field: 'IsActive'
+      field: 'is_active'
     }
   }, {
-    tableName: 'Customer',
+    tableName: 'customer',
     timestamps: true,
-    createdAt: 'CreatedAt',
-    updatedAt: 'UpdatedAt'
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
   });
 //Hashing
   const hashPassword = async (customer) => {

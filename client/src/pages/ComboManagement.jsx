@@ -100,7 +100,7 @@ const ComboManagement = () => {
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            // Mock image upload - create preview URL
+            // Local image preview
             const reader = new FileReader();
             reader.onloadend = () => {
                 setImagePreview(reader.result);

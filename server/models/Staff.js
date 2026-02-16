@@ -6,13 +6,13 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
-      field: 'StaffID'
+      field: 'staff_id'
     },
 
     Name: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      field: 'Name',
+      field: 'name',
       validate: {
         len: {
           args: [2, 100],
@@ -24,14 +24,14 @@ module.exports = (sequelize, DataTypes) => {
     RoleID: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      field: 'RoleID'
+      field: 'role_id'
     },
 
     Email: {
       type: DataTypes.STRING(255),
       allowNull: false,
       unique: true,
-      field: 'Email',
+      field: 'email',
       validate: {
         isEmail: {
           msg: 'Invalid email format'
@@ -42,7 +42,7 @@ module.exports = (sequelize, DataTypes) => {
     Phone: {
       type: DataTypes.STRING(15),
       allowNull: false,
-      field: 'Phone',
+      field: 'phone',
       validate: {
         is: {
           args: /^[+]?[0-9]{9,15}$/,
@@ -54,24 +54,24 @@ module.exports = (sequelize, DataTypes) => {
     Password: {
       type: DataTypes.STRING(255),
       allowNull: false,
-      field: 'Password'
+      field: 'password'
     },
 
     IsActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      field: 'IsActive'
+      field: 'is_active'
     },
     ProfileImageURL: {
       type: DataTypes.STRING(255),
       allowNull: true,
-      field: 'ProfileImageURL'
+      field: 'profile_image_url'
     }
   }, {
-    tableName: 'Staff',
+    tableName: 'staff',
     timestamps: true,
-    createdAt: 'CreatedAt',
-    updatedAt: 'UpdatedAt'
+    createdAt: 'created_at',
+    updatedAt: 'updated_at'
   });
 
   const hashPassword = async (staff) => {

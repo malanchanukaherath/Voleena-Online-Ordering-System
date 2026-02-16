@@ -1,37 +1,16 @@
-import React, { useState } from 'react';
-import { FaStar, FaEdit, FaTrash, FaSearch, FaChartLine } from 'react-icons/fa';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FaChartLine } from 'react-icons/fa';
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import Select from '../components/ui/Select';
-import Input from '../components/ui/Input';
+import { adminService } from '../services/dashboardService';
 
 const SalesAnalytics = () => {
     const [dateRange, setDateRange] = useState('7days');
 
-    // Mock data
-    const salesData = [
-        { date: '1/20', revenue: 12450, orders: 24 },
-        { date: '1/21', revenue: 15280, orders: 31 },
-        { date: '1/22', revenue: 18920, orders: 38 },
-        { date: '1/23', revenue: 14670, orders: 29 },
-        { date: '1/24', revenue: 21340, orders: 42 },
-        { date: '1/25', revenue: 19850, orders: 39 },
-    ];
-
-    const categoryData = [
-        { name: 'Burgers', value: 35, revenue: 45280 },
-        { name: 'Rice & Curry', value: 25, revenue: 32450 },
-        { name: 'Pizza', value: 20, revenue: 28920 },
-        { name: 'Pasta', value: 12, revenue: 15670 },
-        { name: 'Drinks', value: 8, revenue: 8340 },
-    ];
-
-    const topItems = [
-        { name: 'Chicken Burger', orders: 145, revenue: 65250 },
-        { name: 'Rice & Curry', orders: 132, revenue: 46200 },
-        { name: 'Margherita Pizza', orders: 89, revenue: 75650 },
-        { name: 'Carbonara Pasta', orders: 67, revenue: 40200 },
-        { name: 'Garlic Bread', orders: 54, revenue: 8100 },
-    ];
+    const [salesData, setSalesData] = useState([]);
+    const [categoryData, setCategoryData] = useState([]);
+    const [topItems, setTopItems] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
@@ -43,9 +22,84 @@ const SalesAnalytics = () => {
         { value: 'custom', label: 'Custom Range' },
     ];
 
-    const totalRevenue = salesData.reduce((sum, day) => sum + day.revenue, 0);
-    const totalOrders = salesData.reduce((sum, day) => sum + day.orders, 0);
-    const avgOrderValue = totalRevenue / totalOrders;
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadAnalytics = async () => {
+            try {
+                setLoading(true);
+                const now = new Date();
+                const targetDate = dateRange === 'lastMonth'
+                    ? new Date(now.getFullYear(), now.getMonth() - 1, 1)
+                    : new Date(now.getFullYear(), now.getMonth(), 1);
+                const year = targetDate.getFullYear();
+                const month = targetDate.getMonth() + 1;
+
+                const [salesResponse, bestSellingResponse] = await Promise.all([
+                    adminService.getMonthlySalesReport(year, month),
+                    adminService.getBestSellingItems(10)
+                ]);
+
+                const salesRows = salesResponse.data || salesResponse?.data?.data || [];
+                const mappedSales = salesRows.map((row) => ({
+                    date: row.date,
+                    revenue: parseFloat(row.revenue || 0),
+                    orders: parseInt(row.orderCount || 0, 10)
+                }));
+
+                const bestSelling = bestSellingResponse.data || bestSellingResponse?.data?.data || [];
+                const mappedTopItems = bestSelling.map((item) => ({
+                    name: item.Name,
+                    orders: parseInt(item.totalSold || 0, 10),
+                    revenue: parseFloat(item.totalRevenue || 0)
+                }));
+
+                const categoryMap = new Map();
+                bestSelling.forEach((item) => {
+                    const key = item.CategoryName || 'Uncategorized';
+                    const current = categoryMap.get(key) || { name: key, value: 0, revenue: 0 };
+                    const revenue = parseFloat(item.totalRevenue || 0);
+                    current.value += revenue;
+                    current.revenue += revenue;
+                    categoryMap.set(key, current);
+                });
+
+                let filteredSales = mappedSales;
+                if (dateRange === '7days' || dateRange === '30days') {
+                    const days = dateRange === '7days' ? 7 : 30;
+                    const cutoff = new Date();
+                    cutoff.setDate(cutoff.getDate() - days);
+                    filteredSales = mappedSales.filter((row) => new Date(row.date) >= cutoff);
+                }
+
+                if (isMounted) {
+                    setSalesData(filteredSales);
+                    setTopItems(mappedTopItems);
+                    setCategoryData(Array.from(categoryMap.values()));
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setSalesData([]);
+                    setTopItems([]);
+                    setCategoryData([]);
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadAnalytics();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [dateRange]);
+
+    const totalRevenue = useMemo(() => salesData.reduce((sum, day) => sum + day.revenue, 0), [salesData]);
+    const totalOrders = useMemo(() => salesData.reduce((sum, day) => sum + day.orders, 0), [salesData]);
+    const avgOrderValue = totalOrders ? totalRevenue / totalOrders : 0;
 
     return (
         <div className="p-6">
@@ -75,7 +129,7 @@ const SalesAnalytics = () => {
                             <p className="text-2xl font-bold text-primary-600">
                                 LKR {totalRevenue.toLocaleString()}
                             </p>
-                            <p className="text-xs text-green-600 mt-1">+12.5% from last period</p>
+                            <p className="text-xs text-gray-500 mt-1">{loading ? 'Loading...' : 'Updated from orders'}</p>
                         </div>
                         <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
                             <FaChartLine className="w-6 h-6 text-primary-600" />
@@ -85,17 +139,17 @@ const SalesAnalytics = () => {
                 <div className="bg-white rounded-lg shadow p-6">
                     <p className="text-sm text-gray-600 mb-1">Total Orders</p>
                     <p className="text-2xl font-bold">{totalOrders}</p>
-                    <p className="text-xs text-green-600 mt-1">+8.3% from last period</p>
+                    <p className="text-xs text-gray-500 mt-1">{loading ? 'Loading...' : 'From selected range'}</p>
                 </div>
                 <div className="bg-white rounded-lg shadow p-6">
                     <p className="text-sm text-gray-600 mb-1">Avg Order Value</p>
                     <p className="text-2xl font-bold">LKR {avgOrderValue.toFixed(2)}</p>
-                    <p className="text-xs text-green-600 mt-1">+3.7% from last period</p>
+                    <p className="text-xs text-gray-500 mt-1">{loading ? 'Loading...' : 'Calculated'}</p>
                 </div>
                 <div className="bg-white rounded-lg shadow p-6">
                     <p className="text-sm text-gray-600 mb-1">Customer Retention</p>
-                    <p className="text-2xl font-bold">78%</p>
-                    <p className="text-xs text-green-600 mt-1">+5.2% from last period</p>
+                    <p className="text-2xl font-bold">—</p>
+                    <p className="text-xs text-gray-500 mt-1">Needs retention metrics endpoint</p>
                 </div>
             </div>
 
@@ -160,7 +214,9 @@ const SalesAnalytics = () => {
                 <div className="bg-white rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4">Top Selling Items</h3>
                     <div className="space-y-3">
-                        {topItems.map((item, index) => (
+                        {topItems.length === 0 ? (
+                            <div className="text-sm text-gray-500">No sales data available.</div>
+                        ) : topItems.map((item, index) => (
                             <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                 <div className="flex items-center">
                                     <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">

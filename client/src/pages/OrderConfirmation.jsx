@@ -1,37 +1,65 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { FaCheckCircle, FaClipboardList, FaHome } from 'react-icons/fa';
 import Button from '../components/ui/Button';
+import { getOrderById } from '../services/orderApi';
 
 const OrderConfirmation = () => {
     const { orderId } = useParams();
 
-    // Mock order data - will be replaced with real API call
-    const order = {
-        orderNumber: orderId || 'ORD-2024-001',
-        status: 'PENDING',
-        orderType: 'DELIVERY',
-        estimatedDeliveryTime: '30-45 minutes',
-        items: [
-            { id: 1, name: 'Chicken Burger', quantity: 2, price: 450.00 },
-            { id: 2, name: 'Rice & Curry', quantity: 1, price: 350.00 },
-        ],
-        subtotal: 1250.00,
-        deliveryFee: 100.00,
-        tax: 100.00,
-        total: 1450.00,
-        deliveryAddress: {
-            line1: '123 Main Street',
-            line2: 'Apt 4B',
-            city: 'Kalagedihena',
-            postalCode: '11850',
-        },
-        customer: {
-            name: 'John Doe',
-            email: 'john@example.com',
-            phone: '+94 71 234 5678',
-        },
-    };
+    const [order, setOrder] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadOrder = async () => {
+            try {
+                setLoading(true);
+                const response = await getOrderById(orderId);
+                const data = response.data?.data || response.data;
+                if (isMounted) {
+                    setOrder(data);
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setError(err.message || 'Failed to load order');
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        if (orderId) {
+            loadOrder();
+        } else {
+            setLoading(false);
+        }
+
+        return () => {
+            isMounted = false;
+        };
+    }, [orderId]);
+
+    const items = order?.items || [];
+    const subtotal = items.reduce((sum, item) => sum + (item.UnitPrice || item.menuItem?.Price || 0) * (item.Quantity || 0), 0);
+    const total = order?.FinalAmount ?? order?.TotalAmount ?? subtotal;
+    const deliveryAddress = order?.delivery?.address;
+
+    if (loading) {
+        return (
+            <div className="max-w-3xl mx-auto p-6 text-sm text-gray-500">Loading order details...</div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="max-w-3xl mx-auto p-6 text-sm text-red-600">{error}</div>
+        );
+    }
 
     return (
         <div className="max-w-3xl mx-auto">
@@ -43,7 +71,7 @@ const OrderConfirmation = () => {
                     Thank you for your order. We've received your order and will start preparing it shortly.
                 </p>
                 <p className="text-sm text-gray-600">
-                    Order Number: <span className="font-bold text-gray-900">{order.orderNumber}</span>
+                    Order Number: <span className="font-bold text-gray-900">{order?.OrderNumber || '—'}</span>
                 </p>
             </div>
 
@@ -59,13 +87,13 @@ const OrderConfirmation = () => {
                         <h3 className="font-semibold mb-2">
                             {order.orderType === 'DELIVERY' ? 'Delivery Information' : 'Pickup Information'}
                         </h3>
-                        {order.orderType === 'DELIVERY' ? (
+                        {order?.OrderType === 'DELIVERY' ? (
                             <div className="text-sm text-gray-600">
-                                <p>{order.deliveryAddress.line1}</p>
-                                {order.deliveryAddress.line2 && <p>{order.deliveryAddress.line2}</p>}
-                                <p>{order.deliveryAddress.city}, {order.deliveryAddress.postalCode}</p>
+                                <p>{deliveryAddress?.AddressLine1 || 'N/A'}</p>
+                                {deliveryAddress?.AddressLine2 && <p>{deliveryAddress.AddressLine2}</p>}
+                                <p>{deliveryAddress?.City}{deliveryAddress?.PostalCode ? `, ${deliveryAddress.PostalCode}` : ''}</p>
                                 <p className="mt-2 font-medium text-gray-900">
-                                    Estimated Delivery: {order.estimatedDeliveryTime}
+                                    Estimated Delivery: 30-45 minutes
                                 </p>
                             </div>
                         ) : (
@@ -79,9 +107,9 @@ const OrderConfirmation = () => {
                     <div>
                         <h3 className="font-semibold mb-2">Contact Information</h3>
                         <div className="text-sm text-gray-600">
-                            <p>{order.customer.name}</p>
-                            <p>{order.customer.email}</p>
-                            <p>{order.customer.phone}</p>
+                            <p>{order?.customer?.Name || 'N/A'}</p>
+                            <p>{order?.customer?.Email || 'N/A'}</p>
+                            <p>{order?.customer?.Phone || 'N/A'}</p>
                         </div>
                     </div>
 
@@ -89,12 +117,12 @@ const OrderConfirmation = () => {
                     <div>
                         <h3 className="font-semibold mb-2">Order Items</h3>
                         <div className="space-y-2">
-                            {order.items.map((item) => (
-                                <div key={item.id} className="flex justify-between text-sm">
+                            {items.map((item) => (
+                                <div key={item.OrderItemID || `${item.MenuItemID || item.ComboID}-${item.Quantity}`} className="flex justify-between text-sm">
                                     <span className="text-gray-600">
-                                        {item.quantity}x {item.name}
+                                        {item.Quantity}x {item.menuItem?.Name || item.combo?.Name || 'Item'}
                                     </span>
-                                    <span className="font-medium">LKR {(item.price * item.quantity).toFixed(2)}</span>
+                                    <span className="font-medium">LKR {((item.UnitPrice || item.menuItem?.Price || 0) * item.Quantity).toFixed(2)}</span>
                                 </div>
                             ))}
                         </div>
@@ -105,21 +133,11 @@ const OrderConfirmation = () => {
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Subtotal</span>
-                                <span>LKR {order.subtotal.toFixed(2)}</span>
-                            </div>
-                            {order.orderType === 'DELIVERY' && (
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Delivery Fee</span>
-                                    <span>LKR {order.deliveryFee.toFixed(2)}</span>
-                                </div>
-                            )}
-                            <div className="flex justify-between">
-                                <span className="text-gray-600">Tax (8%)</span>
-                                <span>LKR {order.tax.toFixed(2)}</span>
+                                <span>LKR {subtotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-lg font-bold border-t pt-2">
                                 <span>Total</span>
-                                <span className="text-primary-600">LKR {order.total.toFixed(2)}</span>
+                                <span className="text-primary-600">LKR {parseFloat(total).toFixed(2)}</span>
                             </div>
                         </div>
                     </div>
@@ -128,7 +146,7 @@ const OrderConfirmation = () => {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-4">
-                <Link to={`/orders/${order.orderNumber}/track`} className="flex-1">
+                <Link to={`/orders/${order?.OrderID || orderId}/track`} className="flex-1">
                     <Button className="w-full">
                         <FaClipboardList className="inline mr-2" />
                         Track Order
@@ -144,7 +162,7 @@ const OrderConfirmation = () => {
 
             {/* Email Notification */}
             <div className="mt-8 text-center text-sm text-gray-500">
-                <p>A confirmation email has been sent to {order.customer.email}</p>
+                <p>A confirmation email has been sent to {order?.customer?.Email || 'your email'}</p>
                 <p>You will receive updates about your order status via email and SMS</p>
             </div>
         </div>

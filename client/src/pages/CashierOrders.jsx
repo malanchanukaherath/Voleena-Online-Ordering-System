@@ -1,12 +1,56 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
+import { cashierService } from '../services/dashboardService';
 
 const CashierOrders = () => {
-    const orders = [
-        { id: 1, orderNumber: 'ORD-001', customer: 'John Doe', total: 1450, status: 'PENDING', orderType: 'DELIVERY' },
-        { id: 2, orderNumber: 'ORD-002', customer: 'Jane Smith', total: 850, status: 'CONFIRMED', orderType: 'TAKEAWAY' },
-    ];
+    const [orders, setOrders] = useState([]);
+    const [error, setError] = useState('');
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadOrders = async () => {
+            try {
+                const response = await cashierService.getAllOrders();
+                const data = response.data || response?.data?.data || [];
+                const mapped = data.map((order) => ({
+                    id: order.OrderID,
+                    orderNumber: order.OrderNumber,
+                    customer: order.customer?.Name || 'Unknown',
+                    total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
+                    status: order.Status,
+                    orderType: order.OrderType
+                }));
+
+                if (isMounted) {
+                    setOrders(mapped);
+                    setError('');
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setError(err.message || 'Failed to load orders');
+                }
+            }
+        };
+
+        loadOrders();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
+
+    const handleConfirm = async (orderId) => {
+        try {
+            await cashierService.confirmOrder(orderId);
+            setOrders((prev) => prev.map((order) => (
+                order.id === orderId ? { ...order, status: 'CONFIRMED' } : order
+            )));
+        } catch (err) {
+            setError(err.message || 'Failed to confirm order');
+        }
+    };
 
     return (
         <div className="p-6">
@@ -24,14 +68,24 @@ const CashierOrders = () => {
                         </tr>
                     </thead>
                     <tbody className="divide-y">
-                        {orders.map(order => (
+                        {orders.length === 0 ? (
+                            <tr>
+                                <td className="px-6 py-4 text-sm text-gray-500" colSpan={6}>
+                                    {error || 'No orders available.'}
+                                </td>
+                            </tr>
+                        ) : orders.map(order => (
                             <tr key={order.id} className="hover:bg-gray-50">
                                 <td className="px-6 py-4 font-medium">{order.orderNumber}</td>
                                 <td className="px-6 py-4">{order.customer}</td>
                                 <td className="px-6 py-4">{order.orderType}</td>
-                                <td className="px-6 py-4">LKR {order.total}</td>
+                                <td className="px-6 py-4">LKR {order.total.toFixed(2)}</td>
                                 <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
-                                <td className="px-6 py-4"><Button size="sm">Confirm</Button></td>
+                                <td className="px-6 py-4">
+                                    <Button size="sm" onClick={() => handleConfirm(order.id)} disabled={order.status !== 'PENDING'}>
+                                        Confirm
+                                    </Button>
+                                </td>
                             </tr>
                         ))}
                     </tbody>

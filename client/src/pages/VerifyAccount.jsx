@@ -3,11 +3,12 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
 import Toast from '../components/ui/Toast';
+import authService from '../services/authService';
 
 const VerifyAccount = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { email, phone, mockOTP } = location.state || {};
+    const { email, phone, userType } = location.state || {};
 
     const [otp, setOtp] = useState(['', '', '', '', '', '']);
     const [error, setError] = useState('');
@@ -69,12 +70,16 @@ const VerifyAccount = () => {
     const handleResendOTP = () => {
         setTimeLeft(300);
         setOtp(['', '', '', '', '', '']);
-        setToastMessage(`New OTP sent! (Mock: ${mockOTP})`);
-        setToastType('success');
-        setShowToast(true);
+        if (email) {
+            authService.requestPasswordReset(email, userType || 'Customer').then((result) => {
+                setToastMessage(result.success ? 'New OTP sent!' : (result.error || 'Failed to resend OTP'));
+                setToastType(result.success ? 'success' : 'error');
+                setShowToast(true);
+            });
+        }
     };
 
-    const handleVerify = () => {
+    const handleVerify = async () => {
         const enteredOtp = otp.join('');
 
         if (enteredOtp.length !== 6) {
@@ -82,23 +87,22 @@ const VerifyAccount = () => {
             return;
         }
 
-        if (enteredOtp !== mockOTP) {
-            setError('Invalid OTP. Please try again.');
+        setIsVerifying(true);
+        const result = await authService.verifyResetOTP(email, enteredOtp, userType || 'Customer');
+        setIsVerifying(false);
+
+        if (!result.success) {
+            setError(result.error || 'Invalid OTP. Please try again.');
             return;
         }
 
-        setIsVerifying(true);
+        setToastMessage('Verification successful!');
+        setToastType('success');
+        setShowToast(true);
 
-        // Mock verification
         setTimeout(() => {
-            setToastMessage('Account verified successfully!');
-            setToastType('success');
-            setShowToast(true);
-
-            setTimeout(() => {
-                navigate('/login');
-            }, 2000);
-        }, 1000);
+            navigate('/login');
+        }, 1500);
     };
 
     if (!email && !phone) {

@@ -1,20 +1,52 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaClipboardList, FaTruck, FaUsers, FaDollarSign } from 'react-icons/fa';
+import { cashierService } from '../services/dashboardService';
 
 const CashierDashboard = () => {
-    // Mock data
-    const stats = {
-        pendingOrders: 8,
-        todayOrders: 45,
-        todayRevenue: 32450.00,
-        newCustomers: 3,
-    };
+    const [stats, setStats] = useState({
+        pendingOrders: 0,
+        todayOrders: 0,
+        todayRevenue: 0,
+        newCustomers: 0
+    });
+    const [recentOrders, setRecentOrders] = useState([]);
 
-    const recentOrders = [
-        { id: 1, orderNumber: 'ORD-001', customer: 'John Doe', total: 1450, status: 'PENDING' },
-        { id: 2, orderNumber: 'ORD-002', customer: 'Jane Smith', total: 850, status: 'CONFIRMED' },
-    ];
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadData = async () => {
+            try {
+                const [statsResponse, ordersResponse] = await Promise.all([
+                    cashierService.getDashboardStats(),
+                    cashierService.getAllOrders({ status: 'PENDING', limit: 5 })
+                ]);
+
+                if (isMounted) {
+                    setStats(statsResponse.stats || statsResponse.data?.stats || statsResponse.data || stats);
+                    const orders = ordersResponse.data || ordersResponse?.data?.data || [];
+                    const mappedOrders = orders.map((order) => ({
+                        id: order.OrderID,
+                        orderNumber: order.OrderNumber,
+                        customer: order.customer?.Name || 'Unknown',
+                        total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
+                        status: order.Status
+                    }));
+                    setRecentOrders(mappedOrders);
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setRecentOrders([]);
+                }
+            }
+        };
+
+        loadData();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     return (
         <div className="p-6">
@@ -47,13 +79,15 @@ const CashierDashboard = () => {
                 <div className="bg-white rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4">Pending Orders</h3>
                     <div className="space-y-3">
-                        {recentOrders.map(order => (
+                        {recentOrders.length === 0 ? (
+                            <div className="text-sm text-gray-500">No pending orders.</div>
+                        ) : recentOrders.map(order => (
                             <div key={order.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
                                 <div>
                                     <p className="font-medium">{order.orderNumber}</p>
                                     <p className="text-sm text-gray-600">{order.customer}</p>
                                 </div>
-                                <p className="font-semibold">LKR {order.total}</p>
+                                <p className="font-semibold">LKR {order.total.toFixed(2)}</p>
                             </div>
                         ))}
                     </div>

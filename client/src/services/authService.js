@@ -1,6 +1,6 @@
 import { realApi } from './backendApi';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
 
 class AuthService {
   // Staff Login (Admin, Cashier, Kitchen, Delivery)

@@ -1,56 +1,68 @@
-import React, { useState } from 'react';
-import { FaSearch, FaEdit, FaTrash, FaPlus, FaEye } from 'react-icons/fa';
+import React, { useEffect, useMemo, useState } from 'react';
+import { FaSearch } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
-import StatusBadge from '../components/ui/StatusBadge';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
+import backendApi from '../services/backendApi';
+import { getOrders } from '../services/orderApi';
 
 const OrderManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [orders, setOrders] = useState([]);
+    const [error, setError] = useState('');
 
-    // Mock orders data
-    const orders = [
-        {
-            id: 1,
-            orderNumber: 'ORD-2024-001',
-            customerName: 'John Doe',
-            customerPhone: '+94 71 234 5678',
-            orderType: 'DELIVERY',
-            status: 'PENDING',
-            total: 1450.00,
-            items: 3,
-            createdAt: '2024-01-25 10:30 AM',
-            assignedStaff: null,
-        },
-        {
-            id: 2,
-            orderNumber: 'ORD-2024-002',
-            customerName: 'Jane Smith',
-            customerPhone: '+94 77 345 6789',
-            orderType: 'TAKEAWAY',
-            status: 'PREPARING',
-            total: 850.00,
-            items: 2,
-            createdAt: '2024-01-25 10:15 AM',
-            assignedStaff: 'Kitchen Staff 1',
-        },
-        {
-            id: 3,
-            orderNumber: 'ORD-2024-003',
-            customerName: 'Bob Wilson',
-            customerPhone: '+94 76 456 7890',
-            orderType: 'DELIVERY',
-            status: 'OUT_FOR_DELIVERY',
-            total: 2150.00,
-            items: 5,
-            createdAt: '2024-01-25 09:45 AM',
-            assignedStaff: 'Delivery Person 2',
-        },
-    ];
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadOrders = async () => {
+            try {
+                setLoading(true);
+                const response = await getOrders();
+                const apiOrders = response.data?.data || response.data || [];
+
+                const mappedOrders = apiOrders.map((order) => {
+                    const itemCount = Array.isArray(order.items)
+                        ? order.items.reduce((sum, item) => sum + (item.Quantity || 0), 0)
+                        : 0;
+
+                    return {
+                        id: order.OrderID,
+                        orderNumber: order.OrderNumber,
+                        customerName: order.customer?.Name || 'Unknown',
+                        customerPhone: order.customer?.Phone || 'N/A',
+                        orderType: order.OrderType,
+                        status: order.Status,
+                        total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
+                        items: itemCount,
+                        createdAt: order.CreatedAt,
+                    };
+                });
+
+                if (isMounted) {
+                    setOrders(mappedOrders);
+                    setError('');
+                }
+            } catch (err) {
+                if (isMounted) {
+                    setError(err.message || 'Failed to load orders');
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadOrders();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const statusOptions = [
         { value: '', label: 'All Statuses' },
@@ -63,26 +75,24 @@ const OrderManagement = () => {
         { value: 'CANCELLED', label: 'Cancelled' },
     ];
 
-    const filteredOrders = orders.filter(order => {
-        const matchesSearch = order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesStatus = !statusFilter || order.status === statusFilter;
-        return matchesSearch && matchesStatus;
-    });
+    const filteredOrders = useMemo(() => {
+        return orders.filter(order => {
+            const matchesSearch = order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                order.customerName?.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesStatus = !statusFilter || order.status === statusFilter;
+            return matchesSearch && matchesStatus;
+        });
+    }, [orders, searchTerm, statusFilter]);
 
-    const handleStatusUpdate = (orderId, newStatus) => {
-        console.log(`Updating order ${orderId} to ${newStatus}`);
-        // In production, call API to update status
-    };
-
-    const handleAssignStaff = (orderId) => {
-        console.log(`Assigning staff to order ${orderId}`);
-        // In production, open modal to select staff
-    };
-
-    const handleViewDetails = (orderId) => {
-        console.log(`Viewing order details ${orderId}`);
-        // In production, navigate to order details page or open modal
+    const handleStatusUpdate = async (orderId, newStatus) => {
+        try {
+            await backendApi.patch(`/api/v1/orders/${orderId}/status`, { status: newStatus });
+            setOrders((prev) => prev.map((order) => (
+                order.id === orderId ? { ...order, status: newStatus } : order
+            )));
+        } catch (err) {
+            setError(err.response?.data?.message || err.message || 'Failed to update status');
+        }
     };
 
     return (
@@ -138,9 +148,6 @@ const OrderManagement = () => {
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Time
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Actions
-                                    </th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
@@ -176,29 +183,8 @@ const OrderManagement = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-500">{order.createdAt}</div>
-                                            {order.assignedStaff && (
-                                                <div className="text-xs text-gray-400">{order.assignedStaff}</div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleViewDetails(order.id)}
-                                                    className="text-primary-600 hover:text-primary-900"
-                                                    title="View Details"
-                                                >
-                                                    <FaEye />
-                                                </button>
-                                                {!order.assignedStaff && (
-                                                    <button
-                                                        onClick={() => handleAssignStaff(order.id)}
-                                                        className="text-blue-600 hover:text-blue-900"
-                                                        title="Assign Staff"
-                                                    >
-                                                        <FaPlus />
-                                                    </button>
-                                                )}
+                                            <div className="text-sm text-gray-500">
+                                                {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}
                                             </div>
                                         </td>
                                     </tr>
@@ -211,7 +197,7 @@ const OrderManagement = () => {
                 <EmptyState
                     type="search"
                     title="No orders found"
-                    description="No orders match your search criteria"
+                    description={error || 'No orders match your search criteria'}
                     action={
                         <Button onClick={() => { setSearchTerm(''); setStatusFilter(''); }}>
                             Clear Filters

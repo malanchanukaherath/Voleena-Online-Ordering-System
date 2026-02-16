@@ -47,7 +47,7 @@ exports.staffLogin = async (req, res) => {
       include: [{
         model: Role,
         as: 'role',
-        attributes: ['RoleID', 'RoleName', 'Description', 'Permissions']
+        attributes: ['RoleID', 'RoleName', 'Description']
       }]
     });
 
@@ -72,7 +72,7 @@ exports.staffLogin = async (req, res) => {
       role: roleName,
       roleId: staff.RoleID,
       type: 'Staff',
-      permissions: staff.role ? staff.role.Permissions : {}
+      permissions: {}
     };
 
     const token = generateToken(payload);
