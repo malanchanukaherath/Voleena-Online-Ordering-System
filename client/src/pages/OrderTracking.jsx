@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
 import { FaMapMarkerAlt, FaPhone, FaBox, FaTruck, FaCheckCircle, FaClock, FaBan, FaMoneyBillWave } from 'react-icons/fa';
+import { cancelOrder, getOrderById } from '../services/orderApi';
 
 const OrderTracking = () => {
     const { orderId } = useParams();
@@ -12,35 +13,7 @@ const OrderTracking = () => {
     // Configurable cancellation window (in minutes)
     const CANCELLATION_WINDOW_MINUTES = 10;
 
-    // Mock order tracking data with payment method and timestamps
-    const [order, setOrder] = useState({
-        orderNumber: orderId || 'ORD-2024-001',
-        status: 'CONFIRMED', // Changed to CONFIRMED to allow cancellation demo
-        orderType: 'DELIVERY',
-        paymentMethod: 'ONLINE', // CASH or ONLINE
-        paymentStatus: 'PAID',
-        customer: {
-            name: 'John Doe',
-            phone: '+94 71 234 5678',
-        },
-        deliveryAddress: {
-            line1: '123 Main Street',
-            city: 'Kalagedihena',
-            district: 'Gampaha',
-        },
-        deliveryPerson: {
-            name: 'Delivery Staff 1',
-            phone: '+94 77 123 4567',
-        },
-        estimatedDelivery: '6:30 PM',
-        placedAt: new Date(Date.now() - 5 * 60 * 1000).toISOString(), // 5 minutes ago
-        items: [
-            { name: 'Chicken Burger', quantity: 2, price: 450 },
-            { name: 'Fries', quantity: 1, price: 250 },
-        ],
-        total: 1450.00,
-        refund: null // Will be set when order is cancelled
-    });
+    const [order, setOrder] = useState(null);
 
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showToast, setShowToast] = useState(false);
@@ -48,8 +21,48 @@ const OrderTracking = () => {
     const [toastType, setToastType] = useState('success');
     const [timeRemaining, setTimeRemaining] = useState(0);
 
+    useEffect(() => {
+        const fetchOrder = async () => {
+            try {
+                const response = await getOrderById(orderId);
+                const data = response.data?.data;
+                if (!data) return;
+
+                setOrder({
+                    id: data.OrderID,
+                    orderNumber: data.OrderNumber,
+                    status: data.Status,
+                    orderType: data.OrderType,
+                    paymentMethod: data.payment?.Method || 'CASH',
+                    paymentStatus: data.payment?.Status || null,
+                    customer: {
+                        name: data.customer?.Name || 'Customer',
+                        phone: data.customer?.Phone || ''
+                    },
+                    deliveryAddress: data.delivery?.address ? {
+                        line1: data.delivery.address.AddressLine1,
+                        city: data.delivery.address.City,
+                        district: data.delivery.address.District || ''
+                    } : null,
+                    placedAt: data.CreatedAt,
+                    items: (data.items || []).map((item) => ({
+                        name: item.menuItem?.Name || item.combo?.Name || 'Item',
+                        quantity: item.Quantity,
+                        price: parseFloat(item.UnitPrice || 0)
+                    })),
+                    total: parseFloat(data.FinalAmount || data.TotalAmount || 0)
+                });
+            } catch (error) {
+                console.error('Failed to load order:', error);
+            }
+        };
+
+        fetchOrder();
+    }, [orderId]);
+
     // Calculate time remaining for cancellation
     useEffect(() => {
+        if (!order?.placedAt) return;
         const calculateTimeRemaining = () => {
             const orderTime = new Date(order.placedAt);
             const now = new Date();
@@ -61,7 +74,7 @@ const OrderTracking = () => {
         calculateTimeRemaining();
         const interval = setInterval(calculateTimeRemaining, 1000);
         return () => clearInterval(interval);
-    }, [order.placedAt]);
+    }, [order?.placedAt]);
 
     // Check if order can be cancelled
     const canCancelOrder = () => {
@@ -88,85 +101,82 @@ const OrderTracking = () => {
         return '';
     };
 
-    const handleCancelOrder = () => {
-        // Update order status to CANCELLED
-        const updatedOrder = {
-            ...order,
-            status: 'CANCELLED',
-            cancelledAt: new Date().toISOString()
-        };
-
-        // If prepaid, initiate refund
-        if (order.paymentMethod === 'ONLINE' && order.paymentStatus === 'PAID') {
-            updatedOrder.refund = {
-                amount: order.total,
-                status: 'PENDING',
-                initiatedAt: new Date().toISOString(),
-                estimatedCompletion: '3-5 business days'
-            };
-            setToastMessage('Order cancelled successfully! Refund has been initiated.');
-        } else {
-            setToastMessage('Order cancelled successfully!');
+    const handleCancelOrder = async () => {
+        try {
+            await cancelOrder(order.id, 'Cancelled by customer');
+            setOrder((prev) => ({ ...prev, status: 'CANCELLED', cancelledAt: new Date().toISOString() }));
+            setToastMessage('Order cancelled successfully.');
+            setToastType('success');
+            setShowToast(true);
+        } catch (error) {
+            setToastMessage(error.message || 'Failed to cancel order');
+            setToastType('error');
+            setShowToast(true);
+        } finally {
+            setShowCancelModal(false);
         }
-
-        setOrder(updatedOrder);
-        setToastType('success');
-        setShowToast(true);
-        setShowCancelModal(false);
     };
 
     const trackingSteps = [
         {
             status: 'PENDING',
             label: 'Order Placed',
-            time: new Date(order.placedAt).toLocaleTimeString(),
+            time: order?.placedAt ? new Date(order.placedAt).toLocaleTimeString() : '',
             completed: true,
             icon: FaBox,
         },
         {
             status: 'CONFIRMED',
             label: 'Order Confirmed',
-            time: order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'OUT_FOR_DELIVERY' || order.status === 'DELIVERED' ? new Date(new Date(order.placedAt).getTime() + 5 * 60000).toLocaleTimeString() : '',
-            completed: order.status === 'CONFIRMED' || order.status === 'PREPARING' || order.status === 'OUT_FOR_DELIVERY' || order.status === 'DELIVERED',
+            time: order?.placedAt ? new Date(new Date(order.placedAt).getTime() + 5 * 60000).toLocaleTimeString() : '',
+            completed: ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order?.status),
             icon: FaCheckCircle,
-            current: order.status === 'CONFIRMED'
+            current: order?.status === 'CONFIRMED'
         },
         {
             status: 'PREPARING',
             label: 'Preparing',
-            time: order.status === 'PREPARING' || order.status === 'OUT_FOR_DELIVERY' || order.status === 'DELIVERED' ? new Date(new Date(order.placedAt).getTime() + 15 * 60000).toLocaleTimeString() : '',
-            completed: order.status === 'PREPARING' || order.status === 'OUT_FOR_DELIVERY' || order.status === 'DELIVERED',
+            time: order?.placedAt ? new Date(new Date(order.placedAt).getTime() + 15 * 60000).toLocaleTimeString() : '',
+            completed: ['PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order?.status),
             icon: FaClock,
-            current: order.status === 'PREPARING'
+            current: order?.status === 'PREPARING'
         },
         {
             status: 'OUT_FOR_DELIVERY',
             label: 'Out for Delivery',
-            time: order.status === 'OUT_FOR_DELIVERY' || order.status === 'DELIVERED' ? new Date(new Date(order.placedAt).getTime() + 30 * 60000).toLocaleTimeString() : '',
-            completed: order.status === 'OUT_FOR_DELIVERY' || order.status === 'DELIVERED',
+            time: order?.placedAt ? new Date(new Date(order.placedAt).getTime() + 30 * 60000).toLocaleTimeString() : '',
+            completed: ['OUT_FOR_DELIVERY', 'DELIVERED'].includes(order?.status),
             icon: FaTruck,
-            current: order.status === 'OUT_FOR_DELIVERY'
+            current: order?.status === 'OUT_FOR_DELIVERY'
         },
         {
             status: 'DELIVERED',
             label: 'Delivered',
-            time: order.estimatedDelivery,
-            completed: order.status === 'DELIVERED',
+            time: '',
+            completed: order?.status === 'DELIVERED',
             icon: FaCheckCircle,
-            current: order.status === 'DELIVERED'
+            current: order?.status === 'DELIVERED'
         },
     ];
 
     // Add cancelled step if order is cancelled
-    if (order.status === 'CANCELLED') {
+    if (order?.status === 'CANCELLED') {
         trackingSteps.push({
             status: 'CANCELLED',
             label: 'Order Cancelled',
-            time: new Date(order.cancelledAt).toLocaleTimeString(),
+            time: order?.cancelledAt ? new Date(order.cancelledAt).toLocaleTimeString() : '',
             completed: true,
             icon: FaBan,
             current: true
         });
+    }
+
+    if (!order) {
+        return (
+            <div className="max-w-4xl mx-auto">
+                <div className="bg-white rounded-lg shadow p-6">Loading order details...</div>
+            </div>
+        );
     }
 
     return (
@@ -200,7 +210,7 @@ const OrderTracking = () => {
                         </div>
                         {order.status !== 'CANCELLED' && (
                             <div className="text-sm text-primary-800">
-                                <p>Estimated delivery: <span className="font-semibold">{order.estimatedDelivery}</span></p>
+                                <p>Estimated delivery: <span className="font-semibold">Pending</span></p>
                             </div>
                         )}
                     </div>
@@ -238,19 +248,14 @@ const OrderTracking = () => {
                     )}
 
                     {/* Refund Information */}
-                    {order.refund && (
+                    {order.status === 'CANCELLED' && (
                         <div className="bg-green-50 border-2 border-green-500 rounded-lg p-6">
                             <div className="flex items-start gap-3">
                                 <FaMoneyBillWave className="text-green-600 text-2xl mt-1" />
                                 <div className="flex-1">
-                                    <h3 className="text-lg font-semibold text-green-900 mb-2">Refund Initiated</h3>
+                                    <h3 className="text-lg font-semibold text-green-900 mb-2">Refund Status</h3>
                                     <div className="space-y-2 text-sm text-green-800">
-                                        <p><strong>Refund Amount:</strong> LKR {order.refund.amount.toFixed(2)}</p>
-                                        <p><strong>Status:</strong> <span className="bg-green-200 px-2 py-0.5 rounded">{order.refund.status}</span></p>
-                                        <p><strong>Estimated Completion:</strong> {order.refund.estimatedCompletion}</p>
-                                        <p className="text-xs mt-2">
-                                            The refund will be processed to your original payment method.
-                                        </p>
+                                        <p>Refund processing is handled by support if payment was prepaid.</p>
                                     </div>
                                 </div>
                             </div>
@@ -318,14 +323,17 @@ const OrderTracking = () => {
                             <div className="border-t pt-3">
                                 <p className="text-gray-600">Payment Method:</p>
                                 <p className="font-medium">
-                                    {order.paymentMethod === 'ONLINE' ? '💳 Online Payment' : '💵 Cash on Delivery'}
+                                    {order.paymentMethod === 'ONLINE' ? '💳 Online Payment' : order.paymentMethod === 'CARD' ? '💳 Card Payment' : '💵 Cash on Delivery'}
                                 </p>
+                                {order.paymentStatus && (
+                                    <p className="text-xs text-gray-500">Status: {order.paymentStatus}</p>
+                                )}
                             </div>
                         </div>
                     </div>
 
                     {/* Delivery Info */}
-                    {order.orderType === 'DELIVERY' && order.status !== 'CANCELLED' && (
+                    {order.orderType === 'DELIVERY' && order.status !== 'CANCELLED' && order.deliveryAddress && (
                         <div className="bg-white rounded-lg shadow p-6">
                             <h3 className="font-semibold mb-4">Delivery Information</h3>
                             <div className="space-y-3 text-sm">

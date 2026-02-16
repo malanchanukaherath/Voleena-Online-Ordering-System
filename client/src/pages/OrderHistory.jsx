@@ -1,56 +1,52 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaEye, FaRedo } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
 import Select from '../components/ui/Select';
 import EmptyState from '../components/ui/EmptyState';
 import Button from '../components/ui/Button';
+import { getOrders } from '../services/orderApi';
 
 const OrderHistory = () => {
     const [statusFilter, setStatusFilter] = useState('');
 
-    // Mock order data - will be replaced with real API call
-    const orders = [
-        {
-            id: 1,
-            orderNumber: 'ORD-2024-001',
-            date: '2024-01-20',
-            time: '14:30',
-            items: [
-                { name: 'Chicken Burger', quantity: 2 },
-                { name: 'Fries', quantity: 1 },
-            ],
-            total: 1450.00,
-            status: 'DELIVERED',
-            orderType: 'DELIVERY',
-        },
-        {
-            id: 2,
-            orderNumber: 'ORD-2024-002',
-            date: '2024-01-18',
-            time: '19:15',
-            items: [
-                { name: 'Rice & Curry', quantity: 1 },
-                { name: 'Iced Tea', quantity: 2 },
-            ],
-            total: 850.00,
-            status: 'DELIVERED',
-            orderType: 'TAKEAWAY',
-        },
-        {
-            id: 3,
-            orderNumber: 'ORD-2024-003',
-            date: '2024-01-15',
-            time: '12:00',
-            items: [
-                { name: 'Margherita Pizza', quantity: 1 },
-                { name: 'Garlic Bread', quantity: 1 },
-            ],
-            total: 1250.00,
-            status: 'CANCELLED',
-            orderType: 'DELIVERY',
-        },
-    ];
+    const [orders, setOrders] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+
+    useEffect(() => {
+        const fetchOrders = async () => {
+            try {
+                setLoading(true);
+                const response = await getOrders();
+                const mapped = (response.data?.data || []).map((order) => {
+                    const createdAt = new Date(order.CreatedAt);
+                    return {
+                        id: order.OrderID,
+                        orderNumber: order.OrderNumber,
+                        date: createdAt.toLocaleDateString(),
+                        time: createdAt.toLocaleTimeString(),
+                        items: (order.items || []).map((item) => ({
+                            name: item.menuItem?.Name || item.combo?.Name || 'Item',
+                            quantity: item.Quantity
+                        })),
+                        total: parseFloat(order.FinalAmount || order.TotalAmount || 0),
+                        status: order.Status,
+                        orderType: order.OrderType
+                    };
+                });
+                setOrders(mapped);
+                setError(null);
+            } catch (err) {
+                console.error('Failed to load orders:', err);
+                setError('Failed to load orders');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchOrders();
+    }, []);
 
     const statusOptions = [
         { value: '', label: 'All Orders' },
@@ -90,7 +86,11 @@ const OrderHistory = () => {
             </div>
 
             {/* Orders List */}
-            {filteredOrders.length > 0 ? (
+            {loading ? (
+                <div className="bg-white rounded-lg shadow p-6">Loading orders...</div>
+            ) : error ? (
+                <div className="bg-white rounded-lg shadow p-6 text-red-600">{error}</div>
+            ) : filteredOrders.length > 0 ? (
                 <div className="space-y-4">
                     {filteredOrders.map((order) => (
                         <div key={order.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
@@ -129,7 +129,7 @@ const OrderHistory = () => {
 
                                 {/* Actions */}
                                 <div className="flex flex-wrap gap-3">
-                                    <Link to={`/orders/${order.orderNumber}/track`}>
+                                    <Link to={`/orders/${order.id}/track`}>
                                         <Button size="sm" variant="outline">
                                             <FaEye className="inline mr-2" />
                                             View Details

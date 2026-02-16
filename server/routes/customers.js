@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const { Customer, Address } = require('../models');
-const { authenticateToken, requireAdmin, requireCashier } = require('../middleware/auth');
+const { authenticateToken, requireAdmin, requireCashier, requireCustomer } = require('../middleware/auth');
 const { logCustomerCreation } = require('../utils/auditLogger');
 
 /**
@@ -184,6 +184,88 @@ router.get('/', authenticateToken, requireCashier, async (req, res) => {
     } catch (error) {
         console.error('Get customers error:', error);
         return res.status(500).json({ error: 'Failed to retrieve customers' });
+    }
+});
+
+/**
+ * GET /api/customers/me
+ * Customer: Get current profile and addresses
+ */
+router.get('/me', requireCustomer, async (req, res) => {
+    try {
+        const customer = await Customer.findByPk(req.user.id, {
+            attributes: { exclude: ['Password'] },
+            include: [{
+                model: Address,
+                as: 'addresses'
+            }]
+        });
+
+        if (!customer) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        return res.json({ success: true, data: customer });
+    } catch (error) {
+        console.error('Get customer profile error:', error);
+        return res.status(500).json({ error: 'Failed to retrieve customer profile' });
+    }
+});
+
+/**
+ * GET /api/customers/me/addresses
+ * Customer: List saved addresses
+ */
+router.get('/me/addresses', requireCustomer, async (req, res) => {
+    try {
+        const addresses = await Address.findAll({
+            where: { CustomerID: req.user.id },
+            order: [['CreatedAt', 'DESC']]
+        });
+
+        return res.json({ success: true, data: addresses });
+    } catch (error) {
+        console.error('Get customer addresses error:', error);
+        return res.status(500).json({ error: 'Failed to retrieve addresses' });
+    }
+});
+
+/**
+ * POST /api/customers/me/addresses
+ * Customer: Add a new address
+ */
+router.post('/me/addresses', requireCustomer, async (req, res) => {
+    try {
+        const { addressLine1, addressLine2, city, postalCode, district, latitude, longitude } = req.body;
+
+        if (!addressLine1 || !city) {
+            return res.status(400).json({ error: 'Address line 1 and city are required' });
+        }
+
+        const address = await Address.create({
+            CustomerID: req.user.id,
+            AddressLine1: addressLine1.trim(),
+            AddressLine2: addressLine2 ? addressLine2.trim() : null,
+            City: city.trim(),
+            PostalCode: postalCode ? postalCode.trim() : null,
+            District: district ? district.trim() : null,
+            Latitude: latitude || null,
+            Longitude: longitude || null
+        });
+
+        return res.status(201).json({
+            success: true,
+            addressId: address.AddressID,
+            address: {
+                id: address.AddressID,
+                addressLine1: address.AddressLine1,
+                city: address.City,
+                postalCode: address.PostalCode
+            }
+        });
+    } catch (error) {
+        console.error('Create address error:', error);
+        return res.status(500).json({ error: 'Failed to create address' });
     }
 });
 

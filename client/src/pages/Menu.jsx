@@ -6,6 +6,7 @@ import EmptyState from '../components/ui/EmptyState';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { menuItemService } from '../services/menuService';
 import { toast } from 'react-toastify';
+import { addToCart } from '../utils/cartStorage';
 
 const Menu = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -26,14 +27,16 @@ const Menu = () => {
                 if (response.success && response.data) {
                     // Transform API data to match component format
                     const transformedItems = response.data.map(item => ({
-                        id: item.ItemID,
+                        id: item.MenuItemID || item.ItemID,
+                        type: 'menu',
+                        menuItemId: item.MenuItemID || item.ItemID,
                         name: item.Name,
                         description: item.Description || 'No description available',
                         price: parseFloat(item.Price),
                         category: item.category?.Name?.toLowerCase() || 'other',
-                        image: item.Image_URL,
-                        stockQuantity: item.StockQuantity || 0,
-                        isAvailable: item.IsActive && (item.StockQuantity > 0),
+                        image: item.ImageURL || item.Image_URL || null,
+                        stockQuantity: item.StockQuantity ?? null,
+                        isAvailable: !!item.IsActive,
                     }));
                     setMenuItems(transformedItems);
                 } else {
@@ -89,7 +92,9 @@ const Menu = () => {
 
     // Convert combo packs to menu item format
     const comboMenuItems = comboPacks.map(combo => ({
-        id: `combo-${combo.id}`,
+        id: combo.id,
+        type: 'combo',
+        comboId: combo.id,
         name: combo.name,
         description: combo.description,
         price: combo.price,
@@ -97,7 +102,7 @@ const Menu = () => {
         discount: combo.discount,
         category: 'combos',
         image: combo.image,
-        stockQuantity: 999, // Combos always in stock for demo
+        stockQuantity: null,
         isAvailable: true,
         isCombo: true
     }));
@@ -114,6 +119,9 @@ const Menu = () => {
 
     // Get stock badge info
     const getStockBadge = (item) => {
+        if (item.stockQuantity === null || item.stockQuantity === undefined) {
+            return null;
+        }
         if (item.stockQuantity === 0) {
             return { text: 'Out of Stock', className: 'bg-red-500 text-white' };
         }
@@ -121,6 +129,25 @@ const Menu = () => {
             return { text: `Only ${item.stockQuantity} left!`, className: 'bg-yellow-500 text-white' };
         }
         return null;
+    };
+
+    const handleAddToCart = (item) => {
+        if (!item.isAvailable) {
+            toast.error('This item is not available right now');
+            return;
+        }
+
+        addToCart({
+            id: item.id,
+            type: item.type || (item.isCombo ? 'combo' : 'menu'),
+            menuItemId: item.menuItemId || null,
+            comboId: item.comboId || null,
+            name: item.name,
+            price: item.price,
+            image: item.image || null
+        }, 1);
+
+        toast.success('Added to cart');
     };
 
     return (
@@ -220,7 +247,7 @@ const Menu = () => {
                                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
 
                                     {/* Stock Info */}
-                                    {!item.isCombo && (
+                                        {!item.isCombo && item.stockQuantity !== null && (
                                         <p className="text-xs text-gray-500 mb-2">
                                             Stock: {item.stockQuantity > 0 ? `${item.stockQuantity} available` : 'Out of stock'}
                                         </p>
@@ -247,6 +274,7 @@ const Menu = () => {
                                             size="sm"
                                             disabled={!item.isAvailable || item.stockQuantity === 0}
                                             title={item.stockQuantity === 0 ? 'Out of stock' : 'Add to cart'}
+                                            onClick={() => handleAddToCart(item)}
                                         >
                                             {item.stockQuantity === 0 || !item.isAvailable ? 'Unavailable' : 'Add to Cart'}
                                         </Button>

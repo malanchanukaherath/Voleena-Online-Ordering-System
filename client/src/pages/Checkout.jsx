@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Textarea from '../components/ui/Textarea';
-import { FaCheckCircle } from 'react-icons/fa';
+import { getCart, clearCart } from '../utils/cartStorage';
+import { createAddress, createOrder, initiatePayment } from '../services/orderApi';
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -22,7 +23,7 @@ const Checkout = () => {
     });
 
     const [errors, setErrors] = useState({});
-    const [locationVerified, setLocationVerified] = useState(false);
+    const cartItems = useMemo(() => getCart(), []);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -30,18 +31,6 @@ const Checkout = () => {
         // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
-        }
-    };
-
-    const verifyDeliveryLocation = () => {
-        // Mock verification - in production, use Google Maps API
-        const mockDistance = Math.random() * 20; // Random distance 0-20km
-        if (mockDistance <= 15) {
-            setLocationVerified(true);
-            alert(`✅ Delivery location verified! Distance: ${mockDistance.toFixed(2)}km`);
-        } else {
-            setLocationVerified(false);
-            alert(`❌ Sorry, delivery location is ${mockDistance.toFixed(2)}km away. We only deliver within 15km radius.`);
         }
     };
 
@@ -55,31 +44,104 @@ const Checkout = () => {
         if (formData.orderType === 'DELIVERY') {
             if (!formData.addressLine1.trim()) newErrors.addressLine1 = 'Address is required';
             if (!formData.city.trim()) newErrors.city = 'City is required';
-            if (!locationVerified) newErrors.location = 'Please verify delivery location';
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if (!validateForm()) {
             return;
         }
 
-        // Mock order creation - in production, call API
-        const orderId = 'ORD' + Date.now();
-        console.log('Creating order:', formData);
+        if (cartItems.length === 0) {
+            setErrors({ cart: 'Your cart is empty' });
+            return;
+        }
 
-        // Redirect to confirmation page
-        navigate(`/order-confirmation/${orderId}`);
+        try {
+            let addressId = null;
+
+            if (formData.orderType === 'DELIVERY') {
+                const addressResponse = await createAddress({
+                    addressLine1: formData.addressLine1,
+                    addressLine2: formData.addressLine2 || null,
+                    city: formData.city,
+                    postalCode: formData.postalCode || null,
+                    district: null,
+                    latitude: null,
+                    longitude: null
+                });
+                addressId = addressResponse.data?.address?.id || addressResponse.data?.addressId || null;
+            }
+
+            const orderPayload = {
+                orderType: formData.orderType,
+                addressId,
+                specialInstructions: formData.specialInstructions,
+                items: cartItems.map((item) => ({
+                    menuItemId: item.type === 'menu' ? item.menuItemId || item.id : null,
+                    comboId: item.type === 'combo' ? item.comboId || item.id : null,
+                    quantity: item.quantity,
+                    notes: item.notes || null
+                }))
+            };
+
+            const orderResponse = await createOrder(orderPayload);
+            const orderId = orderResponse.data?.data?.OrderID;
+
+            if (!orderId) {
+                throw new Error('Order creation failed');
+            }
+
+            if (formData.paymentMethod === 'ONLINE' || formData.paymentMethod === 'CARD') {
+                const paymentResponse = await initiatePayment(orderId, formData.paymentMethod);
+                const paymentData = paymentResponse.data?.data;
+
+                if (paymentData?.paymentUrl && paymentData?.paymentData) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = paymentData.paymentUrl;
+
+                    Object.entries(paymentData.paymentData).forEach(([key, value]) => {
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = key;
+                        input.value = value;
+                        form.appendChild(input);
+                    });
+
+                    document.body.appendChild(form);
+                    form.submit();
+                    return;
+                }
+            }
+
+            clearCart();
+            navigate(`/order-confirmation/${orderId}`);
+        } catch (error) {
+            console.error('Checkout error:', error);
+            const message = error.response?.data?.message || error.message || 'Failed to place order';
+            const nextErrors = { submit: message };
+
+            if (message.toLowerCase().includes('delivery address is outside')) {
+                nextErrors.addressLine1 = message;
+            }
+
+            if (message.toLowerCase().includes('geocode')) {
+                nextErrors.addressLine1 = 'We could not validate this address. Please check the address details.';
+            }
+
+            setErrors(nextErrors);
+        }
     };
 
     // Mock cart summary
     const cartSummary = {
-        subtotal: 1250.00,
+        subtotal: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
         deliveryFee: formData.orderType === 'DELIVERY' ? 100.00 : 0,
         tax: 100.00,
     };
@@ -193,24 +255,8 @@ const Checkout = () => {
                                         />
                                     </div>
 
-                                    <div>
-                                        <Button
-                                            type="button"
-                                            onClick={verifyDeliveryLocation}
-                                            variant="outline"
-                                            className="w-full md:w-auto"
-                                        >
-                                            Verify Delivery Location (15km limit)
-                                        </Button>
-                                        {locationVerified && (
-                                            <div className="mt-2 flex items-center text-green-600">
-                                                <FaCheckCircle className="mr-2" />
-                                                <span className="text-sm">Location verified ✓</span>
-                                            </div>
-                                        )}
-                                        {errors.location && (
-                                            <p className="mt-2 text-sm text-red-600">{errors.location}</p>
-                                        )}
+                                    <div className="text-sm text-gray-600">
+                                        Delivery distance is validated when you place the order.
                                     </div>
                                 </div>
                             </div>
@@ -255,7 +301,7 @@ const Checkout = () => {
                                     <span className="text-gray-600">Subtotal</span>
                                     <span>LKR {cartSummary.subtotal.toFixed(2)}</span>
                                 </div>
-                                {formData.orderType === 'DELIVERY' && (
+                                    {formData.orderType === 'DELIVERY' && (
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Delivery Fee</span>
                                         <span>LKR {cartSummary.deliveryFee.toFixed(2)}</span>
@@ -275,9 +321,13 @@ const Checkout = () => {
 
                             <Button type="submit" size="lg" className="w-full mb-3">
                                 Place Order
-                            </Button>
+                            {errors.submit && (
+                                <p className="text-sm text-red-600 mb-3">{errors.submit}</p>
+                            )}
+                            <Button
 
                             <Link to="/cart" className="block text-center text-sm text-gray-600 hover:text-gray-900">
+                                disabled={cartItems.length === 0}
                                 ← Back to Cart
                             </Link>
                         </div>

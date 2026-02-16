@@ -1,82 +1,38 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { FaTrash, FaMinus, FaPlus, FaExclamationTriangle } from 'react-icons/fa';
+import { FaTrash, FaMinus, FaPlus } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
+import { getCart, updateCartItem, removeCartItem } from '../utils/cartStorage';
 
 const Cart = () => {
     const navigate = useNavigate();
 
-    // Mock cart data with stock quantities (FR 19-20 demonstration)
-    const [cartItems, setCartItems] = useState([
-        {
-            id: 1,
-            name: 'Chicken Burger',
-            price: 450.00,
-            quantity: 2,
-            image: null,
-            stockQuantity: 12, // Available
-        },
-        {
-            id: 2,
-            name: 'Rice & Curry',
-            price: 350.00,
-            quantity: 1,
-            image: null,
-            stockQuantity: 3, // Low stock
-        },
-        {
-            id: 3,
-            name: 'Margherita Pizza',
-            price: 850.00,
-            quantity: 1,
-            image: null,
-            stockQuantity: 0, // Out of stock!
-        },
-    ]);
+    const [cartItems, setCartItems] = useState([]);
 
-    const [stockError, setStockError] = useState('');
+    useEffect(() => {
+        setCartItems(getCart());
+    }, []);
 
-    const updateQuantity = (id, delta) => {
-        setCartItems(items =>
-            items.map(item => {
-                if (item.id === id) {
-                    const newQuantity = item.quantity + delta;
-                    // Check stock availability
-                    if (newQuantity > item.stockQuantity) {
-                        setStockError(`Only ${item.stockQuantity} ${item.name} available in stock`);
-                        return item;
-                    }
-                    setStockError('');
-                    return { ...item, quantity: Math.max(1, newQuantity) };
+    const updateQuantity = (id, type, delta) => {
+        setCartItems((items) => {
+            const nextItems = items.map((item) => {
+                if (item.id === id && item.type === type) {
+                    const nextQuantity = Math.max(1, item.quantity + delta);
+                    updateCartItem(id, type, { quantity: nextQuantity });
+                    return { ...item, quantity: nextQuantity };
                 }
                 return item;
-            })
-        );
+            });
+            return nextItems;
+        });
     };
 
-    const removeItem = (id) => {
-        setCartItems(items => items.filter(item => item.id !== id));
-        setStockError('');
-    };
-
-    // Check if any items are out of stock
-    const getOutOfStockItems = () => {
-        return cartItems.filter(item => item.stockQuantity === 0 || item.quantity > item.stockQuantity);
-    };
-
-    // Check if cart has stock issues
-    const hasStockIssues = () => {
-        return getOutOfStockItems().length > 0;
+    const removeItem = (id, type) => {
+        setCartItems(() => removeCartItem(id, type));
     };
 
     const handleCheckout = () => {
-        const outOfStockItems = getOutOfStockItems();
-        if (outOfStockItems.length > 0) {
-            const itemNames = outOfStockItems.map(item => item.name).join(', ');
-            setStockError(`Cannot proceed to checkout: ${itemNames} ${outOfStockItems.length > 1 ? 'are' : 'is'} out of stock or quantity exceeds available stock`);
-            return;
-        }
         navigate('/checkout');
     };
 
@@ -108,29 +64,6 @@ const Cart = () => {
                 <p className="text-gray-600">Review your items before checkout</p>
             </div>
 
-            {/* Stock Error Alert */}
-            {stockError && (
-                <div className="bg-red-50 border-2 border-red-500 rounded-lg p-4 mb-6 flex items-start gap-3">
-                    <FaExclamationTriangle className="text-red-600 text-xl mt-0.5" />
-                    <div>
-                        <h3 className="font-semibold text-red-900 mb-1">Stock Issue</h3>
-                        <p className="text-sm text-red-800">{stockError}</p>
-                    </div>
-                </div>
-            )}
-
-            {/* Out of Stock Warning */}
-            {hasStockIssues() && (
-                <div className="bg-yellow-50 border-2 border-yellow-500 rounded-lg p-4 mb-6 flex items-start gap-3">
-                    <FaExclamationTriangle className="text-yellow-600 text-xl mt-0.5" />
-                    <div>
-                        <h3 className="font-semibold text-yellow-900 mb-1">Items Unavailable</h3>
-                        <p className="text-sm text-yellow-800">
-                            Some items in your cart are out of stock. Please remove them to proceed with checkout.
-                        </p>
-                    </div>
-                </div>
-            )}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {/* Cart Items */}
@@ -141,14 +74,10 @@ const Cart = () => {
                         </div>
                         <div className="divide-y">
                             {cartItems.map((item) => {
-                                const isOutOfStock = item.stockQuantity === 0;
-                                const exceedsStock = item.quantity > item.stockQuantity;
-                                const hasIssue = isOutOfStock || exceedsStock;
-
                                 return (
                                     <div
-                                        key={item.id}
-                                        className={`p-6 ${hasIssue ? 'bg-red-50' : ''}`}
+                                        key={`${item.type}-${item.id}`}
+                                        className="p-6"
                                     >
                                         <div className="flex items-start gap-4">
                                             {/* Image */}
@@ -167,35 +96,11 @@ const Cart = () => {
                                                     LKR {item.price.toFixed(2)}
                                                 </p>
 
-                                                {/* Stock Status */}
-                                                <div className="mb-3">
-                                                    {isOutOfStock ? (
-                                                        <div className="flex items-center gap-2 text-red-600 text-sm">
-                                                            <FaExclamationTriangle />
-                                                            <span className="font-semibold">Out of Stock</span>
-                                                        </div>
-                                                    ) : exceedsStock ? (
-                                                        <div className="flex items-center gap-2 text-red-600 text-sm">
-                                                            <FaExclamationTriangle />
-                                                            <span className="font-semibold">Only {item.stockQuantity} available</span>
-                                                        </div>
-                                                    ) : item.stockQuantity <= 5 ? (
-                                                        <div className="flex items-center gap-2 text-yellow-600 text-sm">
-                                                            <FaExclamationTriangle />
-                                                            <span>Only {item.stockQuantity} left in stock</span>
-                                                        </div>
-                                                    ) : (
-                                                        <p className="text-sm text-gray-500">
-                                                            Stock: {item.stockQuantity} available
-                                                        </p>
-                                                    )}
-                                                </div>
-
                                                 {/* Quantity Controls */}
                                                 <div className="flex items-center gap-3">
                                                     <div className="flex items-center border rounded">
                                                         <button
-                                                            onClick={() => updateQuantity(item.id, -1)}
+                                                            onClick={() => updateQuantity(item.id, item.type, -1)}
                                                             className="px-3 py-1 hover:bg-gray-100"
                                                             disabled={item.quantity <= 1}
                                                         >
@@ -203,15 +108,14 @@ const Cart = () => {
                                                         </button>
                                                         <span className="px-4 py-1 border-x">{item.quantity}</span>
                                                         <button
-                                                            onClick={() => updateQuantity(item.id, 1)}
+                                                            onClick={() => updateQuantity(item.id, item.type, 1)}
                                                             className="px-3 py-1 hover:bg-gray-100"
-                                                            disabled={isOutOfStock || item.quantity >= item.stockQuantity}
                                                         >
                                                             <FaPlus className="w-3 h-3" />
                                                         </button>
                                                     </div>
                                                     <button
-                                                        onClick={() => removeItem(item.id)}
+                                                        onClick={() => removeItem(item.id, item.type)}
                                                         className="text-red-600 hover:text-red-800 flex items-center gap-2"
                                                     >
                                                         <FaTrash />

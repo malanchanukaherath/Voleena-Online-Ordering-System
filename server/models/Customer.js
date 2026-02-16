@@ -110,7 +110,12 @@ module.exports = (sequelize, DataTypes) => {
     return values;
   };
 
-  // No associations - standalone auth table
+  Customer.associate = function (models) {
+    Customer.hasMany(models.Address, {
+      foreignKey: 'CustomerID',
+      as: 'addresses'
+    });
+  };
 
   return Customer;
 };

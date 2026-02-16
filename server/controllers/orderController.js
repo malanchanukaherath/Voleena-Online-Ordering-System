@@ -1,4 +1,5 @@
-const { Order, OrderItem, MenuItem, ComboPack, Customer, DailyStock, StockMovement, sequelize } = require('../models');
+const { Order, OrderItem, MenuItem, ComboPack, Customer, DailyStock, StockMovement, Delivery, Address, sequelize } = require('../models');
+const { geocodeAddress, validateDeliveryDistanceWithFallback } = require('../services/distanceValidation');
 
 // Generate unique order number
 const generateOrderNumber = () => {
@@ -132,6 +133,58 @@ exports.createOrder = async (req, res) => {
             });
         }
 
+        // Validate delivery address ownership
+        if (orderType === 'DELIVERY') {
+            if (!addressId) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: 'Address is required for delivery orders'
+                });
+            }
+
+            const address = await Address.findByPk(addressId, { transaction });
+            if (!address || address.CustomerID !== customerId) {
+                await transaction.rollback();
+                return res.status(403).json({
+                    success: false,
+                    message: 'Invalid delivery address'
+                });
+            }
+
+            let latitude = address.Latitude;
+            let longitude = address.Longitude;
+
+            if (!latitude || !longitude) {
+                const addressText = `${address.AddressLine1}, ${address.City}${address.District ? `, ${address.District}` : ''}`;
+                const geocoded = await geocodeAddress(addressText);
+                if (!geocoded) {
+                    await transaction.rollback();
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Unable to geocode delivery address. Please update your address with a valid location.'
+                    });
+                }
+
+                latitude = geocoded.lat;
+                longitude = geocoded.lng;
+
+                await address.update({
+                    Latitude: latitude,
+                    Longitude: longitude
+                }, { transaction });
+            }
+
+            const distanceValidation = await validateDeliveryDistanceWithFallback(latitude, longitude);
+            if (!distanceValidation.isValid) {
+                await transaction.rollback();
+                return res.status(400).json({
+                    success: false,
+                    message: `Delivery address is outside our delivery range (${distanceValidation.distance.toFixed(2)}km > ${distanceValidation.maxDistance}km).`
+                });
+            }
+        }
+
         // Create order
         const order = await Order.create({
             OrderNumber: generateOrderNumber(),
@@ -148,6 +201,14 @@ exports.createOrder = async (req, res) => {
             await OrderItem.create({
                 OrderID: order.OrderID,
                 ...itemData
+            }, { transaction });
+        }
+
+        if (orderType === 'DELIVERY') {
+            await Delivery.create({
+                OrderID: order.OrderID,
+                AddressID: addressId,
+                Status: 'PENDING'
             }, { transaction });
         }
 
@@ -188,7 +249,7 @@ exports.getAllOrders = async (req, res) => {
         const where = {};
 
         // Customer can only see their own orders
-        if (req.user.role === 'customer') {
+        if (req.user.type === 'Customer') {
             where.CustomerID = req.user.id;
         }
 
@@ -204,6 +265,7 @@ exports.getAllOrders = async (req, res) => {
             where,
             include: [
                 { model: Customer, as: 'customer', attributes: ['CustomerID', 'Name', 'Phone'] },
+                { model: require('../models').Payment, as: 'payment', attributes: ['Method', 'Status', 'Amount'] },
                 {
                     model: OrderItem,
                     as: 'items',
@@ -238,6 +300,15 @@ exports.getOrderById = async (req, res) => {
         const order = await Order.findByPk(id, {
             include: [
                 { model: Customer, as: 'customer' },
+                { model: require('../models').Payment, as: 'payment', attributes: ['Method', 'Status', 'Amount'] },
+                {
+                    model: Delivery,
+                    as: 'delivery',
+                    include: [{
+                        model: Address,
+                        as: 'address'
+                    }]
+                },
                 {
                     model: OrderItem,
                     as: 'items',
@@ -257,7 +328,7 @@ exports.getOrderById = async (req, res) => {
         }
 
         // Customer can only view their own orders
-        if (req.user.role === 'customer' && order.CustomerID !== req.user.id) {
+        if (req.user.type === 'Customer' && order.CustomerID !== req.user.id) {
             return res.status(403).json({
                 success: false,
                 message: 'Access denied'
@@ -401,17 +472,45 @@ exports.cancelOrder = async (req, res) => {
             });
         }
 
-        if (!['PENDING', 'CONFIRMED'].includes(order.Status)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Order cannot be cancelled at this stage'
-            });
+        if (req.user.type === 'Customer') {
+            if (order.CustomerID !== req.user.id) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Access denied'
+                });
+            }
+
+            if (!['PENDING', 'CONFIRMED'].includes(order.Status)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Order cannot be cancelled at this stage'
+                });
+            }
+        }
+
+        if (req.user.type === 'Staff') {
+            const staffRole = req.user.role;
+            const isAdmin = staffRole === 'Admin';
+            const allowedStatuses = isAdmin ? ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'] : ['PENDING', 'CONFIRMED'];
+
+            if (!allowedStatuses.includes(order.Status)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Order cannot be cancelled at this stage'
+                });
+            }
         }
 
         order.Status = 'CANCELLED';
         order.CancelledAt = new Date();
         order.CancellationReason = reason;
-        order.CancelledBy = req.user.role === 'customer' ? 'CUSTOMER' : 'ADMIN';
+        if (req.user.type === 'Customer') {
+            order.CancelledBy = 'CUSTOMER';
+        } else if (req.user.role === 'Cashier') {
+            order.CancelledBy = 'CASHIER';
+        } else {
+            order.CancelledBy = 'ADMIN';
+        }
         await order.save();
 
         res.json({

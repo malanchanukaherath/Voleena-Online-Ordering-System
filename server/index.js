@@ -1,93 +1,239 @@
 const express = require('express');
-const app = express();
 const cors = require('cors');
-const path = require('path');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const compression = require('compression');
+require('dotenv').config();
 
-app.use(express.json());
-app.use(cors());
+const sequelize = require('./config/database');
+const { apiLimiter } = require('./middleware/rateLimiter');
+const { sanitizeInput } = require('./middleware/validation');
+// const automatedJobs = require('./services/automatedJobs'); // Temporarily disabled
 
-app.use('/uploads', express.static(path.join(__dirname, 'Assets')));
+// Initialize Express app
+const app = express();
+const PORT = process.env.PORT || 3001;
 
-const db = require('./models');
-const { requireAuth, requireRole } = require('./middleware/auth');
+// =====================================================
+// SECURITY MIDDLEWARE
+// =====================================================
 
-// Import routes
-const authRouter = require('./routes/Auth');
-const authRoutes = require('./routes/authRoutes');
-const adminRoutes = require('./routes/adminRoutes');
-const cashierRoutes = require('./routes/cashierRoutes');
-const kitchenRoutes = require('./routes/kitchenRoutes');
-const deliveryRoutes = require('./routes/deliveryRoutes');
-const menuItemsRouter = require('./routes/menuItems');
-const comboPacksRouter = require('./routes/comboPacks');
-const categoriesRouter = require('./routes/categories');
-const ordersRouter = require('./routes/orders');
-const stockRouter = require('./routes/stock');
-const staffRoutes = require('./routes/staff');
-const customersRouter = require('./routes/customers');
+// Helmet for security headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
 
+// CORS configuration
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  credentials: true,
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+};
+app.use(cors(corsOptions));
+
+// =====================================================
+// GENERAL MIDDLEWARE
+// =====================================================
+
+// Body parsing
+app.use(express.json({
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Compression
+app.use(compression());
+
+// Request logging
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+} else {
+  app.use(morgan('combined'));
+}
+
+// Input sanitization
+app.use(sanitizeInput);
+
+// Rate limiting
+app.use('/api/', apiLimiter);
+
+// =====================================================
+// API ROUTES
+// =====================================================
+
+// Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'healthy', service: 'voleena-api' });
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    environment: process.env.NODE_ENV
+  });
 });
 
-// Authentication routes (new)
-app.use('/api/auth', authRoutes);
+// API version 1 routes
+app.use('/api/v1/auth', require('./routes/authRoutes'));
+app.use('/api/v1/customers', require('./routes/customers'));
+app.use('/api/v1/staff', require('./routes/staff'));
+app.use('/api/v1/menu', require('./routes/menuItems'));
+app.use('/api/v1/categories', require('./routes/categories'));
+app.use('/api/v1/orders', require('./routes/orders'));
+app.use('/api/v1/combos', require('./routes/comboPacks'));
+app.use('/api/v1/stock', require('./routes/stock'));
+app.use('/api/v1/payments', require('./routes/payments'));
+app.use('/api/v1/delivery', require('./routes/deliveryRoutes'));
+app.use('/api/v1/admin', require('./routes/adminRoutes'));
+app.use('/api/v1/kitchen', require('./routes/kitchenRoutes'));
+app.use('/api/v1/cashier', require('./routes/cashierRoutes'));
 
-// Role-based dashboard routes
-app.use('/api/admin', adminRoutes);
-app.use('/api/cashier', cashierRoutes);
-app.use('/api/kitchen', kitchenRoutes);
-app.use('/api/delivery', deliveryRoutes);
+// Legacy aliases for older clients
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/customers', require('./routes/customers'));
+app.use('/api/staff', require('./routes/staff'));
+app.use('/api/menu', require('./routes/menuItems'));
+app.use('/api/categories', require('./routes/categories'));
+app.use('/api/orders', require('./routes/orders'));
+app.use('/api/combos', require('./routes/comboPacks'));
+app.use('/api/stock', require('./routes/stock'));
+app.use('/api/payments', require('./routes/payments'));
+app.use('/api/delivery', require('./routes/deliveryRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/kitchen', require('./routes/kitchenRoutes'));
+app.use('/api/cashier', require('./routes/cashierRoutes'));
 
-// Legacy auth route (keep for backward compatibility)
-app.use('/auth', authRouter);
+// =====================================================
+// ERROR HANDLING
+// =====================================================
 
-// Existing routes
-app.use('/api/menu-items', menuItemsRouter);
-app.use('/api/combo-packs', comboPacksRouter);
-app.use('/api/categories', categoriesRouter);
-app.use('/api/orders', ordersRouter);
-app.use('/api/stock', stockRouter);
-app.use('/api/staff', staffRoutes);
-app.use('/api/customers', customersRouter);
-
+// 404 handler
 app.use((req, res) => {
   res.status(404).json({
-    error: 'Endpoint not found',
-    available: [
-      '/auth/login',
-      '/auth/register',
-      '/auth/me',
-      '/api/menu-items',
-      '/api/combo-packs',
-      '/api/categories',
-      '/health'
-    ]
+    success: false,
+    error: 'Route not found',
+    path: req.path
   });
 });
 
-db.sequelize.sync({ alter: false }).then(() => {
-  const PORT = process.env.PORT || 3001;
-  app.listen(PORT, () => {
-    console.log('='.repeat(60));
-    console.log('🍔 Voleena API Server');
-    console.log('='.repeat(60));
-    console.log(`📍 Server running on port ${PORT}`);
-    console.log(`🔗 Base URL: http://localhost:${PORT}`);
-    console.log('\n📋 Available Endpoints:');
-    console.log('   POST   /auth/login');
-    console.log('   POST   /auth/register');
-    console.log('   GET    /auth/me');
-    console.log('   GET    /api/menu-items');
-    console.log('   POST   /api/menu-items');
-    console.log('   GET    /api/combo-packs/active');
-    console.log('   POST   /api/combo-packs');
-    console.log('   GET    /api/categories');
-    console.log('   GET    /health');
-    console.log('='.repeat(60));
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+
+  // Sequelize validation errors
+  if (err.name === 'SequelizeValidationError') {
+    return res.status(400).json({
+      success: false,
+      error: 'Validation error',
+      details: err.errors.map(e => ({
+        field: e.path,
+        message: e.message
+      }))
+    });
+  }
+
+  // Sequelize unique constraint errors
+  if (err.name === 'SequelizeUniqueConstraintError') {
+    return res.status(409).json({
+      success: false,
+      error: 'Duplicate entry',
+      details: err.errors.map(e => ({
+        field: e.path,
+        message: `${e.path} already exists`
+      }))
+    });
+  }
+
+  // JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({
+      success: false,
+      error: 'Invalid token'
+    });
+  }
+
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({
+      success: false,
+      error: 'Token expired',
+      code: 'TOKEN_EXPIRED'
+    });
+  }
+
+  // Default error
+  const statusCode = err.statusCode || 500;
+  res.status(statusCode).json({
+    success: false,
+    error: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
   });
-}).catch(err => {
-  console.error('❌ Database connection failed:', err);
-  process.exit(1);
 });
 
+// =====================================================
+// SERVER INITIALIZATION
+// =====================================================
+
+async function startServer() {
+  try {
+    // Test database connection
+    await sequelize.authenticate();
+    console.log('✅ Database connected');
+
+    // Sync models (only in development)
+    if (process.env.NODE_ENV === 'development') {
+      await sequelize.sync({ alter: false });
+      console.log('✅ Models synchronized');
+    }
+
+    // Start automated jobs
+    // automatedJobs.start(); // Temporarily disabled
+
+    // Start server
+    app.listen(PORT, () => {
+      console.log('='.repeat(50));
+      console.log(`🚀 Voleena Foods API Server`);
+      console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🌐 Server running on port ${PORT}`);
+      console.log(`🔗 API Base URL: http://localhost:${PORT}/api/v1`);
+      console.log('='.repeat(50));
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+// Graceful shutdown
+process.on('SIGTERM', async () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  // automatedJobs.stop();
+  await sequelize.close();
+  process.exit(0);
+});
+
+process.on('SIGINT', async () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  // automatedJobs.stop();
+  await sequelize.close();
+  process.exit(0);
+});
+
+// Start the server
+startServer();
+
+module.exports = app;

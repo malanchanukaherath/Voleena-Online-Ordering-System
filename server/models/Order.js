@@ -135,6 +135,14 @@ module.exports = (sequelize) => {
             foreignKey: 'OrderID',
             as: 'items'
         });
+        Order.hasOne(models.Payment, {
+            foreignKey: 'OrderID',
+            as: 'payment'
+        });
+        Order.hasOne(models.Delivery, {
+            foreignKey: 'OrderID',
+            as: 'delivery'
+        });
     };
 
     return Order;
