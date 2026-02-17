@@ -117,8 +117,30 @@ export const comboPackService = {
 };
 
 export const categoryService = {
-    getAll: async () => {
+    getAll: async (params = {}) => {
         const response = await axios.get(`${API_BASE_URL}/categories`, {
+            headers: getAuthHeader(),
+            params
+        });
+        return response.data;
+    },
+
+    create: async (data) => {
+        const response = await axios.post(`${API_BASE_URL}/categories`, data, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    update: async (id, data) => {
+        const response = await axios.put(`${API_BASE_URL}/categories/${id}`, data, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    delete: async (id) => {
+        const response = await axios.delete(`${API_BASE_URL}/categories/${id}`, {
             headers: getAuthHeader()
         });
         return response.data;

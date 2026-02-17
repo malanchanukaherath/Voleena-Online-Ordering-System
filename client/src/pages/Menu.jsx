@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FaSearch, FaTimes, FaTag, FaExclamationTriangle } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
-import { comboPackService, menuItemService } from '../services/menuService';
+import { categoryService, comboPackService, menuItemService } from '../services/menuService';
 import { toast } from 'react-toastify';
 import { addToCart } from '../utils/cartStorage';
 
@@ -15,6 +15,7 @@ const Menu = () => {
     const [loading, setLoading] = useState(true);
     const [comboPacks, setComboPacks] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
+    const [categories, setCategories] = useState([]);
     const [error, setError] = useState(null);
 
     const resolveImageUrl = (imagePath) => {
@@ -44,7 +45,8 @@ const Menu = () => {
                         name: item.Name,
                         description: item.Description || 'No description available',
                         price: parseFloat(item.Price),
-                        category: item.category?.Name?.toLowerCase() || 'other',
+                        categoryId: item.CategoryID || item.category?.CategoryID || null,
+                        categoryName: item.category?.Name || 'Other',
                         image: resolveImageUrl(item.ImageURL || item.Image_URL || null),
                         stockQuantity: item.StockQuantity ?? null,
                         isAvailable: !!item.IsActive,
@@ -64,6 +66,22 @@ const Menu = () => {
         };
 
         fetchMenuItems();
+    }, []);
+
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await categoryService.getAll();
+                if (response.success && Array.isArray(response.data)) {
+                    setCategories(response.data);
+                }
+            } catch (error) {
+                console.warn('Categories not available for menu:', error);
+                setCategories([]);
+            }
+        };
+
+        fetchCategories();
     }, []);
 
     // Load combo packs from API
@@ -97,15 +115,24 @@ const Menu = () => {
         fetchCombos();
     }, []);
 
-    const categories = [
-        { value: 'burgers', label: 'Burgers' },
-        { value: 'rice', label: 'Rice & Curry' },
-        { value: 'pasta', label: 'Pasta' },
-        { value: 'pizza', label: 'Pizza' },
-        { value: 'drinks', label: 'Drinks' },
-        { value: 'desserts', label: 'Desserts' },
-        { value: 'combos', label: 'Combo Packs' },
-    ];
+    const categoryOptions = useMemo(() => {
+        const sourceCategories = categories.length > 0
+            ? categories.map(cat => ({
+                value: String(cat.CategoryID),
+                label: cat.Name
+            }))
+            : Array.from(new Map(menuItems
+                .filter(item => item.categoryId && item.categoryName)
+                .map(item => [String(item.categoryId), item.categoryName]))
+                .entries())
+                .map(([value, label]) => ({ value, label }));
+
+        const comboOption = comboPacks.length > 0
+            ? [{ value: 'combos', label: 'Combo Packs' }]
+            : [];
+
+        return [...sourceCategories, ...comboOption];
+    }, [categories, menuItems, comboPacks]);
 
     // Convert combo packs to menu item format
     const comboMenuItems = comboPacks.map(combo => ({
@@ -117,6 +144,8 @@ const Menu = () => {
         price: combo.price,
         originalPrice: combo.originalPrice,
         discount: combo.discount,
+        categoryId: null,
+        categoryName: 'Combo Packs',
         category: 'combos',
         image: combo.image,
         stockQuantity: null,
@@ -130,7 +159,9 @@ const Menu = () => {
     const filteredItems = allItems.filter(item => {
         const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.description.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = !selectedCategory || item.category === selectedCategory;
+        const matchesCategory = !selectedCategory
+            || (selectedCategory === 'combos' && item.isCombo)
+            || (selectedCategory !== 'combos' && String(item.categoryId || '') === selectedCategory);
         return matchesSearch && matchesCategory;
     });
 
@@ -204,8 +235,8 @@ const Menu = () => {
                     <Select
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
-                        options={categories}
-                        label=""
+                        options={categoryOptions}
+                        label="Category"
                         name="category"
                     />
                 </div>

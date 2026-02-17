@@ -177,7 +177,7 @@ router.get('/', authenticateToken, requireCashier, async (req, res) => {
             attributes: { exclude: ['Password'] },
             limit: parseInt(limit),
             offset: parseInt(offset),
-            order: [['CreatedAt', 'DESC']]
+            order: [[require('sequelize').col('Customer.created_at'), 'DESC']]
         });
 
         return res.json({ customers, count: customers.length });
@@ -220,7 +220,7 @@ router.get('/me/addresses', requireCustomer, async (req, res) => {
     try {
         const addresses = await Address.findAll({
             where: { CustomerID: req.user.id },
-            order: [['CreatedAt', 'DESC']]
+            order: [[require('sequelize').col('Address.created_at'), 'DESC']]
         });
 
         return res.json({ success: true, data: addresses });

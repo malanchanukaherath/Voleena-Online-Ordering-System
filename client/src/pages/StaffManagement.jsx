@@ -230,7 +230,7 @@ const StaffManagement = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-500">{formatDate(member.CreatedAt)}</div>
+                                            <div className="text-sm text-gray-500">{formatDate(member.createdAt || member.CreatedAt)}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {member.IsActive ? (

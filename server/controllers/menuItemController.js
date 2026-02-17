@@ -67,7 +67,7 @@ const getAllMenuItems = async (req, res) => {
                 as: 'category',
                 attributes: ['CategoryID', 'Name']
             }],
-            order: [['CreatedAt', 'DESC']]
+            order: [[require('sequelize').col('MenuItem.created_at'), 'DESC']]
         });
 
         res.json({
