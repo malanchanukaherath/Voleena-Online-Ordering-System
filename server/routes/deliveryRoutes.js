@@ -3,7 +3,20 @@ const router = express.Router();
 const deliveryController = require('../controllers/deliveryController');
 const { requireAuth, requireDelivery } = require('../middleware/auth');
 
-// All routes require authentication and delivery role (or admin)
+/**
+ * Public endpoints (no authentication required)
+ */
+
+/**
+ * Validate delivery distance for checkout
+ */
+router.post('/validate-distance', deliveryController.validateDeliveryDistance);
+
+/**
+ * Protected routes (require authentication and delivery role or admin)
+ */
+
+// All routes below require authentication and delivery role (or admin)
 router.use(requireAuth, requireDelivery);
 
 /**
@@ -18,6 +31,11 @@ router.get('/deliveries', deliveryController.getMyDeliveries);
 router.get('/deliveries/:deliveryId', deliveryController.getDeliveryById);
 router.put('/deliveries/:deliveryId/status', deliveryController.updateDeliveryStatus);
 router.get('/history', deliveryController.getDeliveryHistory);
+
+/**
+ * Available staff (admin endpoint)
+ */
+router.get('/staff/available', deliveryController.getAvailableDeliveryStaff);
 
 /**
  * Availability Management

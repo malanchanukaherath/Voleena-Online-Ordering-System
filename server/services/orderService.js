@@ -1,4 +1,4 @@
-const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, Delivery, Payment, sequelize } = require('../models');
+const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, Delivery, DeliveryStaffAvailability, Payment, sequelize } = require('../models');
 const { Transaction, Op } = require('sequelize');
 const stockService = require('./stockService');
 const { validateDeliveryDistanceWithFallback } = require('./distanceValidation');
@@ -312,6 +312,11 @@ class OrderService {
 
             await transaction.commit();
 
+            // Auto-assign delivery staff when order becomes READY (FR26)
+            if (newStatus === 'READY' && order.order_type === 'DELIVERY') {
+                await this.autoAssignDeliveryStaff(orderId);
+            }
+
             // Send notifications (FR15)
             try {
                 if (order.customer.email) {
@@ -446,6 +451,66 @@ class OrderService {
         const sequence = (count + 1).toString().padStart(4, '0');
 
         return `VF${year}${month}${day}${sequence}`;
+    }
+
+    /**
+     * Auto-assign delivery staff when order becomes READY (FR26)
+     * Selects earliest available delivery staff and updates their status
+     */
+    async autoAssignDeliveryStaff(orderId) {
+        const transaction = await sequelize.transaction();
+
+        try {
+            // Find the delivery record
+            const delivery = await Delivery.findOne({
+                where: { order_id: orderId },
+                transaction
+            });
+
+            if (!delivery) {
+                throw new Error('Delivery record not found for order');
+            }
+
+            // Find available delivery staff (ordered by earliest availability)
+            const availableStaff = await DeliveryStaffAvailability.findOne({
+                where: { is_available: true },
+                order: [['last_updated', 'ASC']],
+                transaction,
+                lock: transaction.LOCK.UPDATE
+            });
+
+            if (!availableStaff) {
+                console.log(`[AUTO-ASSIGN] No available delivery staff for order ${orderId}. Leaving PENDING.`);
+                await transaction.commit();
+                return null;
+            }
+
+            const staffId = availableStaff.delivery_staff_id;
+
+            // Update delivery staff availability
+            await availableStaff.update({
+                is_available: false,
+                current_order_id: orderId
+            }, { transaction });
+
+            // Update delivery record with assigned staff
+            await delivery.update({
+                delivery_staff_id: staffId,
+                status: 'ASSIGNED',
+                assigned_at: new Date()
+            }, { transaction });
+
+            await transaction.commit();
+
+            console.log(`[AUTO-ASSIGN] Staff ${staffId} assigned to order ${orderId}`);
+            return staffId;
+
+        } catch (error) {
+            await transaction.rollback();
+            console.error('[AUTO-ASSIGN] Error assigning delivery staff:', error.message);
+            // Don't throw - allow order to proceed without staff assignment
+            return null;
+        }
     }
 }
 

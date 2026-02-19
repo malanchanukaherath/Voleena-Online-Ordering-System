@@ -6,82 +6,87 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'DeliveryID'
+            field: 'delivery_id'
         },
         OrderID: {
             type: DataTypes.INTEGER,
             allowNull: false,
             unique: true,
             references: {
-                model: 'Order',
-                key: 'OrderID'
+                model: 'order',
+                key: 'order_id'
             },
-            field: 'OrderID'
+            field: 'order_id'
         },
         DeliveryStaffID: {
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-                model: 'Staff',
-                key: 'StaffID'
+                model: 'staff',
+                key: 'staff_id'
             },
-            field: 'DeliveryStaffID'
+            field: 'delivery_staff_id'
         },
         AddressID: {
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'Address',
-                key: 'AddressID'
+                model: 'address',
+                key: 'address_id'
             },
-            field: 'AddressID'
+            field: 'address_id'
         },
         Status: {
             type: DataTypes.ENUM('PENDING', 'ASSIGNED', 'PICKED_UP', 'IN_TRANSIT', 'DELIVERED', 'FAILED'),
             allowNull: false,
             defaultValue: 'PENDING',
-            field: 'Status'
+            field: 'status'
         },
         AssignedAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'AssignedAt'
+            field: 'assigned_at'
         },
         PickedUpAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'PickedUpAt'
+            field: 'picked_up_at'
         },
         DeliveredAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'DeliveredAt'
+            field: 'delivered_at'
         },
         EstimatedDeliveryTime: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'EstimatedDeliveryTime'
+            field: 'estimated_delivery_time'
         },
         DeliveryProof: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            field: 'DeliveryProof'
+            field: 'delivery_proof'
         },
         DeliveryNotes: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'DeliveryNotes'
+            field: 'delivery_notes'
         },
-        Distance: {
+        FailureReason: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            field: 'failure_reason'
+        },
+        DistanceKm: {
             type: DataTypes.DECIMAL(5, 2),
             allowNull: true,
-            field: 'Distance'
+            field: 'distance_km'
         }
     }, {
-        tableName: 'Delivery',
+        tableName: 'delivery',
         timestamps: true,
-        createdAt: 'CreatedAt',
-        updatedAt: 'UpdatedAt'
+        createdAt: 'created_at',
+        updatedAt: 'updated_at'
     });
 
     Delivery.associate = (models) => {

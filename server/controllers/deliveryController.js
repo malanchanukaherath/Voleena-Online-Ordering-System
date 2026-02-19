@@ -1,4 +1,6 @@
-const { Delivery, Order, OrderItem, MenuItem, Address, Customer, sequelize } = require('../models');
+const { Delivery, Order, OrderItem, MenuItem, Address, Customer, Staff, DeliveryStaffAvailability, sequelize } = require('../models');
+const { validateDeliveryDistanceWithFallback, geocodeAddress } = require('../utils/distanceValidator');
+const { validateAddressLine, validateCoordinates } = require('../utils/validationUtils');
 
 /**
  * Get delivery dashboard statistics
@@ -376,5 +378,106 @@ exports.getDeliveryById = async (req, res) => {
     return res.status(500).json({ error: 'Failed to fetch delivery' });
   }
 };
+/**
+ * Validate delivery distance for an address
+ * Called during checkout to display distance and validate service area
+ * 
+ * POST /api/v1/delivery/validate-distance
+ */
+exports.validateDeliveryDistance = async (req, res) => {
+  try {
+    const { latitude, longitude, address } = req.body;
 
+    let lat = latitude;
+    let lng = longitude;
+
+    // If coordinates not provided, try to geocode the address
+    if ((!lat || !lng) && address) {
+      if (!validateAddressLine(address.addressLine1)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid address provided'
+        });
+      }
+
+      try {
+        const addressText = `${address.addressLine1}${address.city ? ', ' + address.city : ''}${address.district ? ', ' + address.district : ''}`;
+        const geocoded = await geocodeAddress(addressText);
+        lat = geocoded.lat;
+        lng = geocoded.lng;
+      } catch (geocodeError) {
+        return res.status(400).json({
+          success: false,
+          message: 'Unable to locate this address. Please check the address details.',
+          error: geocodeError.message
+        });
+      }
+    }
+
+    // Validate coordinates
+    if (!validateCoordinates(lat, lng)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid coordinates provided'
+      });
+    }
+
+    // Validate distance with fallback
+    const validation = await validateDeliveryDistanceWithFallback(lat, lng);
+
+    res.json({
+      success: true,
+      data: validation
+    });
+
+  } catch (error) {
+    console.error('Distance validation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to validate delivery distance',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get available delivery staff (Admin/Operator endpoint)
+ */
+exports.getAvailableDeliveryStaff = async (req, res) => {
+  try {
+    const availableStaff = await DeliveryStaffAvailability.findAll({
+      where: { IsAvailable: true },
+      include: [
+        {
+          model: Staff,
+          as: 'staff',
+          attributes: ['StaffID', 'Name', 'Phone', 'Email']
+        }
+      ],
+      order: [['LastUpdated', 'ASC']]
+    });
+
+    res.json({
+      success: true,
+      data: {
+        count: availableStaff.length,
+        staff: availableStaff.map(item => ({
+          id: item.staff.StaffID,
+          name: item.staff.Name,
+          phone: item.staff.Phone,
+          email: item.staff.Email,
+          lastUpdated: item.LastUpdated
+        }))
+      }
+    });
+
+  } catch (error) {
+    console.error('Get available staff error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch available delivery staff',
+      error: error.message
+    });
+  }
+};
 module.exports = exports;

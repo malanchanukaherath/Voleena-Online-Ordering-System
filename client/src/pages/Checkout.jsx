@@ -5,7 +5,7 @@ import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Textarea from '../components/ui/Textarea';
 import { getCart, clearCart } from '../utils/cartStorage';
-import { createAddress, createOrder, initiatePayment } from '../services/orderApi';
+import { createAddress, createOrder, initiatePayment, validateDeliveryDistance } from '../services/orderApi';
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -23,6 +23,9 @@ const Checkout = () => {
     });
 
     const [errors, setErrors] = useState({});
+    const [distanceInfo, setDistanceInfo] = useState(null);
+    const [validatingDistance, setValidatingDistance] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const cartItems = useMemo(() => getCart(), []);
 
     const handleChange = (e) => {
@@ -31,6 +34,58 @@ const Checkout = () => {
         // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    /**
+     * Validate delivery distance when address changes or on blur
+     */
+    const validateDeliveryAddressDistance = async () => {
+        if (formData.orderType !== 'DELIVERY' || !formData.addressLine1 || !formData.city) {
+            return;
+        }
+
+        setValidatingDistance(true);
+        try {
+            const response = await validateDeliveryDistance({
+                address: {
+                    addressLine1: formData.addressLine1,
+                    city: formData.city,
+                    district: formData.postalCode
+                }
+            });
+
+            if (response.data?.success) {
+                const data = response.data.data;
+                setDistanceInfo({
+                    isValid: data.isValid,
+                    distance: data.distance,
+                    maxDistance: data.maxDistance,
+                    method: data.method
+                });
+
+                if (!data.isValid) {
+                    setErrors(prev => ({
+                        ...prev,
+                        distance: `Delivery address is outside our service area (${data.distance.toFixed(2)}km > ${data.maxDistance}km)`
+                    }));
+                } else {
+                    setErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.distance;
+                        return newErrors;
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Distance validation error:', error);
+            setDistanceInfo(null);
+            setErrors(prev => ({
+                ...prev,
+                distance: 'Unable to validate delivery distance'
+            }));
+        } finally {
+            setValidatingDistance(false);
         }
     };
 
@@ -219,7 +274,7 @@ const Checkout = () => {
                             </div>
                         </div>
 
-                        {/* Delivery Address */}
+                        {/* Delivery Address (with Distance Validation) */}
                         {formData.orderType === 'DELIVERY' && (
                             <div className="bg-white rounded-lg shadow p-6">
                                 <h2 className="text-xl font-semibold mb-4">Delivery Address</h2>
@@ -229,6 +284,7 @@ const Checkout = () => {
                                         name="addressLine1"
                                         value={formData.addressLine1}
                                         onChange={handleChange}
+                                        onBlur={validateDeliveryAddressDistance}
                                         error={errors.addressLine1}
                                         required
                                     />
@@ -244,6 +300,7 @@ const Checkout = () => {
                                             name="city"
                                             value={formData.city}
                                             onChange={handleChange}
+                                            onBlur={validateDeliveryAddressDistance}
                                             error={errors.city}
                                             required
                                         />
@@ -255,9 +312,39 @@ const Checkout = () => {
                                         />
                                     </div>
 
-                                    <div className="text-sm text-gray-600">
-                                        Delivery distance is validated when you place the order.
-                                    </div>
+                                    {/* Distance Validation Status */}
+                                    {validatingDistance && (
+                                        <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
+                                            Validating delivery distance...
+                                        </div>
+                                    )}
+
+                                    {distanceInfo && (
+                                        <div className={`p-3 rounded border-2 ${
+                                            distanceInfo.isValid
+                                                ? 'bg-green-50 border-green-200 text-green-700'
+                                                : 'bg-red-50 border-red-200 text-red-700'
+                                        }`}>
+                                            <div className="text-sm font-semibold">
+                                                Delivery Distance: {distanceInfo.distance.toFixed(2)} km
+                                            </div>
+                                            <div className="text-xs mt-1">
+                                                {distanceInfo.isValid
+                                                    ? `✓ Within service area (max ${distanceInfo.maxDistance}km)`
+                                                    : `✗ Outside service area (max ${distanceInfo.maxDistance}km)`
+                                                }
+                                            </div>
+                                            <div className="text-xs mt-1 opacity-75">
+                                                Calculated via {distanceInfo.method === 'google_maps' ? 'Google Maps' : 'straight-line approximation'}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {errors.distance && (
+                                        <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                                            {errors.distance}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -294,9 +381,9 @@ const Checkout = () => {
                     {/* Order Summary */}
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-lg shadow p-6 sticky top-24">
-                            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-
-                            <div className="space-y-3 mb-4">
+                            <h2 className="text-xl font-semibold || isSubmitting || (formData.orderType === 'DELIVERY' && !distanceInfo?.isValid)}
+                            >
+                                {isSubmitting ? 'Placing Order...' : 'Place Order'}"space-y-3 mb-4">
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Subtotal</span>
                                     <span>LKR {cartSummary.subtotal.toFixed(2)}</span>
