@@ -14,46 +14,61 @@ class AutomatedJobsService {
 
     /**
      * Start all automated jobs
+     * 
+     * PART 1: Daily stock record generation
+     * - Runs at 12:00 AM (midnight) every day
+     * - Creates daily_stock records for all active menu items
+     * - Sets opening quantity = previous day's closing quantity
+     * - Uses SERIALIZABLE transactions to prevent race conditions
      */
     start() {
         console.log('🤖 Starting automated jobs...');
 
-        // Job 1: Activate/deactivate combo packs based on schedule (FR19)
+        // Job 1: Daily stock creation at 12:00 AM (PART 1)
+        // Runs at the start of each day to prepare stock records
+        this.jobs.push(
+            cron.schedule('0 0 * * *', async () => {
+                await this.createDailyStockRecords();
+            }, {
+                name: 'Daily Stock Creation',
+                timezone: process.env.TZ || 'Asia/Colombo'
+            })
+        );
+
+        // Job 2: Activate/deactivate combo packs based on schedule (FR19)
         this.jobs.push(
             cron.schedule('0 0 * * *', async () => {
                 await this.updateComboPackSchedules();
             })
         );
 
-        // Job 2: Auto-disable out-of-stock menu items (FR25)
+        // Job 3: Auto-disable out-of-stock menu items (FR25)
         this.jobs.push(
             cron.schedule('*/15 * * * *', async () => {
                 await this.autoDisableOutOfStockItems();
             })
         );
 
-        // Job 3: Auto-cancel unconfirmed orders
+        // Job 4: Auto-cancel unconfirmed orders
         this.jobs.push(
             cron.schedule('*/10 * * * *', async () => {
                 await this.autoCancelUnconfirmedOrders();
             })
         );
 
-        // Job 4: Clean expired blacklisted tokens
+        // Job 5: Clean expired blacklisted tokens
         this.jobs.push(
             cron.schedule('0 */6 * * *', async () => {
                 await this.cleanExpiredTokens();
             })
         );
 
-        // Job 5: Generate daily stock records for tomorrow
-        this.jobs.push(
-            cron.schedule('0 23 * * *', async () => {
-                await this.generateTomorrowStockRecords();
-            })
-        );
-
         console.log('✅ Automated jobs started');
+        console.log('   - Daily stock creation: 12:00 AM (Asia/Colombo)');
+        console.log('   - Combo pack schedules: 12:00 AM');
+        console.log('   - Out-of-stock check: Every 15 minutes');
+        console.log('   - Order timeout: Every 10 minutes');
+        console.log('   - Token cleanup: Every 6 hours');
     }
 
     /**
@@ -194,8 +209,30 @@ class AutomatedJobsService {
     }
 
     /**
-     * Generate stock records for tomorrow
-     * Carries forward today's closing stock as tomorrow's opening stock
+     * PART 1: Create daily stock records for all active menu items
+     * Runs at 12:00 AM each day using node-cron
+     * 
+     * Process:
+     * 1. Query all active menu items
+     * 2. For each item, check if stock record exists for today
+     * 3. If not, get yesterday's closing quantity as opening quantity
+     * 4. Create new stock record with opening qty, sold=0, adjusted=0
+     * 5. Uses SERIALIZABLE transactions and SELECT FOR UPDATE
+     * 6. Unique constraint prevents duplicate (MenuItemID, StockDate)
+     */
+    async createDailyStockRecords() {
+        try {
+            console.log('🔄 Creating daily stock records...');
+            const result = await stockService.createDailyStockRecords();
+            console.log(`✅ Daily stock creation completed: Created=${result.created}, Skipped=${result.skipped}, Failed=${result.failed}`);
+        } catch (error) {
+            console.error('❌ Error creating daily stock records:', error.message);
+        }
+    }
+
+    /**
+     * LEGACY: Generate stock records for tomorrow (11 PM the night before)
+     * Kept for reference, now handled by createDailyStockRecords at 12:00 AM
      */
     async generateTomorrowStockRecords() {
         try {

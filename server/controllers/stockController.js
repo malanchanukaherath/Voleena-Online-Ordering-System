@@ -1,35 +1,241 @@
 const { DailyStock, StockMovement, MenuItem, sequelize } = require('../models');
+const stockService = require('../services/stockService');
 
-// Get today's stock for all items
+/**
+ * Stock Management Controller
+ * Handles stock operations with role-based access:
+ * - Admin: Full read/write access
+ * - Kitchen: Read-only access with low-stock alerts
+ */
+
+/**
+ * PART 3 & 2: Get today's stock for all items
+ * Admin: Full details | Kitchen: Read-only with low-stock alerts
+ */
 exports.getTodayStock = async (req, res) => {
     try {
-        const today = new Date().toISOString().split('T')[0];
-
-        const stocks = await DailyStock.findAll({
-            where: { StockDate: today },
-            include: [{
-                model: MenuItem,
-                as: 'menuItem',
-                attributes: ['MenuItemID', 'Name', 'Price', 'CategoryID']
-            }],
-            order: [[{ model: MenuItem, as: 'menuItem' }, 'Name', 'ASC']]
-        });
+        const stocks = await stockService.getDailyStockWithAlerts();
 
         res.json({
             success: true,
-            data: stocks
+            message: `Retrieved ${stocks.length} stock records for today`,
+            data: stocks,
+            lowStockCount: stocks.filter(s => s.IsLowStock).length
         });
 
     } catch (error) {
         console.error('Get today stock error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to fetch stock data'
+            error: 'Failed to fetch stock data',
+            message: error.message
         });
     }
 };
 
-// Set opening stock for an item
+/**
+ * PART 2: Update opening quantity for a stock record (admin only)
+ * 
+ * Request body:
+ * {
+ *   "openingQuantity": 50  // New opening quantity
+ * }
+ */
+exports.updateOpeningQuantity = async (req, res) => {
+    try {
+        const { stockId } = req.params;
+        const { openingQuantity } = req.body;
+        const staffId = req.user.id;
+
+        // Validate input
+        if (typeof openingQuantity !== 'number' || !Number.isInteger(openingQuantity)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Opening quantity must be an integer'
+            });
+        }
+
+        const updatedStock = await stockService.updateOpeningQuantity(
+            parseInt(stockId),
+            openingQuantity,
+            staffId
+        );
+
+        res.json({
+            success: true,
+            message: 'Opening quantity updated successfully',
+            data: {
+                StockID: updatedStock.StockID,
+                MenuItemID: updatedStock.MenuItemID,
+                StockDate: updatedStock.StockDate,
+                OpeningQuantity: updatedStock.OpeningQuantity,
+                SoldQuantity: updatedStock.SoldQuantity,
+                AdjustedQuantity: updatedStock.AdjustedQuantity,
+                ClosingQuantity: updatedStock.OpeningQuantity - updatedStock.SoldQuantity + updatedStock.AdjustedQuantity,
+                LastUpdated: updatedStock.LastUpdated
+            }
+        });
+
+    } catch (error) {
+        console.error('Update opening quantity error:', error);
+        
+        if (error.status === 400) {
+            return res.status(400).json({
+                success: false,
+                error: error.message
+            });
+        }
+
+        if (error.status === 404) {
+            return res.status(404).json({
+                success: false,
+                error: error.message
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: 'Failed to update stock',
+            message: error.message
+        });
+    }
+};
+
+/**
+ * PART 2: Manual stock adjustment (admin only)
+ * Use case: Damage, spoilage, inventory count correction
+ * 
+ * Request body:
+ * {
+ *   "adjustment": -5,  // Negative to reduce, positive to add
+ *   "reason": "Damaged during delivery"
+ * }
+ */
+exports.manualAdjustStock = async (req, res) => {
+    try {
+        const { stockId } = req.params;
+        const { adjustment, reason } = req.body;
+        const staffId = req.user.id;
+
+        // Validate input
+        if (typeof adjustment !== 'number' || !Number.isInteger(adjustment)) {
+            return res.status(400).json({
+                success: false,
+                error: 'Adjustment quantity must be an integer'
+            });
+        }
+
+        if (!reason || reason.trim().length === 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Reason for adjustment is required'
+            });
+        }
+
+        if (reason.length > 255) {
+            return res.status(400).json({
+                success: false,
+                error: 'Reason must be less than 255 characters'
+            });
+        }
+
+        const updatedStock = await stockService.manualAdjustClosingQuantity(
+            parseInt(stockId),
+            adjustment,
+            reason.trim(),
+            staffId
+        );
+
+        res.json({
+            success: true,
+            message: 'Stock adjustment completed successfully',
+            data: {
+                StockID: updatedStock.StockID,
+                MenuItemID: updatedStock.MenuItemID,
+                StockDate: updatedStock.StockDate,
+                OpeningQuantity: updatedStock.OpeningQuantity,
+                SoldQuantity: updatedStock.SoldQuantity,
+                AdjustedQuantity: updatedStock.AdjustedQuantity,
+                ClosingQuantity: updatedStock.OpeningQuantity - updatedStock.SoldQuantity + updatedStock.AdjustedQuantity,
+                Adjustment: adjustment,
+                Reason: reason,
+                LastUpdated: updatedStock.LastUpdated
+            }
+        });
+
+    } catch (error) {
+        console.error('Manual adjust stock error:', error);
+
+        if (error.status === 400) {
+            return res.status(400).json({
+                success: false,
+                error: error.message
+            });
+        }
+
+        if (error.status === 404) {
+            return res.status(404).json({
+                success: false,
+                error: error.message
+            });
+        }
+
+        res.status(500).json({
+            success: false,
+            error: 'Failed to adjust stock',
+            message: error.message
+        });
+    }
+};
+
+/**
+ * PART 3: Get stock movements (audit trail)
+ * Available to all staff roles
+ */
+exports.getStockMovements = async (req, res) => {
+    try {
+        const { menuItemId, startDate, endDate, changeType } = req.query;
+        const where = {};
+
+        if (menuItemId) where.MenuItemID = parseInt(menuItemId);
+        if (changeType) where.ChangeType = changeType;
+        if (startDate && endDate) {
+            where.StockDate = {
+                [sequelize.Op.between]: [startDate, endDate]
+            };
+        }
+
+        const movements = await StockMovement.findAll({
+            where,
+            include: [{
+                model: MenuItem,
+                as: 'menuItem',
+                attributes: ['MenuItemID', 'Name']
+            }],
+            order: [['CreatedAt', 'DESC']],
+            limit: 100
+        });
+
+        res.json({
+            success: true,
+            message: `Retrieved ${movements.length} stock movements`,
+            data: movements
+        });
+
+    } catch (error) {
+        console.error('Get stock movements error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch stock movements',
+            message: error.message
+        });
+    }
+};
+
+/**
+ * LEGACY: Set opening stock for an item
+ * Kept for backward compatibility, use updateOpeningQuantity instead
+ */
 exports.setOpeningStock = async (req, res) => {
     try {
         const { menuItemId, quantity, stockDate } = req.body;
@@ -48,7 +254,7 @@ exports.setOpeningStock = async (req, res) => {
         if (existingStock) {
             return res.status(400).json({
                 success: false,
-                message: 'Stock record already exists for this date'
+                error: 'Stock record already exists for this date'
             });
         }
 
@@ -82,12 +288,16 @@ exports.setOpeningStock = async (req, res) => {
         console.error('Set opening stock error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to set opening stock'
+            error: 'Failed to set opening stock',
+            message: error.message
         });
     }
 };
 
-// Adjust stock (add or remove)
+/**
+ * LEGACY: Adjust stock (add or remove)
+ * Kept for backward compatibility, use manualAdjustStock instead
+ */
 exports.adjustStock = async (req, res) => {
     const transaction = await sequelize.transaction();
 
@@ -101,7 +311,7 @@ exports.adjustStock = async (req, res) => {
             await transaction.rollback();
             return res.status(404).json({
                 success: false,
-                message: 'Stock record not found'
+                error: 'Stock record not found'
             });
         }
 
@@ -133,51 +343,15 @@ exports.adjustStock = async (req, res) => {
         console.error('Adjust stock error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to adjust stock'
+            error: 'Failed to adjust stock',
+            message: error.message
         });
     }
 };
 
-// Get stock movements (audit trail)
-exports.getStockMovements = async (req, res) => {
-    try {
-        const { menuItemId, startDate, endDate, changeType } = req.query;
-        const where = {};
-
-        if (menuItemId) where.MenuItemID = menuItemId;
-        if (changeType) where.ChangeType = changeType;
-        if (startDate && endDate) {
-            where.StockDate = {
-                [sequelize.Op.between]: [startDate, endDate]
-            };
-        }
-
-        const movements = await StockMovement.findAll({
-            where,
-            include: [{
-                model: MenuItem,
-                as: 'menuItem',
-                attributes: ['MenuItemID', 'Name']
-            }],
-            order: [['CreatedAt', 'DESC']],
-            limit: 100
-        });
-
-        res.json({
-            success: true,
-            data: movements
-        });
-
-    } catch (error) {
-        console.error('Get stock movements error:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to fetch stock movements'
-        });
-    }
-};
-
-// Bulk set opening stock for multiple items
+/**
+ * LEGACY: Bulk set opening stock for multiple items
+ */
 exports.bulkSetOpeningStock = async (req, res) => {
     const transaction = await sequelize.transaction();
 
@@ -234,7 +408,8 @@ exports.bulkSetOpeningStock = async (req, res) => {
         console.error('Bulk set opening stock error:', error);
         res.status(500).json({
             success: false,
-            message: 'Failed to set opening stock'
+            error: 'Failed to set opening stock',
+            message: error.message
         });
     }
 };

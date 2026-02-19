@@ -7,6 +7,13 @@
 const STORAGE_KEY = 'voleena_cart';
 
 /**
+ * Emit cart update event for listeners to react to changes
+ */
+const emitCartUpdate = () => {
+  window.dispatchEvent(new Event('cartUpdated'));
+};
+
+/**
  * Get current cart from localStorage
  * @returns {Array} Cart items array
  */
@@ -27,6 +34,7 @@ export const getCart = () => {
  */
 export const setCart = (items) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  emitCartUpdate();
 };
 
 /**
@@ -111,6 +119,7 @@ export const removeCartItem = (id, type) => {
  */
 export const clearCart = () => {
   localStorage.removeItem(STORAGE_KEY);
+  emitCartUpdate();
 };
 
 /**

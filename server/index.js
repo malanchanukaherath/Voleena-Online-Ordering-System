@@ -8,7 +8,7 @@ require('dotenv').config();
 const sequelize = require('./config/database');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const { sanitizeInput } = require('./middleware/validation');
-// const automatedJobs = require('./services/automatedJobs'); // Temporarily disabled
+const automatedJobs = require('./services/automatedJobs'); // Daily stock creation, order timeout, etc.
 
 // Initialize Express app
 const app = express();
@@ -202,8 +202,8 @@ async function startServer() {
       console.log('✅ Models synchronized');
     }
 
-    // Start automated jobs
-    // automatedJobs.start(); // Temporarily disabled
+    // Start automated jobs (Daily stock creation @ 12:00 AM, etc.)
+    automatedJobs.start();
 
     // Start server
     app.listen(PORT, () => {
@@ -223,14 +223,14 @@ async function startServer() {
 // Graceful shutdown
 process.on('SIGTERM', async () => {
   console.log('SIGTERM received, shutting down gracefully...');
-  // automatedJobs.stop();
+  automatedJobs.stop();
   await sequelize.close();
   process.exit(0);
 });
 
 process.on('SIGINT', async () => {
   console.log('SIGINT received, shutting down gracefully...');
-  // automatedJobs.stop();
+  automatedJobs.stop();
   await sequelize.close();
   process.exit(0);
 });

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { getCart } from '../../utils/cartStorage';
 import {
     FaHome,
     FaUtensils,
@@ -21,6 +22,30 @@ import {
 const Header = () => {
     const { user, isAuthenticated, logout } = useAuth();
     const location = useLocation();
+    const [cartCount, setCartCount] = useState(0);
+
+    // Load cart count on mount and listen for updates
+    useEffect(() => {
+        const updateCartCount = () => {
+            const cart = getCart();
+            const count = cart.reduce((total, item) => total + item.quantity, 0);
+            setCartCount(count);
+        };
+
+        // Initial load
+        updateCartCount();
+
+        // Listen for storage changes (works when user adds items)
+        window.addEventListener('storage', updateCartCount);
+        
+        // Listen for custom cart events
+        window.addEventListener('cartUpdated', updateCartCount);
+
+        return () => {
+            window.removeEventListener('storage', updateCartCount);
+            window.removeEventListener('cartUpdated', updateCartCount);
+        };
+    }, []);
 
     const isActive = (path) => location.pathname === path;
 
@@ -124,9 +149,11 @@ const Header = () => {
                                 className="relative text-gray-700 hover:text-primary-600"
                             >
                                 <FaShoppingCart className="w-6 h-6" />
-                                <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                    0
-                                </span>
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                                        {cartCount}
+                                    </span>
+                                )}
                             </Link>
                         )}
 

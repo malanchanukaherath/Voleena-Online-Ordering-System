@@ -36,6 +36,11 @@ const Cart = () => {
         navigate('/checkout');
     };
 
+    const hasStockIssues = () => {
+        // Check if any items have stock issues (unavailable or out of stock)
+        return cartItems.some(item => !item.isAvailable);
+    };
+
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const deliveryFee = 100.00;
     const tax = subtotal * 0.08; // 8% tax

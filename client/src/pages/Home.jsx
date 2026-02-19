@@ -67,7 +67,7 @@ const Home = () => {
             image: item.image || null
         }, 1);
 
-        toast.success('Added to cart');
+        toast.success(`✓ ${item.name} added to cart!`);
     };
 
     const features = [

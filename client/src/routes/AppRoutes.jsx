@@ -131,6 +131,7 @@ const AppRoutes = () => {
       <Route path="/kitchen/dashboard" element={<ProtectedRoute allowedRoles={['Kitchen', 'Admin']}><KitchenDashboard /></ProtectedRoute>} />
       <Route path="/kitchen" element={<Navigate to="/kitchen/dashboard" replace />} />
       <Route path="/kitchen/orders" element={<ProtectedRoute allowedRoles={['Kitchen', 'Admin']}><KitchenOrders /></ProtectedRoute>} />
+      <Route path="/kitchen/stock" element={<ProtectedRoute allowedRoles={['Kitchen', 'Admin']}><StockManagement /></ProtectedRoute>} />
 
       {/* Delivery Protected Routes */}
       <Route path="/delivery/dashboard" element={<ProtectedRoute allowedRoles={['Delivery', 'Admin']}><DeliveryDashboard /></ProtectedRoute>} />

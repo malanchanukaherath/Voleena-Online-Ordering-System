@@ -381,14 +381,13 @@ const Checkout = () => {
                     {/* Order Summary */}
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-lg shadow p-6 sticky top-24">
-                            <h2 className="text-xl font-semibold || isSubmitting || (formData.orderType === 'DELIVERY' && !distanceInfo?.isValid)}
-                            >
-                                {isSubmitting ? 'Placing Order...' : 'Place Order'}"space-y-3 mb-4">
+                            <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+                            <div className="space-y-3 mb-4">
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Subtotal</span>
                                     <span>LKR {cartSummary.subtotal.toFixed(2)}</span>
                                 </div>
-                                    {formData.orderType === 'DELIVERY' && (
+                                {formData.orderType === 'DELIVERY' && (
                                     <div className="flex justify-between">
                                         <span className="text-gray-600">Delivery Fee</span>
                                         <span>LKR {cartSummary.deliveryFee.toFixed(2)}</span>
@@ -413,9 +412,9 @@ const Checkout = () => {
                                 type="submit"
                                 size="lg"
                                 className="w-full mb-3"
-                                disabled={cartItems.length === 0}
+                                disabled={cartItems.length === 0 || isSubmitting || (formData.orderType === 'DELIVERY' && !distanceInfo?.isValid)}
                             >
-                                Place Order
+                                {isSubmitting ? 'Placing Order...' : 'Place Order'}
                             </Button>
 
                             <Link

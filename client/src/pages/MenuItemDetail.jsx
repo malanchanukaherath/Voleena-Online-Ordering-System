@@ -99,7 +99,7 @@ const MenuItemDetail = () => {
             image: item.image
         }, 1);
 
-        toast.success('Added to cart');
+        toast.success(`✓ ${item.name} added to cart!`);
     };
 
     if (loading) {
