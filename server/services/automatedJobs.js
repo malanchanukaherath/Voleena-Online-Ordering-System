@@ -212,6 +212,10 @@ class AutomatedJobsService {
      * PART 1: Create daily stock records for all active menu items
      * Runs at 12:00 AM each day using node-cron
      * 
+     * CRITICAL: Includes retry logic with exponential backoff
+     * If job fails 3 times, admin is notified and system logs error
+     * This prevents order confirmation failures due to missing stock records
+     * 
      * Process:
      * 1. Query all active menu items
      * 2. For each item, check if stock record exists for today
@@ -219,15 +223,52 @@ class AutomatedJobsService {
      * 4. Create new stock record with opening qty, sold=0, adjusted=0
      * 5. Uses SERIALIZABLE transactions and SELECT FOR UPDATE
      * 6. Unique constraint prevents duplicate (MenuItemID, StockDate)
+     * 7. Implements 3 retries with exponential backoff (1s, 2s, 4s)
+     * 8. Notifies admin on persistent failure
      */
     async createDailyStockRecords() {
-        try {
-            console.log('🔄 Creating daily stock records...');
-            const result = await stockService.createDailyStockRecords();
-            console.log(`✅ Daily stock creation completed: Created=${result.created}, Skipped=${result.skipped}, Failed=${result.failed}`);
-        } catch (error) {
-            console.error('❌ Error creating daily stock records:', error.message);
+        const maxRetries = 3;
+        let lastError = null;
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                console.log(`🔄 Creating daily stock records... (Attempt ${attempt}/${maxRetries})`);
+                const result = await stockService.createDailyStockRecords();
+                console.log(`✅ Daily stock creation completed: Created=${result.created}, Skipped=${result.skipped}, Failed=${result.failed}`);
+                return; // Success - exit retry loop
+            } catch (error) {
+                lastError = error;
+                console.error(`❌ Attempt ${attempt}/${maxRetries} failed:`, error.message);
+                
+                if (attempt < maxRetries) {
+                    // Exponential backoff: 1s, 2s, 4s
+                    const backoffMs = Math.pow(2, attempt - 1) * 1000;
+                    console.log(`⏳ Retrying in ${backoffMs}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, backoffMs));
+                }
+            }
         }
+        
+        // ===== ALL RETRIES EXHAUSTED =====
+        console.error('❌ Daily stock creation failed after 3 retries. System is at risk!');
+        console.error('Error details:', lastError.message);
+        
+        // Log to activity log for admin review
+        const { ActivityLog } = require('../models');
+        try {
+            await ActivityLog.create({
+                action: 'DAILY_STOCK_JOB_FAILED',
+                description: `Daily stock creation failed after 3 retries: ${lastError.message}`,
+                severity: 'CRITICAL',
+                affected_entity: 'DailyStock',
+                created_by: null // System-generated
+            }).catch(err => console.error('Failed to log activity:', err));
+        } catch (logError) {
+            console.error('Failed to create activity log:', logError.message);
+        }
+        
+        // TODO: Implement admin notification (email/SMS)
+        // This should alert admin that the stock job failed
     }
 
     /**

@@ -134,45 +134,47 @@ exports.getMonthlySalesReport = async (req, res) => {
 };
 
 /**
- * Get best-selling items
+ * Get best-selling items with proper parameterized queries
  */
 exports.getBestSellingItems = async (req, res) => {
   try {
     const { limit = 10, startDate, endDate } = req.query;
+    const limitNum = Math.min(parseInt(limit) || 10, 100); // Safety limit
 
-    let whereClause = '';
-    const replacements = [parseInt(limit)];
-
-    if (startDate && endDate) {
-      whereClause = 'WHERE o.CreatedAt BETWEEN ? AND ?';
-      replacements.unshift(startDate, endDate);
-    }
-
-    const [items] = await sequelize.query(`
+    let query = `
       SELECT 
-        mi.MenuItemID,
-        mi.Name,
-        mi.Price,
-        mi.ImageURL,
-        c.Name as CategoryName,
-        SUM(oi.Quantity) as totalSold,
+        m.MenuItemID,
+        m.Name,
+        COUNT(oi.OrderItemID) as totalSold,
+        SUM(oi.Quantity) as totalQuantity,
         SUM(oi.Subtotal) as totalRevenue
-      FROM order_item oi
-      JOIN menu_item mi ON oi.MenuItemID = mi.MenuItemID
-      JOIN category c ON mi.CategoryID = c.CategoryID
-      JOIN \`order\` o ON oi.OrderID = o.OrderID
-      ${whereClause}
-      GROUP BY mi.MenuItemID
-      ORDER BY totalSold DESC
+      FROM MenuItemA m
+      LEFT JOIN OrderItem oi ON m.MenuItemID = oi.MenuItemID
+      LEFT JOIN \`Order\` o ON oi.OrderID = o.OrderID
+    `;
+    
+    const replacements = [];
+    
+    if (startDate && endDate) {
+      query += 'WHERE o.CreatedAt BETWEEN ? AND ? ';
+      replacements.push(startDate, endDate);
+    }
+    
+    query += `
+      GROUP BY m.MenuItemID, m.Name
+      ORDER BY totalQuantity DESC
       LIMIT ?
-    `, {
-      replacements,
+    `;
+    replacements.push(limitNum);
+
+    const [salesData] = await sequelize.query(query, {
+      replacements: replacements,
       type: sequelize.QueryTypes.SELECT
     });
 
     return res.json({
       success: true,
-      data: items
+      data: salesData
     });
   } catch (error) {
     console.error('Best selling items error:', error);
@@ -181,11 +183,12 @@ exports.getBestSellingItems = async (req, res) => {
 };
 
 /**
- * Create staff account
+ * Create staff account with role restrictions
  */
 exports.createStaff = async (req, res) => {
   try {
     const { name, email, phone, roleId, password } = req.body;
+    const adminRoleId = req.user.RoleID; // Get requesting user's role
 
     // Validation
     if (!name || !email || !phone || !roleId || !password) {
@@ -196,9 +199,28 @@ exports.createStaff = async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 8 characters' });
     }
 
-    // Check if email exists
-    const existingStaff = await Staff.findOne({ where: { Email: email.toLowerCase() } });
-    const existingCustomer = await Customer.findOne({ where: { Email: email.toLowerCase() } });
+    // CRITICAL: Only Owner/Super Admin can create Admin accounts
+    const roleRow = await Role.findByPk(roleId);
+    if (!roleRow) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
+    // Prevent creating roles higher than self
+    if (roleRow.RoleName === 'Admin') {
+      const adminRole = await Role.findOne({ where: { RoleName: 'Admin' } });
+      const myRole = await Role.findByPk(adminRoleId);
+      
+      // Only allow if requesting user is also Admin (for now, can enhance with role hierarchy)
+      if (!myRole || myRole.RoleName !== 'Admin') {
+        return res.status(403).json({ error: 'Only Admin can create other Admins' });
+      }
+    }
+
+    // Check if email exists in BOTH Staff and Customer
+    const [existingStaff, existingCustomer] = await Promise.all([
+      Staff.findOne({ where: { Email: email.toLowerCase() } }),
+      Customer.findOne({ where: { Email: email.toLowerCase() } })
+    ]);
 
     if (existingStaff || existingCustomer) {
       return res.status(409).json({ error: 'Email already exists' });
@@ -226,12 +248,13 @@ exports.createStaff = async (req, res) => {
 };
 
 /**
- * Update staff account
+ * Update staff account - CRITICAL: Prevent self-promotion to Admin
  */
 exports.updateStaff = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, phone, roleId, isActive } = req.body;
+    const requestingUserId = req.user.ID;
 
     const staff = await Staff.findByPk(id);
 
@@ -239,12 +262,26 @@ exports.updateStaff = async (req, res) => {
       return res.status(404).json({ error: 'Staff not found' });
     }
 
-    // Check if email is being changed and if it exists
+    // CRITICAL: Prevent staff from changing their own role
+    if (parseInt(id) === requestingUserId && roleId && roleId !== staff.RoleID) {
+      return res.status(403).json({ error: 'You cannot change your own role. Contact your administrator.' });
+    }
+
+    // CRITICAL: Prevent staff from promoting themselves to Admin
+    if (parseInt(id) === requestingUserId && roleId) {
+      const newRole = await Role.findByPk(roleId);
+      if (newRole && newRole.RoleName === 'Admin') {
+        return res.status(403).json({ error: 'Privilege escalation prevented. Admin role cannot be self-assigned.' });
+      }
+    }
+
+    // Check if email is being changed and validate uniqueness in BOTH tables
     if (email && email.toLowerCase() !== staff.Email) {
-      const existingStaff = await Staff.findOne({ 
-        where: { Email: email.toLowerCase() } 
-      });
-      if (existingStaff) {
+      const [existingStaff, existingCustomer] = await Promise.all([
+        Staff.findOne({ where: { Email: email.toLowerCase() } }),
+        Customer.findOne({ where: { Email: email.toLowerCase() } })
+      ]);
+      if (existingStaff || existingCustomer) {
         return res.status(409).json({ error: 'Email already exists' });
       }
     }

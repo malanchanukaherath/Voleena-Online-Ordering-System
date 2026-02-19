@@ -36,7 +36,8 @@ const validateStock = async (items, orderDate) => {
     }
 };
 
-// Deduct stock on order confirmation
+// Deduct stock on order confirmation with SELECT FOR UPDATE (row-level locking)
+// CRITICAL: Uses SELECT FOR UPDATE to prevent race conditions on concurrent orders
 const deductStock = async (orderId, transaction) => {
     const orderItems = await OrderItem.findAll({
         where: { OrderID: orderId },
@@ -47,29 +48,39 @@ const deductStock = async (orderId, transaction) => {
 
     for (const item of orderItems) {
         if (item.MenuItemID) {
+            // CRITICAL: Use SELECT FOR UPDATE to lock the stock row
+            // This prevents concurrent orders from overselling the same item
             const stock = await DailyStock.findOne({
                 where: {
                     MenuItemID: item.MenuItemID,
                     StockDate: today
                 },
+                lock: transaction.LOCK.UPDATE, // Row-level lock
                 transaction
             });
 
-            if (stock) {
-                stock.SoldQuantity += item.Quantity;
-                await stock.save({ transaction });
-
-                // Log stock movement
-                await StockMovement.create({
-                    MenuItemID: item.MenuItemID,
-                    StockDate: today,
-                    ChangeType: 'SALE',
-                    QuantityChange: -item.Quantity,
-                    ReferenceID: orderId,
-                    ReferenceType: 'ORDER',
-                    Notes: `Order #${orderId}`
-                }, { transaction });
+            if (!stock) {
+                throw new Error(`Stock record not found for item ${item.MenuItemID} on ${today}`);
             }
+
+            const availableQty = stock.OpeningQuantity - stock.SoldQuantity + stock.AdjustedQuantity;
+            if (availableQty < item.Quantity) {
+                throw new Error(`Insufficient stock for item ${item.MenuItemID}. Available: ${availableQty}, Requested: ${item.Quantity}`);
+            }
+
+            stock.SoldQuantity += item.Quantity;
+            await stock.save({ transaction });
+
+            // Log stock movement
+            await StockMovement.create({
+                MenuItemID: item.MenuItemID,
+                StockDate: today,
+                ChangeType: 'SALE',
+                QuantityChange: -item.Quantity,
+                ReferenceID: orderId,
+                ReferenceType: 'ORDER',
+                Notes: `Order #${orderId}`
+            }, { transaction });
         }
     }
 };
@@ -350,13 +361,22 @@ exports.getOrderById = async (req, res) => {
 };
 
 // Confirm order (Admin/Cashier only)
+// CRITICAL: Uses SERIALIZABLE isolation level to prevent race conditions
 exports.confirmOrder = async (req, res) => {
-    const transaction = await sequelize.transaction();
+    const { Transaction } = require('sequelize');
+    const transaction = await sequelize.transaction({
+        isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE
+    });
 
     try {
         const { id } = req.params;
 
-        const order = await Order.findByPk(id, { transaction });
+        // Lock order row to prevent concurrent modifications
+        const order = await Order.findByPk(id, {
+            lock: transaction.LOCK.UPDATE,
+            transaction
+        });
+        
         if (!order) {
             await transaction.rollback();
             return res.status(404).json({
@@ -373,15 +393,17 @@ exports.confirmOrder = async (req, res) => {
             });
         }
 
-        // Deduct stock
+        // Deduct stock - this will lock stock rows with SELECT FOR UPDATE
+        // If any stock is insufficient, transaction rolls back automatically
         await deductStock(id, transaction);
 
-        // Update order status
+        // Update order status only after stock deduction succeeds
         order.Status = 'CONFIRMED';
         order.ConfirmedAt = new Date();
         order.ConfirmedBy = req.user.id;
         await order.save({ transaction });
 
+        // Commit only when order AND stock changes are successful
         await transaction.commit();
 
         res.json({
@@ -393,7 +415,7 @@ exports.confirmOrder = async (req, res) => {
     } catch (error) {
         await transaction.rollback();
         console.error('Confirm order error:', error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
             message: error.message || 'Failed to confirm order'
         });
@@ -458,22 +480,56 @@ exports.updateOrderStatus = async (req, res) => {
     }
 };
 
-// Cancel order
+// Cancel order - ATOMIC transaction with stock restoration
+// CRITICAL: Must restore stock before changing order status
 exports.cancelOrder = async (req, res) => {
+    const { Transaction } = require('sequelize');
+    const transaction = await sequelize.transaction({
+        isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE
+    });
+
     try {
         const { id } = req.params;
         const { reason } = req.body;
 
-        const order = await Order.findByPk(id);
+        // ===== INPUT VALIDATION =====
+        // Validate cancellation reason (10-255 chars)
+        if (reason && typeof reason === 'string') {
+            const trimmedReason = reason.trim();
+            if (trimmedReason.length > 0) {
+                if (trimmedReason.length < 10 || trimmedReason.length > 255) {
+                    await transaction.rollback();
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Cancellation reason must be 10-255 characters'
+                    });
+                }
+            }
+        }
+
+        // ===== FETCH ORDER WITH LOCK =====
+        // Lock the order row to prevent concurrent cancellations
+        const order = await Order.findByPk(id, {
+            lock: transaction.LOCK.UPDATE,
+            transaction,
+            include: [
+                { model: OrderItem, as: 'items' },
+                { model: Payment }
+            ]
+        });
+
         if (!order) {
+            await transaction.rollback();
             return res.status(404).json({
                 success: false,
                 message: 'Order not found'
             });
         }
 
+        // ===== AUTHORIZATION CHECKS =====
         if (req.user.type === 'Customer') {
             if (order.CustomerID !== req.user.id) {
+                await transaction.rollback();
                 return res.status(403).json({
                     success: false,
                     message: 'Access denied'
@@ -481,29 +537,75 @@ exports.cancelOrder = async (req, res) => {
             }
 
             if (!['PENDING', 'CONFIRMED'].includes(order.Status)) {
+                await transaction.rollback();
                 return res.status(400).json({
                     success: false,
                     message: 'Order cannot be cancelled at this stage'
                 });
             }
-        }
-
-        if (req.user.type === 'Staff') {
+        } else if (req.user.type === 'Staff') {
             const staffRole = req.user.role;
             const isAdmin = staffRole === 'Admin';
             const allowedStatuses = isAdmin ? ['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY'] : ['PENDING', 'CONFIRMED'];
 
             if (!allowedStatuses.includes(order.Status)) {
+                await transaction.rollback();
                 return res.status(400).json({
                     success: false,
-                    message: 'Order cannot be cancelled at this stage'
+                    message: `Order with status ${order.Status} cannot be cancelled`
                 });
             }
         }
 
+        // ===== RESTORE STOCK (if order was confirmed) =====
+        if (order.Status === 'CONFIRMED' && order.items && order.items.length > 0) {
+            const today = new Date().toISOString().split('T')[0];
+
+            for (const item of order.items) {
+                // Lock the stock row for update
+                const stock = await DailyStock.findOne({
+                    where: {
+                        MenuItemID: item.MenuItemID,
+                        StockDate: today
+                    },
+                    lock: transaction.LOCK.UPDATE,
+                    transaction
+                });
+
+                if (!stock) {
+                    throw new Error(`Stock record not found for item ${item.MenuItemID}. Cannot restore stock.`);
+                }
+
+                // Return the sold quantity
+                stock.SoldQuantity = Math.max(0, stock.SoldQuantity - item.Quantity);
+                await stock.save({ transaction });
+
+                // Log stock movement
+                await StockMovement.create({
+                    MenuItemID: item.MenuItemID,
+                    StockDate: today,
+                    ChangeType: 'RETURN',
+                    QuantityChange: item.Quantity,
+                    ReferenceID: id,
+                    ReferenceType: 'ORDER',
+                    Notes: `Order #${id} cancelled - stock returned`
+                }, { transaction });
+            }
+        }
+
+        // ===== HANDLE REFUND (if payment was made) =====
+        const payment = order.Payment ? order.Payment[0] : null;
+        if (payment && payment.Status === 'PAID') {
+            // Just mark payment as refunded, don't actually process refund here
+            // (Real refund processing would happen through payment gateway)
+            payment.Status = 'REFUNDED';
+            await payment.save({ transaction });
+        }
+
+        // ===== UPDATE ORDER STATUS (only after stock restoration succeeds) =====
         order.Status = 'CANCELLED';
         order.CancelledAt = new Date();
-        order.CancellationReason = reason;
+        order.CancellationReason = reason || 'Not specified';
         if (req.user.type === 'Customer') {
             order.CancelledBy = 'CUSTOMER';
         } else if (req.user.role === 'Cashier') {
@@ -511,19 +613,25 @@ exports.cancelOrder = async (req, res) => {
         } else {
             order.CancelledBy = 'ADMIN';
         }
-        await order.save();
+        await order.save({ transaction });
+
+        // ===== COMMIT TRANSACTION =====
+        // Only commits if EVERYTHING succeeded
+        await transaction.commit();
 
         res.json({
             success: true,
-            message: 'Order cancelled successfully',
+            message: 'Order cancelled successfully, stock restored',
             data: order
         });
 
     } catch (error) {
+        // Rollback entire transaction on any error
+        await transaction.rollback();
         console.error('Cancel order error:', error);
-        res.status(500).json({
+        res.status(400).json({
             success: false,
-            message: 'Failed to cancel order'
+            message: error.message || 'Failed to cancel order. Please try again.'
         });
     }
 };

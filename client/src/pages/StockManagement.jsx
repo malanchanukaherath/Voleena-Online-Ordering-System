@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaRefresh, FaExclamationTriangle } from 'react-icons/fa';
+import { FaSyncAlt, FaExclamationTriangle } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
 import Button from '../components/ui/Button';
@@ -111,7 +111,7 @@ const StockManagement = () => {
                     </p>
                 </div>
                 <Button onClick={fetchStock} variant="outline">
-                    <FaRefresh className="inline mr-2" /> Refresh
+                    <FaSyncAlt className="inline mr-2" /> Refresh
                 </Button>
             </div>
 

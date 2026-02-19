@@ -99,10 +99,53 @@ const passwordResetLimiter = rateLimit({
     }) : undefined
 });
 
+/**
+ * Payment endpoint rate limiter
+ * Prevents abuse of payment initiation and webhook endpoints
+ */
+const paymentLimiter = rateLimit({
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    max: 20, // 20 payment requests per 10 minutes
+    message: {
+        success: false,
+        error: 'Too many payment requests, please slow down'
+    },
+    skip: (req) => {
+        // Skip limiting for webhook endpoints (public safety)
+        if (req.path.includes('webhook')) {
+            return true;
+        }
+        return false;
+    },
+    store: redisClient ? new RedisStore({
+        client: redisClient,
+        prefix: 'rl:payment:'
+    }) : undefined
+});
+
+/**
+ * Order confirmation endpoint rate limiter
+ * Prevents rapid confirmation attempts that could cause race conditions
+ */
+const confirmOrderLimiter = rateLimit({
+    windowMs: 5 * 60 * 1000, // 5 minutes
+    max: 15, // 15 confirmations per 5 minutes
+    message: {
+        success: false,
+        error: 'Too many confirmation attempts, please slow down'
+    },
+    store: redisClient ? new RedisStore({
+        client: redisClient,
+        prefix: 'rl:confirm:'
+    }) : undefined
+});
+
 module.exports = {
     apiLimiter,
     authLimiter,
     otpLimiter,
     orderLimiter,
+    paymentLimiter,
+    confirmOrderLimiter,
     passwordResetLimiter
 };

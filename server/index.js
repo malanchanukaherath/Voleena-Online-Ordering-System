@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
+const csrf = require('csurf');
 require('dotenv').config();
 
 const sequelize = require('./config/database');
@@ -23,7 +24,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
+      styleSrc: ["'self'"],
       scriptSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "https:"],
     },
@@ -35,13 +36,17 @@ app.use(helmet({
   }
 }));
 
-// CORS configuration
+// CORS configuration - CRITICAL: Require explicit FRONTEND_URL
+if (!process.env.FRONTEND_URL || process.env.FRONTEND_URL === '*') {
+  throw new Error('CRITICAL: FRONTEND_URL must be explicitly set in .env (CORS cannot be wildcard)');
+}
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL,
   credentials: true,
   optionsSuccessStatus: 200,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
 };
 app.use(cors(corsOptions));
 

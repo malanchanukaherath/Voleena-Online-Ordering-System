@@ -102,6 +102,35 @@ exports.payHereWebhook = async (req, res) => {
       });
     }
 
+    // ===== CRITICAL: Validate payment amount matches order total =====
+    const paymentAmount = parseFloat(payload.payhere_amount);
+    const expectedAmount = parseFloat(order.FinalAmount);
+    
+    if (Math.abs(paymentAmount - expectedAmount) > 0.01) {
+      console.error(`❌ Amount mismatch: Payment ₹${paymentAmount} vs Order ₹${expectedAmount}`);
+      return res.status(400).json({ 
+        error: 'Payment amount does not match order total. Fraud detected.' 
+      });
+    }
+
+    // ===== CRITICAL: Check for duplicate transaction ID =====
+    const existingTransaction = await Payment.findOne({
+      where: { TransactionID: payload.payment_id }
+    });
+    if (existingTransaction) {
+      console.warn(`⚠️ Duplicate transaction ID detected: ${payload.payment_id}`);
+      return res.status(400).json({ 
+        error: 'Duplicate payment transaction detected.' 
+      });
+    }
+
+    // ===== CRITICAL: Check order is not already cancelled =====
+    if (order.Status === 'CANCELLED') {
+      return res.status(400).json({ 
+        error: 'Cannot process payment for cancelled order.' 
+      });
+    }
+
     const isPaid = payload.status_code === PAYHERE_SUCCESS;
     const isPending = payload.status_code === PAYHERE_PENDING;
 
