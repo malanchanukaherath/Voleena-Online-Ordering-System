@@ -57,14 +57,6 @@ module.exports = (sequelize) => {
                 key: 'StaffID'
             },
             field: 'created_by'
-        },
-        CreatedAt: {
-            type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW
-        },
-        UpdatedAt: {
-            type: DataTypes.DATE,
-            defaultValue: DataTypes.NOW
         }
     }, {
         tableName: 'menu_item',

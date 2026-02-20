@@ -6,46 +6,46 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'MovementID'
+            field: 'movement_id'
         },
         MenuItemID: {
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'Menu_Item',
+                model: 'MenuItem',
                 key: 'MenuItemID'
             },
-            field: 'MenuItemID'
+            field: 'menu_item_id'
         },
         StockDate: {
             type: DataTypes.DATEONLY,
             allowNull: false,
-            field: 'StockDate'
+            field: 'stock_date'
         },
         ChangeType: {
             type: DataTypes.ENUM('OPENING', 'SALE', 'ADJUSTMENT', 'RETURN'),
             allowNull: false,
-            field: 'ChangeType'
+            field: 'change_type'
         },
         QuantityChange: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            field: 'QuantityChange'
+            field: 'quantity_change'
         },
         ReferenceID: {
             type: DataTypes.INTEGER,
             allowNull: true,
-            field: 'ReferenceID'
+            field: 'reference_id'
         },
         ReferenceType: {
             type: DataTypes.ENUM('ORDER', 'MANUAL', 'SYSTEM'),
             allowNull: true,
-            field: 'ReferenceType'
+            field: 'reference_type'
         },
         Notes: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            field: 'Notes'
+            field: 'notes'
         },
         CreatedBy: {
             type: DataTypes.INTEGER,
@@ -54,12 +54,12 @@ module.exports = (sequelize) => {
                 model: 'Staff',
                 key: 'StaffID'
             },
-            field: 'CreatedBy'
+            field: 'created_by'
         }
     }, {
-        tableName: 'Stock_Movement',
+        tableName: 'stock_movement',
         timestamps: true,
-        createdAt: 'CreatedAt',
+        createdAt: 'created_at',
         updatedAt: false
     });
 

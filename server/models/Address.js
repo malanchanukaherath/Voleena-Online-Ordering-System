@@ -6,7 +6,7 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'AddressID'
+            field: 'address_id'
         },
         CustomerID: {
             type: DataTypes.INTEGER,
@@ -15,48 +15,54 @@ module.exports = (sequelize) => {
                 model: 'Customer',
                 key: 'CustomerID'
             },
-            field: 'CustomerID'
+            field: 'customer_id'
         },
         AddressLine1: {
             type: DataTypes.STRING(255),
             allowNull: false,
-            field: 'AddressLine1'
+            field: 'address_line1'
         },
         AddressLine2: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            field: 'AddressLine2'
+            field: 'address_line2'
         },
         City: {
             type: DataTypes.STRING(100),
             allowNull: false,
-            field: 'City'
+            field: 'city'
         },
         PostalCode: {
             type: DataTypes.STRING(10),
             allowNull: true,
-            field: 'PostalCode'
+            field: 'postal_code'
         },
         District: {
             type: DataTypes.STRING(100),
             allowNull: true,
-            field: 'District'
+            field: 'district'
         },
         Latitude: {
             type: DataTypes.DECIMAL(10, 8),
             allowNull: true,
-            field: 'Latitude'
+            field: 'latitude'
         },
         Longitude: {
             type: DataTypes.DECIMAL(11, 8),
             allowNull: true,
-            field: 'Longitude'
+            field: 'longitude'
+        },
+        IsDefault: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+            field: 'is_default'
         }
     }, {
-        tableName: 'Address',
+        tableName: 'address',
         timestamps: true,
-        createdAt: 'CreatedAt',
-        updatedAt: 'UpdatedAt'
+        createdAt: 'created_at',
+        updatedAt: 'updated_at'
     });
 
     Address.associate = (models) => {

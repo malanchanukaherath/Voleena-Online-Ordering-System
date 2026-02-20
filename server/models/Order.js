@@ -6,13 +6,13 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'OrderID'
+            field: 'order_id'
         },
         OrderNumber: {
             type: DataTypes.STRING(20),
             allowNull: false,
             unique: true,
-            field: 'OrderNumber'
+            field: 'order_number'
         },
         CustomerID: {
             type: DataTypes.INTEGER,
@@ -21,7 +21,7 @@ module.exports = (sequelize) => {
                 model: 'Customer',
                 key: 'CustomerID'
             },
-            field: 'CustomerID'
+            field: 'customer_id'
         },
         TotalAmount: {
             type: DataTypes.DECIMAL(10, 2),
@@ -29,7 +29,7 @@ module.exports = (sequelize) => {
             validate: {
                 min: 0
             },
-            field: 'TotalAmount'
+            field: 'total_amount'
         },
         PromotionID: {
             type: DataTypes.INTEGER,
@@ -38,69 +38,74 @@ module.exports = (sequelize) => {
                 model: 'Promotion',
                 key: 'PromotionID'
             },
-            field: 'PromotionID'
+            field: 'promotion_id'
         },
         DiscountAmount: {
             type: DataTypes.DECIMAL(10, 2),
             defaultValue: 0,
-            field: 'DiscountAmount'
+            field: 'discount_amount'
+        },
+        DeliveryFee: {
+            type: DataTypes.DECIMAL(10, 2),
+            defaultValue: 0,
+            field: 'delivery_fee'
         },
         FinalAmount: {
             type: DataTypes.VIRTUAL,
             get() {
-                return Math.max(this.TotalAmount - this.DiscountAmount, 0);
+                return Math.max((this.TotalAmount - this.DiscountAmount) + (this.DeliveryFee || 0), 0);
             }
         },
         Status: {
             type: DataTypes.ENUM('PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'),
             allowNull: false,
             defaultValue: 'PENDING',
-            field: 'Status'
+            field: 'status'
         },
         OrderType: {
             type: DataTypes.ENUM('DELIVERY', 'TAKEAWAY'),
             allowNull: false,
-            field: 'OrderType'
+            field: 'order_type'
         },
         SpecialInstructions: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'SpecialInstructions'
+            field: 'special_instructions'
         },
         CancellationReason: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'CancellationReason'
+            field: 'cancellation_reason'
         },
         CancelledBy: {
             type: DataTypes.ENUM('CUSTOMER', 'ADMIN', 'CASHIER', 'SYSTEM'),
             allowNull: true,
-            field: 'CancelledBy'
+            field: 'cancelled_by'
         },
         ConfirmedAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'ConfirmedAt'
+            field: 'confirmed_at'
         },
         PreparingAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'PreparingAt'
+            field: 'preparing_at'
         },
         ReadyAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'ReadyAt'
+            field: 'ready_at'
         },
         CompletedAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'CompletedAt'
+            field: 'completed_at'
         },
         CancelledAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'CancelledAt'
+            field: 'cancelled_at'
         },
         ConfirmedBy: {
             type: DataTypes.INTEGER,
@@ -109,13 +114,22 @@ module.exports = (sequelize) => {
                 model: 'Staff',
                 key: 'StaffID'
             },
-            field: 'ConfirmedBy'
+            field: 'confirmed_by'
+        },
+        UpdatedBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'Staff',
+                key: 'StaffID'
+            },
+            field: 'updated_by'
         }
     }, {
-        tableName: 'Order',
+        tableName: 'order',
         timestamps: true,
-        createdAt: 'CreatedAt',
-        updatedAt: 'UpdatedAt'
+        createdAt: 'created_at',
+        updatedAt: 'updated_at'
     });
 
     Order.associate = (models) => {

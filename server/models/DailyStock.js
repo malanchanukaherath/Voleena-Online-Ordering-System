@@ -6,21 +6,21 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'StockID'
+            field: 'stock_id'
         },
         MenuItemID: {
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'Menu_Item',
+                model: 'MenuItem',
                 key: 'MenuItemID'
             },
-            field: 'MenuItemID'
+            field: 'menu_item_id'
         },
         StockDate: {
             type: DataTypes.DATEONLY,
             allowNull: false,
-            field: 'StockDate'
+            field: 'stock_date'
         },
         OpeningQuantity: {
             type: DataTypes.INTEGER,
@@ -29,7 +29,7 @@ module.exports = (sequelize) => {
             validate: {
                 min: 0
             },
-            field: 'OpeningQuantity'
+            field: 'opening_quantity'
         },
         SoldQuantity: {
             type: DataTypes.INTEGER,
@@ -38,19 +38,25 @@ module.exports = (sequelize) => {
             validate: {
                 min: 0
             },
-            field: 'SoldQuantity'
+            field: 'sold_quantity'
         },
         AdjustedQuantity: {
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 0,
-            field: 'AdjustedQuantity'
+            field: 'adjusted_quantity'
         },
         ClosingQuantity: {
             type: DataTypes.VIRTUAL,
             get() {
                 return this.OpeningQuantity - this.SoldQuantity + this.AdjustedQuantity;
             }
+        },
+        Version: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            defaultValue: 0,
+            field: 'version'
         },
         UpdatedBy: {
             type: DataTypes.INTEGER,
@@ -59,13 +65,16 @@ module.exports = (sequelize) => {
                 model: 'Staff',
                 key: 'StaffID'
             },
-            field: 'UpdatedBy'
+            field: 'updated_by'
+        },
+        LastUpdated: {
+            type: DataTypes.DATE,
+            defaultValue: DataTypes.NOW,
+            field: 'last_updated'
         }
     }, {
-        tableName: 'Daily_Stock',
-        timestamps: true,
-        createdAt: false,
-        updatedAt: 'LastUpdated',
+        tableName: 'daily_stock',
+        timestamps: false,
         indexes: [
             {
                 unique: true,

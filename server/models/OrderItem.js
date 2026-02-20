@@ -6,7 +6,7 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'OrderItemID'
+            field: 'order_item_id'
         },
         OrderID: {
             type: DataTypes.INTEGER,
@@ -15,16 +15,16 @@ module.exports = (sequelize) => {
                 model: 'Order',
                 key: 'OrderID'
             },
-            field: 'OrderID'
+            field: 'order_id'
         },
         MenuItemID: {
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-                model: 'Menu_Item',
+                model: 'MenuItem',
                 key: 'MenuItemID'
             },
-            field: 'MenuItemID'
+            field: 'menu_item_id'
         },
         ComboID: {
             type: DataTypes.INTEGER,
@@ -33,7 +33,7 @@ module.exports = (sequelize) => {
                 model: 'ComboPack',
                 key: 'ComboID'
             },
-            field: 'ComboID'
+            field: 'combo_id'
         },
         Quantity: {
             type: DataTypes.INTEGER,
@@ -41,7 +41,7 @@ module.exports = (sequelize) => {
             validate: {
                 min: 1
             },
-            field: 'Quantity'
+            field: 'quantity'
         },
         UnitPrice: {
             type: DataTypes.DECIMAL(10, 2),
@@ -49,7 +49,7 @@ module.exports = (sequelize) => {
             validate: {
                 min: 0
             },
-            field: 'UnitPrice'
+            field: 'unit_price'
         },
         Subtotal: {
             type: DataTypes.VIRTUAL,
@@ -60,10 +60,10 @@ module.exports = (sequelize) => {
         ItemNotes: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            field: 'ItemNotes'
+            field: 'item_notes'
         }
     }, {
-        tableName: 'Order_Item',
+        tableName: 'order_item',
         timestamps: false,
         validate: {
             eitherMenuItemOrCombo() {

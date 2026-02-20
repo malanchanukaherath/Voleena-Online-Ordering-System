@@ -6,7 +6,7 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'FeedbackID'
+            field: 'feedback_id'
         },
         Rating: {
             type: DataTypes.INTEGER,
@@ -15,12 +15,12 @@ module.exports = (sequelize) => {
                 min: 1,
                 max: 5
             },
-            field: 'Rating'
+            field: 'rating'
         },
         Comment: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'Comment'
+            field: 'comment'
         },
         CustomerID: {
             type: DataTypes.INTEGER,
@@ -29,7 +29,7 @@ module.exports = (sequelize) => {
                 model: 'Customer',
                 key: 'CustomerID'
             },
-            field: 'CustomerID'
+            field: 'customer_id'
         },
         OrderID: {
             type: DataTypes.INTEGER,
@@ -38,22 +38,22 @@ module.exports = (sequelize) => {
                 model: 'Order',
                 key: 'OrderID'
             },
-            field: 'OrderID'
+            field: 'order_id'
         },
         FeedbackType: {
             type: DataTypes.ENUM('ORDER', 'DELIVERY', 'GENERAL'),
             defaultValue: 'ORDER',
-            field: 'FeedbackType'
+            field: 'feedback_type'
         },
         AdminResponse: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'AdminResponse'
+            field: 'admin_response'
         },
         RespondedAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'RespondedAt'
+            field: 'responded_at'
         },
         RespondedBy: {
             type: DataTypes.INTEGER,
@@ -62,12 +62,12 @@ module.exports = (sequelize) => {
                 model: 'Staff',
                 key: 'StaffID'
             },
-            field: 'RespondedBy'
+            field: 'responded_by'
         }
     }, {
-        tableName: 'Feedback',
+        tableName: 'feedback',
         timestamps: true,
-        createdAt: 'CreatedAt',
+        createdAt: 'created_at',
         updatedAt: false
     });
 

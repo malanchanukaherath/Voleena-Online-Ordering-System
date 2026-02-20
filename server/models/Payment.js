@@ -6,7 +6,7 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'PaymentID'
+            field: 'payment_id'
         },
         OrderID: {
             type: DataTypes.INTEGER,
@@ -15,7 +15,7 @@ module.exports = (sequelize) => {
                 model: 'Order',
                 key: 'OrderID'
             },
-            field: 'OrderID'
+            field: 'order_id'
         },
         Amount: {
             type: DataTypes.DECIMAL(10, 2),
@@ -23,50 +23,50 @@ module.exports = (sequelize) => {
             validate: {
                 min: 0
             },
-            field: 'Amount'
+            field: 'amount'
         },
         Method: {
             type: DataTypes.ENUM('CASH', 'CARD', 'ONLINE', 'WALLET'),
             allowNull: false,
-            field: 'Method'
+            field: 'method'
         },
         Status: {
             type: DataTypes.ENUM('PENDING', 'PAID', 'FAILED', 'REFUNDED'),
             allowNull: false,
             defaultValue: 'PENDING',
-            field: 'Status'
+            field: 'status'
         },
         TransactionID: {
             type: DataTypes.STRING(100),
             allowNull: true,
             unique: true,
-            field: 'TransactionID'
+            field: 'transaction_id'
         },
-        PaymentGatewayResponse: {
-            type: DataTypes.TEXT,
+        GatewayStatus: {
+            type: DataTypes.STRING(50),
             allowNull: true,
-            field: 'PaymentGatewayResponse'
+            field: 'gateway_status'
         },
         PaidAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'PaidAt'
+            field: 'paid_at'
         },
         RefundedAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'RefundedAt'
+            field: 'refunded_at'
         },
         RefundReason: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'RefundReason'
+            field: 'refund_reason'
         }
     }, {
-        tableName: 'Payment',
+        tableName: 'payment',
         timestamps: true,
-        createdAt: 'CreatedAt',
-        updatedAt: 'UpdatedAt'
+        createdAt: 'created_at',
+        updatedAt: 'updated_at'
     });
 
     Payment.associate = (models) => {
