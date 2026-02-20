@@ -144,21 +144,32 @@ exports.customerLogin = async (req, res) => {
 };
 
 /**
- * Refresh Token - extends session by another 30 minutes
+ * Refresh Token - extends session by another 30 minutes AND issues new refresh token
+ * CRITICAL: Implements token rotation to prevent token sliding attacks
  */
 exports.refreshToken = async (req, res) => {
   try {
     const authHeader = req.headers.authorization || '';
-    const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    const refreshTokenHeader = req.headers['x-refresh-token'] || '';
+    
+    // Get access token from Authorization header
+    const accessToken = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+    
+    // Get refresh token from header or body
+    const refreshToken = refreshTokenHeader || req.body?.refreshToken;
 
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+    if (!accessToken || !refreshToken) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Access token and refresh token are required' 
+      });
     }
 
     try {
-      const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: false });
+      // Verify refresh token
+      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || JWT_SECRET);
       
-      // Generate new token with same payload but fresh expiry
+      // Generate NEW access token with fresh expiry
       const newPayload = {
         id: decoded.id,
         name: decoded.name,
@@ -169,33 +180,92 @@ exports.refreshToken = async (req, res) => {
         permissions: decoded.permissions
       };
 
-      const newToken = generateToken(newPayload);
+      const newAccessToken = generateToken(newPayload);
+      
+      // CRITICAL: Generate NEW refresh token (token rotation)
+      const { generateRefreshToken } = require('../utils/jwtUtils');
+      const newRefreshToken = generateRefreshToken(newPayload);
 
       return res.json({
         success: true,
-        token: newToken,
+        token: newAccessToken,
+        refreshToken: newRefreshToken,
         user: newPayload,
-        expiresIn: 1800
+        expiresIn: 1800 // 30 minutes
       });
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
-        return res.status(401).json({ error: 'Token expired. Please login again' });
+        return res.status(401).json({ 
+          success: false,
+          error: 'Refresh token expired. Please login again' 
+        });
       }
-      return res.status(401).json({ error: 'Invalid token' });
+      return res.status(401).json({ 
+        success: false,
+        error: 'Invalid refresh token' 
+      });
     }
   } catch (error) {
     console.error('Token refresh error:', error);
-    return res.status(500).json({ error: 'Token refresh failed' });
+    return res.status(500).json({ 
+      success: false,
+      error: 'Token refresh failed' 
+    });
   }
 };
 
 /**
- * Logout - client-side token removal
+ * Logout - Server-side token blacklisting
+ * CRITICAL: Blacklists the token to prevent reuse after logout
  */
 exports.logout = async (req, res) => {
-  // Token invalidation happens on client side
-  // Could implement token blacklist here if needed
-  return res.json({ success: true, message: 'Logged out successfully' });
+  try {
+    const authHeader = req.headers.authorization || '';
+    const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+
+    if (!token) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'No token provided' 
+      });
+    }
+
+    // Blacklist the token
+    const { TokenBlacklist } = require('../models');
+    const { hashToken } = require('../utils/jwtUtils');
+    
+    const tokenHash = hashToken(token);
+    const decoded = jwt.decode(token);
+
+    if (!decoded || !decoded.exp) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Invalid token' 
+      });
+    }
+
+    const expiresAt = new Date(decoded.exp * 1000);
+
+    // Add token to blacklist
+    await TokenBlacklist.create({
+      token_hash: tokenHash,
+      user_type: decoded.type,
+      user_id: decoded.id,
+      expires_at: expiresAt,
+      reason: 'LOGOUT'
+    });
+
+    return res.json({ 
+      success: true, 
+      message: 'Logged out successfully' 
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    return res.status(500).json({ 
+      success: false,
+      error: 'Logout failed' 
+    });
+  }
 };
 
 /**

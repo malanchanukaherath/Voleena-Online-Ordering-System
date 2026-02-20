@@ -9,6 +9,7 @@ require('dotenv').config();
 const sequelize = require('./config/database');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const { sanitizeInput } = require('./middleware/validation');
+const auditLogMiddleware = require('./middleware/auditLog');
 const automatedJobs = require('./services/automatedJobs'); // Daily stock creation, order timeout, etc.
 
 // Initialize Express app
@@ -79,6 +80,9 @@ app.use(sanitizeInput);
 // Rate limiting
 app.use('/api/', apiLimiter);
 
+// Audit logging middleware (logs all state-changing operations)
+app.use(auditLogMiddleware);
+
 // =====================================================
 // API ROUTES
 // =====================================================
@@ -109,21 +113,25 @@ app.use('/api/v1/admin', require('./routes/adminRoutes'));
 app.use('/api/v1/kitchen', require('./routes/kitchenRoutes'));
 app.use('/api/v1/cashier', require('./routes/cashierRoutes'));
 
-// Legacy aliases for older clients
-app.use('/api/auth', require('./routes/authRoutes'));
-app.use('/api/customers', require('./routes/customers'));
-app.use('/api/staff', require('./routes/staff'));
-app.use('/api/menu', require('./routes/menuItems'));
-app.use('/api/categories', require('./routes/categories'));
-app.use('/api/orders', require('./routes/orders'));
-app.use('/api/combos', require('./routes/comboPacks'));
-app.use('/api/cart', require('./routes/cart'));
-app.use('/api/stock', require('./routes/stock'));
-app.use('/api/payments', require('./routes/payments'));
-app.use('/api/delivery', require('./routes/deliveryRoutes'));
-app.use('/api/admin', require('./routes/adminRoutes'));
-app.use('/api/kitchen', require('./routes/kitchenRoutes'));
-app.use('/api/cashier', require('./routes/cashierRoutes'));
+// DEPRECATED: Legacy aliases for backward compatibility only
+// These routes will be removed in v3.0 (2026-06-01)
+// Please migrate to /api/v1/* routes
+const deprecationMiddleware = require('./middleware/deprecation');
+
+app.use('/api/auth', deprecationMiddleware('/auth'), require('./routes/authRoutes'));
+app.use('/api/customers', deprecationMiddleware('/customers'), require('./routes/customers'));
+app.use('/api/staff', deprecationMiddleware('/staff'), require('./routes/staff'));
+app.use('/api/menu', deprecationMiddleware('/menu'), require('./routes/menuItems'));
+app.use('/api/categories', deprecationMiddleware('/categories'), require('./routes/categories'));
+app.use('/api/orders', deprecationMiddleware('/orders'), require('./routes/orders'));
+app.use('/api/combos', deprecationMiddleware('/combos'), require('./routes/comboPacks'));
+app.use('/api/cart', deprecationMiddleware('/cart'), require('./routes/cart'));
+app.use('/api/stock', deprecationMiddleware('/stock'), require('./routes/stock'));
+app.use('/api/payments', deprecationMiddleware('/payments'), require('./routes/payments'));
+app.use('/api/delivery', deprecationMiddleware('/delivery'), require('./routes/deliveryRoutes'));
+app.use('/api/admin', deprecationMiddleware('/admin'), require('./routes/adminRoutes'));
+app.use('/api/kitchen', deprecationMiddleware('/kitchen'), require('./routes/kitchenRoutes'));
+app.use('/api/cashier', deprecationMiddleware('/cashier'), require('./routes/cashierRoutes'));
 
 // =====================================================
 // ERROR HANDLING
