@@ -76,7 +76,7 @@ exports.getAssignedOrders = async (req, res) => {
       include: [
         {
           model: OrderItem,
-          as: 'orderItems',
+          as: 'items',
           include: [{
             model: MenuItem,
             as: 'menuItem',
@@ -85,8 +85,8 @@ exports.getAssignedOrders = async (req, res) => {
         }
       ],
       order: [
-        ['CreatedAt', 'ASC'], // Older orders first
-        ['OrderID', 'ASC']
+        [sequelize.col('Order.created_at'), 'ASC'], // Older orders first
+        [sequelize.col('Order.order_id'), 'ASC']
       ]
     });
 

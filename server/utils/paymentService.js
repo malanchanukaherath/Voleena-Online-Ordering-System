@@ -165,7 +165,7 @@ class PaymentService {
             await payment.update({
                 Status: isSuccess ? 'PAID' : 'FAILED',
                 PaidAt: isSuccess ? new Date() : null,
-                PaymentGatewayResponse: JSON.stringify(gatewayResponse)
+                GatewayStatus: isSuccess ? 'SUCCESS' : 'FAILED'
             });
 
             // Send notification to customer (FR31)
@@ -228,7 +228,8 @@ class PaymentService {
             await payment.update({
                 Status: 'REFUNDED',
                 RefundedAt: new Date(),
-                RefundReason: reason
+                RefundReason: reason,
+                GatewayStatus: 'REFUNDED'
             });
 
             // Send refund notification

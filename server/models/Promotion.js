@@ -6,23 +6,23 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'PromotionID'
+            field: 'promotion_id'
         },
         Code: {
             type: DataTypes.STRING(50),
             allowNull: false,
             unique: true,
-            field: 'Code'
+            field: 'code'
         },
         Description: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'Description'
+            field: 'description'
         },
         DiscountType: {
             type: DataTypes.ENUM('PERCENTAGE', 'FIXED_AMOUNT'),
             allowNull: false,
-            field: 'DiscountType'
+            field: 'discount_type'
         },
         DiscountValue: {
             type: DataTypes.DECIMAL(10, 2),
@@ -30,22 +30,22 @@ module.exports = (sequelize) => {
             validate: {
                 min: 0
             },
-            field: 'DiscountValue'
+            field: 'discount_value'
         },
         MinOrderAmount: {
             type: DataTypes.DECIMAL(10, 2),
             defaultValue: 0,
-            field: 'MinOrderAmount'
+            field: 'min_order_amount'
         },
         MaxDiscountAmount: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: true,
-            field: 'MaxDiscountAmount'
+            field: 'max_discount_amount'
         },
         ValidFrom: {
             type: DataTypes.DATE,
             allowNull: false,
-            field: 'ValidFrom'
+            field: 'valid_from'
         },
         ValidUntil: {
             type: DataTypes.DATE,
@@ -57,37 +57,37 @@ module.exports = (sequelize) => {
                     }
                 }
             },
-            field: 'ValidUntil'
+            field: 'valid_until'
         },
         UsageLimit: {
             type: DataTypes.INTEGER,
             allowNull: true,
-            field: 'UsageLimit'
+            field: 'usage_limit'
         },
         UsageCount: {
             type: DataTypes.INTEGER,
             defaultValue: 0,
-            field: 'UsageCount'
+            field: 'usage_count'
         },
         IsActive: {
             type: DataTypes.BOOLEAN,
             defaultValue: true,
-            field: 'IsActive'
+            field: 'is_active'
         },
         CreatedBy: {
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-                model: 'Staff',
-                key: 'StaffID'
+                model: 'staff',
+                key: 'staff_id'
             },
-            field: 'CreatedBy'
+            field: 'created_by'
         }
     }, {
-        tableName: 'Promotion',
+        tableName: 'promotion',
         timestamps: true,
-        createdAt: 'CreatedAt',
-        updatedAt: 'UpdatedAt'
+        createdAt: 'created_at',
+        updatedAt: 'updated_at'
     });
 
     Promotion.associate = (models) => {

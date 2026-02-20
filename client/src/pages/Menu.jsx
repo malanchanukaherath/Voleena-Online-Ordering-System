@@ -49,7 +49,7 @@ const Menu = () => {
                         categoryName: item.category?.Name || 'Other',
                         image: resolveImageUrl(item.ImageURL || item.Image_URL || null),
                         stockQuantity: item.StockQuantity ?? null,
-                        isAvailable: !!item.IsActive,
+                        isAvailable: item.IsAvailable !== undefined ? !!item.IsAvailable : !!item.IsActive,
                     }));
                     setMenuItems(transformedItems);
                 } else {

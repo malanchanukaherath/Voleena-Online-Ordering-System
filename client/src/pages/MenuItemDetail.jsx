@@ -30,7 +30,8 @@ const MenuItemDetail = () => {
         price: parseFloat(data.Price),
         categoryName: data.category?.Name || 'Other',
         image: resolveImageUrl(data.ImageURL || data.Image_URL || null),
-        isAvailable: !!data.IsActive
+        stockQuantity: data.StockQuantity ?? null,
+        isAvailable: data.IsAvailable !== undefined ? !!data.IsAvailable : !!data.IsActive
     });
 
     useEffect(() => {

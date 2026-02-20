@@ -41,15 +41,15 @@ class PayHereService {
      */
     async createPayment(order, customer) {
         const payment = await Payment.create({
-            order_id: order.order_id,
-            amount: order.final_amount,
-            method: 'ONLINE',
-            status: 'PENDING'
+            OrderID: order.OrderID,
+            Amount: order.FinalAmount,
+            Method: 'ONLINE',
+            Status: 'PENDING'
         });
 
         const hash = this.generateHash(
-            order.order_number,
-            order.final_amount
+            order.OrderNumber,
+            order.FinalAmount
         );
 
         return {
@@ -57,14 +57,14 @@ class PayHereService {
             return_url: process.env.PAYHERE_RETURN_URL,
             cancel_url: process.env.PAYHERE_CANCEL_URL,
             notify_url: process.env.PAYHERE_NOTIFY_URL,
-            order_id: order.order_number,
-            items: `Order #${order.order_number}`,
+            order_id: order.OrderNumber,
+            items: `Order #${order.OrderNumber}`,
             currency: 'LKR',
-            amount: order.final_amount.toFixed(2),
-            first_name: customer.name.split(' ')[0],
-            last_name: customer.name.split(' ').slice(1).join(' ') || '',
-            email: customer.email,
-            phone: customer.phone,
+            amount: order.FinalAmount.toFixed(2),
+            first_name: customer.Name.split(' ')[0],
+            last_name: customer.Name.split(' ').slice(1).join(' ') || '',
+            email: customer.Email,
+            phone: customer.Phone,
             address: '',
             city: '',
             country: 'Sri Lanka',
@@ -115,7 +115,7 @@ class PayHereService {
 
         // Find order by order number
         const order = await Order.findOne({
-            where: { order_number: order_id }
+            where: { OrderNumber: order_id }
         });
 
         if (!order) {
@@ -124,7 +124,7 @@ class PayHereService {
 
         // Find payment record
         const payment = await Payment.findOne({
-            where: { order_id: order.order_id }
+            where: { OrderID: order.OrderID }
         });
 
         if (!payment) {
@@ -134,18 +134,18 @@ class PayHereService {
         // Update payment status
         if (status_code === '2') {
             // Payment successful
-            payment.status = 'PAID';
-            payment.transaction_id = payment_id;
-            payment.paid_at = new Date();
-            payment.gateway_status = 'SUCCESS';
+            payment.Status = 'PAID';
+            payment.TransactionID = payment_id;
+            payment.PaidAt = new Date();
+            payment.GatewayStatus = 'SUCCESS';
         } else if (status_code === '0') {
             // Payment pending
-            payment.status = 'PENDING';
-            payment.gateway_status = 'PENDING';
+            payment.Status = 'PENDING';
+            payment.GatewayStatus = 'PENDING';
         } else {
             // Payment failed
-            payment.status = 'FAILED';
-            payment.gateway_status = `FAILED_${status_code}`;
+            payment.Status = 'FAILED';
+            payment.GatewayStatus = `FAILED_${status_code}`;
         }
 
         await payment.save();
@@ -160,13 +160,13 @@ class PayHereService {
         // PayHere doesn't have automated refund API
         // This would need manual processing or integration with payment processor
 
-        payment.status = 'REFUNDED';
-        payment.refunded_at = new Date();
-        payment.refund_reason = reason;
+        payment.Status = 'REFUNDED';
+        payment.RefundedAt = new Date();
+        payment.RefundReason = reason;
         await payment.save();
 
         // Log for manual processing
-        console.log(`REFUND REQUIRED: Payment ${payment.payment_id}, Amount: ${payment.amount}, Reason: ${reason}`);
+        console.log(`REFUND REQUIRED: Payment ${payment.PaymentID}, Amount: ${payment.Amount}, Reason: ${reason}`);
 
         return payment;
     }
@@ -185,24 +185,24 @@ class StripeService {
      */
     async createPaymentIntent(order, customer) {
         const payment = await Payment.create({
-            order_id: order.order_id,
-            amount: order.final_amount,
-            method: 'ONLINE',
-            status: 'PENDING'
+            OrderID: order.OrderID,
+            Amount: order.FinalAmount,
+            Method: 'ONLINE',
+            Status: 'PENDING'
         });
 
         const paymentIntent = await this.stripe.paymentIntents.create({
-            amount: Math.round(order.final_amount * 100), // Convert to cents
+            amount: Math.round(order.FinalAmount * 100), // Convert to cents
             currency: 'lkr',
             metadata: {
-                order_id: order.order_id,
-                order_number: order.order_number,
-                customer_id: customer.customer_id
+                order_id: order.OrderID,
+                order_number: order.OrderNumber,
+                customer_id: customer.CustomerID
             },
-            receipt_email: customer.email
+            receipt_email: customer.Email
         });
 
-        payment.transaction_id = paymentIntent.id;
+        payment.TransactionID = paymentIntent.id;
         await payment.save();
 
         return {
@@ -234,13 +234,13 @@ class StripeService {
      */
     async handlePaymentSuccess(paymentIntent) {
         const payment = await Payment.findOne({
-            where: { transaction_id: paymentIntent.id }
+            where: { TransactionID: paymentIntent.id }
         });
 
         if (payment) {
-            payment.status = 'PAID';
-            payment.paid_at = new Date();
-            payment.gateway_status = 'SUCCESS';
+            payment.Status = 'PAID';
+            payment.PaidAt = new Date();
+            payment.GatewayStatus = 'SUCCESS';
             await payment.save();
         }
     }
@@ -250,12 +250,12 @@ class StripeService {
      */
     async handlePaymentFailure(paymentIntent) {
         const payment = await Payment.findOne({
-            where: { transaction_id: paymentIntent.id }
+            where: { TransactionID: paymentIntent.id }
         });
 
         if (payment) {
-            payment.status = 'FAILED';
-            payment.gateway_status = paymentIntent.last_payment_error?.message || 'FAILED';
+            payment.Status = 'FAILED';
+            payment.GatewayStatus = paymentIntent.last_payment_error?.message || 'FAILED';
             await payment.save();
         }
     }
@@ -265,16 +265,16 @@ class StripeService {
      */
     async processRefund(payment, reason) {
         const refund = await this.stripe.refunds.create({
-            payment_intent: payment.transaction_id,
+            payment_intent: payment.TransactionID,
             reason: 'requested_by_customer',
             metadata: {
                 refund_reason: reason
             }
         });
 
-        payment.status = 'REFUNDED';
-        payment.refunded_at = new Date();
-        payment.refund_reason = reason;
+        payment.Status = 'REFUNDED';
+        payment.RefundedAt = new Date();
+        payment.RefundReason = reason;
         await payment.save();
 
         return refund;

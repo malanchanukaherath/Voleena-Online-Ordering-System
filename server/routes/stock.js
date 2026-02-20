@@ -15,19 +15,19 @@ const { authenticateToken, requireRole, requireAdmin, requireKitchen } = require
 // ADMIN ONLY ROUTES (R/W)
 // =====================================================
 
-// Update opening quantity (admin only)
+// Update opening quantity (admin + kitchen)
 router.put(
     '/update/:stockId',
     authenticateToken,
-    requireRole('Admin'),
+    requireRole('Admin', 'Kitchen'),
     stockController.updateOpeningQuantity
 );
 
-// Manual stock adjustment (admin only)
+// Manual stock adjustment (admin + kitchen)
 router.post(
     '/manual-adjust/:stockId',
     authenticateToken,
-    requireRole('Admin'),
+    requireRole('Admin', 'Kitchen'),
     stockController.manualAdjustStock
 );
 
@@ -52,6 +52,14 @@ router.get(
     stockController.getStockMovements
 );
 
+// Remove a stock record (admin + kitchen)
+router.delete(
+    '/:stockId',
+    authenticateToken,
+    requireRole('Admin', 'Kitchen'),
+    stockController.deleteStockRecord
+);
+
 // =====================================================
 // LEGACY ROUTES (Backward compatibility)
 // =====================================================
@@ -60,7 +68,7 @@ router.get(
 router.post(
     '/daily',
     authenticateToken,
-    requireRole('Admin'),
+    requireRole('Admin', 'Kitchen'),
     stockController.setOpeningStock
 );
 
@@ -68,7 +76,7 @@ router.post(
 router.post(
     '/daily/bulk',
     authenticateToken,
-    requireRole('Admin'),
+    requireRole('Admin', 'Kitchen'),
     stockController.bulkSetOpeningStock
 );
 
@@ -76,7 +84,7 @@ router.post(
 router.patch(
     '/daily/:id',
     authenticateToken,
-    requireRole('Admin'),
+    requireRole('Admin', 'Kitchen'),
     stockController.adjustStock
 );
 

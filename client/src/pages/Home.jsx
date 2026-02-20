@@ -34,7 +34,7 @@ const Home = () => {
                         description: item.Description || 'No description available',
                         price: parseFloat(item.Price),
                         image: resolveImageUrl(item.ImageURL || item.Image_URL || null),
-                        isAvailable: !!item.IsActive
+                        isAvailable: item.IsAvailable !== undefined ? !!item.IsAvailable : !!item.IsActive
                     }));
                     setFeaturedItems(items);
                 } else {

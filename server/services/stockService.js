@@ -21,46 +21,47 @@ class StockService {
         const reservations = [];
 
         for (const item of items) {
-            const { menu_item_id, quantity } = item;
+            const menuItemId = item.MenuItemID ?? item.menu_item_id;
+            const quantity = item.Quantity ?? item.quantity;
 
             // Lock the stock row for update
             const stock = await DailyStock.findOne({
                 where: {
-                    menu_item_id,
-                    stock_date: stockDate
+                    MenuItemID: menuItemId,
+                    StockDate: stockDate
                 },
                 lock: transaction.LOCK.UPDATE,
                 transaction
             });
 
             if (!stock) {
-                throw new Error(`No stock record found for menu item ${menu_item_id} on ${stockDate}`);
+                throw new Error(`No stock record found for menu item ${menuItemId} on ${stockDate}`);
             }
 
             // Calculate available quantity
-            const availableQty = stock.opening_quantity - stock.sold_quantity + stock.adjusted_quantity;
+            const availableQty = stock.OpeningQuantity - stock.SoldQuantity + stock.AdjustedQuantity;
 
             if (availableQty < quantity) {
-                const menuItem = await MenuItem.findByPk(menu_item_id);
+                const menuItem = await MenuItem.findByPk(menuItemId);
                 throw new Error(
-                    `Insufficient stock for ${menuItem.name}. Available: ${availableQty}, Requested: ${quantity}`
+                    `Insufficient stock for ${menuItem?.Name ?? 'menu item'}. Available: ${availableQty}, Requested: ${quantity}`
                 );
             }
 
             // Optimistic locking check
-            const currentVersion = stock.version;
+            const currentVersion = stock.Version;
 
             // Update sold quantity and version
             const [updatedRows] = await DailyStock.update(
                 {
-                    sold_quantity: stock.sold_quantity + quantity,
-                    version: currentVersion + 1,
-                    updated_by: null // Set from context if available
+                    SoldQuantity: stock.SoldQuantity + quantity,
+                    Version: currentVersion + 1,
+                    UpdatedBy: null // Set from context if available
                 },
                 {
                     where: {
-                        stock_id: stock.stock_id,
-                        version: currentVersion // Ensure version hasn't changed
+                        StockID: stock.StockID,
+                        Version: currentVersion // Ensure version hasn't changed
                     },
                     transaction
                 }
@@ -71,9 +72,9 @@ class StockService {
             }
 
             reservations.push({
-                menu_item_id,
-                quantity,
-                stock_id: stock.stock_id
+                MenuItemID: menuItemId,
+                Quantity: quantity,
+                StockID: stock.StockID
             });
         }
 
@@ -85,18 +86,19 @@ class StockService {
      */
     async deductStock(orderId, items, stockDate, staffId, transaction) {
         for (const item of items) {
-            const { menu_item_id, quantity } = item;
+            const menuItemId = item.MenuItemID ?? item.menu_item_id;
+            const quantity = item.Quantity ?? item.quantity;
 
             // Log stock movement
             await StockMovement.create({
-                menu_item_id,
-                stock_date: stockDate,
-                change_type: 'SALE',
-                quantity_change: -quantity,
-                reference_id: orderId,
-                reference_type: 'ORDER',
-                notes: `Order #${orderId}`,
-                created_by: staffId
+                MenuItemID: menuItemId,
+                StockDate: stockDate,
+                ChangeType: 'SALE',
+                QuantityChange: -quantity,
+                ReferenceID: orderId,
+                ReferenceType: 'ORDER',
+                Notes: `Order #${orderId}`,
+                CreatedBy: staffId
             }, { transaction });
         }
     }
@@ -106,33 +108,34 @@ class StockService {
      */
     async returnStock(orderId, items, stockDate, staffId, transaction) {
         for (const item of items) {
-            const { menu_item_id, quantity } = item;
+            const menuItemId = item.MenuItemID ?? item.menu_item_id;
+            const quantity = item.Quantity ?? item.quantity;
 
             // Lock the stock row
             const stock = await DailyStock.findOne({
                 where: {
-                    menu_item_id,
-                    stock_date: stockDate
+                    MenuItemID: menuItemId,
+                    StockDate: stockDate
                 },
                 lock: transaction.LOCK.UPDATE,
                 transaction
             });
 
             if (!stock) {
-                throw new Error(`No stock record found for menu item ${menu_item_id}`);
+                throw new Error(`No stock record found for menu item ${menuItemId}`);
             }
 
             // Return quantity
-            const currentVersion = stock.version;
+            const currentVersion = stock.Version;
 
             const [updatedRows] = await DailyStock.update({
-                sold_quantity: Math.max(0, stock.sold_quantity - quantity),
-                version: currentVersion + 1,
-                updated_by: staffId
+                SoldQuantity: Math.max(0, stock.SoldQuantity - quantity),
+                Version: currentVersion + 1,
+                UpdatedBy: staffId
             }, {
                 where: {
-                    stock_id: stock.stock_id,
-                    version: currentVersion
+                    StockID: stock.StockID,
+                    Version: currentVersion
                 },
                 transaction
             });
@@ -143,14 +146,14 @@ class StockService {
 
             // Log stock movement
             await StockMovement.create({
-                menu_item_id,
-                stock_date: stockDate,
-                change_type: 'RETURN',
-                quantity_change: quantity,
-                reference_id: orderId,
-                reference_type: 'ORDER',
-                notes: `Order #${orderId} cancelled - stock returned`,
-                created_by: staffId
+                MenuItemID: menuItemId,
+                StockDate: stockDate,
+                ChangeType: 'RETURN',
+                QuantityChange: quantity,
+                ReferenceID: orderId,
+                ReferenceType: 'ORDER',
+                Notes: `Order #${orderId} cancelled - stock returned`,
+                CreatedBy: staffId
             }, { transaction });
         }
     }
@@ -166,14 +169,14 @@ class StockService {
         try {
             const [stock, created] = await DailyStock.findOrCreate({
                 where: {
-                    menu_item_id: menuItemId,
-                    stock_date: stockDate
+                    MenuItemID: menuItemId,
+                    StockDate: stockDate
                 },
                 defaults: {
-                    opening_quantity: openingQuantity,
-                    sold_quantity: 0,
-                    adjusted_quantity: 0,
-                    updated_by: staffId
+                    OpeningQuantity: openingQuantity,
+                    SoldQuantity: 0,
+                    AdjustedQuantity: 0,
+                    UpdatedBy: staffId
                 },
                 transaction
             });
@@ -181,21 +184,21 @@ class StockService {
             if (!created) {
                 // Update existing stock
                 await stock.update({
-                    opening_quantity: openingQuantity,
-                    updated_by: staffId,
-                    version: stock.version + 1
+                    OpeningQuantity: openingQuantity,
+                    UpdatedBy: staffId,
+                    Version: stock.Version + 1
                 }, { transaction });
             }
 
             // Log stock movement
             await StockMovement.create({
-                menu_item_id: menuItemId,
-                stock_date: stockDate,
-                change_type: 'OPENING',
-                quantity_change: openingQuantity,
-                reference_type: 'MANUAL',
-                notes: 'Opening stock set',
-                created_by: staffId
+                MenuItemID: menuItemId,
+                StockDate: stockDate,
+                ChangeType: 'OPENING',
+                QuantityChange: openingQuantity,
+                ReferenceType: 'MANUAL',
+                Notes: 'Opening stock set',
+                CreatedBy: staffId
             }, { transaction });
 
             await transaction.commit();
@@ -217,8 +220,8 @@ class StockService {
         try {
             const stock = await DailyStock.findOne({
                 where: {
-                    menu_item_id: menuItemId,
-                    stock_date: stockDate
+                    MenuItemID: menuItemId,
+                    StockDate: stockDate
                 },
                 lock: transaction.LOCK.UPDATE,
                 transaction
@@ -228,16 +231,16 @@ class StockService {
                 throw new Error('Stock record not found');
             }
 
-            const currentVersion = stock.version;
+            const currentVersion = stock.Version;
 
             const [updatedRows] = await DailyStock.update({
-                adjusted_quantity: stock.adjusted_quantity + adjustmentQuantity,
-                version: currentVersion + 1,
-                updated_by: staffId
+                AdjustedQuantity: stock.AdjustedQuantity + adjustmentQuantity,
+                Version: currentVersion + 1,
+                UpdatedBy: staffId
             }, {
                 where: {
-                    stock_id: stock.stock_id,
-                    version: currentVersion
+                    StockID: stock.StockID,
+                    Version: currentVersion
                 },
                 transaction
             });
@@ -248,18 +251,18 @@ class StockService {
 
             // Log stock movement
             await StockMovement.create({
-                menu_item_id: menuItemId,
-                stock_date: stockDate,
-                change_type: 'ADJUSTMENT',
-                quantity_change: adjustmentQuantity,
-                reference_type: 'MANUAL',
-                notes: reason,
-                created_by: staffId
+                MenuItemID: menuItemId,
+                StockDate: stockDate,
+                ChangeType: 'ADJUSTMENT',
+                QuantityChange: adjustmentQuantity,
+                ReferenceType: 'MANUAL',
+                Notes: reason,
+                CreatedBy: staffId
             }, { transaction });
 
             await transaction.commit();
 
-            return await DailyStock.findByPk(stock.stock_id);
+            return await DailyStock.findByPk(stock.StockID);
         } catch (error) {
             await transaction.rollback();
             throw error;
@@ -274,8 +277,8 @@ class StockService {
 
         const stock = await DailyStock.findOne({
             where: {
-                menu_item_id: menuItemId,
-                stock_date: dateStr
+                MenuItemID: menuItemId,
+                StockDate: dateStr
             },
             include: [{
                 model: MenuItem,
@@ -285,12 +288,12 @@ class StockService {
 
         if (!stock) {
             return {
-                menu_item_id: menuItemId,
-                stock_date: dateStr,
-                opening_quantity: 0,
-                sold_quantity: 0,
-                adjusted_quantity: 0,
-                closing_quantity: 0
+                MenuItemID: menuItemId,
+                StockDate: dateStr,
+                OpeningQuantity: 0,
+                SoldQuantity: 0,
+                AdjustedQuantity: 0,
+                ClosingQuantity: 0
             };
         }
 
@@ -303,12 +306,12 @@ class StockService {
     async getStockMovements(menuItemId, startDate, endDate) {
         return await StockMovement.findAll({
             where: {
-                menu_item_id: menuItemId,
-                stock_date: {
+                MenuItemID: menuItemId,
+                StockDate: {
                     [Op.between]: [startDate, endDate]
                 }
             },
-            order: [['created_at', 'DESC']],
+            order: [['CreatedAt', 'DESC']],
             include: [{
                 model: MenuItem,
                 as: 'menuItem'
@@ -326,17 +329,17 @@ class StockService {
         // Find items with zero closing quantity
         const outOfStockItems = await DailyStock.findAll({
             where: {
-                stock_date: dateStr,
-                closing_quantity: 0
+                StockDate: dateStr,
+                ClosingQuantity: 0
             }
         });
 
-        const menuItemIds = outOfStockItems.map(s => s.menu_item_id);
+        const menuItemIds = outOfStockItems.map(s => s.MenuItemID);
 
         if (menuItemIds.length > 0) {
             await MenuItem.update(
-                { is_available: false },
-                { where: { menu_item_id: menuItemIds } }
+                { IsAvailable: false },
+                { where: { MenuItemID: menuItemIds } }
             );
         }
 

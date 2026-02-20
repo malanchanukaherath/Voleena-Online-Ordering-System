@@ -6,61 +6,64 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'MovementID'
+            field: 'movement_id'
         },
         MenuItemID: {
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'Menu_Item',
-                key: 'MenuItemID'
+                model: 'menu_item',
+                key: 'menu_item_id'
             },
-            field: 'MenuItemID'
+            field: 'menu_item_id'
         },
         StockDate: {
             type: DataTypes.DATEONLY,
             allowNull: false,
-            field: 'StockDate'
+            field: 'stock_date'
         },
         ChangeType: {
             type: DataTypes.ENUM('OPENING', 'SALE', 'ADJUSTMENT', 'RETURN'),
             allowNull: false,
-            field: 'ChangeType'
+            field: 'change_type'
         },
         QuantityChange: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            field: 'QuantityChange'
+            field: 'quantity_change'
         },
         ReferenceID: {
             type: DataTypes.INTEGER,
             allowNull: true,
-            field: 'ReferenceID'
+            field: 'reference_id'
         },
         ReferenceType: {
             type: DataTypes.ENUM('ORDER', 'MANUAL', 'SYSTEM'),
             allowNull: true,
-            field: 'ReferenceType'
+            field: 'reference_type'
         },
         Notes: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            field: 'Notes'
+            field: 'notes'
         },
         CreatedBy: {
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-                model: 'Staff',
-                key: 'StaffID'
+                model: 'staff',
+                key: 'staff_id'
             },
-            field: 'CreatedBy'
+            field: 'created_by'
+        },
+        CreatedAt: {
+            type: DataTypes.DATE,
+            allowNull: false,
+            field: 'created_at'
         }
     }, {
-        tableName: 'Stock_Movement',
-        timestamps: true,
-        createdAt: 'CreatedAt',
-        updatedAt: false
+        tableName: 'stock_movement',
+        timestamps: false
     });
 
     StockMovement.associate = (models) => {

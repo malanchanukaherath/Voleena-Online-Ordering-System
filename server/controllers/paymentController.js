@@ -138,7 +138,7 @@ exports.payHereWebhook = async (req, res) => {
       Status: isPaid ? 'PAID' : isPending ? 'PENDING' : 'FAILED',
       TransactionID: payload.payment_id,
       PaidAt: isPaid ? new Date() : null,
-      PaymentGatewayResponse: JSON.stringify(payload)
+      GatewayStatus: isPaid ? 'SUCCESS' : isPending ? 'PENDING' : `FAILED_${payload.status_code}`
     });
 
     return res.json({ success: true });
@@ -175,7 +175,7 @@ exports.stripeWebhook = async (req, res) => {
         await payment.update({
           Status: event.type === 'payment_intent.succeeded' ? 'PAID' : 'FAILED',
           PaidAt: event.type === 'payment_intent.succeeded' ? new Date() : null,
-          PaymentGatewayResponse: JSON.stringify(intent)
+          GatewayStatus: event.type === 'payment_intent.succeeded' ? 'SUCCESS' : (intent.last_payment_error?.message || 'FAILED')
         });
       }
     }

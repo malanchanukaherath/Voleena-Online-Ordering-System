@@ -31,14 +31,14 @@ async function sendSMS(to, message, relatedOrderId = null) {
 
             // Log notification
             await Notification.create({
-                recipient_type: 'CUSTOMER',
-                recipient_id: null,
-                notification_type: 'SMS',
-                subject: null,
-                message,
-                status: 'SENT',
-                sent_at: new Date(),
-                related_order_id: relatedOrderId
+                RecipientType: 'CUSTOMER',
+                RecipientID: null,
+                NotificationType: 'SMS',
+                Subject: null,
+                Message: message,
+                Status: 'SENT',
+                SentAt: new Date(),
+                RelatedOrderID: relatedOrderId
             });
 
             return {
@@ -50,14 +50,14 @@ async function sendSMS(to, message, relatedOrderId = null) {
             console.log('📱 SMS (Console):', to, message);
 
             await Notification.create({
-                recipient_type: 'CUSTOMER',
-                recipient_id: null,
-                notification_type: 'SMS',
-                subject: null,
-                message,
-                status: 'SENT',
-                sent_at: new Date(),
-                related_order_id: relatedOrderId
+                RecipientType: 'CUSTOMER',
+                RecipientID: null,
+                NotificationType: 'SMS',
+                Subject: null,
+                Message: message,
+                Status: 'SENT',
+                SentAt: new Date(),
+                RelatedOrderID: relatedOrderId
             });
 
             return {
@@ -68,14 +68,14 @@ async function sendSMS(to, message, relatedOrderId = null) {
     } catch (error) {
         // Log failed notification
         await Notification.create({
-            recipient_type: 'CUSTOMER',
-            recipient_id: null,
-            notification_type: 'SMS',
-            subject: null,
-            message,
-            status: 'FAILED',
-            error_message: error.message,
-            related_order_id: relatedOrderId
+            RecipientType: 'CUSTOMER',
+            RecipientID: null,
+            NotificationType: 'SMS',
+            Subject: null,
+            Message: message,
+            Status: 'FAILED',
+            ErrorMessage: error.message,
+            RelatedOrderID: relatedOrderId
         });
 
         throw error;

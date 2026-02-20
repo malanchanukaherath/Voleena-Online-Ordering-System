@@ -19,10 +19,13 @@ class OrderService {
         });
 
         try {
-            const { items, order_type, special_instructions, promotion_id } = orderData;
+            const items = orderData.items || [];
+            const orderType = orderData.orderType || orderData.order_type;
+            const specialInstructions = orderData.specialInstructions || orderData.special_instructions;
+            const promotionId = orderData.promotionId || orderData.promotion_id;
 
             // Validate delivery distance if delivery order (FR09)
-            if (order_type === 'DELIVERY') {
+            if (orderType === 'DELIVERY') {
                 if (!addressId) {
                     throw new Error('Address is required for delivery orders');
                 }
@@ -30,13 +33,13 @@ class OrderService {
                 const { Address } = require('../models');
                 const address = await Address.findByPk(addressId);
 
-                if (!address || !address.latitude || !address.longitude) {
+                if (!address || !address.Latitude || !address.Longitude) {
                     throw new Error('Address coordinates are required for delivery validation');
                 }
 
                 const distanceValidation = await validateDeliveryDistanceWithFallback(
-                    address.latitude,
-                    address.longitude
+                    address.Latitude,
+                    address.Longitude
                 );
 
                 if (!distanceValidation.isValid) {
@@ -51,63 +54,66 @@ class OrderService {
             const orderItems = [];
 
             for (const item of items) {
-                if (item.menu_item_id) {
-                    const menuItem = await MenuItem.findByPk(item.menu_item_id, { transaction });
-                    if (!menuItem || !menuItem.is_active || !menuItem.is_available) {
-                        throw new Error(`Menu item ${item.menu_item_id} is not available`);
+                const menuItemId = item.menuItemId || item.menu_item_id;
+                const comboId = item.comboId || item.combo_id;
+
+                if (menuItemId) {
+                    const menuItem = await MenuItem.findByPk(menuItemId, { transaction });
+                    if (!menuItem || !menuItem.IsActive || !menuItem.IsAvailable) {
+                        throw new Error(`Menu item ${menuItemId} is not available`);
                     }
 
                     orderItems.push({
-                        menu_item_id: item.menu_item_id,
-                        quantity: item.quantity,
-                        unit_price: menuItem.price
+                        MenuItemID: menuItemId,
+                        Quantity: item.quantity,
+                        UnitPrice: menuItem.Price
                     });
 
-                    totalAmount += menuItem.price * item.quantity;
-                } else if (item.combo_id) {
-                    const combo = await ComboPack.findByPk(item.combo_id, { transaction });
-                    if (!combo || !combo.is_active) {
-                        throw new Error(`Combo pack ${item.combo_id} is not available`);
+                    totalAmount += menuItem.Price * item.quantity;
+                } else if (comboId) {
+                    const combo = await ComboPack.findByPk(comboId, { transaction });
+                    if (!combo || !combo.IsActive) {
+                        throw new Error(`Combo pack ${comboId} is not available`);
                     }
 
                     orderItems.push({
-                        combo_id: item.combo_id,
-                        quantity: item.quantity,
-                        unit_price: combo.price
+                        ComboID: comboId,
+                        Quantity: item.quantity,
+                        UnitPrice: combo.Price
                     });
 
-                    totalAmount += combo.price * item.quantity;
+                    totalAmount += combo.Price * item.quantity;
                 }
             }
 
             // Apply promotion if provided
             let discountAmount = 0;
-            if (promotion_id) {
+            if (promotionId) {
                 const { Promotion } = require('../models');
-                const promotion = await Promotion.findByPk(promotion_id, { transaction });
+                const promotion = await Promotion.findByPk(promotionId, { transaction });
 
-                if (promotion && promotion.is_active) {
+                if (promotion && promotion.IsActive) {
                     const now = new Date();
-                    if (now >= promotion.valid_from && now <= promotion.valid_until) {
-                        if (totalAmount >= promotion.min_order_amount) {
-                            if (promotion.discount_type === 'PERCENTAGE') {
-                                discountAmount = (totalAmount * promotion.discount_value) / 100;
-                                if (promotion.max_discount_amount) {
-                                    discountAmount = Math.min(discountAmount, promotion.max_discount_amount);
+                    if (now >= promotion.ValidFrom && now <= promotion.ValidUntil) {
+                        if (totalAmount >= promotion.MinOrderAmount) {
+                            if (promotion.DiscountType === 'PERCENTAGE') {
+                                discountAmount = (totalAmount * promotion.DiscountValue) / 100;
+                                if (promotion.MaxDiscountAmount) {
+                                    discountAmount = Math.min(discountAmount, promotion.MaxDiscountAmount);
                                 }
                             } else {
-                                discountAmount = promotion.discount_value;
+                                discountAmount = promotion.DiscountValue;
                             }
 
                             // Update promotion usage
-                            await promotion.increment('usage_count', { transaction });
+                            await promotion.increment('UsageCount', { transaction });
                         }
                     }
                 }
             }
 
             // Calculate delivery fee
-            const deliveryFee = order_type === 'DELIVERY'
+            const deliveryFee = orderType === 'DELIVERY'
                 ? parseFloat(process.env.DELIVERY_FEE) || 150
                 : 0;
 
@@ -116,51 +122,51 @@ class OrderService {
 
             // Create order
             const order = await Order.create({
-                order_number: orderNumber,
-                customer_id: customerId,
-                total_amount: totalAmount,
-                promotion_id: promotion_id || null,
-                discount_amount: discountAmount,
-                delivery_fee: deliveryFee,
-                status: 'PENDING',
-                order_type,
-                special_instructions
+                OrderNumber: orderNumber,
+                CustomerID: customerId,
+                TotalAmount: totalAmount,
+                PromotionID: promotionId || null,
+                DiscountAmount: discountAmount,
+                DeliveryFee: deliveryFee,
+                Status: 'PENDING',
+                OrderType: orderType,
+                SpecialInstructions: specialInstructions
             }, { transaction });
 
             // Create order items
             for (const item of orderItems) {
                 await OrderItem.create({
-                    order_id: order.order_id,
+                    OrderID: order.OrderID,
                     ...item
                 }, { transaction });
             }
 
             // Create delivery record if delivery order
-            if (order_type === 'DELIVERY') {
+            if (orderType === 'DELIVERY') {
                 const { Address } = require('../models');
                 const address = await Address.findByPk(addressId);
 
                 const distanceValidation = await validateDeliveryDistanceWithFallback(
-                    address.latitude,
-                    address.longitude
+                    address.Latitude,
+                    address.Longitude
                 );
 
                 await Delivery.create({
-                    order_id: order.order_id,
-                    address_id: addressId,
-                    status: 'PENDING',
-                    distance_km: distanceValidation.distance
+                    OrderID: order.OrderID,
+                    AddressID: addressId,
+                    Status: 'PENDING',
+                    DistanceKm: distanceValidation.distance
                 }, { transaction });
             }
 
             // Log status history
             await OrderStatusHistory.create({
-                order_id: order.order_id,
-                old_status: null,
-                new_status: 'PENDING',
-                changed_by: null,
-                changed_by_type: 'CUSTOMER',
-                notes: 'Order created'
+                OrderID: order.OrderID,
+                OldStatus: null,
+                NewStatus: 'PENDING',
+                ChangedBy: null,
+                ChangedByType: 'CUSTOMER',
+                Notes: 'Order created'
             }, { transaction });
 
             await transaction.commit();
@@ -194,13 +200,13 @@ class OrderService {
                 throw new Error('Order not found');
             }
 
-            if (order.status !== 'PENDING') {
-                throw new Error(`Order cannot be confirmed. Current status: ${order.status}`);
+            if (order.Status !== 'PENDING') {
+                throw new Error(`Order cannot be confirmed. Current status: ${order.Status}`);
             }
 
             // Verify payment if online payment
-            if (order.payment && order.payment.method === 'ONLINE') {
-                if (order.payment.status !== 'PAID') {
+            if (order.payment && order.payment.Method === 'ONLINE') {
+                if (order.payment.Status !== 'PAID') {
                     throw new Error('Payment not completed. Cannot confirm order.');
                 }
             }
@@ -208,10 +214,10 @@ class OrderService {
             // Validate and reserve stock
             const stockDate = new Date().toISOString().split('T')[0];
             const stockItems = order.items
-                .filter(item => item.menu_item_id)
+                .filter(item => item.MenuItemID)
                 .map(item => ({
-                    menu_item_id: item.menu_item_id,
-                    quantity: item.quantity
+                    MenuItemID: item.MenuItemID,
+                    Quantity: item.Quantity
                 }));
 
             if (stockItems.length > 0) {
@@ -220,30 +226,30 @@ class OrderService {
             }
 
             // Update order status
-            order.status = 'CONFIRMED';
-            order.confirmed_at = new Date();
-            order.confirmed_by = staffId;
+            order.Status = 'CONFIRMED';
+            order.ConfirmedAt = new Date();
+            order.ConfirmedBy = staffId;
             await order.save({ transaction });
 
             // Log status history
             await OrderStatusHistory.create({
-                order_id: orderId,
-                old_status: 'PENDING',
-                new_status: 'CONFIRMED',
-                changed_by: staffId,
-                changed_by_type: 'STAFF',
-                notes: 'Order confirmed by staff'
+                OrderID: orderId,
+                OldStatus: 'PENDING',
+                NewStatus: 'CONFIRMED',
+                ChangedBy: staffId,
+                ChangedByType: 'STAFF',
+                Notes: 'Order confirmed by staff'
             }, { transaction });
 
             await transaction.commit();
 
             // Send notifications (FR15)
             try {
-                if (order.customer.email) {
+                if (order.customer.Email) {
                     await sendOrderConfirmationEmail(order, order.customer);
                 }
-                if (order.customer.phone) {
-                    await sendOrderConfirmationSMS(order.customer.phone, order.order_number);
+                if (order.customer.Phone) {
+                    await sendOrderConfirmationSMS(order.customer.Phone, order.OrderNumber);
                 }
             } catch (notifError) {
                 console.error('Notification error:', notifError);
@@ -273,57 +279,57 @@ class OrderService {
                 throw new Error('Order not found');
             }
 
-            const oldStatus = order.status;
+            const oldStatus = order.Status;
 
             // Validate status transition
             this.validateStatusTransition(oldStatus, newStatus);
 
             // Update order
-            order.status = newStatus;
+            order.Status = newStatus;
 
             // Set timestamp based on status
             switch (newStatus) {
                 case 'PREPARING':
-                    order.preparing_at = new Date();
+                    order.PreparingAt = new Date();
                     break;
                 case 'READY':
-                    order.ready_at = new Date();
+                    order.ReadyAt = new Date();
                     break;
                 case 'DELIVERED':
-                    order.completed_at = new Date();
+                    order.CompletedAt = new Date();
                     break;
                 case 'CANCELLED':
-                    order.cancelled_at = new Date();
+                    order.CancelledAt = new Date();
                     break;
             }
 
-            order.updated_by = staffId;
+            order.UpdatedBy = staffId;
             await order.save({ transaction });
 
             // Log status history
             await OrderStatusHistory.create({
-                order_id: orderId,
-                old_status: oldStatus,
-                new_status: newStatus,
-                changed_by: staffId,
-                changed_by_type: 'STAFF',
-                notes
+                OrderID: orderId,
+                OldStatus: oldStatus,
+                NewStatus: newStatus,
+                ChangedBy: staffId,
+                ChangedByType: 'STAFF',
+                Notes: notes
             }, { transaction });
 
             await transaction.commit();
 
             // Auto-assign delivery staff when order becomes READY (FR26)
-            if (newStatus === 'READY' && order.order_type === 'DELIVERY') {
+            if (newStatus === 'READY' && order.OrderType === 'DELIVERY') {
                 await this.autoAssignDeliveryStaff(orderId);
             }
 
             // Send notifications (FR15)
             try {
-                if (order.customer.email) {
+                if (order.customer.Email) {
                     await sendOrderStatusUpdateEmail(order, order.customer, newStatus);
                 }
-                if (order.customer.phone) {
-                    await sendOrderStatusUpdateSMS(order.customer.phone, order.order_number, newStatus);
+                if (order.customer.Phone) {
+                    await sendOrderStatusUpdateSMS(order.customer.Phone, order.OrderNumber, newStatus);
                 }
             } catch (notifError) {
                 console.error('Notification error:', notifError);
@@ -357,18 +363,18 @@ class OrderService {
                 throw new Error('Order not found');
             }
 
-            if (['DELIVERED', 'CANCELLED'].includes(order.status)) {
-                throw new Error(`Order cannot be cancelled. Current status: ${order.status}`);
+            if (['DELIVERED', 'CANCELLED'].includes(order.Status)) {
+                throw new Error(`Order cannot be cancelled. Current status: ${order.Status}`);
             }
 
             // Return stock if order was confirmed
-            if (order.status !== 'PENDING') {
-                const stockDate = order.confirmed_at.toISOString().split('T')[0];
+            if (order.Status !== 'PENDING' && order.ConfirmedAt) {
+                const stockDate = order.ConfirmedAt.toISOString().split('T')[0];
                 const stockItems = order.items
-                    .filter(item => item.menu_item_id)
+                    .filter(item => item.MenuItemID)
                     .map(item => ({
-                        menu_item_id: item.menu_item_id,
-                        quantity: item.quantity
+                        MenuItemID: item.MenuItemID,
+                        Quantity: item.Quantity
                     }));
 
                 if (stockItems.length > 0) {
@@ -377,26 +383,31 @@ class OrderService {
             }
 
             // Process refund if payment was made (FR21)
-            if (order.payment && order.payment.status === 'PAID') {
-                const { paymentService } = require('./paymentService');
-                await paymentService.processRefund(order.payment, reason);
+            if (order.payment && order.payment.Status === 'PAID') {
+                const { payHereService, stripeService } = require('./paymentService');
+
+                if (order.payment.Method === 'CARD') {
+                    await stripeService.processRefund(order.payment, reason);
+                } else if (order.payment.Method === 'ONLINE') {
+                    await payHereService.processRefund(order.payment, reason);
+                }
             }
 
             // Update order
-            order.status = 'CANCELLED';
-            order.cancelled_at = new Date();
-            order.cancellation_reason = reason;
-            order.cancelled_by = cancelledByType;
+            order.Status = 'CANCELLED';
+            order.CancelledAt = new Date();
+            order.CancellationReason = reason;
+            order.CancelledBy = cancelledByType;
             await order.save({ transaction });
 
             // Log status history
             await OrderStatusHistory.create({
-                order_id: orderId,
-                old_status: order.status,
-                new_status: 'CANCELLED',
-                changed_by: cancelledBy,
-                changed_by_type: cancelledByType,
-                notes: reason
+                OrderID: orderId,
+                OldStatus: order.Status,
+                NewStatus: 'CANCELLED',
+                ChangedBy: cancelledBy,
+                ChangedByType: cancelledByType,
+                Notes: reason
             }, { transaction });
 
             await transaction.commit();
@@ -442,7 +453,7 @@ class OrderService {
 
         const count = await Order.count({
             where: {
-                created_at: {
+                createdAt: {
                     [Op.between]: [startOfDay, endOfDay]
                 }
             }
@@ -463,7 +474,7 @@ class OrderService {
         try {
             // Find the delivery record
             const delivery = await Delivery.findOne({
-                where: { order_id: orderId },
+                where: { OrderID: orderId },
                 transaction
             });
 
@@ -473,7 +484,7 @@ class OrderService {
 
             // Find available delivery staff (ordered by earliest availability)
             const availableStaff = await DeliveryStaffAvailability.findOne({
-                where: { is_available: true },
+                where: { IsAvailable: true },
                 order: [['last_updated', 'ASC']],
                 transaction,
                 lock: transaction.LOCK.UPDATE
@@ -485,19 +496,19 @@ class OrderService {
                 return null;
             }
 
-            const staffId = availableStaff.delivery_staff_id;
+            const staffId = availableStaff.DeliveryStaffID;
 
             // Update delivery staff availability
             await availableStaff.update({
-                is_available: false,
-                current_order_id: orderId
+                IsAvailable: false,
+                CurrentOrderID: orderId
             }, { transaction });
 
             // Update delivery record with assigned staff
             await delivery.update({
-                delivery_staff_id: staffId,
-                status: 'ASSIGNED',
-                assigned_at: new Date()
+                DeliveryStaffID: staffId,
+                Status: 'ASSIGNED',
+                AssignedAt: new Date()
             }, { transaction });
 
             await transaction.commit();

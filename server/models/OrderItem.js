@@ -6,34 +6,34 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'OrderItemID'
+            field: 'order_item_id'
         },
         OrderID: {
             type: DataTypes.INTEGER,
             allowNull: false,
             references: {
-                model: 'Order',
-                key: 'OrderID'
+                model: 'order',
+                key: 'order_id'
             },
-            field: 'OrderID'
+            field: 'order_id'
         },
         MenuItemID: {
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-                model: 'Menu_Item',
-                key: 'MenuItemID'
+                model: 'menu_item',
+                key: 'menu_item_id'
             },
-            field: 'MenuItemID'
+            field: 'menu_item_id'
         },
         ComboID: {
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-                model: 'ComboPack',
-                key: 'ComboID'
+                model: 'combo_pack',
+                key: 'combo_id'
             },
-            field: 'ComboID'
+            field: 'combo_id'
         },
         Quantity: {
             type: DataTypes.INTEGER,
@@ -41,7 +41,7 @@ module.exports = (sequelize) => {
             validate: {
                 min: 1
             },
-            field: 'Quantity'
+            field: 'quantity'
         },
         UnitPrice: {
             type: DataTypes.DECIMAL(10, 2),
@@ -49,7 +49,7 @@ module.exports = (sequelize) => {
             validate: {
                 min: 0
             },
-            field: 'UnitPrice'
+            field: 'unit_price'
         },
         Subtotal: {
             type: DataTypes.VIRTUAL,
@@ -60,10 +60,10 @@ module.exports = (sequelize) => {
         ItemNotes: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            field: 'ItemNotes'
+            field: 'item_notes'
         }
     }, {
-        tableName: 'Order_Item',
+        tableName: 'order_item',
         timestamps: false,
         validate: {
             eitherMenuItemOrCombo() {

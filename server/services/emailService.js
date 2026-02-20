@@ -35,14 +35,14 @@ async function sendEmail(to, subject, html, relatedOrderId = null) {
 
         // Log notification
         await Notification.create({
-            recipient_type: 'CUSTOMER', // Determine based on context
-            recipient_id: null, // Set based on context
-            notification_type: 'EMAIL',
-            subject,
-            message: html,
-            status: 'SENT',
-            sent_at: new Date(),
-            related_order_id: relatedOrderId
+          RecipientType: 'CUSTOMER', // Determine based on context
+          RecipientID: null, // Set based on context
+          NotificationType: 'EMAIL',
+          Subject: subject,
+          Message: html,
+          Status: 'SENT',
+          SentAt: new Date(),
+          RelatedOrderID: relatedOrderId
         });
 
         return {
@@ -52,14 +52,14 @@ async function sendEmail(to, subject, html, relatedOrderId = null) {
     } catch (error) {
         // Log failed notification
         await Notification.create({
-            recipient_type: 'CUSTOMER',
-            recipient_id: null,
-            notification_type: 'EMAIL',
-            subject,
-            message: html,
-            status: 'FAILED',
-            error_message: error.message,
-            related_order_id: relatedOrderId
+          RecipientType: 'CUSTOMER',
+          RecipientID: null,
+          NotificationType: 'EMAIL',
+          Subject: subject,
+          Message: html,
+          Status: 'FAILED',
+          ErrorMessage: error.message,
+          RelatedOrderID: relatedOrderId
         });
 
         throw error;
@@ -70,7 +70,7 @@ async function sendEmail(to, subject, html, relatedOrderId = null) {
  * Send order confirmation email (FR15)
  */
 async function sendOrderConfirmationEmail(order, customer) {
-    const subject = `Order Confirmed - #${order.order_number}`;
+    const subject = `Order Confirmed - #${order.OrderNumber}`;
     const html = `
     <!DOCTYPE html>
     <html>
@@ -90,15 +90,15 @@ async function sendOrderConfirmationEmail(order, customer) {
           <h1>Order Confirmed!</h1>
         </div>
         <div class="content">
-          <p>Dear ${customer.name},</p>
+          <p>Dear ${customer.Name},</p>
           <p>Thank you for your order. Your order has been confirmed and is being prepared.</p>
           
           <div class="order-details">
             <h3>Order Details</h3>
-            <p><strong>Order Number:</strong> ${order.order_number}</p>
-            <p><strong>Order Type:</strong> ${order.order_type}</p>
-            <p><strong>Total Amount:</strong> LKR ${order.final_amount}</p>
-            <p><strong>Status:</strong> ${order.status}</p>
+            <p><strong>Order Number:</strong> ${order.OrderNumber}</p>
+            <p><strong>Order Type:</strong> ${order.OrderType}</p>
+            <p><strong>Total Amount:</strong> LKR ${order.FinalAmount}</p>
+            <p><strong>Status:</strong> ${order.Status}</p>
           </div>
           
           <p>You will receive updates as your order progresses.</p>
@@ -113,7 +113,7 @@ async function sendOrderConfirmationEmail(order, customer) {
     </html>
   `;
 
-    return sendEmail(customer.email, subject, html, order.order_id);
+    return sendEmail(customer.Email, subject, html, order.OrderID);
 }
 
 /**
@@ -129,7 +129,7 @@ async function sendOrderStatusUpdateEmail(order, customer, newStatus) {
         CANCELLED: 'Your order has been cancelled'
     };
 
-    const subject = `Order Update - #${order.order_number}`;
+    const subject = `Order Update - #${order.OrderNumber}`;
     const html = `
     <!DOCTYPE html>
     <html>
@@ -150,15 +150,15 @@ async function sendOrderStatusUpdateEmail(order, customer, newStatus) {
           <h1>Order Status Update</h1>
         </div>
         <div class="content">
-          <p>Dear ${customer.name},</p>
+          <p>Dear ${customer.Name},</p>
           
           <div class="status">
             <h2>${statusMessages[newStatus]}</h2>
-            <p>Order #${order.order_number}</p>
+            <p>Order #${order.OrderNumber}</p>
           </div>
           
           ${newStatus === 'OUT_FOR_DELIVERY' ? '<p>Your order is on its way! Our delivery staff will contact you shortly.</p>' : ''}
-          ${newStatus === 'READY' && order.order_type === 'TAKEAWAY' ? '<p>Your order is ready for pickup at our location.</p>' : ''}
+          ${newStatus === 'READY' && order.OrderType === 'TAKEAWAY' ? '<p>Your order is ready for pickup at our location.</p>' : ''}
           
           <p>Thank you for your patience!</p>
         </div>
@@ -170,7 +170,7 @@ async function sendOrderStatusUpdateEmail(order, customer, newStatus) {
     </html>
   `;
 
-    return sendEmail(customer.email, subject, html, order.order_id);
+    return sendEmail(customer.Email, subject, html, order.OrderID);
 }
 
 /**
@@ -293,7 +293,7 @@ async function sendWelcomeEmail(customer) {
           <h1>Welcome to Voleena Foods!</h1>
         </div>
         <div class="content">
-          <p>Dear ${customer.name},</p>
+          <p>Dear ${customer.Name},</p>
           <p>Thank you for registering with Voleena Foods!</p>
           <p>We're excited to serve you delicious Sri Lankan meals, combo packs, and catering services.</p>
           <p>Start browsing our menu and place your first order today!</p>
@@ -307,7 +307,7 @@ async function sendWelcomeEmail(customer) {
     </html>
   `;
 
-    return sendEmail(customer.email, subject, html);
+    return sendEmail(customer.Email, subject, html);
 }
 
 module.exports = {

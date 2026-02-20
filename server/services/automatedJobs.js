@@ -152,8 +152,8 @@ class AutomatedJobsService {
 
             const ordersToCancel = await Order.findAll({
                 where: {
-                    status: 'PENDING',
-                    created_at: {
+                    Status: 'PENDING',
+                    createdAt: {
                         [Op.lt]: cutoffTime
                     }
                 }
@@ -161,21 +161,21 @@ class AutomatedJobsService {
 
             for (const order of ordersToCancel) {
                 await order.update({
-                    status: 'CANCELLED',
-                    cancelled_at: new Date(),
-                    cancellation_reason: `Auto-cancelled after ${timeoutMinutes} minutes without confirmation`,
-                    cancelled_by: 'SYSTEM'
+                    Status: 'CANCELLED',
+                    CancelledAt: new Date(),
+                    CancellationReason: `Auto-cancelled after ${timeoutMinutes} minutes without confirmation`,
+                    CancelledBy: 'SYSTEM'
                 });
 
                 // Log status history
                 const { OrderStatusHistory } = require('../models');
                 await OrderStatusHistory.create({
-                    order_id: order.order_id,
-                    old_status: 'PENDING',
-                    new_status: 'CANCELLED',
-                    changed_by: null,
-                    changed_by_type: 'SYSTEM',
-                    notes: 'Auto-cancelled due to timeout'
+                    OrderID: order.OrderID,
+                    OldStatus: 'PENDING',
+                    NewStatus: 'CANCELLED',
+                    ChangedBy: null,
+                    ChangedByType: 'SYSTEM',
+                    Notes: 'Auto-cancelled due to timeout'
                 });
             }
 

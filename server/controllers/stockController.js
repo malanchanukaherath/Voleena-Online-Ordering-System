@@ -189,6 +189,74 @@ exports.manualAdjustStock = async (req, res) => {
 };
 
 /**
+ * Delete a stock record (admin + kitchen only)
+ * Only allowed if no sales have been recorded for the day
+ */
+exports.deleteStockRecord = async (req, res) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        const { stockId } = req.params;
+        const staffId = req.user.id;
+
+        const stock = await DailyStock.findByPk(stockId, { transaction });
+        if (!stock) {
+            await transaction.rollback();
+            return res.status(404).json({
+                success: false,
+                error: 'Stock record not found'
+            });
+        }
+
+        if (stock.SoldQuantity > 0) {
+            await transaction.rollback();
+            return res.status(400).json({
+                success: false,
+                error: 'Cannot remove stock record after sales have been recorded'
+            });
+        }
+
+        await StockMovement.create({
+            MenuItemID: stock.MenuItemID,
+            StockDate: stock.StockDate,
+            ChangeType: 'ADJUSTMENT',
+            QuantityChange: -stock.OpeningQuantity,
+            ReferenceType: 'MANUAL',
+            Notes: 'Stock record removed',
+            CreatedBy: staffId
+        }, { transaction });
+
+        await DailyStock.destroy({
+            where: { StockID: stock.StockID },
+            transaction
+        });
+
+        const today = new Date().toISOString().split('T')[0];
+        if (stock.StockDate === today) {
+            await MenuItem.update(
+                { IsAvailable: false },
+                { where: { MenuItemID: stock.MenuItemID }, transaction }
+            );
+        }
+
+        await transaction.commit();
+
+        res.json({
+            success: true,
+            message: 'Stock record removed successfully'
+        });
+    } catch (error) {
+        await transaction.rollback();
+        console.error('Delete stock record error:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to remove stock record',
+            message: error.message
+        });
+    }
+};
+
+/**
  * PART 3: Get stock movements (audit trail)
  * Available to all staff roles
  */

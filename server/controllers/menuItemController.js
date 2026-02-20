@@ -1,6 +1,6 @@
 const { MenuItem, Category, Staff } = require('../models');
 const path = require('path');
-const { Op } = require('sequelize');
+const { Op, col, literal } = require('sequelize');
 
 const createMenuItem = async (req, res) => {
     try {
@@ -62,12 +62,23 @@ const getAllMenuItems = async (req, res) => {
 
         const menuItems = await MenuItem.findAll({
             where,
+            attributes: {
+                include: [[
+                    literal(`(
+                        SELECT ds.closing_quantity
+                        FROM daily_stock ds
+                        WHERE ds.menu_item_id = MenuItem.menu_item_id
+                          AND ds.stock_date = CURDATE()
+                    )`),
+                    'StockQuantity'
+                ]]
+            },
             include: [{
                 model: Category,
                 as: 'category',
                 attributes: ['CategoryID', 'Name']
             }],
-            order: [[require('sequelize').col('MenuItem.created_at'), 'DESC']]
+            order: [[col('MenuItem.created_at'), 'DESC']]
         });
 
         res.json({
@@ -86,6 +97,17 @@ const getMenuItem = async (req, res) => {
         const { id } = req.params;
 
         const menuItem = await MenuItem.findByPk(id, {
+            attributes: {
+                include: [[
+                    literal(`(
+                        SELECT ds.closing_quantity
+                        FROM daily_stock ds
+                        WHERE ds.menu_item_id = MenuItem.menu_item_id
+                          AND ds.stock_date = CURDATE()
+                    )`),
+                    'StockQuantity'
+                ]]
+            },
             include: [{
                 model: Category,
                 as: 'category',
@@ -138,7 +160,7 @@ const updateMenuItem = async (req, res) => {
         if (Price) updateData.Price = parseFloat(Price);
         if (CategoryID) updateData.CategoryID = CategoryID;
         if (IsActive !== undefined) updateData.IsActive = IsActive;
-        updateData.UpdatedAt = new Date();
+        updateData.updatedAt = new Date();
 
         await menuItem.update(updateData);
 
@@ -187,13 +209,13 @@ const uploadImage = async (req, res) => {
         }
 
         const imageUrl = `/uploads/menu-images/${req.file.filename}`;
-        await menuItem.update({ Image_URL: imageUrl });
+        await menuItem.update({ ImageURL: imageUrl });
 
         res.json({
             success: true,
             data: {
-                ItemID: menuItem.ItemID,
-                Image_URL: imageUrl
+                MenuItemID: menuItem.MenuItemID,
+                ImageURL: imageUrl
             }
         });
     } catch (error) {
