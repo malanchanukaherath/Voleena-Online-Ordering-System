@@ -18,7 +18,7 @@
 
 This section lists all third-party integrations that **CANNOT** work automatically without manual configuration.
 
----
+---------
 
 ## 1.1 Google Maps Distance Matrix API
 
