@@ -7,7 +7,7 @@
 
 ## TABLE OF CONTENTS
 
-1. [External Services Requiring Manual Setup](#part-1--external-services-requiring-manual-setup)
+1. [External Services Requiring Manual Setup]   (#part-1--external-services-requiring-manual-setup)
 2. [Email Verification Implementation](#part-2--email-verification-implementation)
 3. [Payment Gateway Implementation](#part-3--payment-gateway-implementation)
 4. [Manual Setup Checklist](#part-4--manual-setup-checklist)
