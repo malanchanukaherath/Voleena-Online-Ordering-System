@@ -1,0 +1,40 @@
+/**
+ * Rate Limit Headers Middleware
+ * Ensures all responses include RFC 6585 standard rate limit headers
+ * even when express-rate-limit doesn't set them
+ */
+function rateLimitHeadersMiddleware(req, res, next) {
+    // Set Rate-Limit headers if not already set by rate limiter
+    const originalJson = res.json;
+    const originalSend = res.send;
+
+    function addHeaders(data) {
+        // Add rate limit info if available (from rate limiter)
+        if (req.rateLimit) {
+            res.setHeader('RateLimit-Limit', req.rateLimit.limit);
+            res.setHeader('RateLimit-Remaining', req.rateLimit.current);
+            res.setHeader('RateLimit-Reset', new Date(req.rateLimit.resetTime).toUTCString());
+            // Alternative Unix timestamp format
+            res.setHeader('X-RateLimit-Reset', Math.ceil(req.rateLimit.resetTime / 1000));
+        }
+        return data;
+    }
+
+    // Override json response
+    res.json = function (data) {
+        addHeaders(data);
+        return originalJson.call(this, data);
+    };
+
+    // Override text response
+    res.send = function (data) {
+        if (typeof data === 'object') {
+            addHeaders(data);
+        }
+        return originalSend.call(this, data);
+    };
+
+    next();
+}
+
+module.exports = rateLimitHeadersMiddleware;

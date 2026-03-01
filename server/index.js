@@ -10,6 +10,8 @@ const sequelize = require('./config/database');
 const { apiLimiter } = require('./middleware/rateLimiter');
 const { sanitizeInput } = require('./middleware/validation');
 const auditLogMiddleware = require('./middleware/auditLog');
+const requestIdMiddleware = require('./middleware/requestId');
+const rateLimitHeadersMiddleware = require('./middleware/rateLimitHeaders');
 const automatedJobs = require('./services/automatedJobs'); // Daily stock creation, order timeout, etc.
 
 // Initialize Express app
@@ -55,6 +57,9 @@ app.use(cors(corsOptions));
 // GENERAL MIDDLEWARE
 // =====================================================
 
+// Request ID middleware - add before other middleware for tracing
+app.use(requestIdMiddleware);
+
 // Body parsing
 app.use(express.json({
   limit: '10mb',
@@ -79,6 +84,9 @@ app.use(sanitizeInput);
 
 // Rate limiting
 app.use('/api/', apiLimiter);
+
+// Rate limit headers middleware
+app.use(rateLimitHeadersMiddleware);
 
 // Audit logging middleware (logs all state-changing operations)
 app.use(auditLogMiddleware);

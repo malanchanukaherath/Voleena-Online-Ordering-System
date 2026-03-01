@@ -41,10 +41,12 @@ const sequelize = new Sequelize(
     dialect: 'mysql',
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {
-      max: parseInt(process.env.DB_POOL_MAX) || 30,
-      min: parseInt(process.env.DB_POOL_MIN) || 5,
-      acquire: 30000,
-      idle: 10000
+      // Production-optimized connection pool settings
+      // For 100 concurrent users, keep pool small but responsive
+      max: parseInt(process.env.DB_POOL_MAX) || 20,  // Max 20 connections
+      min: parseInt(process.env.DB_POOL_MIN) || 5,   // Keep 5 warm
+      acquire: 30000,  // Max 30s to acquire a connection
+      idle: 30000      // Keep connections 30s before release
     },
     connectTimeout: 5000,
     timezone: process.env.TZ || 'Asia/Colombo',

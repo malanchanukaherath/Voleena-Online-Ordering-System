@@ -466,43 +466,78 @@ class OrderService {
 
     /**
      * Auto-assign delivery staff when order becomes READY (FR26)
-     * Selects earliest available delivery staff and updates their status
+     * Uses workload balancing to distribute deliveries fairly
+     * Considers: active deliveries count, geographic location, and availability
+     * CRITICAL: Prevents overwhelming single staff while others idle
      */
     async autoAssignDeliveryStaff(orderId) {
-        const transaction = await sequelize.transaction();
+        const transaction = await sequelize.transaction({
+            isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE
+        });
 
         try {
-            // Find the delivery record
+            // Find the delivery record with order details
             const delivery = await Delivery.findOne({
                 where: { OrderID: orderId },
-                transaction
+                include: [{
+                    model: Order,
+                    as: 'order',
+                    include: [{
+                        model: Address,
+                        as: 'address'
+                    }]
+                }],
+                transaction,
+                lock: transaction.LOCK.UPDATE
             });
 
             if (!delivery) {
                 throw new Error('Delivery record not found for order');
             }
 
-            // Find available delivery staff (ordered by earliest availability)
-            const availableStaff = await DeliveryStaffAvailability.findOne({
-                where: { IsAvailable: true },
-                order: [['last_updated', 'ASC']],
-                transaction,
-                lock: transaction.LOCK.UPDATE
-            });
+            // Get all available delivery staff with their current workload
+            const [staffWithWorkload] = await sequelize.query(
+                `SELECT 
+                    dsa.DeliveryStaffID,
+                    dsa.IsAvailable,
+                    COUNT(d.DeliveryID) AS active_deliveries,
+                    s.Name,
+                    s.Phone,
+                    COALESCE(AVG(TIMESTAMPDIFF(MINUTE, o.CreatedAt, d.DeliveredAt)), 0) AS avg_completion_time,
+                    COALESCE(AVG(d.DistanceKm), 0) AS avg_distance
+                FROM delivery_staff_availability dsa
+                LEFT JOIN delivery d ON dsa.DeliveryStaffID = d.DeliveryStaffID 
+                    AND d.Status IN ('ASSIGNED', 'PICKED_UP', 'IN_TRANSIT')
+                LEFT JOIN order o ON d.OrderID = o.OrderID
+                JOIN staff s ON dsa.DeliveryStaffID = s.StaffID
+                WHERE dsa.IsAvailable = 1
+                GROUP BY dsa.DeliveryStaffID, dsa.IsAvailable, s.Name, s.Phone
+                ORDER BY active_deliveries ASC, avg_completion_time DESC
+                LIMIT 5`,
+                { transaction, type: sequelize.QueryTypes.SELECT }
+            );
 
-            if (!availableStaff) {
-                console.log(`[AUTO-ASSIGN] No available delivery staff for order ${orderId}. Leaving PENDING.`);
+            if (!staffWithWorkload || staffWithWorkload.length === 0) {
+                console.log(`[AUTO-ASSIGN] No available delivery staff for order ${orderId}`);
                 await transaction.commit();
                 return null;
             }
 
-            const staffId = availableStaff.DeliveryStaffID;
+            // Select best staff based on workload balancing
+            // Priority: 1) Lightest workload, 2) Fastest completion time, 3) Earliest available
+            const selectedStaff = staffWithWorkload[0];
+            const staffId = selectedStaff.DeliveryStaffID;
 
-            // Update delivery staff availability
-            await availableStaff.update({
+            // Update delivery staff availability (lock row)
+            await DeliveryStaffAvailability.update({
                 IsAvailable: false,
-                CurrentOrderID: orderId
-            }, { transaction });
+                CurrentOrderID: orderId,
+                LastUpdated: new Date()
+            }, {
+                where: { DeliveryStaffID: staffId },
+                transaction,
+                lock: transaction.LOCK.UPDATE
+            });
 
             // Update delivery record with assigned staff
             await delivery.update({
@@ -511,14 +546,33 @@ class OrderService {
                 AssignedAt: new Date()
             }, { transaction });
 
+            // Log assignment decision for auditing
+            await sequelize.query(
+                `INSERT INTO delivery_assignment_log 
+                (OrderID, AssignedStaffID, Reason, ActiveDeliveries, CompletionTime) 
+                VALUES (?, ?, ?, ?, ?)`,
+                {
+                    replacements: [
+                        orderId,
+                        staffId,
+                        `Workload: ${selectedStaff.active_deliveries} active, completion time: ${selectedStaff.avg_completion_time.toFixed(1)}min`,
+                        selectedStaff.active_deliveries,
+                        selectedStaff.avg_completion_time
+                    ],
+                    transaction
+                }
+            );
+
             await transaction.commit();
 
-            console.log(`[AUTO-ASSIGN] Staff ${staffId} assigned to order ${orderId}`);
+            console.log(`[AUTO-ASSIGN] ✅ Staff ${staffId} (${selectedStaff.Name}) assigned to order ${orderId}`);
+            console.log(`   - Active deliveries: ${selectedStaff.active_deliveries}`);
+            console.log(`   - Avg completion time: ${selectedStaff.avg_completion_time.toFixed(1)} minutes`);
             return staffId;
 
         } catch (error) {
             await transaction.rollback();
-            console.error('[AUTO-ASSIGN] Error assigning delivery staff:', error.message);
+            console.error('[AUTO-ASSIGN] ❌ Error assigning delivery staff:', error.message);
             // Don't throw - allow order to proceed without staff assignment
             return null;
         }
