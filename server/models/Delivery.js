@@ -81,6 +81,21 @@ module.exports = (sequelize) => {
             type: DataTypes.DECIMAL(5, 2),
             allowNull: true,
             field: 'distance_km'
+        },
+        CurrentLatitude: {
+            type: DataTypes.DECIMAL(10, 8),
+            allowNull: true,
+            field: 'current_latitude'
+        },
+        CurrentLongitude: {
+            type: DataTypes.DECIMAL(11, 8),
+            allowNull: true,
+            field: 'current_longitude'
+        },
+        LastLocationUpdate: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            field: 'last_location_update'
         }
     }, {
         tableName: 'delivery',

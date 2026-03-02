@@ -16,11 +16,11 @@ const getAuthHeaders = () => {
  */
 const handleResponse = async (response) => {
   const data = await response.json();
-  
+
   if (!response.ok) {
     throw new Error(data.error || 'Request failed');
   }
-  
+
   return data;
 };
 
@@ -120,7 +120,7 @@ class CashierService {
     if (filters.startDate && filters.endDate) {
       url += `startDate=${filters.startDate}&endDate=${filters.endDate}`;
     }
-    
+
     const response = await fetch(url, { headers: getAuthHeaders() });
     return handleResponse(response);
   }
@@ -190,7 +190,7 @@ class KitchenService {
   async getAssignedOrders(status = '') {
     let url = `${API_BASE_URL}/api/kitchen/orders`;
     if (status) url += `?status=${status}`;
-    
+
     const response = await fetch(url, { headers: getAuthHeaders() });
     return handleResponse(response);
   }
@@ -214,7 +214,7 @@ class KitchenService {
   async getDailyStock(date = '') {
     let url = `${API_BASE_URL}/api/kitchen/stock/daily`;
     if (date) url += `?date=${date}`;
-    
+
     const response = await fetch(url, { headers: getAuthHeaders() });
     return handleResponse(response);
   }
@@ -252,7 +252,7 @@ class DeliveryService {
   async getMyDeliveries(status = '') {
     let url = `${API_BASE_URL}/api/delivery/deliveries`;
     if (status) url += `?status=${status}`;
-    
+
     const response = await fetch(url, { headers: getAuthHeaders() });
     return handleResponse(response);
   }
@@ -292,6 +292,28 @@ class DeliveryService {
 
   async getAvailability() {
     const response = await fetch(`${API_BASE_URL}/api/delivery/availability`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  }
+
+  /**
+   * Track delivery rider's current location
+   */
+  async trackDeliveryLocation(deliveryId, { lat, lng }) {
+    const response = await fetch(`${API_BASE_URL}/api/delivery/deliveries/${deliveryId}/location`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ lat, lng })
+    });
+    return handleResponse(response);
+  }
+
+  /**
+   * Get delivery's live location (for admin/customer tracking)
+   */
+  async getDeliveryLocation(deliveryId) {
+    const response = await fetch(`${API_BASE_URL}/api/delivery/deliveries/${deliveryId}/location`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);

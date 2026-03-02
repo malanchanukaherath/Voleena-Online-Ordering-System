@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { GoogleMap, LoadScript, Marker, InfoWindow, Polyline } from '@react-google-maps/api';
-import { FaMapMarkerAlt, FaTruck, FaPhone, FaClock, FaMapPin } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaTruck, FaPhone, FaClock, FaMapPin, FaExternalLinkAlt } from 'react-icons/fa';
 import { deliveryService } from '../services/dashboardService';
 
 const DeliveryMap = () => {
@@ -9,6 +9,9 @@ const DeliveryMap = () => {
     const [selectedRestaurant, setSelectedRestaurant] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [currentLocation, setCurrentLocation] = useState(null);
+    const [locationPermission, setLocationPermission] = useState('prompt');
+    const [locationError, setLocationError] = useState('');
 
     // Restaurant location - Kalagedihena (4392+WXG)
     const restaurantLocation = {
@@ -41,6 +44,44 @@ const DeliveryMap = () => {
             }
         ]
     };
+
+    const requestCurrentLocation = useCallback(() => {
+        if (!navigator.geolocation) {
+            setLocationPermission('unavailable');
+            setLocationError('Geolocation is not supported by your browser.');
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                setCurrentLocation({
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                });
+                setLocationPermission('granted');
+                setLocationError('');
+            },
+            (geoError) => {
+                setCurrentLocation(null);
+                setLocationPermission(geoError.code === 1 ? 'denied' : 'prompt');
+
+                if (geoError.code === 1) {
+                    setLocationError('Location access denied. Enable it to see your live position and route directions.');
+                } else if (geoError.code === 2) {
+                    setLocationError('Unable to determine your location right now.');
+                } else if (geoError.code === 3) {
+                    setLocationError('Location request timed out. Please try again.');
+                } else {
+                    setLocationError('Unable to fetch your current location.');
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 30000
+            }
+        );
+    }, []);
 
     // Fetch active deliveries
     useEffect(() => {
@@ -83,6 +124,17 @@ const DeliveryMap = () => {
         return () => clearInterval(interval);
     }, []);
 
+    useEffect(() => {
+        requestCurrentLocation();
+        // Broadcast location every 10 seconds if delivery is in transit
+        const locationInterval = setInterval(() => {
+            if (currentLocation && selectedDelivery) {
+                deliveryService.trackDeliveryLocation(selectedDelivery.id, currentLocation);
+            }
+        }, 10000);
+        return () => clearInterval(locationInterval);
+    }, [currentLocation, selectedDelivery, requestCurrentLocation]);
+
     const getMarkerColor = (status) => {
         switch (status) {
             case 'ASSIGNED':
@@ -119,18 +171,24 @@ const DeliveryMap = () => {
     };
 
     const calculateBounds = () => {
-        if (deliveries.length === 0) return null;
+        if (deliveries.length === 0 && !currentLocation) return null;
 
-        let minLat = restaurantLocation.lat;
-        let maxLat = restaurantLocation.lat;
-        let minLng = restaurantLocation.lng;
-        let maxLng = restaurantLocation.lng;
+        const points = [restaurantLocation, ...deliveries.map((delivery) => ({ lat: delivery.lat, lng: delivery.lng }))];
 
-        deliveries.forEach(delivery => {
-            minLat = Math.min(minLat, delivery.lat);
-            maxLat = Math.max(maxLat, delivery.lat);
-            minLng = Math.min(minLng, delivery.lng);
-            maxLng = Math.max(maxLng, delivery.lng);
+        if (currentLocation) {
+            points.push(currentLocation);
+        }
+
+        let minLat = points[0].lat;
+        let maxLat = points[0].lat;
+        let minLng = points[0].lng;
+        let maxLng = points[0].lng;
+
+        points.forEach(point => {
+            minLat = Math.min(minLat, point.lat);
+            maxLat = Math.max(maxLat, point.lat);
+            minLng = Math.min(minLng, point.lng);
+            maxLng = Math.max(maxLng, point.lng);
         });
 
         return {
@@ -165,6 +223,19 @@ const DeliveryMap = () => {
                 {/* Map Section */}
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-lg shadow overflow-hidden">
+                        {locationError && (
+                            <div className="bg-yellow-50 border-b border-yellow-200 p-3 flex items-center justify-between gap-3">
+                                <p className="text-sm text-yellow-800">{locationError}</p>
+                                <button
+                                    type="button"
+                                    onClick={requestCurrentLocation}
+                                    className="text-xs px-3 py-1.5 bg-yellow-100 text-yellow-900 rounded hover:bg-yellow-200 transition"
+                                >
+                                    Enable Location
+                                </button>
+                            </div>
+                        )}
+
                         {error ? (
                             <div className="bg-red-50 p-6 h-96 flex items-center justify-center">
                                 <p className="text-red-600">{error}</p>
@@ -196,6 +267,15 @@ const DeliveryMap = () => {
                                             </InfoWindow>
                                         )}
                                     </Marker>
+
+                                    {/* Current User Location */}
+                                    {currentLocation && (
+                                        <Marker
+                                            position={currentLocation}
+                                            title="Your Current Location"
+                                            icon="http://maps.google.com/mapfiles/ms/icons/purple-dot.png"
+                                        />
+                                    )}
 
                                     {/* Delivery Markers */}
                                     {deliveries.map((delivery) => (
@@ -232,7 +312,7 @@ const DeliveryMap = () => {
                                         </Marker>
                                     ))}
 
-                                    {/* Route Lines */}
+                                    {/* Route Lines to All Deliveries */}
                                     {deliveries.map((delivery) => (
                                         <Polyline
                                             key={`route-${delivery.id}`}
@@ -282,6 +362,12 @@ const DeliveryMap = () => {
                             Active Deliveries ({deliveries.length})
                         </h3>
 
+                        <div className="mb-3 text-xs text-gray-600">
+                            {locationPermission === 'granted'
+                                ? '✓ Live location enabled. Tap Navigate to open in Google Maps.'
+                                : 'Enable location access to send live updates to admin.'}
+                        </div>
+
                         {deliveries.length === 0 ? (
                             <div className="text-center py-6 text-gray-500">
                                 <FaMapMarkerAlt className="w-8 h-8 mx-auto mb-2 opacity-50" />
@@ -318,12 +404,22 @@ const DeliveryMap = () => {
                                         <div className="text-xs text-gray-600 mb-2">
                                             <strong>Distance:</strong> {delivery.distance.toFixed(2)} km
                                         </div>
-                                        <a
-                                            href={`tel:${delivery.phone}`}
-                                            className="w-full inline-flex items-center justify-center text-xs bg-primary-600 text-white px-2 py-1 rounded hover:bg-primary-700 transition"
-                                        >
-                                            <FaPhone className="mr-1" /> Call {delivery.phone}
-                                        </a>
+                                        <div className="flex gap-2">
+                                            <a
+                                                href={`https://www.google.com/maps/dir/?api=1&origin=${currentLocation?.lat || 'current'},${currentLocation?.lng || 'location'}&destination=${delivery.lat},${delivery.lng}&travelmode=driving`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex-1 inline-flex items-center justify-center text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition"
+                                            >
+                                                <FaExternalLinkAlt className="mr-1" /> Navigate
+                                            </a>
+                                            <a
+                                                href={`tel:${delivery.phone}`}
+                                                className="flex-1 inline-flex items-center justify-center text-xs bg-primary-600 text-white px-2 py-1 rounded hover:bg-primary-700 transition"
+                                            >
+                                                <FaPhone className="mr-1" /> Call
+                                            </a>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

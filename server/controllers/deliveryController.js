@@ -153,8 +153,8 @@ exports.updateDeliveryStatus = async (req, res) => {
     };
 
     if (!validTransitions[delivery.Status]?.includes(status)) {
-      return res.status(400).json({ 
-        error: `Cannot change status from ${delivery.Status} to ${status}` 
+      return res.status(400).json({
+        error: `Cannot change status from ${delivery.Status} to ${status}`
       });
     }
 
@@ -183,7 +183,7 @@ exports.updateDeliveryStatus = async (req, res) => {
       );
     } else if (status === 'DELIVERED') {
       await Order.update(
-        { 
+        {
           Status: 'DELIVERED',
           CompletedAt: new Date()
         },
@@ -197,8 +197,8 @@ exports.updateDeliveryStatus = async (req, res) => {
        VALUES (?, ?, ?, ?, 'STAFF', ?)`,
       {
         replacements: [
-          delivery.OrderID, 
-          delivery.Status, 
+          delivery.OrderID,
+          delivery.Status,
           status === 'DELIVERED' ? 'DELIVERED' : 'OUT_FOR_DELIVERY',
           staffId,
           notes || `Delivery status updated to ${status}`
@@ -480,4 +480,108 @@ exports.getAvailableDeliveryStaff = async (req, res) => {
     });
   }
 };
+
+/**
+ * Track delivery rider's current location
+ * POST /api/delivery/:deliveryId/location
+ * Body: { lat: number, lng: number }
+ */
+exports.trackDeliveryLocation = async (req, res) => {
+  try {
+    const { deliveryId } = req.params;
+    const { lat, lng } = req.body;
+    const staffId = req.user.id;
+
+    // Validate coordinates
+    if (typeof lat !== 'number' || typeof lng !== 'number' || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid coordinates. Latitude must be between -90 and 90, longitude between -180 and 180.'
+      });
+    }
+
+    // Verify ownership - staff can only track their own deliveries
+    const delivery = await Delivery.findOne({
+      where: {
+        DeliveryID: deliveryId,
+        DeliveryStaffID: staffId
+      }
+    });
+
+    if (!delivery) {
+      return res.status(404).json({
+        success: false,
+        message: 'Delivery not found or not assigned to you'
+      });
+    }
+
+    // Update delivery with current location
+    await delivery.update({
+      CurrentLatitude: lat,
+      CurrentLongitude: lng,
+      LastLocationUpdate: new Date()
+    });
+
+    res.json({
+      success: true,
+      message: 'Location tracked successfully',
+      data: {
+        deliveryId: delivery.DeliveryID,
+        lat: lat,
+        lng: lng,
+        timestamp: delivery.LastLocationUpdate
+      }
+    });
+
+  } catch (error) {
+    console.error('Track delivery location error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to track delivery location',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get delivery rider's live location (for admin/customer tracking)
+ * GET /api/delivery/:deliveryId/location
+ */
+exports.getDeliveryLocation = async (req, res) => {
+  try {
+    const { deliveryId } = req.params;
+
+    const delivery = await Delivery.findOne({
+      where: { DeliveryID: deliveryId },
+      attributes: ['DeliveryID', 'CurrentLatitude', 'CurrentLongitude', 'LastLocationUpdate', 'Status']
+    });
+
+    if (!delivery) {
+      return res.status(404).json({
+        success: false,
+        message: 'Delivery not found'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        deliveryId: delivery.DeliveryID,
+        lat: delivery.CurrentLatitude,
+        lng: delivery.CurrentLongitude,
+        lastUpdate: delivery.LastLocationUpdate,
+        status: delivery.Status
+      }
+    });
+
+  } catch (error) {
+    console.error('Get delivery location error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch delivery location',
+      error: error.message
+    });
+  }
+};
+
 module.exports = exports;

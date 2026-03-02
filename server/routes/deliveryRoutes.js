@@ -33,6 +33,12 @@ router.put('/deliveries/:deliveryId/status', deliveryController.updateDeliverySt
 router.get('/history', deliveryController.getDeliveryHistory);
 
 /**
+ * Location Tracking (Rider sends location, Admin/Customer retrieves it)
+ */
+router.post('/deliveries/:deliveryId/location', deliveryController.trackDeliveryLocation);
+router.get('/deliveries/:deliveryId/location', deliveryController.getDeliveryLocation);
+
+/**
  * Available staff (admin endpoint)
  */
 router.get('/staff/available', deliveryController.getAvailableDeliveryStaff);
