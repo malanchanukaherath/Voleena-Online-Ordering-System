@@ -1,4 +1,4 @@
-const { MenuItem, Category, Staff } = require('../models');
+const { MenuItem, Category, Staff, DailyStock } = require('../models');
 const path = require('path');
 const { Op, col, literal } = require('sequelize');
 
@@ -70,10 +70,43 @@ const getAllMenuItems = async (req, res) => {
             order: [[literal('`MenuItem`.`created_at`'), 'DESC']]
         });
 
+        const today = new Date().toISOString().split('T')[0];
+        const menuItemIds = menuItems.map(item => item.MenuItemID);
+
+        let stockMap = new Map();
+        if (menuItemIds.length > 0) {
+            const todaysStock = await DailyStock.findAll({
+                where: {
+                    MenuItemID: menuItemIds,
+                    StockDate: today
+                },
+                attributes: ['MenuItemID', 'ClosingQuantity'],
+                raw: true
+            });
+
+            stockMap = new Map(
+                todaysStock.map(stock => [stock.MenuItemID, stock.ClosingQuantity])
+            );
+        }
+
+        const enrichedMenuItems = menuItems.map(item => {
+            const json = item.toJSON();
+            const stockQuantity = stockMap.has(item.MenuItemID) ? stockMap.get(item.MenuItemID) : null;
+            const effectiveAvailability = stockQuantity !== null
+                ? stockQuantity > 0
+                : json.IsAvailable;
+
+            return {
+                ...json,
+                StockQuantity: stockQuantity,
+                IsAvailable: effectiveAvailability
+            };
+        });
+
         res.json({
             success: true,
-            data: menuItems,
-            count: menuItems.length
+            data: enrichedMenuItems,
+            count: enrichedMenuItems.length
         });
     } catch (error) {
         console.error('Get menu items error:', error);

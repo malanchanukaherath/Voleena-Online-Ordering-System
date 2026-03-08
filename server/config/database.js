@@ -49,7 +49,7 @@ const sequelize = new Sequelize(
       idle: 30000      // Keep connections 30s before release
     },
     connectTimeout: 5000,
-    timezone: process.env.TZ || 'Asia/Colombo',
+    timezone: process.env.DB_TIMEZONE || '+05:30',
     define: {
       charset: 'utf8mb4',
       collate: 'utf8mb4_unicode_ci',

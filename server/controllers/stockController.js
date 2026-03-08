@@ -336,6 +336,11 @@ exports.setOpeningStock = async (req, res) => {
             UpdatedBy: staffId
         });
 
+        await MenuItem.update(
+            { IsAvailable: quantity > 0 },
+            { where: { MenuItemID: menuItemId } }
+        );
+
         // Log stock movement
         await StockMovement.create({
             MenuItemID: menuItemId,
@@ -388,6 +393,15 @@ exports.adjustStock = async (req, res) => {
         stock.AdjustedQuantity += adjustment;
         stock.UpdatedBy = staffId;
         await stock.save({ transaction });
+
+        const closingQty = stock.OpeningQuantity - stock.SoldQuantity + stock.AdjustedQuantity;
+        await MenuItem.update(
+            { IsAvailable: closingQty > 0 },
+            {
+                where: { MenuItemID: stock.MenuItemID },
+                transaction
+            }
+        );
 
         // Log stock movement
         await StockMovement.create({
@@ -451,6 +465,14 @@ exports.bulkSetOpeningStock = async (req, res) => {
                     AdjustedQuantity: 0,
                     UpdatedBy: staffId
                 }, { transaction });
+
+                await MenuItem.update(
+                    { IsAvailable: item.quantity > 0 },
+                    {
+                        where: { MenuItemID: item.menuItemId },
+                        transaction
+                    }
+                );
 
                 await StockMovement.create({
                     MenuItemID: item.menuItemId,

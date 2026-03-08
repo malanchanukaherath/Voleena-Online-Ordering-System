@@ -223,13 +223,22 @@ async function startServer() {
     automatedJobs.start();
 
     // Start server
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log('='.repeat(50));
       console.log(`🚀 Voleena Foods API Server`);
       console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🌐 Server running on port ${PORT}`);
       console.log(`🔗 API Base URL: http://localhost:${PORT}/api/v1`);
       console.log('='.repeat(50));
+    });
+
+    server.on('error', (error) => {
+      if (error.code === 'EADDRINUSE') {
+        console.error(`❌ Port ${PORT} is already in use. Stop the existing process or set a different PORT.`);
+      } else {
+        console.error('❌ Server listen error:', error);
+      }
+      process.exit(1);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error);

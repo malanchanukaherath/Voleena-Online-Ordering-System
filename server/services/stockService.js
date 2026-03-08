@@ -13,6 +13,16 @@ const { Transaction, Op } = require('sequelize');
  * - Comprehensive audit trail via stock_movement table
  */
 class StockService {
+    async syncMenuItemAvailability(menuItemId, closingQuantity, transaction = null) {
+        await MenuItem.update(
+            { IsAvailable: closingQuantity > 0 },
+            {
+                where: { MenuItemID: menuItemId },
+                ...(transaction ? { transaction } : {})
+            }
+        );
+    }
+
     /**
      * Validate and reserve stock atomically (FR22, FR24)
      * Uses SERIALIZABLE isolation and SELECT FOR UPDATE
@@ -335,15 +345,34 @@ class StockService {
             where: {
                 StockDate: dateStr,
                 ClosingQuantity: 0
-            }
+            },
+            attributes: ['MenuItemID']
+        });
+
+        const inStockItems = await DailyStock.findAll({
+            where: {
+                StockDate: dateStr,
+                ClosingQuantity: {
+                    [Op.gt]: 0
+                }
+            },
+            attributes: ['MenuItemID']
         });
 
         const menuItemIds = outOfStockItems.map(s => s.MenuItemID);
+        const inStockMenuItemIds = inStockItems.map(s => s.MenuItemID);
 
         if (menuItemIds.length > 0) {
             await MenuItem.update(
                 { IsAvailable: false },
                 { where: { MenuItemID: menuItemIds } }
+            );
+        }
+
+        if (inStockMenuItemIds.length > 0) {
+            await MenuItem.update(
+                { IsAvailable: true },
+                { where: { MenuItemID: inStockMenuItemIds } }
             );
         }
 
@@ -574,6 +603,9 @@ class StockService {
                 { transaction }
             );
 
+            const closingQty = newOpeningQuantity - stock.SoldQuantity + stock.AdjustedQuantity;
+            await this.syncMenuItemAvailability(stock.MenuItemID, closingQty, transaction);
+
             // Log the change as a stock movement
             const difference = newOpeningQuantity - oldOpeningQty;
             await StockMovement.create({
@@ -652,6 +684,8 @@ class StockService {
                 },
                 { transaction }
             );
+
+            await this.syncMenuItemAvailability(stock.MenuItemID, closingQtyAfter, transaction);
 
             // Log the adjustment
             await StockMovement.create({
