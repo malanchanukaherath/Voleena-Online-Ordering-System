@@ -86,16 +86,16 @@ GET /api/v1/delivery/deliveries?status=IN_TRANSIT
 | Property | Value |
 |----------|-------|
 | Plus Code | 4392+WXG |
-| Latitude | 6.8521°N |
-| Longitude | 80.7740°E |
+| Latitude | 7.120035696626918°N |
+| Longitude | 80.05250172082567°E |
 | Country | Sri Lanka |
 | City | Kalagedihena |
 
 **Hardcoded in DeliveryMap.jsx:**
 ```javascript
 const restaurantLocation = {
-    lat: 6.8521,
-    lng: 80.7740,
+    lat: 7.120035696626918,
+    lng: 80.05250172082567,
     name: 'Voleena Foods',
     address: 'Kalagedihena'
 };

@@ -68,7 +68,7 @@ exports.getAllOrders = async (req, res) => {
         if (status) where.Status = status;
         if (orderType) where.OrderType = orderType;
         if (startDate && endDate) {
-            where.createdAt = {
+            where.created_at = {
                 [sequelize.Op.between]: [new Date(startDate), new Date(endDate)]
             };
         }
@@ -87,7 +87,12 @@ exports.getAllOrders = async (req, res) => {
                     ]
                 }
             ],
-            order: [['created_at', 'DESC']]
+            order: [
+                // Prioritize action-required statuses: PENDING, then CONFIRMED, then others
+                sequelize.literal("CASE WHEN Status = 'PENDING' THEN 0 WHEN Status = 'CONFIRMED' THEN 1 WHEN Status = 'PREPARING' THEN 2 WHEN Status = 'READY' THEN 3 ELSE 4 END"),
+                // Then show newest orders first
+                ['created_at', 'DESC']
+            ]
         });
 
         res.json({
@@ -116,6 +121,23 @@ exports.getOrderById = async (req, res) => {
                 {
                     model: Delivery,
                     as: 'delivery',
+                    attributes: [
+                        'DeliveryID',
+                        'OrderID',
+                        'DeliveryStaffID',
+                        'AddressID',
+                        'Status',
+                        'AssignedAt',
+                        'PickedUpAt',
+                        'DeliveredAt',
+                        'EstimatedDeliveryTime',
+                        'DeliveryProof',
+                        'DeliveryNotes',
+                        'FailureReason',
+                        'DistanceKm',
+                        'created_at',
+                        'updated_at'
+                    ],
                     include: [{
                         model: Address,
                         as: 'address'

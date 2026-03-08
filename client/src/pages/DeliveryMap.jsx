@@ -13,10 +13,10 @@ const DeliveryMap = () => {
     const [locationPermission, setLocationPermission] = useState('prompt');
     const [locationError, setLocationError] = useState('');
 
-    // Restaurant location - Kalagedihena (4392+WXG)
+    // Restaurant location - Kalagedihena (Actual GPS coordinates)
     const restaurantLocation = {
-        lat: 6.8521,
-        lng: 80.7740,
+        lat: 7.120035696626918,
+        lng: 80.05250172082567,
         name: 'Voleena Foods',
         address: 'Kalagedihena'
     };

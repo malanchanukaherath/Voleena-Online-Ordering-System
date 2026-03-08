@@ -49,8 +49,8 @@ VITE_API_BASE_URL=http://localhost:3001
 #### Backend (.env)
 ```bash
 GOOGLE_MAPS_API_KEY=YOUR_API_KEY_HERE
-RESTAURANT_LATITUDE=6.8521
-RESTAURANT_LONGITUDE=80.7740
+RESTAURANT_LATITUDE=7.120035696626918
+RESTAURANT_LONGITUDE=80.05250172082567
 MAX_DELIVERY_DISTANCE_KM=15
 ```
 
@@ -66,8 +66,9 @@ npm install @react-google-maps/api
 **Plus Code:** 4392+WXG
 
 **Coordinates:**
-- **Latitude:** 6.8521°N
-- **Longitude:** 80.7740°E
+- **Latitude:** 7.120035696626918°N
+- **Longitude:** 80.05250172082567°E
+- **Location:** Voleena Foods, Kalagedihena
 
 **Address:** Kalagedihena, Sri Lanka
 
@@ -137,7 +138,7 @@ POST /api/v1/delivery/validate-distance
 Use these test coordinates for Colombo area:
 ```javascript
 // Near Restaurant
-{ lat: 6.8521, lng: 80.7740 }
+{ lat: 7.120035696626918, lng: 80.05250172082567 }
 
 // Sample Delivery Point 1
 { lat: 6.8600, lng: 80.7800 }

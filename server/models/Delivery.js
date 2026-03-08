@@ -99,6 +99,11 @@ module.exports = (sequelize) => {
         }
     }, {
         tableName: 'delivery',
+        defaultScope: {
+            attributes: {
+                exclude: ['CurrentLatitude', 'CurrentLongitude', 'LastLocationUpdate']
+            }
+        },
         timestamps: true,
         createdAt: 'created_at',
         updatedAt: 'updated_at'

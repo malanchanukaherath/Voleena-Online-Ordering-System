@@ -120,7 +120,7 @@ class OrderService {
             // Generate order number
             const orderNumber = await this.generateOrderNumber();
 
-            // Create order
+            // Create order with CONFIRMED status (auto-confirmation to avoid cashier bottleneck)
             const order = await Order.create({
                 OrderNumber: orderNumber,
                 CustomerID: customerId,
@@ -128,9 +128,11 @@ class OrderService {
                 PromotionID: promotionId || null,
                 DiscountAmount: discountAmount,
                 DeliveryFee: deliveryFee,
-                Status: 'PENDING',
+                Status: 'CONFIRMED',
                 OrderType: orderType,
-                SpecialInstructions: specialInstructions
+                SpecialInstructions: specialInstructions,
+                ConfirmedAt: new Date(),
+                ConfirmedBy: null // Auto-confirmed by system
             }, { transaction });
 
             // Create order items
@@ -159,17 +161,48 @@ class OrderService {
                 }, { transaction });
             }
 
-            // Log status history
+            // Validate and deduct stock at order creation (auto-confirmation)
+            const stockDate = new Date().toISOString().split('T')[0];
+            const stockItems = orderItems
+                .filter(item => item.MenuItemID)
+                .map(item => ({
+                    MenuItemID: item.MenuItemID,
+                    Quantity: item.Quantity
+                }));
+
+            if (stockItems.length > 0) {
+                await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
+                await stockService.deductStock(order.OrderID, stockItems, stockDate, null, transaction);
+            }
+
+            // Log status history - auto-confirmed
             await OrderStatusHistory.create({
                 OrderID: order.OrderID,
                 OldStatus: null,
-                NewStatus: 'PENDING',
+                NewStatus: 'CONFIRMED',
                 ChangedBy: null,
-                ChangedByType: 'CUSTOMER',
-                Notes: 'Order created'
+                ChangedByType: 'SYSTEM',
+                Notes: 'Order created and auto-confirmed',
+                CreatedAt: new Date()
             }, { transaction });
 
             await transaction.commit();
+
+            // Send confirmation notifications (FR15) - after successful commit
+            try {
+                const customer = await Customer.findByPk(customerId);
+                if (customer) {
+                    if (customer.Email) {
+                        await sendOrderConfirmationEmail(order, customer);
+                    }
+                    if (customer.Phone) {
+                        await sendOrderConfirmationSMS(customer.Phone, orderNumber);
+                    }
+                }
+            } catch (notifError) {
+                console.error('Notification error after order creation:', notifError);
+                // Don't fail the order if notification fails
+            }
 
             return order;
         } catch (error) {
@@ -198,6 +231,12 @@ class OrderService {
 
             if (!order) {
                 throw new Error('Order not found');
+            }
+
+            // Orders are now auto-confirmed, so if already confirmed, just return success
+            if (order.Status === 'CONFIRMED') {
+                await transaction.rollback();
+                return order;
             }
 
             if (order.Status !== 'PENDING') {
@@ -238,7 +277,8 @@ class OrderService {
                 NewStatus: 'CONFIRMED',
                 ChangedBy: staffId,
                 ChangedByType: 'STAFF',
-                Notes: 'Order confirmed by staff'
+                Notes: 'Order confirmed by staff',
+                CreatedAt: new Date()
             }, { transaction });
 
             await transaction.commit();
@@ -313,7 +353,8 @@ class OrderService {
                 NewStatus: newStatus,
                 ChangedBy: staffId,
                 ChangedByType: 'STAFF',
-                Notes: notes
+                Notes: notes,
+                CreatedAt: new Date()
             }, { transaction });
 
             await transaction.commit();
@@ -367,6 +408,8 @@ class OrderService {
                 throw new Error(`Order cannot be cancelled. Current status: ${order.Status}`);
             }
 
+            const oldStatus = order.Status;
+
             // Return stock if order was confirmed
             if (order.Status !== 'PENDING' && order.ConfirmedAt) {
                 const stockDate = order.ConfirmedAt.toISOString().split('T')[0];
@@ -403,11 +446,12 @@ class OrderService {
             // Log status history
             await OrderStatusHistory.create({
                 OrderID: orderId,
-                OldStatus: order.Status,
+                OldStatus: oldStatus,
                 NewStatus: 'CANCELLED',
                 ChangedBy: cancelledBy,
                 ChangedByType: cancelledByType,
-                Notes: reason
+                Notes: reason,
+                CreatedAt: new Date()
             }, { transaction });
 
             await transaction.commit();
@@ -453,7 +497,7 @@ class OrderService {
 
         const count = await Order.count({
             where: {
-                createdAt: {
+                created_at: {
                     [Op.between]: [startOfDay, endOfDay]
                 }
             }
@@ -471,6 +515,8 @@ class OrderService {
      * CRITICAL: Prevents overwhelming single staff while others idle
      */
     async autoAssignDeliveryStaff(orderId) {
+        console.log(`[AUTO-ASSIGN] 🚀 Starting auto-assignment for order ${orderId}`);
+
         const transaction = await sequelize.transaction({
             isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE
         });
@@ -492,7 +538,18 @@ class OrderService {
             });
 
             if (!delivery) {
-                throw new Error('Delivery record not found for order');
+                console.error(`[AUTO-ASSIGN] ❌ Delivery record not found for order ${orderId}`);
+                await transaction.rollback();
+                return null;
+            }
+
+            console.log(`[AUTO-ASSIGN] 📦 Found delivery record (ID: ${delivery.DeliveryID}, Status: ${delivery.Status})`);
+
+            // Check if already assigned
+            if (delivery.Status !== 'PENDING') {
+                console.log(`[AUTO-ASSIGN] ⚠️  Delivery already ${delivery.Status}, skipping assignment`);
+                await transaction.commit();
+                return delivery.DeliveryStaffID;
             }
 
             // Get all available delivery staff with their current workload
@@ -517,16 +574,26 @@ class OrderService {
                 { transaction, type: sequelize.QueryTypes.SELECT }
             );
 
+            console.log(`[AUTO-ASSIGN] 👥 Found ${staffWithWorkload ? staffWithWorkload.length : 0} available staff`);
+
             if (!staffWithWorkload || staffWithWorkload.length === 0) {
-                console.log(`[AUTO-ASSIGN] No available delivery staff for order ${orderId}`);
-                await transaction.commit();
+                console.warn(`[AUTO-ASSIGN] ⚠️  No available delivery staff for order ${orderId}`);
+                console.warn(`[AUTO-ASSIGN] 💡 Tip: Run init_delivery_staff_availability.js or have staff set availability to true`);
+                await transaction.rollback();
                 return null;
             }
+
+            // Log available staff
+            staffWithWorkload.forEach((staff, idx) => {
+                console.log(`[AUTO-ASSIGN]    ${idx + 1}. ${staff.Name} - ${staff.active_deliveries} active`);
+            });
 
             // Select best staff based on workload balancing
             // Priority: 1) Lightest workload, 2) Fastest completion time, 3) Earliest available
             const selectedStaff = staffWithWorkload[0];
             const staffId = selectedStaff.DeliveryStaffID;
+
+            console.log(`[AUTO-ASSIGN] 🎯 Selected: ${selectedStaff.Name} (ID: ${staffId})`);
 
             // Update delivery staff availability (lock row)
             await DeliveryStaffAvailability.update({
@@ -547,32 +614,40 @@ class OrderService {
             }, { transaction });
 
             // Log assignment decision for auditing
-            await sequelize.query(
-                `INSERT INTO delivery_assignment_log 
-                (OrderID, AssignedStaffID, Reason, ActiveDeliveries, CompletionTime) 
-                VALUES (?, ?, ?, ?, ?)`,
-                {
-                    replacements: [
-                        orderId,
-                        staffId,
-                        `Workload: ${selectedStaff.active_deliveries} active, completion time: ${selectedStaff.avg_completion_time.toFixed(1)}min`,
-                        selectedStaff.active_deliveries,
-                        selectedStaff.avg_completion_time
-                    ],
-                    transaction
-                }
-            );
+            try {
+                await sequelize.query(
+                    `INSERT INTO delivery_assignment_log 
+                    (OrderID, AssignedStaffID, Reason, ActiveDeliveries, CompletionTime) 
+                    VALUES (?, ?, ?, ?, ?)`,
+                    {
+                        replacements: [
+                            orderId,
+                            staffId,
+                            `Workload: ${selectedStaff.active_deliveries} active, completion time: ${selectedStaff.avg_completion_time.toFixed(1)}min`,
+                            selectedStaff.active_deliveries,
+                            selectedStaff.avg_completion_time
+                        ],
+                        transaction
+                    }
+                );
+            } catch (logError) {
+                // Ignore if assignment log table doesn't exist
+                console.log(`[AUTO-ASSIGN] ℹ️  Assignment log table not available (optional)`);
+            }
 
             await transaction.commit();
 
             console.log(`[AUTO-ASSIGN] ✅ Staff ${staffId} (${selectedStaff.Name}) assigned to order ${orderId}`);
-            console.log(`   - Active deliveries: ${selectedStaff.active_deliveries}`);
-            console.log(`   - Avg completion time: ${selectedStaff.avg_completion_time.toFixed(1)} minutes`);
+            console.log(`[AUTO-ASSIGN]    - Active deliveries: ${selectedStaff.active_deliveries}`);
+            console.log(`[AUTO-ASSIGN]    - Avg completion time: ${selectedStaff.avg_completion_time.toFixed(1)} minutes`);
+            console.log(`[AUTO-ASSIGN] 🎉 Auto-assignment completed successfully!`);
+
             return staffId;
 
         } catch (error) {
             await transaction.rollback();
             console.error('[AUTO-ASSIGN] ❌ Error assigning delivery staff:', error.message);
+            console.error('[AUTO-ASSIGN] Stack trace:', error.stack);
             // Don't throw - allow order to proceed without staff assignment
             return null;
         }

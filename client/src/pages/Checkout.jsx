@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
@@ -30,6 +31,9 @@ const Checkout = () => {
     const [showStripeModal, setShowStripeModal] = useState(false);
     const [currentOrderId, setCurrentOrderId] = useState(null);
     const [paymentClientSecret, setPaymentClientSecret] = useState(null);
+    const [currentLocation, setCurrentLocation] = useState(null);
+    const [gettingLocation, setGettingLocation] = useState(false);
+    const [locationError, setLocationError] = useState('');
     const cartItems = useMemo(() => getCart(), []);
 
     const handleChange = (e) => {
@@ -42,22 +46,125 @@ const Checkout = () => {
     };
 
     /**
+     * Get current GPS location and validate it for delivery
+     */
+    const handleUseCurrentLocation = async () => {
+        if (!navigator.geolocation) {
+            setLocationError('Geolocation is not supported by your browser.');
+            return;
+        }
+
+        setGettingLocation(true);
+        setLocationError('');
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+
+                setCurrentLocation({ lat, lng });
+                setGettingLocation(false);
+
+                // Validate the GPS location directly
+                try {
+                    setValidatingDistance(true);
+                    const response = await validateDeliveryDistance({
+                        latitude: lat,
+                        longitude: lng
+                    });
+
+                    console.log('[GPS Location Validation] Response:', response.data);
+
+                    if (response.data?.success) {
+                        const data = response.data.data;
+                        setDistanceInfo({
+                            isValid: data.isValid,
+                            distance: data.distance,
+                            maxDistance: data.maxDistance,
+                            method: data.method
+                        });
+
+                        if (!data.isValid) {
+                            setErrors(prev => ({
+                                ...prev,
+                                distance: `Your current location is outside our delivery area (${data.distance.toFixed(2)}km > ${data.maxDistance}km)`
+                            }));
+                            setLocationError(`Your current location is outside our delivery area (${data.distance.toFixed(2)}km away)`);
+                        } else {
+                            setErrors(prev => {
+                                const newErrors = { ...prev };
+                                delete newErrors.distance;
+                                return newErrors;
+                            });
+                            setLocationError('');
+                            // Suggest to fill in address details
+                            setFormData(prev => ({
+                                ...prev,
+                                addressLine1: prev.addressLine1 || `GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                            }));
+                        }
+                    }
+                } catch (error) {
+                    console.error('GPS location validation error:', error);
+                    setLocationError(error.response?.data?.message || 'Unable to validate your current location');
+                } finally {
+                    setValidatingDistance(false);
+                }
+            },
+            (error) => {
+                setGettingLocation(false);
+                if (error.code === 1) {
+                    setLocationError('Location access denied. Please enable location permissions.');
+                } else if (error.code === 2) {
+                    setLocationError('Unable to determine your location right now.');
+                } else if (error.code === 3) {
+                    setLocationError('Location request timed out. Please try again.');
+                } else {
+                    setLocationError('Unable to get your current location.');
+                }
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 30000
+            }
+        );
+    };
+
+    /**
      * Validate delivery distance when address changes or on blur
+     * Only validates if address line is at least 5 characters and city is provided
      */
     const validateDeliveryAddressDistance = async () => {
-        if (formData.orderType !== 'DELIVERY' || !formData.addressLine1 || !formData.city) {
+        // Skip validation if not delivery order
+        if (formData.orderType !== 'DELIVERY') {
             return;
+        }
+
+        // Skip validation if required fields are not properly filled
+        // (addressLine1 must be at least 5 chars, city must be provided)
+        if (!formData.addressLine1 || formData.addressLine1.trim().length < 5) {
+            return; // Silently skip - user is still typing
+        }
+
+        if (!formData.city || formData.city.trim().length < 2) {
+            return; // Silently skip - user hasn't entered city yet
         }
 
         setValidatingDistance(true);
         try {
-            const response = await validateDeliveryDistance({
+            const payload = {
                 address: {
                     addressLine1: formData.addressLine1,
                     city: formData.city,
                     district: formData.postalCode
                 }
-            });
+            };
+
+            console.log('[Distance Validation] Sending request with:', payload);
+            const response = await validateDeliveryDistance(payload);
+
+            console.log('[Distance Validation] Response:', response.data);
 
             if (response.data?.success) {
                 const data = response.data.data;
@@ -83,10 +190,14 @@ const Checkout = () => {
             }
         } catch (error) {
             console.error('Distance validation error:', error);
+
+            // Show specific error message from server if available
+            const errorMessage = error.response?.data?.message || 'Unable to validate delivery distance';
+
             setDistanceInfo(null);
             setErrors(prev => ({
                 ...prev,
-                distance: 'Unable to validate delivery distance'
+                distance: errorMessage
             }));
         } finally {
             setValidatingDistance(false);
@@ -126,13 +237,24 @@ const Checkout = () => {
 
             if (formData.orderType === 'DELIVERY') {
                 // Validate delivery distance before placing order
-                const distanceValidation = await validateDeliveryDistance({
-                    address: {
-                        addressLine1: formData.addressLine1,
-                        city: formData.city,
-                        district: formData.postalCode
-                    }
-                });
+                let distanceValidation;
+
+                // If we have GPS coordinates, use them directly
+                if (currentLocation) {
+                    distanceValidation = await validateDeliveryDistance({
+                        latitude: currentLocation.lat,
+                        longitude: currentLocation.lng
+                    });
+                } else {
+                    // Otherwise, use address
+                    distanceValidation = await validateDeliveryDistance({
+                        address: {
+                            addressLine1: formData.addressLine1,
+                            city: formData.city,
+                            district: formData.postalCode
+                        }
+                    });
+                }
 
                 if (!distanceValidation.data?.success) {
                     throw new Error(distanceValidation.data?.message || 'Unable to validate delivery address');
@@ -145,15 +267,15 @@ const Checkout = () => {
                     );
                 }
 
-                // Create address - server will geocode automatically
+                // Create address - include GPS coordinates if available
                 const addressResponse = await createAddress({
                     addressLine1: formData.addressLine1,
                     addressLine2: formData.addressLine2 || null,
                     city: formData.city,
                     postalCode: formData.postalCode || null,
                     district: null,
-                    latitude: null,
-                    longitude: null
+                    latitude: currentLocation?.lat || null,
+                    longitude: currentLocation?.lng || null
                 });
                 addressId = addressResponse.data?.address?.id || addressResponse.data?.addressId || null;
             }
@@ -318,7 +440,40 @@ const Checkout = () => {
                         {/* Delivery Address (with Distance Validation) */}
                         {formData.orderType === 'DELIVERY' && (
                             <div className="bg-white rounded-lg shadow p-6">
-                                <h2 className="text-xl font-semibold mb-4">Delivery Address</h2>
+                                <div className="flex items-center justify-between mb-4">
+                                    <h2 className="text-xl font-semibold">Delivery Address</h2>
+                                    <button
+                                        type="button"
+                                        onClick={handleUseCurrentLocation}
+                                        disabled={gettingLocation}
+                                        className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        {gettingLocation ? (
+                                            <>
+                                                <FaSpinner className="animate-spin" />
+                                                Getting Location...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FaMapMarkerAlt />
+                                                Use My Location
+                                            </>
+                                        )}
+                                    </button>
+                                </div>
+
+                                {locationError && (
+                                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
+                                        {locationError}
+                                    </div>
+                                )}
+
+                                {currentLocation && (
+                                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-700">
+                                        ✓ Using your current GPS location ({currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)})
+                                    </div>
+                                )}
+
                                 <div className="space-y-4">
                                     <Input
                                         label="Address Line 1"

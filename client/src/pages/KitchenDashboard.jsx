@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaClipboardList, FaBoxes, FaClock } from 'react-icons/fa';
+import { FaClipboardList, FaBoxes, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
 import { kitchenService } from '../services/dashboardService';
 
@@ -28,7 +28,7 @@ const KitchenDashboard = () => {
                     id: order.OrderID,
                     orderNumber: order.OrderNumber,
                     items: order.orderItems?.reduce((sum, item) => sum + (item.Quantity || 0), 0) || 0,
-                    time: order.CreatedAt,
+                    time: order.CreatedAt || order.createdAt || order.created_at,
                     status: order.Status,
                     priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
                 }));
@@ -74,16 +74,29 @@ const KitchenDashboard = () => {
             </div>
 
             <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Current Orders</h3>
+                <h3 className="text-lg font-semibold mb-4 flex items-center">
+                    {activeOrders.some(o => o.priority === 'high') && (
+                        <>
+                            <FaExclamationTriangle className="text-red-600 mr-2 animate-pulse" />
+                            Current Orders (Action Required First)
+                        </>
+                    )}
+                    {!activeOrders.some(o => o.priority === 'high') && 'Current Orders'}
+                </h3>
                 <div className="space-y-3">
                     {activeOrders.length === 0 ? (
                         <div className="text-sm text-gray-500">No active kitchen orders.</div>
                     ) : activeOrders.map(order => (
-                        <div key={order.id} className={`p-4 rounded-lg border-2 ${order.priority === 'high' ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'
+                        <div key={order.id} className={`p-4 rounded-lg border-2 ${order.priority === 'high' ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50'
                             }`}>
                             <div className="flex justify-between items-center">
                                 <div>
-                                    <p className="font-bold">{order.orderNumber}</p>
+                                    <div className="flex items-center gap-2">
+                                        {order.priority === 'high' && (
+                                            <FaExclamationTriangle className="text-red-600" />
+                                        )}
+                                        <p className="font-bold">{order.orderNumber}</p>
+                                    </div>
                                     <p className="text-sm text-gray-600">
                                         {order.items} items • {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
                                     </p>

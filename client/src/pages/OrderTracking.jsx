@@ -4,7 +4,7 @@ import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
-import { FaMapMarkerAlt, FaPhone, FaBox, FaTruck, FaCheckCircle, FaClock, FaBan, FaMoneyBillWave } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaPhone, FaBox, FaTruck, FaCheckCircle, FaClock, FaBan, FaMoneyBillWave, FaMapMarkedAlt } from 'react-icons/fa';
 import { cancelOrder, getOrderById } from '../services/orderApi';
 
 const OrderTracking = () => {
@@ -14,6 +14,7 @@ const OrderTracking = () => {
     const CANCELLATION_WINDOW_MINUTES = 10;
 
     const [order, setOrder] = useState(null);
+    const [deliveryLocation, setDeliveryLocation] = useState(null);
 
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showToast, setShowToast] = useState(false);
@@ -42,9 +43,17 @@ const OrderTracking = () => {
                     deliveryAddress: data.delivery?.address ? {
                         line1: data.delivery.address.AddressLine1,
                         city: data.delivery.address.City,
-                        district: data.delivery.address.District || ''
+                        district: data.delivery.address.District || '',
+                        latitude: data.delivery.address.latitude,
+                        longitude: data.delivery.address.longitude
+                    } : null,
+                    deliveryPerson: data.delivery?.staff ? {
+                        name: data.delivery.staff.Name,
+                        phone: data.delivery.staff.Phone
                     } : null,
                     placedAt: data.CreatedAt,
+                    completedAt: data.CompletedAt || data.completedAt,
+                    deliveredAt: data.delivery?.DeliveredAt || data.delivery?.deliveredAt,
                     items: (data.items || []).map((item) => ({
                         name: item.menuItem?.Name || item.combo?.Name || 'Item',
                         quantity: item.Quantity,
@@ -58,6 +67,10 @@ const OrderTracking = () => {
         };
 
         fetchOrder();
+
+        // Poll for updates every 30 seconds when order is active
+        const interval = setInterval(fetchOrder, 30000);
+        return () => clearInterval(interval);
     }, [orderId]);
 
     // Calculate time remaining for cancellation
@@ -117,6 +130,7 @@ const OrderTracking = () => {
         }
     };
 
+    // FR27: Different tracking steps for DELIVERY vs TAKEAWAY orders
     const trackingSteps = [
         {
             status: 'PENDING',
@@ -129,7 +143,7 @@ const OrderTracking = () => {
             status: 'CONFIRMED',
             label: 'Order Confirmed',
             time: order?.placedAt ? new Date(new Date(order.placedAt).getTime() + 5 * 60000).toLocaleTimeString() : '',
-            completed: ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order?.status),
+            completed: ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'READY'].includes(order?.status),
             icon: FaCheckCircle,
             current: order?.status === 'CONFIRMED'
         },
@@ -137,27 +151,41 @@ const OrderTracking = () => {
             status: 'PREPARING',
             label: 'Preparing',
             time: order?.placedAt ? new Date(new Date(order.placedAt).getTime() + 15 * 60000).toLocaleTimeString() : '',
-            completed: ['PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED'].includes(order?.status),
+            completed: ['PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'READY'].includes(order?.status),
             icon: FaClock,
             current: order?.status === 'PREPARING'
-        },
-        {
+        }
+    ];
+
+    // FR27: For DELIVERY orders, show delivery steps. For TAKEAWAY, show pickup step
+    if (order?.orderType === 'DELIVERY') {
+        trackingSteps.push({
             status: 'OUT_FOR_DELIVERY',
             label: 'Out for Delivery',
             time: order?.placedAt ? new Date(new Date(order.placedAt).getTime() + 30 * 60000).toLocaleTimeString() : '',
             completed: ['OUT_FOR_DELIVERY', 'DELIVERED'].includes(order?.status),
             icon: FaTruck,
             current: order?.status === 'OUT_FOR_DELIVERY'
-        },
-        {
+        });
+        trackingSteps.push({
             status: 'DELIVERED',
             label: 'Delivered',
             time: '',
             completed: order?.status === 'DELIVERED',
             icon: FaCheckCircle,
             current: order?.status === 'DELIVERED'
-        },
-    ];
+        });
+    } else if (order?.orderType === 'TAKEAWAY') {
+        // For takeaway, show Ready for Pickup as the final step
+        trackingSteps.push({
+            status: 'READY',
+            label: 'Ready for Pickup',
+            time: '',
+            completed: ['READY', 'DELIVERED'].includes(order?.status),
+            icon: FaCheckCircle,
+            current: order?.status === 'READY'
+        });
+    }
 
     // Add cancelled step if order is cancelled
     if (order?.status === 'CANCELLED') {
@@ -203,12 +231,19 @@ const OrderTracking = () => {
                                     {order.status === 'CANCELLED' ? 'Your order has been cancelled' :
                                         order.status === 'CONFIRMED' ? 'Your order is confirmed!' :
                                             order.status === 'PREPARING' ? 'Your order is being prepared' :
-                                                'Your order is on the way!'}
+                                                order.status === 'READY' ? (order.orderType === 'TAKEAWAY' ? 'Your order is ready for pickup!' : 'Your order is ready!') :
+                                                    order.status === 'OUT_FOR_DELIVERY' ? 'Your order is on the way!' :
+                                                        'Your order has been delivered!'}
                                 </p>
                             </div>
                             <StatusBadge status={order.status} type="order" />
                         </div>
-                        {order.status !== 'CANCELLED' && (
+                        {order.status === 'DELIVERED' && order.orderType === 'DELIVERY' && order.deliveredAt && (
+                            <div className="text-sm text-green-800 bg-green-50 p-2 rounded mt-3">
+                                <p>✅ Delivered on: <span className="font-semibold">{new Date(order.deliveredAt).toLocaleString()}</span></p>
+                            </div>
+                        )}
+                        {order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && order.orderType === 'DELIVERY' && (
                             <div className="text-sm text-primary-800">
                                 <p>Estimated delivery: <span className="font-semibold">Pending</span></p>
                             </div>
@@ -259,6 +294,49 @@ const OrderTracking = () => {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {/* Real-time Delivery Tracking Map */}
+                    {order.orderType === 'DELIVERY' && order.status === 'OUT_FOR_DELIVERY' && order.deliveryAddress && (
+                        <div className="bg-white rounded-lg shadow p-6">
+                            <h3 className="text-lg font-semibold mb-4 flex items-center">
+                                <FaMapMarkedAlt className="mr-2 text-primary-600" />
+                                Live Delivery Tracking
+                            </h3>
+
+                            {order.deliveryAddress.latitude && order.deliveryAddress.longitude ? (
+                                <div className="space-y-4">
+                                    <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800">
+                                        <p>📍 Your order is on the way to:</p>
+                                        <p className="font-medium mt-1">{order.deliveryAddress.line1}, {order.deliveryAddress.city}</p>
+                                        {deliveryLocation && (
+                                            <p className="mt-2 text-xs">
+                                                Last updated: {new Date().toLocaleTimeString()}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="bg-gray-100 rounded-lg p-4 text-center">
+                                        <FaMapMarkedAlt className="w-16 h-16 mx-auto mb-3 text-gray-400" />
+                                        <p className="text-sm text-gray-600">
+                                            Live map tracking available in delivery dashboard
+                                        </p>
+                                        <a
+                                            href={`https://www.google.com/maps/dir/?api=1&destination=${order.deliveryAddress.latitude},${order.deliveryAddress.longitude}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-block mt-3 px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors text-sm"
+                                        >
+                                            Open in Google Maps
+                                        </a>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800">
+                                    <p>📍 Your order is on the way! GPS tracking not available for this delivery.</p>
+                                </div>
+                            )}
                         </div>
                     )}
 

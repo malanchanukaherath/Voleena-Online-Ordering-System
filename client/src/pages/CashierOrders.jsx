@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
 import { cashierService } from '../services/dashboardService';
@@ -7,46 +7,49 @@ const CashierOrders = () => {
     const [orders, setOrders] = useState([]);
     const [error, setError] = useState('');
 
+    const loadOrders = useCallback(async () => {
+        try {
+            const response = await cashierService.getAllOrders();
+            const data = response.data || response?.data?.data || [];
+            const mapped = data.map((order) => ({
+                id: order.OrderID,
+                orderNumber: order.OrderNumber,
+                customer: order.customer?.Name || 'Unknown',
+                total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
+                status: order.Status,
+                orderType: order.OrderType
+            }));
+
+            setOrders(mapped);
+            setError('');
+        } catch (err) {
+            setError(err.message || 'Failed to load orders');
+        }
+    }, []);
+
     useEffect(() => {
-        let isMounted = true;
+        let isActive = true;
 
-        const loadOrders = async () => {
-            try {
-                const response = await cashierService.getAllOrders();
-                const data = response.data || response?.data?.data || [];
-                const mapped = data.map((order) => ({
-                    id: order.OrderID,
-                    orderNumber: order.OrderNumber,
-                    customer: order.customer?.Name || 'Unknown',
-                    total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
-                    status: order.Status,
-                    orderType: order.OrderType
-                }));
-
-                if (isMounted) {
-                    setOrders(mapped);
-                    setError('');
-                }
-            } catch (err) {
-                if (isMounted) {
-                    setError(err.message || 'Failed to load orders');
-                }
-            }
+        const loadOrdersSafely = async () => {
+            if (!isActive) return;
+            await loadOrders();
         };
 
-        loadOrders();
+        loadOrdersSafely();
+
+        // Poll periodically so customer-created orders appear without manual refresh.
+        const intervalId = setInterval(loadOrdersSafely, 5000);
 
         return () => {
-            isMounted = false;
+            isActive = false;
+            clearInterval(intervalId);
         };
-    }, []);
+    }, [loadOrders]);
 
     const handleConfirm = async (orderId) => {
         try {
             await cashierService.confirmOrder(orderId);
-            setOrders((prev) => prev.map((order) => (
-                order.id === orderId ? { ...order, status: 'CONFIRMED' } : order
-            )));
+            await loadOrders();
         } catch (err) {
             setError(err.message || 'Failed to confirm order');
         }

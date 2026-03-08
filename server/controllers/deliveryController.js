@@ -397,25 +397,39 @@ exports.validateDeliveryDistance = async (req, res) => {
 
     // If coordinates not provided, try to geocode the address
     if ((!lat || !lng) && address) {
-      if (!validateAddressLine(address.addressLine1)) {
+      // Validate address has proper fields
+      if (!address.addressLine1 || !validateAddressLine(address.addressLine1)) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid address provided'
+          message: 'Address line must be at least 5 characters'
         });
       }
 
       try {
         const addressText = `${address.addressLine1}${address.city ? ', ' + address.city : ''}${address.district ? ', ' + address.district : ''}`;
-        const geocoded = await geocodeAddress(addressText);
+        // Pass city parameter for fallback geocoding (when API key not configured)
+        const geocoded = await geocodeAddress(addressText, address.city);
         lat = geocoded.lat;
         lng = geocoded.lng;
+
+        // Log geocoding method used (for debugging)
+        console.log(`[Distance Validation] Geocoded via: ${geocoded.method || 'unknown'} -> (${lat}, ${lng})`);
       } catch (geocodeError) {
+        console.error('[Distance Validation] Geocoding error:', geocodeError.message);
         return res.status(400).json({
           success: false,
           message: 'Unable to locate this address. Please check the address details.',
           error: geocodeError.message
         });
       }
+    }
+
+    // If still no coordinates, reject
+    if (!lat || !lng) {
+      return res.status(400).json({
+        success: false,
+        message: 'Address coordinates could not be determined. Please verify your address details.'
+      });
     }
 
     // Validate coordinates
@@ -539,6 +553,14 @@ exports.trackDeliveryLocation = async (req, res) => {
 
   } catch (error) {
     console.error('Track delivery location error:', error);
+
+    if (error?.original?.code === 'ER_BAD_FIELD_ERROR' || error?.parent?.code === 'ER_BAD_FIELD_ERROR') {
+      return res.status(503).json({
+        success: false,
+        message: 'Delivery location tracking is not available until migration_v2.2_delivery_location_tracking.sql is applied.'
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to track delivery location',
@@ -580,6 +602,14 @@ exports.getDeliveryLocation = async (req, res) => {
 
   } catch (error) {
     console.error('Get delivery location error:', error);
+
+    if (error?.original?.code === 'ER_BAD_FIELD_ERROR' || error?.parent?.code === 'ER_BAD_FIELD_ERROR') {
+      return res.status(503).json({
+        success: false,
+        message: 'Delivery location tracking is not available until migration_v2.2_delivery_location_tracking.sql is applied.'
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Failed to fetch delivery location',

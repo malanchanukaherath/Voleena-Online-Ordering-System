@@ -1,4 +1,5 @@
-const { Order, OrderItem, MenuItem, DailyStock, sequelize } = require('../models');
+const { Order, OrderItem, MenuItem, DailyStock, OrderStatusHistory, Payment, sequelize } = require('../models');
+const orderService = require('../services/orderService');
 
 /**
  * Get kitchen dashboard statistics
@@ -33,7 +34,7 @@ exports.getDashboardStats = async (req, res) => {
         Status: {
           [sequelize.Sequelize.Op.in]: ['READY', 'OUT_FOR_DELIVERY', 'DELIVERED']
         },
-        UpdatedAt: {
+        updated_at: {
           [sequelize.Sequelize.Op.gte]: today
         }
       }
@@ -85,8 +86,10 @@ exports.getAssignedOrders = async (req, res) => {
         }
       ],
       order: [
-        ['created_at', 'ASC'], // Older orders first
-        ['order_id', 'ASC']
+        // Prioritize status: CONFIRMED (needs kitchen confirmation) first, then PREPARING, then READY
+        sequelize.literal("CASE WHEN Status = 'CONFIRMED' THEN 0 WHEN Status = 'PREPARING' THEN 1 WHEN Status = 'READY' THEN 2 ELSE 3 END"),
+        // Then show newest orders first within each status
+        ['created_at', 'DESC']
       ]
     });
 
@@ -102,6 +105,7 @@ exports.getAssignedOrders = async (req, res) => {
 
 /**
  * Update order status (CONFIRMED -> PREPARING -> READY)
+ * CRITICAL: Uses orderService to ensure notifications are sent to customer
  */
 exports.updateOrderStatus = async (req, res) => {
   try {
@@ -109,7 +113,9 @@ exports.updateOrderStatus = async (req, res) => {
     const { status } = req.body;
     const staffId = req.user.id;
 
-    const order = await Order.findByPk(orderId);
+    const order = await Order.findByPk(orderId, {
+      include: [{ model: Payment, as: 'payment' }]
+    });
 
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
@@ -128,39 +134,49 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    const updateData = { Status: status };
-
-    if (status === 'PREPARING') {
-      updateData.PreparingAt = new Date();
-    } else if (status === 'READY') {
-      updateData.ReadyAt = new Date();
+    // FR21: Verify payment before marking as READY (critical for cash orders)
+    if (status === 'READY' && order.payment) {
+      // CASH orders require verification before kitchen marks ready
+      if (order.payment.Method === 'CASH' && order.payment.Status !== 'PAID') {
+        return res.status(400).json({
+          error: 'Cannot mark order ready: Payment verification pending for cash order'
+        });
+      }
+      // CARD/ONLINE orders must show as PAID
+      if (['CARD', 'ONLINE'].includes(order.payment.Method) && order.payment.Status !== 'PAID') {
+        return res.status(400).json({
+          error: 'Cannot mark order ready: Online payment not completed'
+        });
+      }
     }
 
-    await order.update(updateData);
-
-    // Log status change
-    await sequelize.query(
-      `INSERT INTO order_status_history (OrderID, OldStatus, NewStatus, ChangedBy, ChangedByType, Notes)
-       VALUES (?, ?, ?, ?, 'STAFF', 'Status updated by kitchen staff')`,
-      {
-        replacements: [orderId, order.Status, status, staffId],
-        type: sequelize.QueryTypes.INSERT
-      }
+    // Use orderService to handle status update with notifications
+    // This ensures customer receives email/SMS notifications
+    const updatedOrder = await orderService.updateOrderStatus(
+      orderId,
+      status,
+      staffId,
+      'Status updated by kitchen staff'
     );
 
-    // If order is READY, update stock
+    // Update stock after order is marked READY
     if (status === 'READY') {
       await updateStockForOrder(orderId);
+      console.log(`[KITCHEN] 🍽️  Order ${order.OrderNumber} marked as READY`);
+      console.log(`[KITCHEN] 📦 Order Type: ${order.OrderType}`);
+      if (order.OrderType === 'DELIVERY') {
+        console.log(`[KITCHEN] 🚚 Triggering auto-assignment for delivery...`);
+      }
     }
 
     return res.json({
       success: true,
       message: 'Order status updated successfully',
-      data: order
+      data: updatedOrder
     });
   } catch (error) {
     console.error('Update order status error:', error);
-    return res.status(500).json({ error: 'Failed to update order status' });
+    return res.status(400).json({ error: error.message || 'Failed to update order status' });
   }
 };
 

@@ -1,4 +1,4 @@
-const { Order, Customer, OrderItem, MenuItem, Delivery, Address, sequelize, literal } = require('../models');
+const { Order, Customer, OrderItem, MenuItem, Delivery, Address, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -18,16 +18,16 @@ exports.getDashboardStats = async (req, res) => {
     // Today's orders
     const todayOrders = await Order.count({
       where: {
-        CreatedAt: {
+        created_at: {
           [sequelize.Sequelize.Op.gte]: today
         }
       }
     });
 
     // Today's revenue
-    const todayRevenue = await Order.sum('FinalAmount', {
+    const todayRevenue = await Order.sum('final_amount', {
       where: {
-        CreatedAt: {
+        created_at: {
           [sequelize.Sequelize.Op.gte]: today
         },
         Status: {
@@ -39,7 +39,7 @@ exports.getDashboardStats = async (req, res) => {
     // New customers today
     const newCustomers = await Customer.count({
       where: {
-        CreatedAt: {
+        created_at: {
           [sequelize.Sequelize.Op.gte]: today
         }
       }
@@ -76,7 +76,7 @@ exports.getAllOrders = async (req, res) => {
     }
 
     if (startDate && endDate) {
-      where.createdAt = {
+      where.created_at = {
         [sequelize.Sequelize.Op.between]: [startDate, endDate]
       };
     }
@@ -99,7 +99,12 @@ exports.getAllOrders = async (req, res) => {
           }]
         }
       ],
-      order: [[literal('`Order`.`created_at`'), 'DESC']],
+      order: [
+        // Prioritize action-required statuses: PENDING (needs cashier confirmation) first
+        sequelize.literal("CASE WHEN Status = 'PENDING' THEN 0 WHEN Status = 'CONFIRMED' THEN 1 ELSE 2 END"),
+        // Then show newest orders first
+        ['created_at', 'DESC']
+      ],
       limit: safeLimit
     });
 
@@ -354,7 +359,7 @@ exports.getAllCustomers = async (req, res) => {
         as: 'addresses'
       }],
       limit: safeLimit,
-      order: [[literal('`Customer`.`created_at`'), 'DESC']]
+      order: [[sequelize.literal('`Customer`.`created_at`'), 'DESC']]
     });
 
     return res.json({
@@ -384,7 +389,7 @@ exports.getCustomerById = async (req, res) => {
           model: Order,
           as: 'orders',
           limit: 10,
-          order: [[literal('`Order`.`created_at`'), 'DESC']]
+          order: [[sequelize.literal('`Order`.`created_at`'), 'DESC']]
         }
       ]
     });

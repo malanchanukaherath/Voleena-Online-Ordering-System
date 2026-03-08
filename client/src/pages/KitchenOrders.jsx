@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
 import { kitchenService } from '../services/dashboardService';
@@ -7,39 +7,44 @@ const KitchenOrders = () => {
     const [orders, setOrders] = useState([]);
     const [error, setError] = useState('');
 
+    const loadOrders = useCallback(async () => {
+        try {
+            const response = await kitchenService.getAssignedOrders();
+            const data = response.data || response?.data?.data || [];
+            const mapped = data.map((order) => ({
+                id: order.OrderID,
+                orderNumber: order.OrderNumber,
+                items: (order.items || []).map((item) => `${item.Quantity}x ${item.menuItem?.Name || 'Item'}`),
+                time: order.created_at || order.CreatedAt,
+                status: order.Status,
+                priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
+            }));
+
+            setOrders(mapped);
+            setError('');
+        } catch (err) {
+            setError(err.message || 'Failed to load kitchen orders');
+        }
+    }, []);
+
     useEffect(() => {
-        let isMounted = true;
+        let isActive = true;
 
-        const loadOrders = async () => {
-            try {
-                const response = await kitchenService.getAssignedOrders();
-                const data = response.data || response?.data?.data || [];
-                const mapped = data.map((order) => ({
-                    id: order.OrderID,
-                    orderNumber: order.OrderNumber,
-                    items: (order.orderItems || []).map((item) => `${item.Quantity}x ${item.menuItem?.Name || 'Item'}`),
-                    time: order.CreatedAt,
-                    status: order.Status,
-                    priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
-                }));
-
-                if (isMounted) {
-                    setOrders(mapped);
-                    setError('');
-                }
-            } catch (err) {
-                if (isMounted) {
-                    setError(err.message || 'Failed to load kitchen orders');
-                }
-            }
+        const loadOrdersSafely = async () => {
+            if (!isActive) return;
+            await loadOrders();
         };
 
-        loadOrders();
+        loadOrdersSafely();
+
+        // Poll periodically so newly confirmed orders appear without manual refresh.
+        const intervalId = setInterval(loadOrdersSafely, 5000);
 
         return () => {
-            isMounted = false;
+            isActive = false;
+            clearInterval(intervalId);
         };
-    }, []);
+    }, [loadOrders]);
 
     const getNextStatus = (status) => {
         const map = {
@@ -55,9 +60,7 @@ const KitchenOrders = () => {
 
         try {
             await kitchenService.updateOrderStatus(orderId, nextStatus);
-            setOrders((prev) => prev.map((order) => (
-                order.id === orderId ? { ...order, status: nextStatus } : order
-            )));
+            await loadOrders();
         } catch (err) {
             setError(err.message || 'Failed to update order status');
         }

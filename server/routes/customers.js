@@ -254,7 +254,8 @@ router.post('/me/addresses', requireCustomer, async (req, res) => {
             try {
                 const { geocodeAddress } = require('../services/distanceValidation');
                 const addressText = `${addressLine1.trim()}${city ? ', ' + city.trim() : ''}${postalCode ? ', ' + postalCode.trim() : ''}`;
-                const geocoded = await geocodeAddress(addressText);
+                // Pass city parameter for fallback geocoding (when API key not configured)
+                const geocoded = await geocodeAddress(addressText, city);
                 finalLat = geocoded.lat;
                 finalLng = geocoded.lng;
                 console.log(`Geocoded address: ${addressText} -> (${finalLat}, ${finalLng})`);

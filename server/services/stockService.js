@@ -338,7 +338,14 @@ class StockService {
      * This is also handled by database trigger
      */
     async autoDisableOutOfStockItems(stockDate = new Date()) {
-        const dateStr = stockDate.toISOString().split('T')[0];
+        // Handle both Date objects and date strings (YYYY-MM-DD)
+        let dateStr = stockDate;
+        if (stockDate instanceof Date) {
+            dateStr = stockDate.toISOString().split('T')[0];
+        } else if (typeof stockDate === 'string') {
+            // Already a date string, use as-is
+            dateStr = stockDate;
+        }
 
         // Find items with zero closing quantity
         const outOfStockItems = await DailyStock.findAll({

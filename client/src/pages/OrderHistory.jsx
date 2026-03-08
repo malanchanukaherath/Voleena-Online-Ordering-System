@@ -20,12 +20,16 @@ const OrderHistory = () => {
                 setLoading(true);
                 const response = await getOrders();
                 const mapped = (response.data?.data || []).map((order) => {
-                    const createdAt = new Date(order.CreatedAt);
+                    // Handle both CreatedAt (PascalCase) and createdAt (camelCase) for compatibility
+                    const createdAtValue = order.CreatedAt || order.createdAt || order.created_at;
+                    const createdAt = createdAtValue ? new Date(createdAtValue) : new Date();
+                    const isValidDate = createdAt && !isNaN(createdAt.getTime());
+
                     return {
                         id: order.OrderID,
                         orderNumber: order.OrderNumber,
-                        date: createdAt.toLocaleDateString(),
-                        time: createdAt.toLocaleTimeString(),
+                        date: isValidDate ? createdAt.toLocaleDateString() : 'N/A',
+                        time: isValidDate ? createdAt.toLocaleTimeString() : 'N/A',
                         items: (order.items || []).map((item) => ({
                             name: item.menuItem?.Name || item.combo?.Name || 'Item',
                             quantity: item.Quantity

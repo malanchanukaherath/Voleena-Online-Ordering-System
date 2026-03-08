@@ -35,7 +35,7 @@ const AdminDashboard = () => {
                     customer: order.customer?.Name || 'Unknown',
                     total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
                     status: order.Status,
-                    time: order.CreatedAt
+                    time: order.CreatedAt || order.createdAt || order.created_at
                 }));
 
                 if (isMounted) {
@@ -128,7 +128,7 @@ const AdminDashboard = () => {
                                 <div>
                                     <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
                                     <p className="text-2xl font-bold">{stat.value}</p>
-                                        <p className="text-sm text-green-600 mt-1">{stat.change}</p>
+                                    <p className="text-sm text-green-600 mt-1">{stat.change}</p>
                                 </div>
                                 <div className={`${stat.color} p-3 rounded-lg`}>
                                     <Icon className="w-6 h-6 text-white" />

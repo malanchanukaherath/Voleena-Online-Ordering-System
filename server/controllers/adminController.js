@@ -29,7 +29,7 @@ exports.getDashboardStats = async (req, res) => {
     // Today's orders
     const todayOrders = await Order.count({
       where: {
-        CreatedAt: {
+        created_at: {
           [sequelize.Sequelize.Op.gte]: today
         }
       }
@@ -47,7 +47,7 @@ exports.getDashboardStats = async (req, res) => {
     // Today's revenue
     const todayRevenue = await Order.sum('FinalAmount', {
       where: {
-        CreatedAt: {
+        created_at: {
           [sequelize.Sequelize.Op.gte]: today
         },
         Status: {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaClipboardList, FaTruck, FaUsers, FaDollarSign } from 'react-icons/fa';
+import { FaClipboardList, FaTruck, FaUsers, FaDollarSign, FaExclamationCircle } from 'react-icons/fa';
+import StatusBadge from '../components/ui/StatusBadge';
 import { cashierService } from '../services/dashboardService';
 
 const CashierDashboard = () => {
@@ -30,7 +31,8 @@ const CashierDashboard = () => {
                         orderNumber: order.OrderNumber,
                         customer: order.customer?.Name || 'Unknown',
                         total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
-                        status: order.Status
+                        status: order.Status,
+                        isPending: order.Status === 'PENDING'
                     }));
                     setRecentOrders(mappedOrders);
                 }
@@ -77,17 +79,31 @@ const CashierDashboard = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-lg font-semibold mb-4">Pending Orders</h3>
+                    <h3 className="text-lg font-semibold mb-4 flex items-center">
+                        {recentOrders.some(o => o.isPending) && (
+                            <FaExclamationCircle className="text-red-600 mr-2" />
+                        )}
+                        Pending Orders
+                    </h3>
                     <div className="space-y-3">
                         {recentOrders.length === 0 ? (
                             <div className="text-sm text-gray-500">No pending orders.</div>
                         ) : recentOrders.map(order => (
-                            <div key={order.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                                <div>
+                            <div
+                                key={order.id}
+                                className={`flex justify-between items-center p-3 rounded border-2 ${order.isPending
+                                        ? 'border-red-300 bg-red-50'
+                                        : 'border-gray-200 bg-gray-50'
+                                    }`}
+                            >
+                                <div className="flex-1">
                                     <p className="font-medium">{order.orderNumber}</p>
                                     <p className="text-sm text-gray-600">{order.customer}</p>
                                 </div>
-                                <p className="font-semibold">LKR {order.total.toFixed(2)}</p>
+                                <div className="flex items-center gap-3">
+                                    <StatusBadge status={order.status} type="order" />
+                                    <p className="font-semibold">LKR {order.total.toFixed(2)}</p>
+                                </div>
                             </div>
                         ))}
                     </div>

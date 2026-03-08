@@ -153,7 +153,7 @@ class AutomatedJobsService {
             const ordersToCancel = await Order.findAll({
                 where: {
                     Status: 'PENDING',
-                    createdAt: {
+                    created_at: {
                         [Op.lt]: cutoffTime
                     }
                 }
@@ -175,7 +175,8 @@ class AutomatedJobsService {
                     NewStatus: 'CANCELLED',
                     ChangedBy: null,
                     ChangedByType: 'SYSTEM',
-                    Notes: 'Auto-cancelled due to timeout'
+                    Notes: 'Auto-cancelled due to timeout',
+                    CreatedAt: new Date()
                 });
             }
 
@@ -229,7 +230,7 @@ class AutomatedJobsService {
     async createDailyStockRecords() {
         const maxRetries = 3;
         let lastError = null;
-        
+
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 console.log(`🔄 Creating daily stock records... (Attempt ${attempt}/${maxRetries})`);
@@ -239,7 +240,7 @@ class AutomatedJobsService {
             } catch (error) {
                 lastError = error;
                 console.error(`❌ Attempt ${attempt}/${maxRetries} failed:`, error.message);
-                
+
                 if (attempt < maxRetries) {
                     // Exponential backoff: 1s, 2s, 4s
                     const backoffMs = Math.pow(2, attempt - 1) * 1000;
@@ -248,11 +249,11 @@ class AutomatedJobsService {
                 }
             }
         }
-        
+
         // ===== ALL RETRIES EXHAUSTED =====
         console.error('❌ Daily stock creation failed after 3 retries. System is at risk!');
         console.error('Error details:', lastError.message);
-        
+
         // Log to activity log for admin review
         const { ActivityLog } = require('../models');
         try {
@@ -266,7 +267,7 @@ class AutomatedJobsService {
         } catch (logError) {
             console.error('Failed to create activity log:', logError.message);
         }
-        
+
         // TODO: Implement admin notification (email/SMS)
         // This should alert admin that the stock job failed
     }

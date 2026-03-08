@@ -130,7 +130,17 @@ module.exports = (sequelize) => {
         tableName: 'order',
         timestamps: true,
         createdAt: 'created_at',
-        updatedAt: 'updated_at'
+        updatedAt: 'updated_at',
+        underscored: false,
+        // Add getter/setter to expose timestamps as PascalCase
+        getterMethods: {
+            CreatedAt() {
+                return this.getDataValue('created_at');
+            },
+            UpdatedAt() {
+                return this.getDataValue('updated_at');
+            }
+        }
     });
 
     Order.associate = (models) => {
