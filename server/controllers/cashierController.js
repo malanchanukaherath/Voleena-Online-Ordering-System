@@ -100,7 +100,8 @@ exports.getAllOrders = async (req, res) => {
         }
       ],
       order: [
-        // Prioritize action-required statuses: PENDING (needs cashier confirmation) first
+        // Prioritize action-required statuses: Show newest orders first
+        // (Orders are auto-confirmed now, so PENDING status rarely occurs)
         sequelize.literal("CASE WHEN Status = 'PENDING' THEN 0 WHEN Status = 'CONFIRMED' THEN 1 ELSE 2 END"),
         // Then show newest orders first
         ['created_at', 'DESC']
@@ -120,6 +121,7 @@ exports.getAllOrders = async (req, res) => {
 
 /**
  * Accept/Confirm an order
+ * NOTE: Orders are now auto-confirmed on creation. This endpoint is maintained for backward compatibility.
  */
 exports.confirmOrder = async (req, res) => {
   try {
@@ -130,6 +132,15 @@ exports.confirmOrder = async (req, res) => {
 
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
+    }
+
+    // Orders are now auto-confirmed, return success if already confirmed
+    if (order.Status === 'CONFIRMED') {
+      return res.json({
+        success: true,
+        message: 'Order is already confirmed',
+        data: order
+      });
     }
 
     if (order.Status !== 'PENDING') {

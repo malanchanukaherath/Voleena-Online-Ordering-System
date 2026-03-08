@@ -66,9 +66,18 @@ exports.getDashboardStats = async (req, res) => {
       where: { IsActive: true }
     });
 
-    // Pending orders
+    // Pending orders (should be minimal now with auto-confirmation)
     const pendingOrders = await Order.count({
       where: { Status: 'PENDING' }
+    });
+
+    // Active orders (confirmed/preparing)
+    const activeOrders = await Order.count({
+      where: {
+        Status: {
+          [sequelize.Sequelize.Op.in]: ['CONFIRMED', 'PREPARING']
+        }
+      }
     });
 
     // Active deliveries
@@ -90,6 +99,7 @@ exports.getDashboardStats = async (req, res) => {
         activeCustomers,
         totalStaff,
         pendingOrders,
+        activeOrders,
         activeDeliveries
       }
     });
