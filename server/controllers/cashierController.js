@@ -102,7 +102,7 @@ exports.getAllOrders = async (req, res) => {
       order: [
         // Prioritize action-required statuses: Show newest orders first
         // (Orders are auto-confirmed now, so PENDING status rarely occurs)
-        sequelize.literal("CASE WHEN Status = 'PENDING' THEN 0 WHEN Status = 'CONFIRMED' THEN 1 ELSE 2 END"),
+        sequelize.literal("CASE WHEN `Order`.Status = 'PENDING' THEN 0 WHEN `Order`.Status = 'CONFIRMED' THEN 1 ELSE 2 END"),
         // Then show newest orders first
         ['created_at', 'DESC']
       ],

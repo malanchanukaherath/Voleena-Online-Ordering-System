@@ -19,18 +19,12 @@ const DeliveryDashboard = () => {
     useEffect(() => {
         let isMounted = true;
 
-        const loadDashboard = async () => {
+        // OPTIMIZATION: Split into frequent and infrequent polling
+        const loadDeliveries = async () => {
             try {
-                const [statsResponse, deliveriesResponse, availabilityResponse] = await Promise.all([
-                    deliveryService.getDashboardStats(),
-                    deliveryService.getMyDeliveries(),
-                    deliveryService.getAvailability().catch(() => ({ data: { isAvailable: true } }))
-                ]);
+                const deliveriesResponse = await deliveryService.getMyDeliveries();
 
                 if (isMounted) {
-                    setStats(statsResponse.stats || statsResponse.data?.stats || statsResponse.data || stats);
-                    setAvailability(availabilityResponse.data);
-
                     const deliveries = deliveriesResponse.data || deliveriesResponse?.data?.data || [];
                     const mapped = deliveries.map((delivery) => ({
                         id: delivery.DeliveryID,
@@ -48,19 +42,41 @@ const DeliveryDashboard = () => {
                 if (isMounted) {
                     setActiveDeliveries([]);
                     setLoadingError(error.message);
-                    console.error('[Delivery Dashboard] Error loading:', error);
+                    console.error('[Delivery Dashboard] Error loading deliveries:', error);
                 }
             }
         };
 
-        loadDashboard();
+        const loadMetadata = async () => {
+            try {
+                const [statsResponse, availabilityResponse] = await Promise.all([
+                    deliveryService.getDashboardStats(),
+                    deliveryService.getAvailability().catch(() => ({ data: { isAvailable: true } }))
+                ]);
 
-        // Refresh dashboard every 30 seconds
-        const interval = setInterval(loadDashboard, 30000);
+                if (isMounted) {
+                    setStats(statsResponse.stats || statsResponse.data?.stats || statsResponse.data || stats);
+                    setAvailability(availabilityResponse.data);
+                }
+            } catch (error) {
+                if (isMounted) {
+                    console.error('[Delivery Dashboard] Error loading metadata:', error);
+                }
+            }
+        };
+
+        // Initial load
+        loadDeliveries();
+        loadMetadata();
+
+        // OPTIMIZATION: Deliveries update frequently (30s), metadata rarely (5 min)
+        const deliveriesInterval = setInterval(loadDeliveries, 30000);
+        const metadataInterval = setInterval(loadMetadata, 300000); // 5 minutes
 
         return () => {
             isMounted = false;
-            clearInterval(interval);
+            clearInterval(deliveriesInterval);
+            clearInterval(metadataInterval);
         };
     }, []);
 
@@ -98,6 +114,27 @@ const DeliveryDashboard = () => {
 
         return () => clearInterval(locationInterval);
     }, []);
+
+    // CRITICAL FIX: Send location updates to backend for all active deliveries
+    useEffect(() => {
+        if (!currentLocation || activeDeliveries.length === 0) return;
+
+        const broadcastLocation = async () => {
+            for (const delivery of activeDeliveries) {
+                try {
+                    await deliveryService.trackDeliveryLocation(delivery.id, currentLocation);
+                } catch (error) {
+                    console.error(`Failed to track location for delivery ${delivery.id}:`, error);
+                }
+            }
+        };
+
+        // Broadcast immediately, then every 30 seconds
+        broadcastLocation();
+        const broadcastInterval = setInterval(broadcastLocation, 30000);
+
+        return () => clearInterval(broadcastInterval);
+    }, [currentLocation, activeDeliveries]);
 
     return (
         <div className="p-6">

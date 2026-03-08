@@ -127,32 +127,38 @@ exports.getMyDeliveries = async (req, res) => {
 
 /**
  * Update delivery status
+ * CRITICAL FIX: Now resets staff availability on DELIVERED/FAILED
  */
 exports.updateDeliveryStatus = async (req, res) => {
+  const transaction = await sequelize.transaction();
+
   try {
     const { deliveryId } = req.params;
     const { status, notes, proof } = req.body;
     const staffId = req.user.id;
 
-    const delivery = await Delivery.findByPk(deliveryId);
+    const delivery = await Delivery.findByPk(deliveryId, { transaction });
 
     if (!delivery) {
+      await transaction.rollback();
       return res.status(404).json({ error: 'Delivery not found' });
     }
 
     // Verify this delivery belongs to this staff
     if (delivery.DeliveryStaffID !== staffId) {
+      await transaction.rollback();
       return res.status(403).json({ error: 'Unauthorized to update this delivery' });
     }
 
     // Validate status transitions
     const validTransitions = {
-      'ASSIGNED': ['PICKED_UP'],
-      'PICKED_UP': ['IN_TRANSIT'],
+      'ASSIGNED': ['PICKED_UP', 'FAILED'],
+      'PICKED_UP': ['IN_TRANSIT', 'FAILED'],
       'IN_TRANSIT': ['DELIVERED', 'FAILED']
     };
 
     if (!validTransitions[delivery.Status]?.includes(status)) {
+      await transaction.rollback();
       return res.status(400).json({
         error: `Cannot change status from ${delivery.Status} to ${status}`
       });
@@ -167,19 +173,21 @@ exports.updateDeliveryStatus = async (req, res) => {
       if (proof) {
         updateData.DeliveryProof = proof;
       }
+    } else if (status === 'FAILED') {
+      updateData.FailureReason = notes || 'Delivery failed';
     }
 
     if (notes) {
       updateData.DeliveryNotes = notes;
     }
 
-    await delivery.update(updateData);
+    await delivery.update(updateData, { transaction });
 
     // Update order status
     if (status === 'PICKED_UP' || status === 'IN_TRANSIT') {
       await Order.update(
         { Status: 'OUT_FOR_DELIVERY' },
-        { where: { OrderID: delivery.OrderID } }
+        { where: { OrderID: delivery.OrderID }, transaction }
       );
     } else if (status === 'DELIVERED') {
       await Order.update(
@@ -187,8 +195,30 @@ exports.updateDeliveryStatus = async (req, res) => {
           Status: 'DELIVERED',
           CompletedAt: new Date()
         },
-        { where: { OrderID: delivery.OrderID } }
+        { where: { OrderID: delivery.OrderID }, transaction }
       );
+    } else if (status === 'FAILED') {
+      await Order.update(
+        { Status: 'READY' }, // Return to READY for reassignment
+        { where: { OrderID: delivery.OrderID }, transaction }
+      );
+    }
+
+    // CRITICAL FIX: Reset staff availability when delivery is completed or failed
+    if (status === 'DELIVERED' || status === 'FAILED') {
+      await DeliveryStaffAvailability.update(
+        {
+          IsAvailable: true,
+          CurrentOrderID: null,
+          LastUpdated: new Date()
+        },
+        {
+          where: { DeliveryStaffID: staffId },
+          transaction
+        }
+      );
+
+      console.log(`[DELIVERY] ✅ Staff ${staffId} availability reset (Status: ${status})`);
     }
 
     // Log status change
@@ -199,13 +229,16 @@ exports.updateDeliveryStatus = async (req, res) => {
         replacements: [
           delivery.OrderID,
           delivery.Status,
-          status === 'DELIVERED' ? 'DELIVERED' : 'OUT_FOR_DELIVERY',
+          status === 'DELIVERED' ? 'DELIVERED' : status === 'FAILED' ? 'READY' : 'OUT_FOR_DELIVERY',
           staffId,
           notes || `Delivery status updated to ${status}`
         ],
-        type: sequelize.QueryTypes.INSERT
+        type: sequelize.QueryTypes.INSERT,
+        transaction
       }
     );
+
+    await transaction.commit();
 
     return res.json({
       success: true,
@@ -213,6 +246,7 @@ exports.updateDeliveryStatus = async (req, res) => {
       data: delivery
     });
   } catch (error) {
+    await transaction.rollback();
     console.error('Update delivery status error:', error);
     return res.status(500).json({ error: 'Failed to update delivery status' });
   }
@@ -572,20 +606,40 @@ exports.trackDeliveryLocation = async (req, res) => {
 /**
  * Get delivery rider's live location (for admin/customer tracking)
  * GET /api/delivery/:deliveryId/location
+ * SECURITY FIX: Now checks authorization before returning location
  */
 exports.getDeliveryLocation = async (req, res) => {
   try {
     const { deliveryId } = req.params;
+    const userId = req.user.id;
+    const userRole = req.user.role;
 
     const delivery = await Delivery.findOne({
       where: { DeliveryID: deliveryId },
-      attributes: ['DeliveryID', 'CurrentLatitude', 'CurrentLongitude', 'LastLocationUpdate', 'Status']
+      attributes: ['DeliveryID', 'CurrentLatitude', 'CurrentLongitude', 'LastLocationUpdate', 'Status', 'DeliveryStaffID', 'OrderID'],
+      include: [{
+        model: Order,
+        as: 'order',
+        attributes: ['CustomerID']
+      }]
     });
 
     if (!delivery) {
       return res.status(404).json({
         success: false,
         message: 'Delivery not found'
+      });
+    }
+
+    // SECURITY FIX: Check authorization
+    const isDeliveryStaff = delivery.DeliveryStaffID === userId;
+    const isCustomer = delivery.order?.CustomerID === userId;
+    const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+
+    if (!isDeliveryStaff && !isCustomer && !isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to view this delivery location'
       });
     }
 

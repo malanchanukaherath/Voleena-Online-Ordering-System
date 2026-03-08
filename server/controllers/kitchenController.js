@@ -87,7 +87,7 @@ exports.getAssignedOrders = async (req, res) => {
       ],
       order: [
         // Prioritize status: CONFIRMED (needs kitchen confirmation) first, then PREPARING, then READY
-        sequelize.literal("CASE WHEN Status = 'CONFIRMED' THEN 0 WHEN Status = 'PREPARING' THEN 1 WHEN Status = 'READY' THEN 2 ELSE 3 END"),
+        sequelize.literal("CASE WHEN `Order`.Status = 'CONFIRMED' THEN 0 WHEN `Order`.Status = 'PREPARING' THEN 1 WHEN `Order`.Status = 'READY' THEN 2 ELSE 3 END"),
         // Then show newest orders first within each status
         ['created_at', 'DESC']
       ]

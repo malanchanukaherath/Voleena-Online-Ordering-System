@@ -95,38 +95,44 @@ const CashierDashboard = () => {
                     <div className="space-y-3">
                         {recentOrders.length === 0 ? (
                             <div className="text-sm text-gray-500">No recent orders.</div>
+                        ) : recentOrders.map(order => (
+                            <div
+                                key={order.id}
+                                className={`flex justify-between items-center p-3 rounded border-2 ${order.isPending
+                                    ? 'border-red-300 bg-red-50'
+                                    : 'border-gray-200 bg-gray-50'
                                     }`}
                             >
-                        <div className="flex-1">
-                            <p className="font-medium">{order.orderNumber}</p>
-                            <p className="text-sm text-gray-600">{order.customer}</p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                            <StatusBadge status={order.status} type="order" />
-                            <p className="font-semibold">LKR {order.total.toFixed(2)}</p>
-                        </div>
-                    </div>
+                                <div className="flex-1">
+                                    <p className="font-medium">{order.orderNumber}</p>
+                                    <p className="text-sm text-gray-600">{order.customer}</p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <StatusBadge status={order.status} type="order" />
+                                    <p className="font-semibold">LKR {order.total.toFixed(2)}</p>
+                                </div>
+                            </div>
                         ))}
+                    </div>
+                    <Link to="/cashier/orders" className="block mt-4 text-primary-600 hover:text-primary-700">
+                        View All →
+                    </Link>
                 </div>
-                <Link to="/cashier/orders" className="block mt-4 text-primary-600 hover:text-primary-700">
-                    View All →
-                </Link>
-            </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-                <div className="grid grid-cols-2 gap-4">
-                    <Link to="/cashier/orders" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
-                        <FaClipboardList className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                        <p className="font-medium">Manage Orders</p>
-                    </Link>
-                    <Link to="/cashier/customers/new" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
-                        <FaUsers className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                        <p className="font-medium">New Customer</p>
-                    </Link>
+                <div className="bg-white rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Link to="/cashier/orders" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
+                            <FaClipboardList className="w-8 h-8 mx-auto mb-2 text-primary-600" />
+                            <p className="font-medium">Manage Orders</p>
+                        </Link>
+                        <Link to="/cashier/customers/new" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
+                            <FaUsers className="w-8 h-8 mx-auto mb-2 text-primary-600" />
+                            <p className="font-medium">New Customer</p>
+                        </Link>
+                    </div>
                 </div>
             </div>
-        </div>
         </div >
     );
 };

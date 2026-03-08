@@ -1,77 +1,108 @@
 const nodemailer = require('nodemailer');
 const { Notification } = require('../models');
 
-// Create reusable transporter
-const transporter = nodemailer.createTransport({
+// Check if email service is properly configured
+const isEmailConfigured = () => {
+  return !!(
+    process.env.SMTP_HOST &&
+    process.env.SMTP_USER &&
+    process.env.SMTP_PASS
+  );
+};
+
+// Create reusable transporter only if configured
+let transporter = null;
+
+if (isEmailConfigured()) {
+  transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: parseInt(process.env.SMTP_PORT) || 587,
     secure: process.env.SMTP_SECURE === 'true',
     auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
     }
-});
+  });
 
-// Verify transporter configuration
-transporter.verify((error, success) => {
+  // Verify transporter configuration
+  transporter.verify((error, success) => {
     if (error) {
-        console.error('❌ Email service configuration error:', error);
+      console.error('❌ Email service configuration error:', error);
     } else {
-        console.log('✅ Email service ready');
+      console.log('✅ Email service ready');
     }
-});
+  });
+} else {
+  console.warn('⚠️  Email service not configured. Email notifications will be skipped.');
+}
 
 /**
  * Send email and log notification
  */
 async function sendEmail(to, subject, html, relatedOrderId = null) {
+  // Skip if email service not configured
+  if (!transporter || !isEmailConfigured()) {
+    console.log(`📧 Email skipped (not configured): ${subject} to ${to}`);
+    return {
+      success: false,
+      skipped: true,
+      reason: 'Email service not configured'
+    };
+  }
+
+  try {
+    const info = await transporter.sendMail({
+      from: `"Voleena Foods" <${process.env.SMTP_FROM}>`,
+      to,
+      subject,
+      html
+    });
+
+    // Log notification
+    await Notification.create({
+      RecipientType: 'CUSTOMER', // Determine based on context
+      RecipientID: null, // Set based on context
+      NotificationType: 'EMAIL',
+      Subject: subject,
+      Message: html,
+      Status: 'SENT',
+      SentAt: new Date(),
+      RelatedOrderID: relatedOrderId
+    });
+
+    return {
+      success: true,
+      messageId: info.messageId
+    };
+  } catch (error) {
+    console.error(`Email send error: ${error.message}`);
+
+    // Log failed notification
     try {
-        const info = await transporter.sendMail({
-            from: `"Voleena Foods" <${process.env.SMTP_FROM}>`,
-            to,
-            subject,
-            html
-        });
-
-        // Log notification
-        await Notification.create({
-          RecipientType: 'CUSTOMER', // Determine based on context
-          RecipientID: null, // Set based on context
-          NotificationType: 'EMAIL',
-          Subject: subject,
-          Message: html,
-          Status: 'SENT',
-          SentAt: new Date(),
-          RelatedOrderID: relatedOrderId
-        });
-
-        return {
-            success: true,
-            messageId: info.messageId
-        };
-    } catch (error) {
-        // Log failed notification
-        await Notification.create({
-          RecipientType: 'CUSTOMER',
-          RecipientID: null,
-          NotificationType: 'EMAIL',
-          Subject: subject,
-          Message: html,
-          Status: 'FAILED',
-          ErrorMessage: error.message,
-          RelatedOrderID: relatedOrderId
-        });
-
-        throw error;
+      await Notification.create({
+        RecipientType: 'CUSTOMER',
+        RecipientID: null,
+        NotificationType: 'EMAIL',
+        Subject: subject,
+        Message: html,
+        Status: 'FAILED',
+        ErrorMessage: error.message,
+        RelatedOrderID: relatedOrderId
+      });
+    } catch (dbError) {
+      console.error('Failed to log notification error:', dbError.message);
     }
+
+    throw error;
+  }
 }
 
 /**
  * Send order confirmation email (FR15)
  */
 async function sendOrderConfirmationEmail(order, customer) {
-    const subject = `Order Confirmed - #${order.OrderNumber}`;
-    const html = `
+  const subject = `Order Confirmed - #${order.OrderNumber}`;
+  const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -113,24 +144,24 @@ async function sendOrderConfirmationEmail(order, customer) {
     </html>
   `;
 
-    return sendEmail(customer.Email, subject, html, order.OrderID);
+  return sendEmail(customer.Email, subject, html, order.OrderID);
 }
 
 /**
  * Send order status update email (FR15)
  */
 async function sendOrderStatusUpdateEmail(order, customer, newStatus) {
-    const statusMessages = {
-        CONFIRMED: 'Your order has been confirmed',
-        PREPARING: 'Your order is being prepared',
-        READY: 'Your order is ready',
-        OUT_FOR_DELIVERY: 'Your order is out for delivery',
-        DELIVERED: 'Your order has been delivered',
-        CANCELLED: 'Your order has been cancelled'
-    };
+  const statusMessages = {
+    CONFIRMED: 'Your order has been confirmed',
+    PREPARING: 'Your order is being prepared',
+    READY: 'Your order is ready',
+    OUT_FOR_DELIVERY: 'Your order is out for delivery',
+    DELIVERED: 'Your order has been delivered',
+    CANCELLED: 'Your order has been cancelled'
+  };
 
-    const subject = `Order Update - #${order.OrderNumber}`;
-    const html = `
+  const subject = `Order Update - #${order.OrderNumber}`;
+  const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -170,21 +201,21 @@ async function sendOrderStatusUpdateEmail(order, customer, newStatus) {
     </html>
   `;
 
-    return sendEmail(customer.Email, subject, html, order.OrderID);
+  return sendEmail(customer.Email, subject, html, order.OrderID);
 }
 
 /**
  * Send OTP verification email (FR28)
  */
 async function sendOTPEmail(email, otp, purpose) {
-    const purposeMessages = {
-        EMAIL_VERIFICATION: 'Verify Your Email',
-        PASSWORD_RESET: 'Reset Your Password',
-        LOGIN: 'Login Verification'
-    };
+  const purposeMessages = {
+    EMAIL_VERIFICATION: 'Verify Your Email',
+    PASSWORD_RESET: 'Reset Your Password',
+    LOGIN: 'Login Verification'
+  };
 
-    const subject = purposeMessages[purpose] || 'Verification Code';
-    const html = `
+  const subject = purposeMessages[purpose] || 'Verification Code';
+  const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -221,16 +252,16 @@ async function sendOTPEmail(email, otp, purpose) {
     </html>
   `;
 
-    return sendEmail(email, subject, html);
+  return sendEmail(email, subject, html);
 }
 
 /**
  * Send password reset email (FR27)
  */
 async function sendPasswordResetEmail(email, resetToken) {
-    const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
-    const subject = 'Password Reset Request';
-    const html = `
+  const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+  const subject = 'Password Reset Request';
+  const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -267,15 +298,15 @@ async function sendPasswordResetEmail(email, resetToken) {
     </html>
   `;
 
-    return sendEmail(email, subject, html);
+  return sendEmail(email, subject, html);
 }
 
 /**
  * Send welcome email for new customers
  */
 async function sendWelcomeEmail(customer) {
-    const subject = 'Welcome to Voleena Foods!';
-    const html = `
+  const subject = 'Welcome to Voleena Foods!';
+  const html = `
     <!DOCTYPE html>
     <html>
     <head>
@@ -307,14 +338,14 @@ async function sendWelcomeEmail(customer) {
     </html>
   `;
 
-    return sendEmail(customer.Email, subject, html);
+  return sendEmail(customer.Email, subject, html);
 }
 
 module.exports = {
-    sendEmail,
-    sendOrderConfirmationEmail,
-    sendOrderStatusUpdateEmail,
-    sendOTPEmail,
-    sendPasswordResetEmail,
-    sendWelcomeEmail
+  sendEmail,
+  sendOrderConfirmationEmail,
+  sendOrderStatusUpdateEmail,
+  sendOTPEmail,
+  sendPasswordResetEmail,
+  sendWelcomeEmail
 };

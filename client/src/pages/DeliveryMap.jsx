@@ -100,11 +100,15 @@ const DeliveryMap = () => {
                         ? `${delivery.address.AddressLine1 || ''}, ${delivery.address.City || ''}`
                         : 'N/A',
                     status: delivery.Status,
-                    // Use provided coordinates or fallback to estimate
-                    lat: delivery.address?.latitude || 6.8721,
-                    lng: delivery.address?.longitude || 80.7840,
-                    distance: delivery.distance_km || 5,
-                    estimatedTime: Math.ceil((delivery.distance_km || 5) * 2) // ~2 min per km
+                    // CRITICAL FIX: Store both current location and destination
+                    currentLat: delivery.CurrentLatitude,
+                    currentLng: delivery.CurrentLongitude,
+                    lastLocationUpdate: delivery.LastLocationUpdate,
+                    // Destination coordinates
+                    lat: delivery.address?.Latitude || 6.8721,
+                    lng: delivery.address?.Longitude || 80.7840,
+                    distance: delivery.DistanceKm || 5,
+                    estimatedTime: Math.ceil((delivery.DistanceKm || 5) * 2) // ~2 min per km
                 }));
 
                 setDeliveries(formattedDeliveries);
@@ -124,16 +128,35 @@ const DeliveryMap = () => {
         return () => clearInterval(interval);
     }, []);
 
+    // Request location once on mount
     useEffect(() => {
         requestCurrentLocation();
-        // Broadcast location every 10 seconds if delivery is in transit
-        const locationInterval = setInterval(() => {
-            if (currentLocation && selectedDelivery) {
-                deliveryService.trackDeliveryLocation(selectedDelivery.id, currentLocation);
+    }, [requestCurrentLocation]);
+
+    // CRITICAL FIX: Broadcast location for ALL active deliveries (not just selected)
+    useEffect(() => {
+        if (!currentLocation || deliveries.length === 0) return;
+
+        const broadcastLocation = async () => {
+            const activeDeliveries = deliveries.filter(d =>
+                ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(d.status)
+            );
+
+            for (const delivery of activeDeliveries) {
+                try {
+                    await deliveryService.trackDeliveryLocation(delivery.id, currentLocation);
+                } catch (error) {
+                    console.error(`Location tracking failed for delivery ${delivery.id}:`, error);
+                }
             }
-        }, 10000);
+        };
+
+        // Broadcast immediately, then every 15 seconds
+        broadcastLocation();
+        const locationInterval = setInterval(broadcastLocation, 15000);
+
         return () => clearInterval(locationInterval);
-    }, [currentLocation, selectedDelivery, requestCurrentLocation]);
+    }, [deliveries, currentLocation]);
 
     const getMarkerColor = (status) => {
         switch (status) {
@@ -215,6 +238,42 @@ const DeliveryMap = () => {
         );
     }
 
+    // CRITICAL FIX: Check for Google Maps API key
+    const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (!googleMapsApiKey) {
+        return (
+            <div className="p-6">
+                <h1 className="text-2xl font-bold mb-6">Delivery Tracking Map</h1>
+                <div className="bg-red-50 border border-red-200 rounded-lg shadow p-6">
+                    <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                            <svg className="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                            </svg>
+                        </div>
+                        <div className="flex-1">
+                            <h2 className="text-red-800 font-bold text-lg mb-2">⚠️ Configuration Error</h2>
+                            <p className="text-red-700 mb-4">
+                                Google Maps API key is not configured. The delivery map cannot be displayed without a valid API key.
+                            </p>
+                            <div className="bg-red-100 border border-red-300 rounded p-4 mb-4">
+                                <h3 className="font-semibold text-red-900 mb-2">To fix this issue:</h3>
+                                <ol className="list-decimal ml-5 text-sm text-red-800 space-y-1">
+                                    <li>Obtain a Google Maps API key from Google Cloud Console</li>
+                                    <li>Add VITE_GOOGLE_MAPS_API_KEY=your_key_here to your .env file</li>
+                                    <li>Restart the development server</li>
+                                </ol>
+                            </div>
+                            <p className="text-xs text-red-600">
+                                <strong>Note:</strong> Contact your system administrator if you need assistance with configuration.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-6">Delivery Tracking Map</h1>
@@ -241,7 +300,7 @@ const DeliveryMap = () => {
                                 <p className="text-red-600">{error}</p>
                             </div>
                         ) : (
-                            <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyDummy'}>
+                            <LoadScript googleMapsApiKey={googleMapsApiKey}>
                                 <GoogleMap
                                     mapContainerStyle={mapContainerStyle}
                                     center={calculateBounds()?.center || restaurantLocation}
@@ -277,39 +336,56 @@ const DeliveryMap = () => {
                                         />
                                     )}
 
-                                    {/* Delivery Markers */}
+                                    {/* CRITICAL FIX: Show both driver location AND destination */}
                                     {deliveries.map((delivery) => (
-                                        <Marker
-                                            key={delivery.id}
-                                            position={{ lat: delivery.lat, lng: delivery.lng }}
-                                            title={delivery.customerName}
-                                            icon={getMarkerColor(delivery.status)}
-                                            onClick={() => handleMarkerClick(delivery)}
-                                        >
-                                            {selectedDelivery?.id === delivery.id && (
-                                                <InfoWindow onCloseClick={() => setSelectedDelivery(null)}>
-                                                    <div className="p-3 w-64">
-                                                        <h3 className="font-bold text-sm mb-2">{delivery.customerName}</h3>
-                                                        <p className="text-xs text-gray-600 mb-2">{delivery.address}</p>
-                                                        <p className="text-xs mb-1">
-                                                            <strong>Order:</strong> {delivery.orderNumber}
-                                                        </p>
-                                                        <p className="text-xs mb-1">
-                                                            <strong>Distance:</strong> {delivery.distance.toFixed(2)} km
-                                                        </p>
-                                                        <p className="text-xs mb-2">
-                                                            <strong>Est. Time:</strong> {delivery.estimatedTime} mins
-                                                        </p>
-                                                        <a
-                                                            href={`tel:${delivery.phone}`}
-                                                            className="inline-flex items-center text-xs bg-primary-600 text-white px-2 py-1 rounded mt-2 hover:bg-primary-700"
-                                                        >
-                                                            <FaPhone className="mr-1" /> Call
-                                                        </a>
-                                                    </div>
-                                                </InfoWindow>
+                                        <React.Fragment key={delivery.id}>
+                                            {/* Driver's Current Location (if available) */}
+                                            {delivery.currentLat && delivery.currentLng && (
+                                                <Marker
+                                                    position={{ lat: delivery.currentLat, lng: delivery.currentLng }}
+                                                    title={`Driver Location - ${delivery.customerName}`}
+                                                    icon="http://maps.google.com/mapfiles/ms/icons/purple-dot.png"
+                                                    onClick={() => handleMarkerClick(delivery)}
+                                                />
                                             )}
-                                        </Marker>
+
+                                            {/* Delivery Destination */}
+                                            <Marker
+                                                position={{ lat: delivery.lat, lng: delivery.lng }}
+                                                title={delivery.customerName}
+                                                icon={getMarkerColor(delivery.status)}
+                                                onClick={() => handleMarkerClick(delivery)}
+                                            >
+                                                {selectedDelivery?.id === delivery.id && (
+                                                    <InfoWindow onCloseClick={() => setSelectedDelivery(null)}>
+                                                        <div className="p-3 w-64">
+                                                            <h3 className="font-bold text-sm mb-2">{delivery.customerName}</h3>
+                                                            <p className="text-xs text-gray-600 mb-2">{delivery.address}</p>
+                                                            <p className="text-xs mb-1">
+                                                                <strong>Order:</strong> {delivery.orderNumber}
+                                                            </p>
+                                                            <p className="text-xs mb-1">
+                                                                <strong>Distance:</strong> {delivery.distance?.toFixed(2) || 'N/A'} km
+                                                            </p>
+                                                            <p className="text-xs mb-1">
+                                                                <strong>Est. Time:</strong> {delivery.estimatedTime} mins
+                                                            </p>
+                                                            {delivery.lastLocationUpdate && (
+                                                                <p className="text-xs mb-2 text-gray-500">
+                                                                    <strong>Last Update:</strong> {new Date(delivery.lastLocationUpdate).toLocaleTimeString()}
+                                                                </p>
+                                                            )}
+                                                            <a
+                                                                href={`tel:${delivery.phone}`}
+                                                                className="inline-flex items-center text-xs bg-primary-600 text-white px-2 py-1 rounded mt-2 hover:bg-primary-700"
+                                                            >
+                                                                <FaPhone className="mr-1" /> Call
+                                                            </a>
+                                                        </div>
+                                                    </InfoWindow>
+                                                )}
+                                            </Marker>
+                                        </React.Fragment>
                                     ))}
 
                                     {/* Route Lines to All Deliveries */}

@@ -595,23 +595,43 @@ class OrderService {
 
             console.log(`[AUTO-ASSIGN] 🎯 Selected: ${selectedStaff.Name} (ID: ${staffId})`);
 
-            // Update delivery staff availability (lock row)
-            await DeliveryStaffAvailability.update({
+            // CRITICAL FIX: Use atomic UPDATE with WHERE condition to prevent race conditions
+            const [updatedCount] = await Delivery.update({
+                DeliveryStaffID: staffId,
+                Status: 'ASSIGNED',
+                AssignedAt: new Date()
+            }, {
+                where: {
+                    DeliveryID: delivery.DeliveryID,
+                    Status: 'PENDING' // Only update if still PENDING
+                },
+                transaction
+            });
+
+            if (updatedCount === 0) {
+                console.log(`[AUTO-ASSIGN] ⚠️  Delivery ${delivery.DeliveryID} was assigned concurrently by another process`);
+                await transaction.rollback();
+                return null;
+            }
+
+            // Update delivery staff availability (lock row first)
+            const [availabilityUpdated] = await DeliveryStaffAvailability.update({
                 IsAvailable: false,
                 CurrentOrderID: orderId,
                 LastUpdated: new Date()
             }, {
-                where: { DeliveryStaffID: staffId },
-                transaction,
-                lock: transaction.LOCK.UPDATE
+                where: {
+                    DeliveryStaffID: staffId,
+                    IsAvailable: true // Only update if still available
+                },
+                transaction
             });
 
-            // Update delivery record with assigned staff
-            await delivery.update({
-                DeliveryStaffID: staffId,
-                Status: 'ASSIGNED',
-                AssignedAt: new Date()
-            }, { transaction });
+            if (availabilityUpdated === 0) {
+                console.log(`[AUTO-ASSIGN] ⚠️  Staff ${staffId} became unavailable during assignment`);
+                await transaction.rollback();
+                return null;
+            }
 
             // Log assignment decision for auditing
             try {
