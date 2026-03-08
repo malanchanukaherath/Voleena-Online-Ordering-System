@@ -4,14 +4,59 @@ import { FaTrash, FaMinus, FaPlus } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import { getCart, updateCartItem, removeCartItem } from '../utils/cartStorage';
+import { toast } from 'react-toastify';
 
 const Cart = () => {
     const navigate = useNavigate();
 
     const [cartItems, setCartItems] = useState([]);
+    const [validatingStock, setValidatingStock] = useState(true);
 
     useEffect(() => {
-        setCartItems(getCart());
+        const validateCartStock = async () => {
+            const rawCartItems = getCart();
+            setCartItems(rawCartItems);
+
+            if (rawCartItems.length === 0) {
+                setValidatingStock(false);
+                return;
+            }
+
+            try {
+                const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const response = await fetch(`${apiBaseUrl}/api/v1/menu?isActive=true`);
+                const data = await response.json();
+
+                if (data.success && Array.isArray(data.data)) {
+                    const menuMap = new Map(data.data.map(item => [item.MenuItemID, item]));
+
+                    const validatedItems = rawCartItems.map(cartItem => {
+                        if (cartItem.type === 'menu') {
+                            const menuItem = menuMap.get(cartItem.id);
+                            return {
+                                ...cartItem,
+                                isAvailable: menuItem?.IsAvailable ?? false,
+                                stockQuantity: menuItem?.StockQuantity ?? 0
+                            };
+                        }
+                        return {
+                            ...cartItem,
+                            isAvailable: true,
+                            stockQuantity: null
+                        };
+                    });
+
+                    setCartItems(validatedItems);
+                }
+            } catch (error) {
+                console.error('Failed to validate cart stock:', error);
+                toast.error('Could not verify item availability');
+            } finally {
+                setValidatingStock(false);
+            }
+        };
+
+        validateCartStock();
     }, []);
 
     const updateQuantity = (id, type, delta) => {
@@ -33,12 +78,28 @@ const Cart = () => {
     };
 
     const handleCheckout = () => {
-        navigate('/checkout');
+        if (hasStockIssues()) {
+            removeUnavailableItems();
+        } else {
+            navigate('/checkout');
+        }
     };
 
     const hasStockIssues = () => {
         // Check if any items have stock issues (unavailable or out of stock)
-        return cartItems.some(item => !item.isAvailable);
+        return cartItems.some(item => item.isAvailable === false || item.stockQuantity === 0);
+    };
+
+    const removeUnavailableItems = () => {
+        const unavailableItems = cartItems.filter(item => item.isAvailable === false || item.stockQuantity === 0);
+
+        unavailableItems.forEach(item => {
+            removeCartItem(item.id, item.type);
+        });
+
+        setCartItems(prev => prev.filter(item => item.isAvailable !== false && item.stockQuantity !== 0));
+
+        toast.success(`Removed ${unavailableItems.length} unavailable item(s)`);
     };
 
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -79,24 +140,36 @@ const Cart = () => {
                         </div>
                         <div className="divide-y">
                             {cartItems.map((item) => {
+                                const isUnavailable = item.isAvailable === false || item.stockQuantity === 0;
+
                                 return (
                                     <div
                                         key={`${item.type}-${item.id}`}
-                                        className="p-6"
+                                        className={`p-6 ${isUnavailable ? 'bg-red-50 border-l-4 border-red-500' : ''}`}
                                     >
                                         <div className="flex items-start gap-4">
                                             {/* Image */}
-                                            <div className="w-24 h-24 bg-gray-200 rounded flex-shrink-0 flex items-center justify-center">
+                                            <div className="w-24 h-24 bg-gray-200 rounded flex-shrink-0 flex items-center justify-center relative">
                                                 {item.image ? (
                                                     <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded" />
                                                 ) : (
                                                     <span className="text-gray-400 text-xs">No image</span>
                                                 )}
+                                                {isUnavailable && (
+                                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded">
+                                                        <span className="text-white text-xs font-bold">Out of Stock</span>
+                                                    </div>
+                                                )}
                                             </div>
 
                                             {/* Details */}
                                             <div className="flex-1">
-                                                <h3 className="font-semibold text-lg mb-1">{item.name}</h3>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <h3 className="font-semibold text-lg">{item.name}</h3>
+                                                    {isUnavailable && (
+                                                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">Unavailable</span>
+                                                    )}
+                                                </div>
                                                 <p className="text-primary-600 font-medium mb-2">
                                                     LKR {item.price.toFixed(2)}
                                                 </p>
@@ -179,14 +252,19 @@ const Cart = () => {
                         <Button
                             onClick={handleCheckout}
                             className="w-full"
-                            disabled={hasStockIssues()}
+                            disabled={validatingStock || cartItems.length === 0}
+                            loading={validatingStock}
                         >
-                            {hasStockIssues() ? 'Remove Unavailable Items' : 'Proceed to Checkout'}
+                            {validatingStock
+                                ? 'Checking availability...'
+                                : hasStockIssues()
+                                    ? 'Remove Unavailable Items'
+                                    : 'Proceed to Checkout'}
                         </Button>
 
-                        {hasStockIssues() && (
+                        {hasStockIssues() && !validatingStock && (
                             <p className="text-xs text-red-600 mt-2 text-center">
-                                Cannot checkout with out-of-stock items
+                                Click to remove unavailable items
                             </p>
                         )}
                     </div>
