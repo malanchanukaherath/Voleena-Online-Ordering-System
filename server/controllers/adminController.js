@@ -111,13 +111,13 @@ exports.getMonthlySalesReport = async (req, res) => {
 
     const [salesData] = await sequelize.query(`
       SELECT 
-        DATE(CreatedAt) as date,
+        DATE(created_at) as date,
         COUNT(*) as orderCount,
-        SUM(FinalAmount) as revenue
+        SUM(final_amount) as revenue
       FROM \`order\`
-      WHERE CreatedAt BETWEEN ? AND ?
-        AND Status != 'CANCELLED'
-      GROUP BY DATE(CreatedAt)
+      WHERE created_at BETWEEN ? AND ?
+        AND status != 'CANCELLED'
+      GROUP BY DATE(created_at)
       ORDER BY date ASC
     `, {
       replacements: [startDate, endDate],
@@ -144,25 +144,25 @@ exports.getBestSellingItems = async (req, res) => {
 
     let query = `
       SELECT 
-        m.MenuItemID,
-        m.Name,
-        COUNT(oi.OrderItemID) as totalSold,
-        SUM(oi.Quantity) as totalQuantity,
-        SUM(oi.Subtotal) as totalRevenue
-      FROM MenuItemA m
-      LEFT JOIN OrderItem oi ON m.MenuItemID = oi.MenuItemID
-      LEFT JOIN \`Order\` o ON oi.OrderID = o.OrderID
+        m.menu_item_id,
+        m.name,
+        COUNT(oi.order_item_id) as totalSold,
+        SUM(oi.quantity) as totalQuantity,
+        SUM(oi.subtotal) as totalRevenue
+      FROM \`menu_item\` m
+      LEFT JOIN \`order_item\` oi ON m.menu_item_id = oi.menu_item_id
+      LEFT JOIN \`order\` o ON oi.order_id = o.order_id
     `;
 
     const replacements = [];
 
     if (startDate && endDate) {
-      query += 'WHERE o.CreatedAt BETWEEN ? AND ? ';
+      query += 'WHERE o.created_at BETWEEN ? AND ? ';
       replacements.push(startDate, endDate);
     }
 
     query += `
-      GROUP BY m.MenuItemID, m.Name
+      GROUP BY m.menu_item_id, m.name
       ORDER BY totalQuantity DESC
       LIMIT ?
     `;

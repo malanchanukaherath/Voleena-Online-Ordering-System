@@ -76,7 +76,7 @@ exports.getAllOrders = async (req, res) => {
     }
 
     if (startDate && endDate) {
-      where.CreatedAt = {
+      where.createdAt = {
         [sequelize.Sequelize.Op.between]: [startDate, endDate]
       };
     }
