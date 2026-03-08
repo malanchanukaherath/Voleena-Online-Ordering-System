@@ -10,7 +10,8 @@ const {
   Role,
   Delivery,
   Feedback,
-  sequelize
+  sequelize,
+  literal
 } = require('../models');
 const bcrypt = require('bcryptjs');
 
@@ -104,7 +105,7 @@ exports.getDashboardStats = async (req, res) => {
 exports.getMonthlySalesReport = async (req, res) => {
   try {
     const { year, month } = req.query;
-    
+
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
@@ -152,14 +153,14 @@ exports.getBestSellingItems = async (req, res) => {
       LEFT JOIN OrderItem oi ON m.MenuItemID = oi.MenuItemID
       LEFT JOIN \`Order\` o ON oi.OrderID = o.OrderID
     `;
-    
+
     const replacements = [];
-    
+
     if (startDate && endDate) {
       query += 'WHERE o.CreatedAt BETWEEN ? AND ? ';
       replacements.push(startDate, endDate);
     }
-    
+
     query += `
       GROUP BY m.MenuItemID, m.Name
       ORDER BY totalQuantity DESC
@@ -209,7 +210,7 @@ exports.createStaff = async (req, res) => {
     if (roleRow.RoleName === 'Admin') {
       const adminRole = await Role.findOne({ where: { RoleName: 'Admin' } });
       const myRole = await Role.findByPk(adminRoleId);
-      
+
       // Only allow if requesting user is also Admin (for now, can enhance with role hierarchy)
       if (!myRole || myRole.RoleName !== 'Admin') {
         return res.status(403).json({ error: 'Only Admin can create other Admins' });
@@ -342,7 +343,7 @@ exports.getAllStaff = async (req, res) => {
         as: 'role',
         attributes: ['RoleID', 'RoleName', 'Description']
       }],
-      order: [['CreatedAt', 'DESC']]
+      order: [[literal('`Staff`.`created_at`'), 'DESC']]
     });
 
     return res.json({

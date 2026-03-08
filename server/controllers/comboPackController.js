@@ -1,5 +1,5 @@
 const { ComboPack, ComboPackItem, MenuItem } = require('../models');
-const { Op } = require('sequelize');
+const { Op, literal } = require('sequelize');
 const db = require('../models');
 
 const createComboPack = async (req, res) => {
@@ -107,7 +107,7 @@ const getAllComboPacks = async (req, res) => {
                     attributes: ['ItemID', 'Name', 'Price']
                 }]
             }],
-            order: [['CreatedAt', 'DESC']]
+            order: [[literal('`ComboPack`.`created_at`'), 'DESC']]
         });
 
         const enrichedCombos = comboPacks.map(combo => {
@@ -155,7 +155,7 @@ const getActiveComboPacks = async (req, res) => {
                     attributes: ['MenuItemID', 'Name', 'Price', 'ImageURL']
                 }]
             }],
-            order: [['CreatedAt', 'DESC']]
+            order: [[literal('`ComboPack`.`created_at`'), 'DESC']]
         });
 
         const enrichedCombos = comboPacks.map(combo => {

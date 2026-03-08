@@ -1,4 +1,4 @@
-const { Delivery, Order, OrderItem, MenuItem, Address, Customer, Staff, DeliveryStaffAvailability, sequelize } = require('../models');
+const { Delivery, Order, OrderItem, MenuItem, Address, Customer, Staff, DeliveryStaffAvailability, sequelize, literal } = require('../models');
 const { validateDeliveryDistanceWithFallback, geocodeAddress } = require('../utils/distanceValidator');
 const { validateAddressLine, validateCoordinates } = require('../utils/validationUtils');
 
@@ -458,7 +458,7 @@ exports.getAvailableDeliveryStaff = async (req, res) => {
           attributes: ['StaffID', 'Name', 'Phone', 'Email']
         }
       ],
-      order: [['LastUpdated', 'ASC']]
+      order: [[literal('`DeliveryStaffAvailability`.`last_updated`'), 'ASC']]
     });
 
     res.json({

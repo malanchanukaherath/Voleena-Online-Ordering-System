@@ -67,7 +67,7 @@ const getAllMenuItems = async (req, res) => {
                 as: 'category',
                 attributes: ['CategoryID', 'Name']
             }],
-            order: [['CreatedAt', 'DESC']]
+            order: [[literal('`MenuItem`.`created_at`'), 'DESC']]
         });
 
         res.json({

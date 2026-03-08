@@ -1,4 +1,4 @@
-const { Order, Customer, OrderItem, MenuItem, Delivery, Address, sequelize } = require('../models');
+const { Order, Customer, OrderItem, MenuItem, Delivery, Address, sequelize, literal } = require('../models');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -99,7 +99,7 @@ exports.getAllOrders = async (req, res) => {
           }]
         }
       ],
-      order: [['CreatedAt', 'DESC']],
+      order: [[literal('`Order`.`created_at`'), 'DESC']],
       limit: safeLimit
     });
 
@@ -354,7 +354,7 @@ exports.getAllCustomers = async (req, res) => {
         as: 'addresses'
       }],
       limit: safeLimit,
-      order: [['CreatedAt', 'DESC']]
+      order: [[literal('`Customer`.`created_at`'), 'DESC']]
     });
 
     return res.json({
@@ -384,7 +384,7 @@ exports.getCustomerById = async (req, res) => {
           model: Order,
           as: 'orders',
           limit: 10,
-          order: [['CreatedAt', 'DESC']]
+          order: [[literal('`Order`.`created_at`'), 'DESC']]
         }
       ]
     });

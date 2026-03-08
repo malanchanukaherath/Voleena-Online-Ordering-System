@@ -38,15 +38,63 @@ ALTER TABLE `feedback`
   REFERENCES `customer` (`customer_id`)
   ON DELETE SET NULL;
 
--- Step 4: Add missing indexes for performance
+-- Step 4: Add missing indexes for performance (if they don't exist)
 -- Index on payment transaction_id lookup
-CREATE INDEX `idx_payment_transaction_id` ON `payment`(`transaction_id`);
+SET @index_exists = (
+  SELECT COUNT(1) 
+  FROM INFORMATION_SCHEMA.STATISTICS 
+  WHERE TABLE_SCHEMA = DATABASE() 
+    AND TABLE_NAME = 'payment' 
+    AND INDEX_NAME = 'idx_payment_transaction_id'
+);
+
+SET @create_idx1_sql = IF(
+  @index_exists > 0,
+  'SELECT 1',
+  'CREATE INDEX `idx_payment_transaction_id` ON `payment`(`transaction_id`)'
+);
+
+PREPARE create_idx1_stmt FROM @create_idx1_sql;
+EXECUTE create_idx1_stmt;
+DEALLOCATE PREPARE create_idx1_stmt;
 
 -- Index on payment creation date for reporting
-CREATE INDEX `idx_payment_created_at` ON `payment`(`created_at`);
+SET @index_exists = (
+  SELECT COUNT(1) 
+  FROM INFORMATION_SCHEMA.STATISTICS 
+  WHERE TABLE_SCHEMA = DATABASE() 
+    AND TABLE_NAME = 'payment' 
+    AND INDEX_NAME = 'idx_payment_created_at'
+);
+
+SET @create_idx2_sql = IF(
+  @index_exists > 0,
+  'SELECT 1',
+  'CREATE INDEX `idx_payment_created_at` ON `payment`(`created_at`)'
+);
+
+PREPARE create_idx2_stmt FROM @create_idx2_sql;
+EXECUTE create_idx2_stmt;
+DEALLOCATE PREPARE create_idx2_stmt;
 
 -- Index on feedback creation for reports
-CREATE INDEX `idx_feedback_created_at` ON `feedback`(`created_at`);
+SET @index_exists = (
+  SELECT COUNT(1) 
+  FROM INFORMATION_SCHEMA.STATISTICS 
+  WHERE TABLE_SCHEMA = DATABASE() 
+    AND TABLE_NAME = 'feedback' 
+    AND INDEX_NAME = 'idx_feedback_created_at'
+);
+
+SET @create_idx3_sql = IF(
+  @index_exists > 0,
+  'SELECT 1',
+  'CREATE INDEX `idx_feedback_created_at` ON `feedback`(`created_at`)'
+);
+
+PREPARE create_idx3_stmt FROM @create_idx3_sql;
+EXECUTE create_idx3_stmt;
+DEALLOCATE PREPARE create_idx3_stmt;
 
 -- Step 5: Verify the changes
 SELECT CONSTRAINT_NAME, TABLE_NAME, COLUMN_NAME, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME
