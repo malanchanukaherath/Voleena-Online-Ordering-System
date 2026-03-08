@@ -1,5 +1,6 @@
 const { Order, Customer, OrderItem, MenuItem, Delivery, Address, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 /**
  * Get cashier dashboard statistics
@@ -65,6 +66,8 @@ exports.getDashboardStats = async (req, res) => {
 exports.getAllOrders = async (req, res) => {
   try {
     const { status, startDate, endDate, limit = 50 } = req.query;
+    const parsedLimit = Number.parseInt(limit, 10);
+    const safeLimit = Number.isNaN(parsedLimit) ? 50 : Math.min(Math.max(parsedLimit, 1), 200);
 
     const where = {};
 
@@ -97,7 +100,7 @@ exports.getAllOrders = async (req, res) => {
         }
       ],
       order: [['CreatedAt', 'DESC']],
-      limit: parseInt(limit)
+      limit: safeLimit
     });
 
     return res.json({
@@ -171,10 +174,12 @@ exports.cancelOrder = async (req, res) => {
     }
 
     if (!['PENDING', 'CONFIRMED'].includes(order.Status)) {
-      return res.status(400).json({ 
-        error: 'Only pending or confirmed orders can be cancelled' 
+      return res.status(400).json({
+        error: 'Only pending or confirmed orders can be cancelled'
       });
     }
+
+    const previousStatus = order.Status;
 
     await order.update({
       Status: 'CANCELLED',
@@ -188,7 +193,7 @@ exports.cancelOrder = async (req, res) => {
       `INSERT INTO order_status_history (OrderID, OldStatus, NewStatus, ChangedBy, ChangedByType, Notes)
        VALUES (?, ?, 'CANCELLED', ?, 'STAFF', ?)`,
       {
-        replacements: [orderId, order.Status, staffId, reason || 'Cancelled by cashier'],
+        replacements: [orderId, previousStatus, staffId, reason || 'Cancelled by cashier'],
         type: sequelize.QueryTypes.INSERT
       }
     );
@@ -226,6 +231,9 @@ exports.registerCustomer = async (req, res) => {
 
     if (existingCustomer) {
       return res.status(409).json({ error: 'Customer with this phone/email already exists' });
+      // Generate secure random password if not provided
+      const finalPassword = password || crypto.randomBytes(8).toString('hex') + 'A1!';
+
     }
 
     // Create customer
@@ -233,7 +241,7 @@ exports.registerCustomer = async (req, res) => {
       Name: name,
       Email: email ? email.toLowerCase() : null,
       Phone: phone,
-      Password: password || 'default123', // Default password if not provided
+      Password: finalPassword,
       AccountStatus: 'ACTIVE',
       IsEmailVerified: false,
       IsPhoneVerified: false
@@ -326,6 +334,8 @@ exports.updateCustomer = async (req, res) => {
 exports.getAllCustomers = async (req, res) => {
   try {
     const { search, limit = 50 } = req.query;
+    const parsedLimit = Number.parseInt(limit, 10);
+    const safeLimit = Number.isNaN(parsedLimit) ? 50 : Math.min(Math.max(parsedLimit, 1), 200);
 
     const where = {};
 
@@ -343,7 +353,7 @@ exports.getAllCustomers = async (req, res) => {
         model: Address,
         as: 'addresses'
       }],
-      limit: parseInt(limit),
+      limit: safeLimit,
       order: [['CreatedAt', 'DESC']]
     });
 

@@ -38,9 +38,7 @@ router.post('/login', async (req, res) => {
 
     if (customer) {
       // ONLY use bcrypt comparison - NO plaintext fallback
-      console.log('[DEMO] 3. Retrieved from DB (Hash):', customer.Password);
       const passwordMatches = await bcrypt.compare(password, customer.Password);
-      console.log('[DEMO] 4. Comparison Result:', passwordMatches);
 
       if (!passwordMatches) {
         return res.status(401).json({ error: 'Invalid credentials' });

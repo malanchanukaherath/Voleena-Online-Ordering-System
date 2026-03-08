@@ -156,6 +156,10 @@ router.post('/', authenticateToken, requireCashier, async (req, res) => {
 router.get('/', authenticateToken, requireCashier, async (req, res) => {
     try {
         const { status, search, limit = 50, offset = 0 } = req.query;
+        const parsedLimit = Number.parseInt(limit, 10);
+        const parsedOffset = Number.parseInt(offset, 10);
+        const safeLimit = Number.isNaN(parsedLimit) ? 50 : Math.min(Math.max(parsedLimit, 1), 200);
+        const safeOffset = Number.isNaN(parsedOffset) ? 0 : Math.max(parsedOffset, 0);
 
         const where = {};
 
@@ -175,8 +179,8 @@ router.get('/', authenticateToken, requireCashier, async (req, res) => {
         const customers = await Customer.findAll({
             where,
             attributes: { exclude: ['Password'] },
-            limit: parseInt(limit),
-            offset: parseInt(offset),
+            limit: safeLimit,
+            offset: safeOffset,
             order: [[require('sequelize').col('Customer.created_at'), 'DESC']]
         });
 

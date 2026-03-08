@@ -225,6 +225,10 @@ exports.getDeliveryHistory = async (req, res) => {
   try {
     const staffId = req.user.id;
     const { limit = 50, offset = 0 } = req.query;
+    const parsedLimit = Number.parseInt(limit, 10);
+    const parsedOffset = Number.parseInt(offset, 10);
+    const safeLimit = Number.isNaN(parsedLimit) ? 50 : Math.min(Math.max(parsedLimit, 1), 200);
+    const safeOffset = Number.isNaN(parsedOffset) ? 0 : Math.max(parsedOffset, 0);
 
     const deliveries = await Delivery.findAll({
       where: {
@@ -251,8 +255,8 @@ exports.getDeliveryHistory = async (req, res) => {
         }
       ],
       order: [['DeliveredAt', 'DESC']],
-      limit: parseInt(limit),
-      offset: parseInt(offset)
+      limit: safeLimit,
+      offset: safeOffset
     });
 
     return res.json({

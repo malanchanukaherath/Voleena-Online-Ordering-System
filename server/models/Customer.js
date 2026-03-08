@@ -92,12 +92,10 @@ module.exports = (sequelize, DataTypes) => {
     createdAt: 'created_at',
     updatedAt: 'updated_at'
   });
-//Hashing
+  //Hashing
   const hashPassword = async (customer) => {
     if (customer.changed('Password')) {
-      console.log('[DEMO] 1. Plain Text Password (before hash):', customer.Password);
       customer.Password = await bcrypt.hash(customer.Password, 10);
-      console.log('[DEMO] 2. Hashed Password (to be saved):', customer.Password);
     }
   };
 
