@@ -152,7 +152,7 @@ const getActiveComboPacks = async (req, res) => {
                 include: [{
                     model: MenuItem,
                     as: 'menuItem',
-                    attributes: ['ItemID', 'Name', 'Price', 'Image_URL']
+                    attributes: ['MenuItemID', 'Name', 'Price', 'ImageURL']
                 }]
             }],
             order: [['CreatedAt', 'DESC']]

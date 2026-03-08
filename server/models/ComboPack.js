@@ -60,7 +60,8 @@ module.exports = (sequelize) => {
         },
         IsActive: {
             type: DataTypes.BOOLEAN,
-            defaultValue: true
+            defaultValue: true,
+            field: 'is_active'
         },
         CreatedBy: {
             type: DataTypes.INTEGER,

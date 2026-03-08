@@ -7,7 +7,6 @@ const csrf = require('csurf');
 require('dotenv').config();
 
 const sequelize = require('./config/database');
-const { apiLimiter } = require('./middleware/rateLimiter');
 const { sanitizeInput } = require('./middleware/validation');
 const auditLogMiddleware = require('./middleware/auditLog');
 const requestIdMiddleware = require('./middleware/requestId');
@@ -81,9 +80,6 @@ if (process.env.NODE_ENV === 'development') {
 
 // Input sanitization
 app.use(sanitizeInput);
-
-// Rate limiting
-app.use('/api/', apiLimiter);
 
 // Rate limit headers middleware
 app.use(rateLimitHeadersMiddleware);

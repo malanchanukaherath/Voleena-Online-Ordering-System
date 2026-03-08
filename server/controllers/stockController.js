@@ -78,7 +78,7 @@ exports.updateOpeningQuantity = async (req, res) => {
 
     } catch (error) {
         console.error('Update opening quantity error:', error);
-        
+
         if (error.status === 400) {
             return res.status(400).json({
                 success: false,
@@ -223,7 +223,8 @@ exports.deleteStockRecord = async (req, res) => {
             QuantityChange: -stock.OpeningQuantity,
             ReferenceType: 'MANUAL',
             Notes: 'Stock record removed',
-            CreatedBy: staffId
+            CreatedBy: staffId,
+            CreatedAt: new Date()
         }, { transaction });
 
         await DailyStock.destroy({
@@ -343,7 +344,8 @@ exports.setOpeningStock = async (req, res) => {
             QuantityChange: quantity,
             ReferenceType: 'MANUAL',
             Notes: 'Opening stock set',
-            CreatedBy: staffId
+            CreatedBy: staffId,
+            CreatedAt: new Date()
         });
 
         res.status(201).json({
@@ -395,7 +397,8 @@ exports.adjustStock = async (req, res) => {
             QuantityChange: adjustment,
             ReferenceType: 'MANUAL',
             Notes: reason || 'Stock adjustment',
-            CreatedBy: staffId
+            CreatedBy: staffId,
+            CreatedAt: new Date()
         }, { transaction });
 
         await transaction.commit();
@@ -456,7 +459,8 @@ exports.bulkSetOpeningStock = async (req, res) => {
                     QuantityChange: item.quantity,
                     ReferenceType: 'MANUAL',
                     Notes: 'Bulk opening stock set',
-                    CreatedBy: staffId
+                    CreatedBy: staffId,
+                    CreatedAt: new Date()
                 }, { transaction });
 
                 results.push(stock);

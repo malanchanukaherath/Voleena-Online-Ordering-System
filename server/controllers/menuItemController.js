@@ -62,23 +62,12 @@ const getAllMenuItems = async (req, res) => {
 
         const menuItems = await MenuItem.findAll({
             where,
-            attributes: {
-                include: [[
-                    literal(`(
-                        SELECT ds.closing_quantity
-                        FROM daily_stock ds
-                        WHERE ds.menu_item_id = MenuItem.menu_item_id
-                          AND ds.stock_date = CURDATE()
-                    )`),
-                    'StockQuantity'
-                ]]
-            },
             include: [{
                 model: Category,
                 as: 'category',
                 attributes: ['CategoryID', 'Name']
             }],
-            order: [[col('MenuItem.created_at'), 'DESC']]
+            order: [['CreatedAt', 'DESC']]
         });
 
         res.json({
@@ -88,7 +77,7 @@ const getAllMenuItems = async (req, res) => {
         });
     } catch (error) {
         console.error('Get menu items error:', error);
-        res.status(500).json({ error: 'Failed to fetch menu items' });
+        res.status(500).json({ error: 'Failed to fetch menu items', details: error.message });
     }
 };
 
@@ -97,17 +86,6 @@ const getMenuItem = async (req, res) => {
         const { id } = req.params;
 
         const menuItem = await MenuItem.findByPk(id, {
-            attributes: {
-                include: [[
-                    literal(`(
-                        SELECT ds.closing_quantity
-                        FROM daily_stock ds
-                        WHERE ds.menu_item_id = MenuItem.menu_item_id
-                          AND ds.stock_date = CURDATE()
-                    )`),
-                    'StockQuantity'
-                ]]
-            },
             include: [{
                 model: Category,
                 as: 'category',
@@ -125,7 +103,7 @@ const getMenuItem = async (req, res) => {
         });
     } catch (error) {
         console.error('Get menu item error:', error);
-        res.status(500).json({ error: 'Failed to fetch menu item' });
+        res.status(500).json({ error: 'Failed to fetch menu item', details: error.message });
     }
 };
 

@@ -98,7 +98,8 @@ class StockService {
                 ReferenceID: orderId,
                 ReferenceType: 'ORDER',
                 Notes: `Order #${orderId}`,
-                CreatedBy: staffId
+                CreatedBy: staffId,
+                CreatedAt: new Date()
             }, { transaction });
         }
     }
@@ -153,7 +154,8 @@ class StockService {
                 ReferenceID: orderId,
                 ReferenceType: 'ORDER',
                 Notes: `Order #${orderId} cancelled - stock returned`,
-                CreatedBy: staffId
+                CreatedBy: staffId,
+                CreatedAt: new Date()
             }, { transaction });
         }
     }
@@ -198,7 +200,8 @@ class StockService {
                 QuantityChange: openingQuantity,
                 ReferenceType: 'MANUAL',
                 Notes: 'Opening stock set',
-                CreatedBy: staffId
+                CreatedBy: staffId,
+                CreatedAt: new Date()
             }, { transaction });
 
             await transaction.commit();
@@ -257,7 +260,8 @@ class StockService {
                 QuantityChange: adjustmentQuantity,
                 ReferenceType: 'MANUAL',
                 Notes: reason,
-                CreatedBy: staffId
+                CreatedBy: staffId,
+                CreatedAt: new Date()
             }, { transaction });
 
             await transaction.commit();
@@ -579,7 +583,8 @@ class StockService {
                 QuantityChange: difference,
                 ReferenceType: 'MANUAL',
                 Notes: `Opening quantity changed from ${oldOpeningQty} to ${newOpeningQuantity} by admin`,
-                CreatedBy: staffId
+                CreatedBy: staffId,
+                CreatedAt: new Date()
             }, { transaction });
 
             await transaction.commit();
@@ -656,7 +661,8 @@ class StockService {
                 QuantityChange: adjustmentQuantity,
                 ReferenceType: 'MANUAL',
                 Notes: `Manual adjustment: ${reason} (Qty: ${closingQtyBefore} → ${closingQtyAfter})`,
-                CreatedBy: staffId
+                CreatedBy: staffId,
+                CreatedAt: new Date()
             }, { transaction });
 
             await transaction.commit();
