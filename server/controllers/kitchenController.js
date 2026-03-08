@@ -85,8 +85,8 @@ exports.getAssignedOrders = async (req, res) => {
         }
       ],
       order: [
-        [sequelize.col('Order.created_at'), 'ASC'], // Older orders first
-        [sequelize.col('Order.order_id'), 'ASC']
+        ['created_at', 'ASC'], // Older orders first
+        ['order_id', 'ASC']
       ]
     });
 
@@ -123,8 +123,8 @@ exports.updateOrderStatus = async (req, res) => {
     };
 
     if (!validTransitions[order.Status]?.includes(status)) {
-      return res.status(400).json({ 
-        error: `Cannot change status from ${order.Status} to ${status}` 
+      return res.status(400).json({
+        error: `Cannot change status from ${order.Status} to ${status}`
       });
     }
 

@@ -176,7 +176,7 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
                 attributes: ['RoleID', 'RoleName']
             }],
             attributes: { exclude: ['Password'] },
-            order: [[require('sequelize').col('Staff.created_at'), 'DESC']]
+            order: [['created_at', 'DESC']]
         });
 
         return res.json({ staff });

@@ -87,7 +87,7 @@ exports.getAllOrders = async (req, res) => {
                     ]
                 }
             ],
-            order: [[sequelize.col('Order.created_at'), 'DESC']]
+            order: [['created_at', 'DESC']]
         });
 
         res.json({

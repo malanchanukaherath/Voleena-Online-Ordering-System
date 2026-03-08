@@ -181,7 +181,7 @@ router.get('/', authenticateToken, requireCashier, async (req, res) => {
             attributes: { exclude: ['Password'] },
             limit: safeLimit,
             offset: safeOffset,
-            order: [[require('sequelize').col('Customer.created_at'), 'DESC']]
+            order: [['created_at', 'DESC']]
         });
 
         return res.json({ customers, count: customers.length });
@@ -224,7 +224,7 @@ router.get('/me/addresses', requireCustomer, async (req, res) => {
     try {
         const addresses = await Address.findAll({
             where: { CustomerID: req.user.id },
-            order: [[require('sequelize').col('Address.created_at'), 'DESC']]
+            order: [['created_at', 'DESC']]
         });
 
         return res.json({ success: true, data: addresses });
@@ -246,6 +246,24 @@ router.post('/me/addresses', requireCustomer, async (req, res) => {
             return res.status(400).json({ error: 'Address line 1 and city are required' });
         }
 
+        let finalLat = latitude;
+        let finalLng = longitude;
+
+        // If coordinates not provided, try to geocode the address
+        if (!finalLat || !finalLng) {
+            try {
+                const { geocodeAddress } = require('../services/distanceValidation');
+                const addressText = `${addressLine1.trim()}${city ? ', ' + city.trim() : ''}${postalCode ? ', ' + postalCode.trim() : ''}`;
+                const geocoded = await geocodeAddress(addressText);
+                finalLat = geocoded.lat;
+                finalLng = geocoded.lng;
+                console.log(`Geocoded address: ${addressText} -> (${finalLat}, ${finalLng})`);
+            } catch (geocodeError) {
+                console.warn('Failed to geocode address, saving without coordinates:', geocodeError.message);
+                // Continue without coordinates - validation will happen at order time
+            }
+        }
+
         const address = await Address.create({
             CustomerID: req.user.id,
             AddressLine1: addressLine1.trim(),
@@ -253,8 +271,8 @@ router.post('/me/addresses', requireCustomer, async (req, res) => {
             City: city.trim(),
             PostalCode: postalCode ? postalCode.trim() : null,
             District: district ? district.trim() : null,
-            Latitude: latitude || null,
-            Longitude: longitude || null
+            Latitude: finalLat || null,
+            Longitude: finalLng || null
         });
 
         return res.status(201).json({
@@ -264,7 +282,9 @@ router.post('/me/addresses', requireCustomer, async (req, res) => {
                 id: address.AddressID,
                 addressLine1: address.AddressLine1,
                 city: address.City,
-                postalCode: address.PostalCode
+                postalCode: address.PostalCode,
+                latitude: address.Latitude,
+                longitude: address.Longitude
             }
         });
     } catch (error) {

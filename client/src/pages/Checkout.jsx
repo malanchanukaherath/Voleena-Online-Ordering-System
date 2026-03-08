@@ -125,6 +125,27 @@ const Checkout = () => {
             let addressId = null;
 
             if (formData.orderType === 'DELIVERY') {
+                // Validate delivery distance before placing order
+                const distanceValidation = await validateDeliveryDistance({
+                    address: {
+                        addressLine1: formData.addressLine1,
+                        city: formData.city,
+                        district: formData.postalCode
+                    }
+                });
+
+                if (!distanceValidation.data?.success) {
+                    throw new Error(distanceValidation.data?.message || 'Unable to validate delivery address');
+                }
+
+                const validationData = distanceValidation.data.data;
+                if (!validationData.isValid) {
+                    throw new Error(
+                        `Delivery address is outside our service area (${validationData.distance.toFixed(2)}km > ${validationData.maxDistance}km)`
+                    );
+                }
+
+                // Create address - server will geocode automatically
                 const addressResponse = await createAddress({
                     addressLine1: formData.addressLine1,
                     addressLine2: formData.addressLine2 || null,
