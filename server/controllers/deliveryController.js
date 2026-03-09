@@ -2,19 +2,24 @@ const { Delivery, Order, OrderItem, MenuItem, Address, Customer, Staff, Delivery
 const { validateDeliveryDistanceWithFallback, geocodeAddress } = require('../utils/distanceValidator');
 const { validateAddressLine, validateCoordinates } = require('../utils/validationUtils');
 
+const isAdminRequest = (req) => req.user?.type === 'Staff' && req.user?.role === 'Admin';
+
 /**
  * Get delivery dashboard statistics
  */
 exports.getDashboardStats = async (req, res) => {
   try {
     const staffId = req.user.id;
+    const isAdmin = isAdminRequest(req);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Active deliveries for this staff
+    const assignmentScope = isAdmin ? {} : { DeliveryStaffID: staffId };
+
+    // Active deliveries for this staff (or all when admin)
     const activeDeliveries = await Delivery.count({
       where: {
-        DeliveryStaffID: staffId,
+        ...assignmentScope,
         Status: {
           [sequelize.Sequelize.Op.in]: ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT']
         }
@@ -24,7 +29,7 @@ exports.getDashboardStats = async (req, res) => {
     // Pending pickup
     const pendingPickup = await Delivery.count({
       where: {
-        DeliveryStaffID: staffId,
+        ...assignmentScope,
         Status: 'ASSIGNED'
       }
     });
@@ -32,7 +37,7 @@ exports.getDashboardStats = async (req, res) => {
     // Completed today
     const completedToday = await Delivery.count({
       where: {
-        DeliveryStaffID: staffId,
+        ...assignmentScope,
         Status: 'DELIVERED',
         DeliveredAt: {
           [sequelize.Sequelize.Op.gte]: today
@@ -43,7 +48,7 @@ exports.getDashboardStats = async (req, res) => {
     // Total completed
     const totalCompleted = await Delivery.count({
       where: {
-        DeliveryStaffID: staffId,
+        ...assignmentScope,
         Status: 'DELIVERED'
       }
     });
@@ -69,9 +74,13 @@ exports.getDashboardStats = async (req, res) => {
 exports.getMyDeliveries = async (req, res) => {
   try {
     const staffId = req.user.id;
+    const isAdmin = isAdminRequest(req);
     const { status } = req.query;
 
-    const where = { DeliveryStaffID: staffId };
+    const where = {};
+    if (!isAdmin) {
+      where.DeliveryStaffID = staffId;
+    }
 
     if (status) {
       where.Status = status;
@@ -136,6 +145,7 @@ exports.updateDeliveryStatus = async (req, res) => {
     const { deliveryId } = req.params;
     const { status, notes, proof } = req.body;
     const staffId = req.user.id;
+    const isAdmin = isAdminRequest(req);
 
     const delivery = await Delivery.findByPk(deliveryId, { transaction });
 
@@ -144,8 +154,8 @@ exports.updateDeliveryStatus = async (req, res) => {
       return res.status(404).json({ error: 'Delivery not found' });
     }
 
-    // Verify this delivery belongs to this staff
-    if (delivery.DeliveryStaffID !== staffId) {
+    // Delivery staff can only update their own deliveries; admin can manage any delivery.
+    if (!isAdmin && delivery.DeliveryStaffID !== staffId) {
       await transaction.rollback();
       return res.status(403).json({ error: 'Unauthorized to update this delivery' });
     }
@@ -205,21 +215,25 @@ exports.updateDeliveryStatus = async (req, res) => {
       );
     }
 
-    // CRITICAL FIX: Reset staff availability when delivery is completed or failed
+    // CRITICAL FIX: Reset assignee availability when delivery is completed or failed
     if (status === 'DELIVERED' || status === 'FAILED') {
-      await DeliveryStaffAvailability.update(
-        {
-          IsAvailable: true,
-          CurrentOrderID: null,
-          LastUpdated: new Date()
-        },
-        {
-          where: { DeliveryStaffID: staffId },
-          transaction
-        }
-      );
+      const assigneeStaffId = delivery.DeliveryStaffID;
 
-      console.log(`[DELIVERY] ✅ Staff ${staffId} availability reset (Status: ${status})`);
+      if (assigneeStaffId) {
+        await DeliveryStaffAvailability.update(
+          {
+            IsAvailable: true,
+            CurrentOrderID: null,
+            LastUpdated: new Date()
+          },
+          {
+            where: { DeliveryStaffID: assigneeStaffId },
+            transaction
+          }
+        );
+
+        console.log(`[DELIVERY] ✅ Staff ${assigneeStaffId} availability reset (Status: ${status})`);
+      }
     }
 
     await OrderStatusHistory.create({
@@ -252,19 +266,25 @@ exports.updateDeliveryStatus = async (req, res) => {
 exports.getDeliveryHistory = async (req, res) => {
   try {
     const staffId = req.user.id;
+    const isAdmin = isAdminRequest(req);
     const { limit = 50, offset = 0 } = req.query;
     const parsedLimit = Number.parseInt(limit, 10);
     const parsedOffset = Number.parseInt(offset, 10);
     const safeLimit = Number.isNaN(parsedLimit) ? 50 : Math.min(Math.max(parsedLimit, 1), 200);
     const safeOffset = Number.isNaN(parsedOffset) ? 0 : Math.max(parsedOffset, 0);
 
+    const where = {
+      Status: {
+        [sequelize.Sequelize.Op.in]: ['DELIVERED', 'FAILED']
+      }
+    };
+
+    if (!isAdmin) {
+      where.DeliveryStaffID = staffId;
+    }
+
     const deliveries = await Delivery.findAll({
-      where: {
-        DeliveryStaffID: staffId,
-        Status: {
-          [sequelize.Sequelize.Op.in]: ['DELIVERED', 'FAILED']
-        }
-      },
+      where,
       include: [
         {
           model: Order,
@@ -370,12 +390,15 @@ exports.getDeliveryById = async (req, res) => {
   try {
     const { deliveryId } = req.params;
     const staffId = req.user.id;
+    const isAdmin = isAdminRequest(req);
+
+    const where = { DeliveryID: deliveryId };
+    if (!isAdmin) {
+      where.DeliveryStaffID = staffId;
+    }
 
     const delivery = await Delivery.findOne({
-      where: {
-        DeliveryID: deliveryId,
-        DeliveryStaffID: staffId
-      },
+      where,
       include: [
         {
           model: Order,

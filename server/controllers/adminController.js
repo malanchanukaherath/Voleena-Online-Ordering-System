@@ -9,6 +9,7 @@ const {
   DailyStock,
   Role,
   Delivery,
+  DeliveryStaffAvailability,
   Feedback,
   sequelize,
   literal
@@ -391,52 +392,150 @@ exports.getAllRoles = async (req, res) => {
  * Assign delivery staff to order
  */
 exports.assignDeliveryStaff = async (req, res) => {
+  const transaction = await sequelize.transaction({
+    isolationLevel: sequelize.Transaction.ISOLATION_LEVELS.SERIALIZABLE
+  });
+
   try {
     const { orderId, staffId } = req.body;
+    const normalizedOrderId = Number(orderId);
+    const normalizedStaffId = Number(staffId);
 
-    if (!orderId || !staffId) {
+    if (!normalizedOrderId || !normalizedStaffId) {
+      await transaction.rollback();
       return res.status(400).json({ error: 'Order ID and Staff ID are required' });
     }
 
-    // Check if order exists and has delivery
-    const delivery = await Delivery.findOne({ where: { OrderID: orderId } });
+    // Check if order exists and lock the row to avoid concurrent re-assignment.
+    const delivery = await Delivery.findOne({
+      where: { OrderID: normalizedOrderId },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
 
     if (!delivery) {
+      await transaction.rollback();
       return res.status(404).json({ error: 'Delivery not found for this order' });
+    }
+
+    if (delivery.Status === 'DELIVERED') {
+      await transaction.rollback();
+      return res.status(400).json({ error: 'Cannot assign staff to a delivered order' });
+    }
+
+    // Idempotent success when the same rider is already assigned for this order.
+    if (delivery.DeliveryStaffID === normalizedStaffId && delivery.Status === 'ASSIGNED') {
+      await transaction.commit();
+      return res.json({
+        success: true,
+        message: 'Delivery staff already assigned to this order'
+      });
     }
 
     // Verify staff is delivery role
     const staff = await Staff.findOne({
-      where: { StaffID: staffId, IsActive: true },
+      where: { StaffID: normalizedStaffId, IsActive: true },
       include: [{
         model: Role,
         as: 'role',
         where: { RoleName: 'Delivery' }
-      }]
+      }],
+      transaction
     });
 
     if (!staff) {
+      await transaction.rollback();
       return res.status(400).json({ error: 'Invalid delivery staff' });
+    }
+
+    const [availability] = await DeliveryStaffAvailability.findOrCreate({
+      where: { DeliveryStaffID: normalizedStaffId },
+      defaults: {
+        DeliveryStaffID: normalizedStaffId,
+        IsAvailable: true,
+        CurrentOrderID: null
+      },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+
+    const alreadyReservedForThisOrder =
+      availability.CurrentOrderID === normalizedOrderId && availability.IsAvailable === false;
+
+    // Manual assignment must not bypass rider opt-out (is_available = false).
+    if (!availability.IsAvailable && !alreadyReservedForThisOrder) {
+      await transaction.rollback();
+      return res.status(409).json({
+        error: 'Selected delivery staff is currently unavailable'
+      });
+    }
+
+    if (!alreadyReservedForThisOrder) {
+      const [reservedCount] = await DeliveryStaffAvailability.update(
+        {
+          IsAvailable: false,
+          CurrentOrderID: normalizedOrderId
+        },
+        {
+          where: {
+            DeliveryStaffID: normalizedStaffId,
+            IsAvailable: true
+          },
+          transaction
+        }
+      );
+
+      if (reservedCount === 0) {
+        await transaction.rollback();
+        return res.status(409).json({
+          error: 'Selected delivery staff became unavailable during assignment'
+        });
+      }
+    }
+
+    // If reassigning from another staff member, release the previous assignee.
+    if (delivery.DeliveryStaffID && delivery.DeliveryStaffID !== normalizedStaffId) {
+      await DeliveryStaffAvailability.update(
+        {
+          IsAvailable: true,
+          CurrentOrderID: null
+        },
+        {
+          where: {
+            DeliveryStaffID: delivery.DeliveryStaffID,
+            CurrentOrderID: normalizedOrderId
+          },
+          transaction
+        }
+      );
     }
 
     // Update delivery
     await delivery.update({
-      DeliveryStaffID: staffId,
+      DeliveryStaffID: normalizedStaffId,
       Status: 'ASSIGNED',
       AssignedAt: new Date()
+    }, {
+      transaction
     });
 
     // Update order status
     await Order.update(
       { Status: 'OUT_FOR_DELIVERY' },
-      { where: { OrderID: orderId } }
+      {
+        where: { OrderID: normalizedOrderId },
+        transaction
+      }
     );
+
+    await transaction.commit();
 
     return res.json({
       success: true,
       message: 'Delivery staff assigned successfully'
     });
   } catch (error) {
+    await transaction.rollback();
     console.error('Assign delivery staff error:', error);
     return res.status(500).json({ error: 'Failed to assign delivery staff' });
   }
