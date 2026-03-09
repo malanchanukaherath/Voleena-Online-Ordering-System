@@ -1,7 +1,5 @@
 import axios from 'axios';
-
-// Backend API configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { API_BASE_URL } from '../config/api';
 
 // Create axios instance for backend API
 const backendApi = axios.create({
@@ -37,6 +35,7 @@ backendApi.interceptors.response.use(
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         localStorage.removeItem('tokenExpiry');
+        localStorage.removeItem('refreshToken');
         window.location.href = '/login';
       }
     }
@@ -49,8 +48,9 @@ export const realApi = {
   /**
    * Login user
    */
-  login: async (email, password) => {
-    return await backendApi.post('/api/auth/login', { email, password });
+  login: async (email, password, userType = 'staff') => {
+    const endpoint = userType === 'customer' ? '/api/auth/customer/login' : '/api/auth/staff/login';
+    return await backendApi.post(endpoint, { email, password });
   },
 
   /**
