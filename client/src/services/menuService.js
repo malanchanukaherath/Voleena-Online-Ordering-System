@@ -1,0 +1,149 @@
+import axios from 'axios';
+import { API_V1_BASE_URL } from '../config/api';
+
+const API_BASE_URL = API_V1_BASE_URL;
+
+const getAuthHeader = () => {
+    const token = localStorage.getItem('token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+export const menuItemService = {
+    getAll: async (params = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/menu`, {
+            headers: getAuthHeader(),
+            params
+        });
+        return response.data;
+    },
+
+    getById: async (id) => {
+        const response = await axios.get(`${API_BASE_URL}/menu/${id}`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    create: async (data) => {
+        const response = await axios.post(`${API_BASE_URL}/menu`, data, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    update: async (id, data) => {
+        const response = await axios.put(`${API_BASE_URL}/menu/${id}`, data, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    delete: async (id) => {
+        const response = await axios.delete(`${API_BASE_URL}/menu/${id}`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    uploadImage: async (id, file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await axios.post(`${API_BASE_URL}/menu/${id}/image`, formData, {
+            headers: {
+                ...getAuthHeader(),
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    }
+};
+
+export const comboPackService = {
+    getAll: async (params = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/combos`, {
+            headers: getAuthHeader(),
+            params
+        });
+        return response.data;
+    },
+
+    getActive: async () => {
+        const response = await axios.get(`${API_BASE_URL}/combos/active`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    getById: async (id) => {
+        const response = await axios.get(`${API_BASE_URL}/combos/${id}`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    create: async (data) => {
+        const response = await axios.post(`${API_BASE_URL}/combos`, data, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    update: async (id, data) => {
+        const response = await axios.put(`${API_BASE_URL}/combos/${id}`, data, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    delete: async (id) => {
+        const response = await axios.delete(`${API_BASE_URL}/combos/${id}`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    uploadImage: async (id, file) => {
+        const formData = new FormData();
+        formData.append('image', file);
+
+        const response = await axios.post(`${API_BASE_URL}/combos/${id}/image`, formData, {
+            headers: {
+                ...getAuthHeader(),
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+        return response.data;
+    }
+};
+
+export const categoryService = {
+    getAll: async (params = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/categories`, {
+            headers: getAuthHeader(),
+            params
+        });
+        return response.data;
+    },
+
+    create: async (data) => {
+        const response = await axios.post(`${API_BASE_URL}/categories`, data, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    update: async (id, data) => {
+        const response = await axios.put(`${API_BASE_URL}/categories/${id}`, data, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    delete: async (id) => {
+        const response = await axios.delete(`${API_BASE_URL}/categories/${id}`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    }
+};

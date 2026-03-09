@@ -1,0 +1,66 @@
+const express = require('express');
+const router = express.Router();
+const authController = require('../controllers/authController');
+const { authLimiter, otpLimiter, passwordResetLimiter } = require('../middleware/rateLimiter');
+
+/**
+ * @route POST /api/auth/staff/login
+ * @desc Staff login (Admin, Cashier, Kitchen, Delivery)
+ * CRITICAL: Rate limited to 5 attempts per 15 minutes
+ */
+router.post('/staff/login', authLimiter, authController.staffLogin);
+
+/**
+ * @route POST /api/auth/customer/login
+ * @desc Customer login
+ * CRITICAL: Rate limited to 5 attempts per 15 minutes
+ */
+router.post('/customer/login', authLimiter, authController.customerLogin);
+
+/**
+ * @route POST /api/auth/register
+ * @desc Customer self-registration
+ * CRITICAL: Rate limited to 5 attempts per 15 minutes
+ */
+router.post('/register', authLimiter, authController.register);
+
+/**
+ * @route POST /api/auth/refresh
+ * @desc Refresh authentication token
+ */
+router.post('/refresh', authController.refreshToken);
+
+/**
+ * @route POST /api/auth/logout
+ * @desc Logout user
+ */
+router.post('/logout', authController.logout);
+
+/**
+ * @route GET /api/auth/verify
+ * @desc Verify current token
+ */
+router.get('/verify', authController.verifyToken);
+
+/**
+ * @route POST /api/auth/password-reset/request
+ * @desc Request password reset (generates OTP)
+ * CRITICAL: Rate limited to 3 OTP requests per 15 minutes
+ */
+router.post('/password-reset/request', otpLimiter, authController.requestPasswordReset);
+
+/**
+ * @route POST /api/auth/password-reset/verify-otp
+ * @desc Verify OTP for password reset
+ * CRITICAL: Rate limited to 3 attempts per 15 minutes
+ */
+router.post('/password-reset/verify-otp', otpLimiter, authController.verifyResetOTP);
+
+/**
+ * @route POST /api/auth/password-reset/reset
+ * @desc Reset password with OTP
+ * CRITICAL: Rate limited to 3 attempts per hour
+ */
+router.post('/password-reset/reset', passwordResetLimiter, authController.resetPassword);
+
+module.exports = router;
