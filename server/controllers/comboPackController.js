@@ -34,10 +34,10 @@ const createComboPack = async (req, res) => {
         }
 
         for (const item of items) {
-            const menuItem = await MenuItem.findByPk(item.ItemID);
+            const menuItem = await MenuItem.findByPk(item.MenuItemID);
             if (!menuItem) {
                 await transaction.rollback();
-                return res.status(404).json({ error: `Menu item ${item.ItemID} not found` });
+                return res.status(404).json({ error: `Menu item ${item.MenuItemID} not found` });
             }
             if (!item.Quantity || item.Quantity < 1) {
                 await transaction.rollback();
@@ -104,7 +104,7 @@ const getAllComboPacks = async (req, res) => {
                 include: [{
                     model: MenuItem,
                     as: 'menuItem',
-                    attributes: ['ItemID', 'Name', 'Price']
+                    attributes: ['MenuItemID', 'Name', 'Price']
                 }]
             }],
             order: [[literal('`ComboPack`.`created_at`'), 'DESC']]

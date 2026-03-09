@@ -54,7 +54,11 @@ module.exports = (sequelize) => {
         FinalAmount: {
             type: DataTypes.VIRTUAL,
             get() {
-                return Math.max((this.TotalAmount - this.DiscountAmount) + this.DeliveryFee, 0);
+                const totalAmount = Number(this.TotalAmount) || 0;
+                const discountAmount = Number(this.DiscountAmount) || 0;
+                const deliveryFee = Number(this.DeliveryFee) || 0;
+
+                return Math.max((totalAmount - discountAmount) + deliveryFee, 0);
             }
         },
         Status: {

@@ -525,14 +525,16 @@ class OrderService {
             // Find the delivery record with order details
             const delivery = await Delivery.findOne({
                 where: { OrderID: orderId },
-                include: [{
-                    model: Order,
-                    as: 'order',
-                    include: [{
+                include: [
+                    {
+                        model: Order,
+                        as: 'order'
+                    },
+                    {
                         model: Address,
                         as: 'address'
-                    }]
-                }],
+                    }
+                ],
                 transaction,
                 lock: transaction.LOCK.UPDATE
             });
@@ -552,25 +554,36 @@ class OrderService {
                 return delivery.DeliveryStaffID;
             }
 
-            // Get all available delivery staff with their current workload
-            const [staffWithWorkload] = await sequelize.query(
-                `SELECT 
-                    dsa.DeliveryStaffID,
-                    dsa.IsAvailable,
-                    COUNT(d.DeliveryID) AS active_deliveries,
-                    s.Name,
-                    s.Phone,
-                    COALESCE(AVG(TIMESTAMPDIFF(MINUTE, o.CreatedAt, d.DeliveredAt)), 0) AS avg_completion_time,
-                    COALESCE(AVG(d.DistanceKm), 0) AS avg_distance
-                FROM delivery_staff_availability dsa
-                LEFT JOIN delivery d ON dsa.DeliveryStaffID = d.DeliveryStaffID 
-                    AND d.Status IN ('ASSIGNED', 'PICKED_UP', 'IN_TRANSIT')
-                LEFT JOIN order o ON d.OrderID = o.OrderID
-                JOIN staff s ON dsa.DeliveryStaffID = s.StaffID
-                WHERE dsa.IsAvailable = 1
-                GROUP BY dsa.DeliveryStaffID, dsa.IsAvailable, s.Name, s.Phone
-                ORDER BY active_deliveries ASC, avg_completion_time DESC
-                LIMIT 5`,
+            // Ensure delivery staff availability rows exist (first run / partial seed safety)
+            await sequelize.query(
+                `INSERT IGNORE INTO delivery_staff_availability (delivery_staff_id, is_available)
+                 SELECT s.staff_id, 1
+                 FROM staff s
+                 JOIN role r ON s.role_id = r.role_id
+                 WHERE r.role_name = 'Delivery' AND s.is_active = 1`,
+                { transaction, type: sequelize.QueryTypes.INSERT }
+            );
+
+            // Get available delivery staff with current workload (least busy first)
+            const staffWithWorkload = await sequelize.query(
+                `SELECT
+                    dsa.delivery_staff_id AS DeliveryStaffID,
+                    dsa.is_available AS IsAvailable,
+                    COUNT(d.delivery_id) AS active_deliveries,
+                    s.name AS Name,
+                    s.phone AS Phone,
+                    COALESCE(AVG(TIMESTAMPDIFF(MINUTE, o.created_at, d.delivered_at)), 0) AS avg_completion_time,
+                    COALESCE(AVG(d.distance_km), 0) AS avg_distance
+                 FROM delivery_staff_availability dsa
+                 LEFT JOIN delivery d
+                    ON dsa.delivery_staff_id = d.delivery_staff_id
+                    AND d.status IN ('ASSIGNED', 'PICKED_UP', 'IN_TRANSIT')
+                 LEFT JOIN \`order\` o ON d.order_id = o.order_id
+                 JOIN staff s ON dsa.delivery_staff_id = s.staff_id
+                 WHERE dsa.is_available = 1 AND s.is_active = 1
+                 GROUP BY dsa.delivery_staff_id, dsa.is_available, s.name, s.phone
+                 ORDER BY active_deliveries ASC, avg_completion_time DESC
+                 LIMIT 5`,
                 { transaction, type: sequelize.QueryTypes.SELECT }
             );
 
@@ -585,13 +598,13 @@ class OrderService {
 
             // Log available staff
             staffWithWorkload.forEach((staff, idx) => {
-                console.log(`[AUTO-ASSIGN]    ${idx + 1}. ${staff.Name} - ${staff.active_deliveries} active`);
+                console.log(`[AUTO-ASSIGN]    ${idx + 1}. ${staff.Name} - ${Number(staff.active_deliveries) || 0} active`);
             });
 
             // Select best staff based on workload balancing
             // Priority: 1) Lightest workload, 2) Fastest completion time, 3) Earliest available
             const selectedStaff = staffWithWorkload[0];
-            const staffId = selectedStaff.DeliveryStaffID;
+            const staffId = Number(selectedStaff.DeliveryStaffID);
 
             console.log(`[AUTO-ASSIGN] 🎯 Selected: ${selectedStaff.Name} (ID: ${staffId})`);
 
@@ -617,8 +630,7 @@ class OrderService {
             // Update delivery staff availability (lock row first)
             const [availabilityUpdated] = await DeliveryStaffAvailability.update({
                 IsAvailable: false,
-                CurrentOrderID: orderId,
-                LastUpdated: new Date()
+                CurrentOrderID: orderId
             }, {
                 where: {
                     DeliveryStaffID: staffId,

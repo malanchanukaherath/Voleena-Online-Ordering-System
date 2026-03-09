@@ -95,7 +95,7 @@ const DeliveryMap = () => {
                     id: delivery.DeliveryID,
                     orderNumber: delivery.order?.OrderNumber || 'N/A',
                     customerName: delivery.order?.customer?.Name || 'Unknown',
-                    phone: delivery.order?.customer?.Phone || 'N/A',
+                    phone: delivery.order?.customer?.Phone || '',
                     address: delivery.address
                         ? `${delivery.address.AddressLine1 || ''}, ${delivery.address.City || ''}`
                         : 'N/A',
@@ -191,6 +191,19 @@ const DeliveryMap = () => {
     const handleMarkerClick = (delivery) => {
         setSelectedDelivery(delivery);
         setSelectedRestaurant(false);
+    };
+
+    const getGoogleMapsNavigationUrl = (delivery) => {
+        if (!Number.isFinite(delivery?.lat) || !Number.isFinite(delivery?.lng)) {
+            return null;
+        }
+
+        const destination = `${delivery.lat},${delivery.lng}`;
+        if (currentLocation?.lat && currentLocation?.lng) {
+            return `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination}&travelmode=driving`;
+        }
+
+        return `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
     };
 
     const calculateBounds = () => {
@@ -375,12 +388,14 @@ const DeliveryMap = () => {
                                                                     <strong>Last Update:</strong> {new Date(delivery.lastLocationUpdate).toLocaleTimeString()}
                                                                 </p>
                                                             )}
-                                                            <a
-                                                                href={`tel:${delivery.phone}`}
-                                                                className="inline-flex items-center text-xs bg-primary-600 text-white px-2 py-1 rounded mt-2 hover:bg-primary-700"
-                                                            >
-                                                                <FaPhone className="mr-1" /> Call
-                                                            </a>
+                                                            {delivery.phone && (
+                                                                <a
+                                                                    href={`tel:${delivery.phone}`}
+                                                                    className="inline-flex items-center text-xs bg-primary-600 text-white px-2 py-1 rounded mt-2 hover:bg-primary-700"
+                                                                >
+                                                                    <FaPhone className="mr-1" /> Call
+                                                                </a>
+                                                            )}
                                                         </div>
                                                     </InfoWindow>
                                                 )}
@@ -481,20 +496,24 @@ const DeliveryMap = () => {
                                             <strong>Distance:</strong> {delivery.distance.toFixed(2)} km
                                         </div>
                                         <div className="flex gap-2">
-                                            <a
-                                                href={`https://www.google.com/maps/dir/?api=1&origin=${currentLocation?.lat || 'current'},${currentLocation?.lng || 'location'}&destination=${delivery.lat},${delivery.lng}&travelmode=driving`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex-1 inline-flex items-center justify-center text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition"
-                                            >
-                                                <FaExternalLinkAlt className="mr-1" /> Navigate
-                                            </a>
-                                            <a
-                                                href={`tel:${delivery.phone}`}
-                                                className="flex-1 inline-flex items-center justify-center text-xs bg-primary-600 text-white px-2 py-1 rounded hover:bg-primary-700 transition"
-                                            >
-                                                <FaPhone className="mr-1" /> Call
-                                            </a>
+                                            {getGoogleMapsNavigationUrl(delivery) && (
+                                                <a
+                                                    href={getGoogleMapsNavigationUrl(delivery)}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex-1 inline-flex items-center justify-center text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition"
+                                                >
+                                                    <FaExternalLinkAlt className="mr-1" /> Navigate
+                                                </a>
+                                            )}
+                                            {delivery.phone && (
+                                                <a
+                                                    href={`tel:${delivery.phone}`}
+                                                    className="flex-1 inline-flex items-center justify-center text-xs bg-primary-600 text-white px-2 py-1 rounded hover:bg-primary-700 transition"
+                                                >
+                                                    <FaPhone className="mr-1" /> Call
+                                                </a>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

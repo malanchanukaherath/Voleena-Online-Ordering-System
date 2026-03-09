@@ -22,10 +22,10 @@ import StaffManagement from '../pages/StaffManagement';
 import MenuManagement from '../pages/MenuManagement';
 import CategoryManagement from '../pages/CategoryManagement';
 import ComboManagement from '../pages/ComboManagement';
-import PromotionManagement from '../pages/PromotionManagement';
 import StockManagement from '../pages/StockManagement';
 import FeedbackManagement from '../pages/FeedbackManagement';
 import SalesAnalytics from '../pages/SalesAnalytics';
+import Settings from '../pages/Settings';
 import CashierDashboard from '../pages/CashierDashboard';
 import CashierOrders from '../pages/CashierOrders';
 import CustomerRegistration from '../pages/CustomerRegistration';
@@ -42,7 +42,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/menu" element={<Menu />} />
       <Route path="/menu/:itemId" element={<MenuItemDetail />} />
-      
+
       {/* Auth Routes - redirect if already logged in */}
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
@@ -116,10 +116,10 @@ const AppRoutes = () => {
       <Route path="/admin/menu" element={<ProtectedRoute allowedRoles={['Admin']}><MenuManagement /></ProtectedRoute>} />
       <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['Admin']}><CategoryManagement /></ProtectedRoute>} />
       <Route path="/admin/combos" element={<ProtectedRoute allowedRoles={['Admin']}><ComboManagement /></ProtectedRoute>} />
-      <Route path="/admin/promotions" element={<ProtectedRoute allowedRoles={['Admin']}><PromotionManagement /></ProtectedRoute>} />
       <Route path="/admin/stock" element={<ProtectedRoute allowedRoles={['Admin']}><StockManagement /></ProtectedRoute>} />
       <Route path="/admin/feedback" element={<ProtectedRoute allowedRoles={['Admin']}><FeedbackManagement /></ProtectedRoute>} />
       <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['Admin']}><SalesAnalytics /></ProtectedRoute>} />
+      <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['Admin']}><Settings /></ProtectedRoute>} />
 
       {/* Cashier Protected Routes */}
       <Route path="/cashier/dashboard" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CashierDashboard /></ProtectedRoute>} />

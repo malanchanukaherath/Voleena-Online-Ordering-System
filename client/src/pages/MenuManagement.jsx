@@ -198,36 +198,43 @@ const MenuManagement = () => {
     const filteredItems = menuItems;
 
     return (
-        <div className="max-w-7xl mx-auto">
+        <div className="p-6">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold mb-2">Menu Management</h1>
                 <p className="text-gray-600">Manage your menu items</p>
             </div>
 
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="md:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="lg:col-span-2">
                         <Input
+                            label="Search"
                             placeholder="Search menu items..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             icon={<FaSearch />}
                         />
                     </div>
-                    <Select
-                        value={categoryFilter}
-                        onChange={(e) => setCategoryFilter(e.target.value)}
-                        options={categories}
-                    />
-                    <Select
-                        value={isActiveFilter}
-                        onChange={(e) => setIsActiveFilter(e.target.value)}
-                        options={[
-                            { value: '', label: 'All Status' },
-                            { value: 'true', label: 'Active' },
-                            { value: 'false', label: 'Inactive' }
-                        ]}
-                    />
+                    <div>
+                        <Select
+                            label="Category"
+                            value={categoryFilter}
+                            onChange={(e) => setCategoryFilter(e.target.value)}
+                            options={categories}
+                        />
+                    </div>
+                    <div>
+                        <Select
+                            label="Status"
+                            value={isActiveFilter}
+                            onChange={(e) => setIsActiveFilter(e.target.value)}
+                            options={[
+                                { value: '', label: 'All Status' },
+                                { value: 'true', label: 'Active' },
+                                { value: 'false', label: 'Inactive' }
+                            ]}
+                        />
+                    </div>
                 </div>
                 <div className="mt-4">
                     <Button onClick={() => handleOpenModal()}>

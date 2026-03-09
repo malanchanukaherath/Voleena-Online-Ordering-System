@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaMapMarkedAlt, FaPhone } from 'react-icons/fa';
+import { FaMapMarkedAlt, FaPhone, FaExternalLinkAlt } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
 import { deliveryService } from '../services/dashboardService';
@@ -19,10 +19,12 @@ const ActiveDeliveries = () => {
                     id: delivery.DeliveryID,
                     orderNumber: delivery.order?.OrderNumber || 'N/A',
                     customer: delivery.order?.customer?.Name || 'Unknown',
-                    phone: delivery.order?.customer?.Phone || 'N/A',
+                    phone: delivery.order?.customer?.Phone || '',
                     address: delivery.address
                         ? [delivery.address.AddressLine1, delivery.address.City].filter(Boolean).join(', ')
                         : 'N/A',
+                    lat: delivery.address?.Latitude != null ? Number(delivery.address.Latitude) : null,
+                    lng: delivery.address?.Longitude != null ? Number(delivery.address.Longitude) : null,
                     status: delivery.Status
                 }));
 
@@ -66,6 +68,14 @@ const ActiveDeliveries = () => {
         }
     };
 
+    const getGoogleMapsNavigationUrl = (delivery) => {
+        if (!Number.isFinite(delivery?.lat) || !Number.isFinite(delivery?.lng)) {
+            return null;
+        }
+
+        return `https://www.google.com/maps/dir/?api=1&destination=${delivery.lat},${delivery.lng}&travelmode=driving`;
+    };
+
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-6">My Active Deliveries</h1>
@@ -81,7 +91,7 @@ const ActiveDeliveries = () => {
                                 <h3 className="font-bold text-lg">{delivery.orderNumber}</h3>
                                 <p className="text-gray-700">{delivery.customer}</p>
                                 <p className="text-sm text-gray-500 flex items-center mt-1">
-                                    <FaPhone className="mr-2" />{delivery.phone}
+                                    <FaPhone className="mr-2" />{delivery.phone || 'Phone not available'}
                                 </p>
                             </div>
                             <StatusBadge status={delivery.status} type="delivery" />
@@ -99,7 +109,19 @@ const ActiveDeliveries = () => {
                             >
                                 Advance Status
                             </Button>
-                            <Button size="sm" variant="outline" onClick={() => window.open(`tel:${delivery.phone}`)}>Call Customer</Button>
+                            {delivery.phone && (
+                                <Button size="sm" variant="outline" onClick={() => window.open(`tel:${delivery.phone}`)}>Call Customer</Button>
+                            )}
+                            {getGoogleMapsNavigationUrl(delivery) && (
+                                <a
+                                    href={getGoogleMapsNavigationUrl(delivery)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center px-3 py-2 text-sm border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition"
+                                >
+                                    <FaExternalLinkAlt className="mr-2" /> Navigate
+                                </a>
+                            )}
                         </div>
                     </div>
                 ))}

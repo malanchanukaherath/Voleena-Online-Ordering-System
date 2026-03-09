@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaTruck, FaMapMarkedAlt, FaCheckCircle, FaClock, FaMapMarkerAlt, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaTruck, FaMapMarkedAlt, FaCheckCircle, FaClock, FaMapMarkerAlt, FaToggleOn, FaToggleOff, FaPhone, FaExternalLinkAlt } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
 import { deliveryService } from '../services/dashboardService';
 
@@ -31,9 +31,12 @@ const DeliveryDashboard = () => {
                         id: delivery.DeliveryID,
                         orderNumber: delivery.order?.OrderNumber || 'N/A',
                         customer: delivery.order?.customer?.Name || 'Unknown',
+                        phone: delivery.order?.customer?.Phone || '',
                         address: delivery.address
-                            ? [delivery.address.AddressLine1, delivery.address.City].filter(Boolean).join(', ')
+                            ? [delivery.address.AddressLine1, delivery.address.City, delivery.address.District].filter(Boolean).join(', ')
                             : 'N/A',
+                        lat: delivery.address?.Latitude != null ? Number(delivery.address.Latitude) : null,
+                        lng: delivery.address?.Longitude != null ? Number(delivery.address.Longitude) : null,
                         status: delivery.Status
                     }));
                     setActiveDeliveries(mapped);
@@ -152,6 +155,19 @@ const DeliveryDashboard = () => {
         }
     };
 
+    const getGoogleMapsNavigationUrl = (delivery) => {
+        if (!Number.isFinite(delivery?.lat) || !Number.isFinite(delivery?.lng)) {
+            return null;
+        }
+
+        const destination = `${delivery.lat},${delivery.lng}`;
+        if (currentLocation?.lat && currentLocation?.lng) {
+            return `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination}&travelmode=driving`;
+        }
+
+        return `https://www.google.com/maps/search/?api=1&query=${destination}`;
+    };
+
     return (
         <div className="p-6">
             <div className="flex items-center justify-between mb-8">
@@ -190,11 +206,6 @@ const DeliveryDashboard = () => {
                             {locationPermission === 'granted' ? (
                                 <>
                                     <span className="font-semibold text-green-600">Location Active</span>
-                                    {currentLocation && (
-                                        <span className="text-xs text-gray-500 ml-2">
-                                            ({currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)})
-                                        </span>
-                                    )}
                                 </>
                             ) : locationPermission === 'denied' ? (
                                 <span className="font-semibold text-red-600">Location Denied</span>
@@ -232,40 +243,38 @@ const DeliveryDashboard = () => {
 
                     {/* Availability Warning */}
                     {availability && !availability.IsAvailable && (
-                            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                <p className="text-sm text-yellow-800">
-                                    ⚠️ You are marked as unavailable. You won't receive new delivery assignments.
-                                </p>
-                                <button
-                                    onClick={toggleAvailability}
-                                    className="mt-2 text-xs text-yellow-900 underline hover:text-yellow-700"
-                                >
-                                    Click here to become available
-                                </button>
-                            )}
+                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <p className="text-sm text-yellow-800">
+                                You are marked as unavailable. You will not receive new delivery assignments.
+                            </p>
+                            <button
+                                onClick={toggleAvailability}
+                                className="mt-2 text-xs text-yellow-900 underline hover:text-yellow-700"
+                            >
+                                Click here to become available
+                            </button>
+                        </div>
+                    )}
 
-                            {/* Loading Error */}
-                            {loadingError && (
-                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                                    <p className="text-sm text-red-800">
-                                        ❌ Error loading deliveries: {loadingError}
-                                    </p>
-                                </div>
-                            )}
+                    {/* Loading Error */}
+                    {loadingError && (
+                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <p className="text-sm text-red-800">
+                                Error loading deliveries: {loadingError}
+                            </p>
+                        </div>
+                    )}
 
-                            <div className="space-y-3">
-                                {activeDeliveries.length === 0 ? (I
-                                    < div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="space-y-3">
+                        {activeDeliveries.length === 0 ? (
+                            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                                 <p className="text-sm text-blue-800 font-medium mb-2">
-                                    📦 No active deliveries
+                                    No active deliveries
                                 </p>
                                 <p className="text-xs text-blue-700">
                                     {availability && !availability.IsAvailable
                                         ? 'Set your status to available to receive delivery assignments.'
                                         : 'New deliveries will appear here when orders are ready for pickup.'}
-                                </p>
-                                <p className="text-xs text-blue-600 mt-2">
-                                    💡 Tip: Orders are automatically assigned when kitchen marks them as READY
                                 </p>
                             </div>
                         ) : activeDeliveries.map(delivery => (
@@ -278,13 +287,34 @@ const DeliveryDashboard = () => {
                                     </div>
                                     <StatusBadge status={delivery.status} type="delivery" />
                                 </div>
+
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                    {getGoogleMapsNavigationUrl(delivery) && (
+                                        <a
+                                            href={getGoogleMapsNavigationUrl(delivery)}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition"
+                                        >
+                                            <FaExternalLinkAlt className="mr-1" /> Navigate
+                                        </a>
+                                    )}
+                                    {delivery.phone && (
+                                        <a
+                                            href={`tel:${delivery.phone}`}
+                                            className="inline-flex items-center text-xs bg-primary-600 text-white px-3 py-1.5 rounded hover:bg-primary-700 transition"
+                                        >
+                                            <FaPhone className="mr-1" /> Call
+                                        </a>
+                                    )}
+                                </div>
                             </div>
                         ))}
-                        </div>
-                        <Link to="/delivery/active" className="block mt-4 text-primary-600 hover:text-primary-700">
-                            View All →
-                        </Link>
                     </div>
+                    <Link to="/delivery/active" className="block mt-4 text-primary-600 hover:text-primary-700">
+                        View All →
+                    </Link>
+                </div>
 
                 <div className="bg-white rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>

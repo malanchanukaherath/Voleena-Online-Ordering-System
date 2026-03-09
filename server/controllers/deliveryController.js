@@ -387,7 +387,7 @@ exports.getDeliveryById = async (req, res) => {
             },
             {
               model: OrderItem,
-              as: 'orderItems',
+              as: 'items',
               include: [{
                 model: MenuItem,
                 as: 'menuItem'

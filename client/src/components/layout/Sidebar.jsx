@@ -35,7 +35,6 @@ const Sidebar = () => {
                     { path: '/admin/menu', label: 'Menu', icon: FaUtensils },
                     { path: '/admin/categories', label: 'Categories', icon: FaTags },
                     { path: '/admin/combos', label: 'Combo Packs', icon: FaBoxes },
-                    { path: '/admin/promotions', label: 'Promotions', icon: FaTags },
                     { path: '/admin/stock', label: 'Stock', icon: FaBoxes },
                     { path: '/admin/analytics', label: 'Analytics', icon: FaChartLine },
                     { path: '/admin/feedback', label: 'Feedback', icon: FaComments },
