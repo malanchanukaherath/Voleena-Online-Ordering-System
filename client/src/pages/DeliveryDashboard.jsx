@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaTruck, FaMapMarkedAlt, FaCheckCircle, FaClock, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaTruck, FaMapMarkedAlt, FaCheckCircle, FaClock, FaMapMarkerAlt, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
 import { deliveryService } from '../services/dashboardService';
 
@@ -15,6 +15,7 @@ const DeliveryDashboard = () => {
     const [currentLocation, setCurrentLocation] = useState(null);
     const [locationPermission, setLocationPermission] = useState('prompt');
     const [loadingError, setLoadingError] = useState(null);
+    const [updatingAvailability, setUpdatingAvailability] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -51,7 +52,7 @@ const DeliveryDashboard = () => {
             try {
                 const [statsResponse, availabilityResponse] = await Promise.all([
                     deliveryService.getDashboardStats(),
-                    deliveryService.getAvailability().catch(() => ({ data: { isAvailable: true } }))
+                    deliveryService.getAvailability().catch(() => ({ data: { IsAvailable: true } }))
                 ]);
 
                 if (isMounted) {
@@ -136,35 +137,74 @@ const DeliveryDashboard = () => {
         return () => clearInterval(broadcastInterval);
     }, [currentLocation, activeDeliveries]);
 
+    // Toggle availability status
+    const toggleAvailability = async () => {
+        try {
+            setUpdatingAvailability(true);
+            const newStatus = !availability?.IsAvailable;
+            await deliveryService.updateAvailability(newStatus);
+            setAvailability({ ...availability, IsAvailable: newStatus });
+        } catch (error) {
+            console.error('Failed to update availability:', error);
+            alert('Failed to update availability status. Please try again.');
+        } finally {
+            setUpdatingAvailability(false);
+        }
+    };
+
     return (
         <div className="p-6">
             <div className="flex items-center justify-between mb-8">
                 <h1 className="text-3xl font-bold">Delivery Dashboard</h1>
 
-                {/* Location Status Indicator */}
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white shadow">
-                    <FaMapMarkerAlt className={`
-                        ${locationPermission === 'granted' ? 'text-green-600' :
-                            locationPermission === 'denied' ? 'text-red-600' : 'text-yellow-600'}
-                    `} />
-                    <span className="text-sm">
-                        {locationPermission === 'granted' ? (
+                <div className="flex items-center gap-4">
+                    {/* Availability Toggle */}
+                    <button
+                        onClick={toggleAvailability}
+                        disabled={updatingAvailability}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow transition-colors ${availability?.IsAvailable
+                            ? 'bg-green-600 hover:bg-green-700 text-white'
+                            : 'bg-gray-400 hover:bg-gray-500 text-white'
+                            } ${updatingAvailability ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        {availability?.IsAvailable ? (
                             <>
-                                <span className="font-semibold text-green-600">Location Active</span>
-                                {currentLocation && (
-                                    <span className="text-xs text-gray-500 ml-2">
-                                        ({currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)})
-                                    </span>
-                                )}
+                                <FaToggleOn className="w-5 h-5" />
+                                <span className="font-semibold">Available</span>
                             </>
-                        ) : locationPermission === 'denied' ? (
-                            <span className="font-semibold text-red-600">Location Denied</span>
-                        ) : locationPermission === 'unavailable' ? (
-                            <span className="font-semibold text-gray-600">Location Unavailable</span>
                         ) : (
-                            <span className="font-semibold text-yellow-600">Enable Location</span>
+                            <>
+                                <FaToggleOff className="w-5 h-5" />
+                                <span className="font-semibold">Unavailable</span>
+                            </>
                         )}
-                    </span>
+                    </button>
+
+                    {/* Location Status Indicator */}
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white shadow">
+                        <FaMapMarkerAlt className={`
+                        ${locationPermission === 'granted' ? 'text-green-600' :
+                                locationPermission === 'denied' ? 'text-red-600' : 'text-yellow-600'}
+                    `} />
+                        <span className="text-sm">
+                            {locationPermission === 'granted' ? (
+                                <>
+                                    <span className="font-semibold text-green-600">Location Active</span>
+                                    {currentLocation && (
+                                        <span className="text-xs text-gray-500 ml-2">
+                                            ({currentLocation.lat.toFixed(4)}, {currentLocation.lng.toFixed(4)})
+                                        </span>
+                                    )}
+                                </>
+                            ) : locationPermission === 'denied' ? (
+                                <span className="font-semibold text-red-600">Location Denied</span>
+                            ) : locationPermission === 'unavailable' ? (
+                                <span className="font-semibold text-gray-600">Location Unavailable</span>
+                            ) : (
+                                <span className="font-semibold text-yellow-600">Enable Location</span>
+                            )}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -191,31 +231,36 @@ const DeliveryDashboard = () => {
                     <h3 className="text-lg font-semibold mb-4">Active Deliveries</h3>
 
                     {/* Availability Warning */}
-                    {availability && !availability.isAvailable && (
-                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <p className="text-sm text-yellow-800">
-                                ⚠️ You are marked as unavailable. You won't receive new delivery assignments.
-                            </p>
-                        </div>
-                    )}
+                    {availability && !availability.IsAvailable && (
+                            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p className="text-sm text-yellow-800">
+                                    ⚠️ You are marked as unavailable. You won't receive new delivery assignments.
+                                </p>
+                                <button
+                                    onClick={toggleAvailability}
+                                    className="mt-2 text-xs text-yellow-900 underline hover:text-yellow-700"
+                                >
+                                    Click here to become available
+                                </button>
+                            )}
 
-                    {/* Loading Error */}
-                    {loadingError && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-sm text-red-800">
-                                ❌ Error loading deliveries: {loadingError}
-                            </p>
-                        </div>
-                    )}
+                            {/* Loading Error */}
+                            {loadingError && (
+                                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                                    <p className="text-sm text-red-800">
+                                        ❌ Error loading deliveries: {loadingError}
+                                    </p>
+                                </div>
+                            )}
 
-                    <div className="space-y-3">
-                        {activeDeliveries.length === 0 ? (
-                            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div className="space-y-3">
+                                {activeDeliveries.length === 0 ? (I
+                                    < div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
                                 <p className="text-sm text-blue-800 font-medium mb-2">
                                     📦 No active deliveries
                                 </p>
                                 <p className="text-xs text-blue-700">
-                                    {availability && !availability.isAvailable
+                                    {availability && !availability.IsAvailable
                                         ? 'Set your status to available to receive delivery assignments.'
                                         : 'New deliveries will appear here when orders are ready for pickup.'}
                                 </p>
@@ -235,11 +280,11 @@ const DeliveryDashboard = () => {
                                 </div>
                             </div>
                         ))}
+                        </div>
+                        <Link to="/delivery/active" className="block mt-4 text-primary-600 hover:text-primary-700">
+                            View All →
+                        </Link>
                     </div>
-                    <Link to="/delivery/active" className="block mt-4 text-primary-600 hover:text-primary-700">
-                        View All →
-                    </Link>
-                </div>
 
                 <div className="bg-white rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>

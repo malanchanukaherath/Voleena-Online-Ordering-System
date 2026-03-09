@@ -37,7 +37,7 @@ const Header = () => {
 
         // Listen for storage changes (works when user adds items)
         window.addEventListener('storage', updateCartCount);
-        
+
         // Listen for custom cart events
         window.addEventListener('cartUpdated', updateCartCount);
 
@@ -130,8 +130,8 @@ const Header = () => {
                                     key={item.path}
                                     to={item.path}
                                     className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1 transition-colors ${isActive(item.path)
-                                            ? 'bg-primary-100 text-primary-700'
-                                            : 'text-gray-700 hover:bg-gray-100'
+                                        ? 'bg-primary-100 text-primary-700'
+                                        : 'text-gray-700 hover:bg-gray-100'
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />
@@ -159,15 +159,16 @@ const Header = () => {
 
                         {isAuthenticated && (
                             <>
-                                <Link
-                                    to="/notifications"
+                                <button
+                                    onClick={() => alert('Notifications feature coming soon!')}
                                     className="relative text-gray-700 hover:text-primary-600"
+                                    title="Notifications"
                                 >
                                     <FaBell className="w-6 h-6" />
                                     <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
                                         0
                                     </span>
-                                </Link>
+                                </button>
 
                                 <div className="flex items-center space-x-3">
                                     <div className="hidden sm:block text-right">
@@ -213,8 +214,8 @@ const Header = () => {
                                 key={item.path}
                                 to={item.path}
                                 className={`px-3 py-2 rounded-md text-xs font-medium flex items-center space-x-1 ${isActive(item.path)
-                                        ? 'bg-primary-100 text-primary-700'
-                                        : 'text-gray-700 bg-gray-100'
+                                    ? 'bg-primary-100 text-primary-700'
+                                    : 'text-gray-700 bg-gray-100'
                                     }`}
                             >
                                 <Icon className="w-3 h-3" />

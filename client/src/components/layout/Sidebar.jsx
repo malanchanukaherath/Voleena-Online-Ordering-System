@@ -47,7 +47,6 @@ const Sidebar = () => {
                     { path: '/cashier', label: 'Dashboard', icon: FaTachometerAlt },
                     { path: '/cashier/orders', label: 'Orders', icon: FaClipboardList },
                     { path: '/cashier/customers/new', label: 'New Customer', icon: FaUsers },
-                    { path: '/cashier/payment', label: 'Payment', icon: FaTags },
                 ];
 
             case 'Kitchen':
@@ -87,8 +86,8 @@ const Sidebar = () => {
                             key={item.path}
                             to={item.path}
                             className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${active
-                                    ? 'bg-primary-100 text-primary-700 font-medium'
-                                    : 'text-gray-700 hover:bg-gray-100'
+                                ? 'bg-primary-100 text-primary-700 font-medium'
+                                : 'text-gray-700 hover:bg-gray-100'
                                 }`}
                         >
                             <Icon className={`w-5 h-5 ${active ? 'text-primary-600' : 'text-gray-500'}`} />

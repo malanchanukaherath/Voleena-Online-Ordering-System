@@ -117,6 +117,14 @@ class AuthService {
   async login(credentials) {
     const { email, password, userType } = credentials;
 
+    // Require email and password - don't attempt login without credentials
+    if (!email || !password) {
+      return {
+        success: false,
+        error: 'Email and password are required'
+      };
+    }
+
     // If userType specified, use specific login
     if (userType === 'staff') {
       return this.staffLogin(email, password);
@@ -124,7 +132,22 @@ class AuthService {
       return this.customerLogin(email, password);
     }
 
-    // Otherwise, try staff first, then customer
+    // Check if there's a current user and use their type
+    const currentUser = this.getCurrentUser();
+    if (currentUser) {
+      const role = currentUser.role || currentUser.staffRole;
+      if (role) {
+        // Staff roles (checking various formats for compatibility)
+        const staffRoles = ['Admin', 'Cashier', 'Kitchen', 'Delivery', 'ADMIN', 'CASHIER', 'KITCHEN_STAFF', 'DELIVERY_STAFF', 'Staff'];
+        if (staffRoles.includes(role)) {
+          return this.staffLogin(email, password);
+        } else if (role === 'Customer') {
+          return this.customerLogin(email, password);
+        }
+      }
+    }
+
+    // Otherwise, try staff first (staff use login pages more commonly), then customer
     const staffResult = await this.staffLogin(email, password);
     if (staffResult.success) {
       return staffResult;

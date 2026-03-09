@@ -309,16 +309,13 @@ exports.updateAvailability = async (req, res) => {
       return res.status(400).json({ error: 'isAvailable must be a boolean' });
     }
 
-    // Update or create availability record
-    const [result] = await sequelize.query(
-      `INSERT INTO delivery_staff_availability (DeliveryStaffID, IsAvailable, LastUpdated)
-       VALUES (?, ?, NOW())
-       ON DUPLICATE KEY UPDATE IsAvailable = ?, LastUpdated = NOW()`,
-      {
-        replacements: [staffId, isAvailable, isAvailable],
-        type: sequelize.QueryTypes.INSERT
-      }
-    );
+    // Update or create availability record using upsert
+    const [availability, created] = await DeliveryStaffAvailability.upsert({
+      DeliveryStaffID: staffId,
+      IsAvailable: isAvailable
+    }, {
+      returning: true
+    });
 
     return res.json({
       success: true,
@@ -338,19 +335,27 @@ exports.getAvailability = async (req, res) => {
   try {
     const staffId = req.user.id;
 
-    const [availability] = await sequelize.query(
-      `SELECT IsAvailable, CurrentOrderID, LastUpdated 
-       FROM delivery_staff_availability 
-       WHERE DeliveryStaffID = ?`,
-      {
-        replacements: [staffId],
-        type: sequelize.QueryTypes.SELECT
-      }
-    );
+    // Try to find existing availability record (let Sequelize handle field mapping)
+    let availability = await DeliveryStaffAvailability.findOne({
+      where: { DeliveryStaffID: staffId }
+    });
+
+    // If no record exists, create one with default availability (true)
+    if (!availability) {
+      availability = await DeliveryStaffAvailability.create({
+        DeliveryStaffID: staffId,
+        IsAvailable: true,
+        CurrentOrderID: null
+      });
+    }
 
     return res.json({
       success: true,
-      data: availability || { IsAvailable: true, CurrentOrderID: null }
+      data: {
+        IsAvailable: availability.IsAvailable,
+        CurrentOrderID: availability.CurrentOrderID,
+        LastUpdated: availability.updatedAt
+      }
     });
   } catch (error) {
     console.error('Get availability error:', error);

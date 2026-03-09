@@ -1,12 +1,13 @@
 import React from 'react';
 
-const Input = ({ 
-  label, 
-  error, 
+const Input = ({
+  label,
+  error,
   helperText,
   className = '',
   containerClassName = '',
-  ...props 
+  icon, // Exclude icon from spreading to native input
+  ...props
 }) => {
   const inputClasses = `
     block w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 
@@ -14,7 +15,7 @@ const Input = ({
     ${error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'}
     ${className}
   `;
-  
+
   return (
     <div className={containerClassName}>
       {label && (
