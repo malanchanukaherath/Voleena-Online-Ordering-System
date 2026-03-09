@@ -5,12 +5,18 @@ const { Customer, Staff, Role, sequelize } = require('../models');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me';
 const JWT_EXPIRES_IN = '30m'; // 30 minutes for session timeout
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || JWT_SECRET;
+const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRE || '7d';
 
 /**
  * Generate JWT Token with 30-minute expiry
  */
 const generateToken = (payload) => {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+};
+
+const generateRefreshToken = (payload) => {
+  return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN });
 };
 
 /**
@@ -76,10 +82,12 @@ exports.staffLogin = async (req, res) => {
     };
 
     const token = generateToken(payload);
+    const refreshToken = generateRefreshToken(payload);
 
     return res.json({
       success: true,
       token,
+      refreshToken,
       user: payload,
       expiresIn: 1800 // 30 minutes in seconds
     });
@@ -130,16 +138,99 @@ exports.customerLogin = async (req, res) => {
     };
 
     const token = generateToken(payload);
+    const refreshToken = generateRefreshToken(payload);
 
     return res.json({
       success: true,
       token,
+      refreshToken,
       user: payload,
       expiresIn: 1800
     });
   } catch (error) {
     console.error('Customer login error:', error);
     return res.status(500).json({ error: 'Login failed' });
+  }
+};
+
+/**
+ * Customer Register
+ */
+exports.register = async (req, res) => {
+  try {
+    const { name, email, phone, password } = req.body;
+
+    if (!name || !email || !phone || !password) {
+      return res.status(400).json({ error: 'Name, email, phone, and password are required' });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({ error: 'Invalid email format' });
+    }
+
+    if (!isValidPassword(password)) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPhone = phone.replace(/\s/g, '');
+
+    if (!/^[+]?[0-9]{9,15}$/.test(normalizedPhone)) {
+      return res.status(400).json({ error: 'Invalid phone number format' });
+    }
+
+    const [existingCustomer, existingStaff] = await Promise.all([
+      Customer.findOne({
+        where: {
+          [sequelize.Sequelize.Op.or]: [{ Email: normalizedEmail }, { Phone: normalizedPhone }]
+        }
+      }),
+      Staff.findOne({ where: { Email: normalizedEmail } })
+    ]);
+
+    if (existingStaff) {
+      return res.status(409).json({ error: 'This email is already used by a staff account' });
+    }
+
+    if (existingCustomer) {
+      return res.status(409).json({ error: 'Customer with this email or phone already exists' });
+    }
+
+    const customer = await Customer.create({
+      Name: name.trim(),
+      Email: normalizedEmail,
+      Phone: normalizedPhone,
+      Password: password,
+      AccountStatus: 'ACTIVE',
+      IsEmailVerified: false,
+      IsPhoneVerified: false,
+      IsActive: true,
+      PreferredNotification: 'BOTH'
+    });
+
+    const payload = {
+      id: customer.CustomerID,
+      name: customer.Name,
+      email: customer.Email,
+      phone: customer.Phone,
+      role: 'Customer',
+      type: 'Customer'
+    };
+
+    const token = generateToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    return res.status(201).json({
+      success: true,
+      token,
+      refreshToken,
+      user: payload,
+      expiresIn: 1800,
+      message: 'Registration successful'
+    });
+  } catch (error) {
+    console.error('Customer registration error:', error);
+    return res.status(500).json({ error: 'Registration failed' });
   }
 };
 
@@ -151,24 +242,24 @@ exports.refreshToken = async (req, res) => {
   try {
     const authHeader = req.headers.authorization || '';
     const refreshTokenHeader = req.headers['x-refresh-token'] || '';
-    
+
     // Get access token from Authorization header
     const accessToken = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-    
+
     // Get refresh token from header or body
     const refreshToken = refreshTokenHeader || req.body?.refreshToken;
 
     if (!accessToken || !refreshToken) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        error: 'Access token and refresh token are required' 
+        error: 'Access token and refresh token are required'
       });
     }
 
     try {
       // Verify refresh token
-      const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET || JWT_SECRET);
-      
+      const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+
       // Generate NEW access token with fresh expiry
       const newPayload = {
         id: decoded.id,
@@ -181,9 +272,8 @@ exports.refreshToken = async (req, res) => {
       };
 
       const newAccessToken = generateToken(newPayload);
-      
+
       // CRITICAL: Generate NEW refresh token (token rotation)
-      const { generateRefreshToken } = require('../utils/jwtUtils');
       const newRefreshToken = generateRefreshToken(newPayload);
 
       return res.json({
@@ -195,21 +285,21 @@ exports.refreshToken = async (req, res) => {
       });
     } catch (error) {
       if (error.name === 'TokenExpiredError') {
-        return res.status(401).json({ 
+        return res.status(401).json({
           success: false,
-          error: 'Refresh token expired. Please login again' 
+          error: 'Refresh token expired. Please login again'
         });
       }
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        error: 'Invalid refresh token' 
+        error: 'Invalid refresh token'
       });
     }
   } catch (error) {
     console.error('Token refresh error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
-      error: 'Token refresh failed' 
+      error: 'Token refresh failed'
     });
   }
 };
@@ -224,23 +314,23 @@ exports.logout = async (req, res) => {
     const token = authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
 
     if (!token) {
-      return res.status(401).json({ 
+      return res.status(401).json({
         success: false,
-        error: 'No token provided' 
+        error: 'No token provided'
       });
     }
 
     // Blacklist the token
     const { TokenBlacklist } = require('../models');
     const { hashToken } = require('../utils/jwtUtils');
-    
+
     const tokenHash = hashToken(token);
     const decoded = jwt.decode(token);
 
     if (!decoded || !decoded.exp) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         success: false,
-        error: 'Invalid token' 
+        error: 'Invalid token'
       });
     }
 
@@ -255,15 +345,15 @@ exports.logout = async (req, res) => {
       reason: 'LOGOUT'
     });
 
-    return res.json({ 
-      success: true, 
-      message: 'Logged out successfully' 
+    return res.json({
+      success: true,
+      message: 'Logged out successfully'
     });
   } catch (error) {
     console.error('Logout error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       success: false,
-      error: 'Logout failed' 
+      error: 'Logout failed'
     });
   }
 };
@@ -310,7 +400,7 @@ exports.requestPasswordReset = async (req, res) => {
     // Find user
     let user;
     let userId;
-    
+
     if (userType === 'Customer') {
       user = await Customer.findOne({ where: { Email: normalizedEmail } });
       userId = user?.CustomerID;
@@ -321,9 +411,9 @@ exports.requestPasswordReset = async (req, res) => {
 
     if (!user) {
       // Don't reveal if user exists for security
-      return res.json({ 
-        success: true, 
-        message: 'If the email exists, an OTP has been sent' 
+      return res.json({
+        success: true,
+        message: 'If the email exists, an OTP has been sent'
       });
     }
 
@@ -372,7 +462,7 @@ exports.verifyResetOTP = async (req, res) => {
     // Find user
     let user;
     let userId;
-    
+
     if (userType === 'Customer') {
       user = await Customer.findOne({ where: { Email: normalizedEmail } });
       userId = user?.CustomerID;
@@ -437,7 +527,7 @@ exports.resetPassword = async (req, res) => {
     // Find user
     let user;
     let userId;
-    
+
     if (userType === 'Customer') {
       user = await Customer.findOne({ where: { Email: normalizedEmail } });
       userId = user?.CustomerID;

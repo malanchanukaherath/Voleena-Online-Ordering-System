@@ -18,6 +18,13 @@ router.post('/staff/login', authLimiter, authController.staffLogin);
 router.post('/customer/login', authLimiter, authController.customerLogin);
 
 /**
+ * @route POST /api/auth/register
+ * @desc Customer self-registration
+ * CRITICAL: Rate limited to 5 attempts per 15 minutes
+ */
+router.post('/register', authLimiter, authController.register);
+
+/**
  * @route POST /api/auth/refresh
  * @desc Refresh authentication token
  */

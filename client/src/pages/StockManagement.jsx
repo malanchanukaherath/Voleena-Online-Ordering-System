@@ -7,10 +7,11 @@ import Input from '../components/ui/Input';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import Select from '../components/ui/Select';
 import { menuItemService } from '../services/menuService';
+import { API_BASE_URL } from '../config/api';
 
 const StockManagement = () => {
     const { user } = useAuth();
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    const apiBaseUrl = API_BASE_URL;
     const [stock, setStock] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);

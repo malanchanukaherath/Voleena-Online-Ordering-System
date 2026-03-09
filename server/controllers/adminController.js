@@ -36,7 +36,7 @@ exports.getDashboardStats = async (req, res) => {
     });
 
     // Total revenue
-    const revenueResult = await Order.sum('FinalAmount', {
+    const revenueResult = await Order.sum('final_amount', {
       where: {
         Status: {
           [sequelize.Sequelize.Op.not]: 'CANCELLED'
@@ -45,7 +45,7 @@ exports.getDashboardStats = async (req, res) => {
     });
 
     // Today's revenue
-    const todayRevenue = await Order.sum('FinalAmount', {
+    const todayRevenue = await Order.sum('final_amount', {
       where: {
         created_at: {
           [sequelize.Sequelize.Op.gte]: today
@@ -119,11 +119,11 @@ exports.getMonthlySalesReport = async (req, res) => {
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
 
-    const [salesData] = await sequelize.query(`
+    const salesData = await sequelize.query(`
       SELECT 
         DATE(created_at) as date,
         COUNT(*) as orderCount,
-        SUM(final_amount) as revenue
+        COALESCE(SUM(final_amount), 0) as revenue
       FROM \`order\`
       WHERE created_at BETWEEN ? AND ?
         AND status != 'CANCELLED'
@@ -154,12 +154,14 @@ exports.getBestSellingItems = async (req, res) => {
 
     let query = `
       SELECT 
-        m.menu_item_id,
-        m.name,
+        m.menu_item_id AS MenuItemID,
+        m.name AS Name,
+        COALESCE(c.name, 'Uncategorized') AS CategoryName,
         COUNT(oi.order_item_id) as totalSold,
-        SUM(oi.quantity) as totalQuantity,
-        SUM(oi.subtotal) as totalRevenue
+        COALESCE(SUM(oi.quantity), 0) as totalQuantity,
+        COALESCE(SUM(oi.subtotal), 0) as totalRevenue
       FROM \`menu_item\` m
+      LEFT JOIN \`category\` c ON m.category_id = c.category_id
       LEFT JOIN \`order_item\` oi ON m.menu_item_id = oi.menu_item_id
       LEFT JOIN \`order\` o ON oi.order_id = o.order_id
     `;
@@ -172,13 +174,13 @@ exports.getBestSellingItems = async (req, res) => {
     }
 
     query += `
-      GROUP BY m.menu_item_id, m.name
+      GROUP BY m.menu_item_id, m.name, c.name
       ORDER BY totalQuantity DESC
       LIMIT ?
     `;
     replacements.push(limitNum);
 
-    const [salesData] = await sequelize.query(query, {
+    const salesData = await sequelize.query(query, {
       replacements: replacements,
       type: sequelize.QueryTypes.SELECT
     });
@@ -199,7 +201,7 @@ exports.getBestSellingItems = async (req, res) => {
 exports.createStaff = async (req, res) => {
   try {
     const { name, email, phone, roleId, password } = req.body;
-    const adminRoleId = req.user.RoleID; // Get requesting user's role
+    const adminRoleId = req.user.roleId; // Get requesting user's role
 
     // Validation
     if (!name || !email || !phone || !roleId || !password) {
@@ -265,7 +267,7 @@ exports.updateStaff = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, phone, roleId, isActive } = req.body;
-    const requestingUserId = req.user.ID;
+    const requestingUserId = req.user.id;
 
     const staff = await Staff.findByPk(id);
 

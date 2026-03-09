@@ -1,6 +1,5 @@
 import { realApi } from './backendApi';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+import { API_BASE_URL } from '../config/api';
 
 class AuthService {
   getTokenExpiry() {
@@ -46,6 +45,9 @@ class AuthService {
       const { user, token } = data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      if (data.refreshToken) {
+        localStorage.setItem('refreshToken', data.refreshToken);
+      }
       this.setTokenExpiry(data.expiresIn);
 
       return { success: true, user, token };
@@ -75,6 +77,9 @@ class AuthService {
       const { user, token } = data;
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      if (data.refreshToken) {
+        localStorage.setItem('refreshToken', data.refreshToken);
+      }
       this.setTokenExpiry(data.expiresIn);
 
       return { success: true, user, token };
@@ -94,6 +99,9 @@ class AuthService {
 
       localStorage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
+      if (response.data?.refreshToken) {
+        localStorage.setItem('refreshToken', response.data.refreshToken);
+      }
       this.setTokenExpiry(response.data?.expiresIn);
 
       return { success: true, user, token };
@@ -129,16 +137,22 @@ class AuthService {
   async refreshToken() {
     try {
       const token = this.getToken();
+      const refreshToken = localStorage.getItem('refreshToken');
       if (!token) {
         throw new Error('No token available');
+      }
+      if (!refreshToken) {
+        throw new Error('No refresh token available');
       }
 
       const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+          'Authorization': `Bearer ${token}`,
+          'X-Refresh-Token': refreshToken
+        },
+        body: JSON.stringify({ refreshToken })
       });
 
       const data = await response.json();
@@ -147,9 +161,12 @@ class AuthService {
         throw new Error(data.error || 'Token refresh failed');
       }
 
-      const { user, token: newToken } = data;
+      const { user, token: newToken, refreshToken: newRefreshToken } = data;
       localStorage.setItem('token', newToken);
       localStorage.setItem('user', JSON.stringify(user));
+      if (newRefreshToken) {
+        localStorage.setItem('refreshToken', newRefreshToken);
+      }
       this.setTokenExpiry(data.expiresIn);
 
       return { success: true, user, token: newToken };
@@ -238,6 +255,7 @@ class AuthService {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('tokenExpiry');
+    localStorage.removeItem('refreshToken');
   }
 
   // Get current user from localStorage

@@ -1,18 +1,14 @@
 import React from 'react';
 import { FaTag, FaClock } from 'react-icons/fa';
 import Button from './ui/Button';
+import { resolveAssetUrl } from '../config/api';
 
 const ComboPackCard = ({ combo, onAddToCart }) => {
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-
     const resolveImageUrl = (imagePath) => {
         if (!imagePath) {
             return null;
         }
-        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-            return imagePath;
-        }
-        return `${apiBaseUrl}${imagePath}`;
+        return resolveAssetUrl(imagePath);
     };
 
     const formatDate = (dateString) => {

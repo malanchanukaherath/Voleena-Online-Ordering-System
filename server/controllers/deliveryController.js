@@ -1,4 +1,4 @@
-const { Delivery, Order, OrderItem, MenuItem, Address, Customer, Staff, DeliveryStaffAvailability, sequelize, literal } = require('../models');
+const { Delivery, Order, OrderItem, MenuItem, Address, Customer, Staff, DeliveryStaffAvailability, OrderStatusHistory, sequelize, literal } = require('../models');
 const { validateDeliveryDistanceWithFallback, geocodeAddress } = require('../utils/distanceValidator');
 const { validateAddressLine, validateCoordinates } = require('../utils/validationUtils');
 
@@ -164,6 +164,7 @@ exports.updateDeliveryStatus = async (req, res) => {
       });
     }
 
+    const previousStatus = delivery.Status;
     const updateData = { Status: status };
 
     if (status === 'PICKED_UP') {
@@ -221,22 +222,15 @@ exports.updateDeliveryStatus = async (req, res) => {
       console.log(`[DELIVERY] ✅ Staff ${staffId} availability reset (Status: ${status})`);
     }
 
-    // Log status change
-    await sequelize.query(
-      `INSERT INTO order_status_history (OrderID, OldStatus, NewStatus, ChangedBy, ChangedByType, Notes)
-       VALUES (?, ?, ?, ?, 'STAFF', ?)`,
-      {
-        replacements: [
-          delivery.OrderID,
-          delivery.Status,
-          status === 'DELIVERED' ? 'DELIVERED' : status === 'FAILED' ? 'READY' : 'OUT_FOR_DELIVERY',
-          staffId,
-          notes || `Delivery status updated to ${status}`
-        ],
-        type: sequelize.QueryTypes.INSERT,
-        transaction
-      }
-    );
+    await OrderStatusHistory.create({
+      OrderID: delivery.OrderID,
+      OldStatus: previousStatus,
+      NewStatus: status === 'DELIVERED' ? 'DELIVERED' : status === 'FAILED' ? 'READY' : 'OUT_FOR_DELIVERY',
+      ChangedBy: staffId,
+      ChangedByType: 'STAFF',
+      Notes: notes || `Delivery status updated to ${status}`,
+      CreatedAt: new Date()
+    }, { transaction });
 
     await transaction.commit();
 

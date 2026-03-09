@@ -5,6 +5,7 @@ import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import { getCart, updateCartItem, removeCartItem } from '../utils/cartStorage';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '../config/api';
 
 const Cart = () => {
     const navigate = useNavigate();
@@ -23,8 +24,7 @@ const Cart = () => {
             }
 
             try {
-                const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-                const response = await fetch(`${apiBaseUrl}/api/v1/menu?isActive=true`);
+                const response = await fetch(`${API_BASE_URL}/api/v1/menu?isActive=true`);
                 const data = await response.json();
 
                 if (data.success && Array.isArray(data.data)) {

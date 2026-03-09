@@ -5,10 +5,10 @@ import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import EmptyState from '../components/ui/EmptyState';
 import { addToCart } from '../utils/cartStorage';
 import { menuItemService } from '../services/menuService';
+import { resolveAssetUrl } from '../config/api';
 
 const MenuItemDetail = () => {
     const { itemId } = useParams();
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -17,10 +17,7 @@ const MenuItemDetail = () => {
         if (!imagePath) {
             return null;
         }
-        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-            return imagePath;
-        }
-        return `${apiBaseUrl}${imagePath}`;
+        return resolveAssetUrl(imagePath);
     };
 
     const mapMenuItem = (data) => ({

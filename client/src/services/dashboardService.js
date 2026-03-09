@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+import { API_BASE_URL } from '../config/api';
 
 /**
  * Get authentication headers
@@ -29,7 +29,7 @@ const handleResponse = async (response) => {
  */
 class AdminService {
   async getDashboardStats() {
-    const response = await fetch(`${API_BASE_URL}/api/admin/dashboard/stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/dashboard/stats`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -37,14 +37,14 @@ class AdminService {
 
   async getMonthlySalesReport(year, month) {
     const response = await fetch(
-      `${API_BASE_URL}/api/admin/reports/monthly-sales?year=${year}&month=${month}`,
+      `${API_BASE_URL}/api/v1/admin/reports/monthly-sales?year=${year}&month=${month}`,
       { headers: getAuthHeaders() }
     );
     return handleResponse(response);
   }
 
   async getBestSellingItems(limit = 10, startDate, endDate) {
-    let url = `${API_BASE_URL}/api/admin/reports/best-selling?limit=${limit}`;
+    let url = `${API_BASE_URL}/api/v1/admin/reports/best-selling?limit=${limit}`;
     if (startDate && endDate) {
       url += `&startDate=${startDate}&endDate=${endDate}`;
     }
@@ -53,14 +53,14 @@ class AdminService {
   }
 
   async getAllStaff() {
-    const response = await fetch(`${API_BASE_URL}/api/admin/staff`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/staff`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
   }
 
   async createStaff(staffData) {
-    const response = await fetch(`${API_BASE_URL}/api/admin/staff`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/staff`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(staffData)
@@ -69,7 +69,7 @@ class AdminService {
   }
 
   async updateStaff(id, staffData) {
-    const response = await fetch(`${API_BASE_URL}/api/admin/staff/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/staff/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(staffData)
@@ -78,7 +78,7 @@ class AdminService {
   }
 
   async deleteStaff(id) {
-    const response = await fetch(`${API_BASE_URL}/api/admin/staff/${id}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/staff/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders()
     });
@@ -86,14 +86,14 @@ class AdminService {
   }
 
   async getAllRoles() {
-    const response = await fetch(`${API_BASE_URL}/api/admin/roles`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/roles`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
   }
 
   async assignDeliveryStaff(orderId, staffId) {
-    const response = await fetch(`${API_BASE_URL}/api/admin/delivery/assign`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/delivery/assign`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ orderId, staffId })
@@ -107,14 +107,14 @@ class AdminService {
  */
 class CashierService {
   async getDashboardStats() {
-    const response = await fetch(`${API_BASE_URL}/api/cashier/dashboard/stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/cashier/dashboard/stats`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
   }
 
   async getAllOrders(filters = {}) {
-    let url = `${API_BASE_URL}/api/cashier/orders?`;
+    let url = `${API_BASE_URL}/api/v1/cashier/orders?`;
     if (filters.status) url += `status=${filters.status}&`;
     if (filters.limit) url += `limit=${filters.limit}&`;
     if (filters.startDate && filters.endDate) {
@@ -126,7 +126,7 @@ class CashierService {
   }
 
   async confirmOrder(orderId) {
-    const response = await fetch(`${API_BASE_URL}/api/cashier/orders/${orderId}/confirm`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/cashier/orders/${orderId}/confirm`, {
       method: 'PUT',
       headers: getAuthHeaders()
     });
@@ -134,7 +134,7 @@ class CashierService {
   }
 
   async cancelOrder(orderId, reason) {
-    const response = await fetch(`${API_BASE_URL}/api/cashier/orders/${orderId}/cancel`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/cashier/orders/${orderId}/cancel`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ reason })
@@ -144,21 +144,21 @@ class CashierService {
 
   async getAllCustomers(search = '', limit = 50) {
     const response = await fetch(
-      `${API_BASE_URL}/api/cashier/customers?search=${search}&limit=${limit}`,
+      `${API_BASE_URL}/api/v1/cashier/customers?search=${search}&limit=${limit}`,
       { headers: getAuthHeaders() }
     );
     return handleResponse(response);
   }
 
   async getCustomerById(customerId) {
-    const response = await fetch(`${API_BASE_URL}/api/cashier/customers/${customerId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/cashier/customers/${customerId}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
   }
 
   async registerCustomer(customerData) {
-    const response = await fetch(`${API_BASE_URL}/api/cashier/customers`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/cashier/customers`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(customerData)
@@ -167,7 +167,7 @@ class CashierService {
   }
 
   async updateCustomer(customerId, customerData) {
-    const response = await fetch(`${API_BASE_URL}/api/cashier/customers/${customerId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/cashier/customers/${customerId}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(customerData)
@@ -181,14 +181,14 @@ class CashierService {
  */
 class KitchenService {
   async getDashboardStats() {
-    const response = await fetch(`${API_BASE_URL}/api/kitchen/dashboard/stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/kitchen/dashboard/stats`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
   }
 
   async getAssignedOrders(status = '') {
-    let url = `${API_BASE_URL}/api/kitchen/orders`;
+    let url = `${API_BASE_URL}/api/v1/kitchen/orders`;
     if (status) url += `?status=${status}`;
 
     const response = await fetch(url, { headers: getAuthHeaders() });
@@ -196,7 +196,7 @@ class KitchenService {
   }
 
   async updateOrderStatus(orderId, status) {
-    const response = await fetch(`${API_BASE_URL}/api/kitchen/orders/${orderId}/status`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/kitchen/orders/${orderId}/status`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ status })
@@ -205,14 +205,14 @@ class KitchenService {
   }
 
   async getAllMenuItems() {
-    const response = await fetch(`${API_BASE_URL}/api/kitchen/menu-items`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/kitchen/menu-items`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
   }
 
   async getDailyStock(date = '') {
-    let url = `${API_BASE_URL}/api/kitchen/stock/daily`;
+    let url = `${API_BASE_URL}/api/v1/kitchen/stock/daily`;
     if (date) url += `?date=${date}`;
 
     const response = await fetch(url, { headers: getAuthHeaders() });
@@ -220,7 +220,7 @@ class KitchenService {
   }
 
   async updateDailyStock(stockData) {
-    const response = await fetch(`${API_BASE_URL}/api/kitchen/stock/daily`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/kitchen/stock/daily`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify(stockData)
@@ -229,7 +229,7 @@ class KitchenService {
   }
 
   async bulkUpdateDailyStock(items) {
-    const response = await fetch(`${API_BASE_URL}/api/kitchen/stock/daily/bulk`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/kitchen/stock/daily/bulk`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ items })
@@ -243,14 +243,14 @@ class KitchenService {
  */
 class DeliveryService {
   async getDashboardStats() {
-    const response = await fetch(`${API_BASE_URL}/api/delivery/dashboard/stats`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/delivery/dashboard/stats`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
   }
 
   async getMyDeliveries(status = '') {
-    let url = `${API_BASE_URL}/api/delivery/deliveries`;
+    let url = `${API_BASE_URL}/api/v1/delivery/deliveries`;
     if (status) url += `?status=${status}`;
 
     const response = await fetch(url, { headers: getAuthHeaders() });
@@ -258,14 +258,14 @@ class DeliveryService {
   }
 
   async getDeliveryById(deliveryId) {
-    const response = await fetch(`${API_BASE_URL}/api/delivery/deliveries/${deliveryId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/delivery/deliveries/${deliveryId}`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
   }
 
   async updateDeliveryStatus(deliveryId, statusData) {
-    const response = await fetch(`${API_BASE_URL}/api/delivery/deliveries/${deliveryId}/status`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/delivery/deliveries/${deliveryId}/status`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify(statusData)
@@ -275,14 +275,14 @@ class DeliveryService {
 
   async getDeliveryHistory(limit = 50, offset = 0) {
     const response = await fetch(
-      `${API_BASE_URL}/api/delivery/history?limit=${limit}&offset=${offset}`,
+      `${API_BASE_URL}/api/v1/delivery/history?limit=${limit}&offset=${offset}`,
       { headers: getAuthHeaders() }
     );
     return handleResponse(response);
   }
 
   async updateAvailability(isAvailable) {
-    const response = await fetch(`${API_BASE_URL}/api/delivery/availability`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/delivery/availability`, {
       method: 'PUT',
       headers: getAuthHeaders(),
       body: JSON.stringify({ isAvailable })
@@ -291,7 +291,7 @@ class DeliveryService {
   }
 
   async getAvailability() {
-    const response = await fetch(`${API_BASE_URL}/api/delivery/availability`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/delivery/availability`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);
@@ -301,7 +301,7 @@ class DeliveryService {
    * Track delivery rider's current location
    */
   async trackDeliveryLocation(deliveryId, { lat, lng }) {
-    const response = await fetch(`${API_BASE_URL}/api/delivery/deliveries/${deliveryId}/location`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/delivery/deliveries/${deliveryId}/location`, {
       method: 'POST',
       headers: getAuthHeaders(),
       body: JSON.stringify({ lat, lng })
@@ -313,7 +313,7 @@ class DeliveryService {
    * Get delivery's live location (for admin/customer tracking)
    */
   async getDeliveryLocation(deliveryId) {
-    const response = await fetch(`${API_BASE_URL}/api/delivery/deliveries/${deliveryId}/location`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/delivery/deliveries/${deliveryId}/location`, {
       headers: getAuthHeaders()
     });
     return handleResponse(response);

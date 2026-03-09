@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const ProtectedRoute = ({ children, requireAdmin = false, allowedRoles = null }) => {
-  const { isAuthenticated, isAdmin, user, hasRole } = useAuth();
+  const { isAuthenticated, isAdmin, user } = useAuth();
   const location = useLocation();
 
   if (!isAuthenticated) {
@@ -13,7 +13,11 @@ const ProtectedRoute = ({ children, requireAdmin = false, allowedRoles = null })
 
   if (requireAdmin && !isAdmin()) {
     // Set a small flag to show a friendly message on next page (lightweight)
-    try { localStorage.setItem('voleena_message', JSON.stringify({ type: 'info', text: 'Admin access required' })); } catch (e) {}
+    try {
+      localStorage.setItem('voleena_message', JSON.stringify({ type: 'info', text: 'Admin access required' }));
+    } catch {
+      // Non-blocking fallback when localStorage is unavailable.
+    }
     return <Navigate to="/" replace />;
   }
 
@@ -21,7 +25,11 @@ const ProtectedRoute = ({ children, requireAdmin = false, allowedRoles = null })
   if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
     const role = user?.role || null;
     if (!role || !allowedRoles.includes(role)) {
-      try { localStorage.setItem('voleena_message', JSON.stringify({ type: 'info', text: 'You do not have permission to view that page' })); } catch (e) {}
+      try {
+        localStorage.setItem('voleena_message', JSON.stringify({ type: 'info', text: 'You do not have permission to view that page' }));
+      } catch {
+        // Non-blocking fallback when localStorage is unavailable.
+      }
       return <Navigate to="/" replace />;
     }
   }

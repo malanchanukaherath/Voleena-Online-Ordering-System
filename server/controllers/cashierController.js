@@ -1,4 +1,4 @@
-const { Order, Customer, OrderItem, MenuItem, Delivery, Address, sequelize } = require('../models');
+const { Order, Customer, OrderItem, MenuItem, Delivery, Address, OrderStatusHistory, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 
@@ -153,15 +153,15 @@ exports.confirmOrder = async (req, res) => {
       ConfirmedBy: staffId
     });
 
-    // Log status change
-    await sequelize.query(
-      `INSERT INTO order_status_history (OrderID, OldStatus, NewStatus, ChangedBy, ChangedByType, Notes)
-       VALUES (?, 'PENDING', 'CONFIRMED', ?, 'STAFF', 'Order confirmed by cashier')`,
-      {
-        replacements: [orderId, staffId],
-        type: sequelize.QueryTypes.INSERT
-      }
-    );
+    await OrderStatusHistory.create({
+      OrderID: orderId,
+      OldStatus: 'PENDING',
+      NewStatus: 'CONFIRMED',
+      ChangedBy: staffId,
+      ChangedByType: 'STAFF',
+      Notes: 'Order confirmed by cashier',
+      CreatedAt: new Date()
+    });
 
     return res.json({
       success: true,
@@ -204,15 +204,15 @@ exports.cancelOrder = async (req, res) => {
       CancelledAt: new Date()
     });
 
-    // Log status change
-    await sequelize.query(
-      `INSERT INTO order_status_history (OrderID, OldStatus, NewStatus, ChangedBy, ChangedByType, Notes)
-       VALUES (?, ?, 'CANCELLED', ?, 'STAFF', ?)`,
-      {
-        replacements: [orderId, previousStatus, staffId, reason || 'Cancelled by cashier'],
-        type: sequelize.QueryTypes.INSERT
-      }
-    );
+    await OrderStatusHistory.create({
+      OrderID: orderId,
+      OldStatus: previousStatus,
+      NewStatus: 'CANCELLED',
+      ChangedBy: staffId,
+      ChangedByType: 'STAFF',
+      Notes: reason || 'Cancelled by cashier',
+      CreatedAt: new Date()
+    });
 
     return res.json({
       success: true,
@@ -247,10 +247,10 @@ exports.registerCustomer = async (req, res) => {
 
     if (existingCustomer) {
       return res.status(409).json({ error: 'Customer with this phone/email already exists' });
-      // Generate secure random password if not provided
-      const finalPassword = password || crypto.randomBytes(8).toString('hex') + 'A1!';
-
     }
+
+    // Generate secure random password if not provided
+    const finalPassword = password || `${crypto.randomBytes(8).toString('hex')}A1!`;
 
     // Create customer
     const customer = await Customer.create({

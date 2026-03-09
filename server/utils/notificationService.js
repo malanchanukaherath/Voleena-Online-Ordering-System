@@ -40,9 +40,10 @@ class NotificationService {
      * Send email notification
      */
     async sendEmail({ to, subject, htmlBody, textBody, relatedOrderID = null }) {
+        let notification;
         try {
             // Log notification to database
-            const notification = await Notification.create({
+            notification = await Notification.create({
                 RecipientType: 'CUSTOMER',
                 RecipientID: null, // Will be set if we have customer context
                 NotificationType: 'EMAIL',
@@ -87,7 +88,7 @@ class NotificationService {
 
         } catch (error) {
             console.error('❌ Email sending failed:', error.message);
-            
+
             if (notification) {
                 await notification.update({
                     Status: 'FAILED',
@@ -160,7 +161,7 @@ class NotificationService {
      */
     async sendOrderConfirmation(order, customer) {
         const subject = `Order Confirmation - #${order.OrderNumber}`;
-        
+
         const htmlBody = this.generateOrderConfirmationHTML(order, customer);
         const textBody = this.generateOrderConfirmationText(order, customer);
 
@@ -263,11 +264,11 @@ class NotificationService {
      */
     async sendPaymentNotification(order, customer, payment) {
         const isSuccess = payment.Status === 'PAID';
-        const subject = isSuccess 
-            ? `Payment Successful - Order #${order.OrderNumber}` 
+        const subject = isSuccess
+            ? `Payment Successful - Order #${order.OrderNumber}`
             : `Payment Failed - Order #${order.OrderNumber}`;
 
-        const htmlBody = isSuccess 
+        const htmlBody = isSuccess
             ? this.generatePaymentSuccessHTML(order, customer, payment)
             : this.generatePaymentFailureHTML(order, customer, payment);
 

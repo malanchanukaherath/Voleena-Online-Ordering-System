@@ -118,7 +118,7 @@ function verifyOwnership(resourceType) {
       let resource;
 
       switch (resourceType) {
-        case 'order':
+        case 'order': {
           const { Order } = require('../models');
           resource = await Order.findByPk(resourceId);
           if (!resource || resource.CustomerID !== req.user.id) {
@@ -128,6 +128,7 @@ function verifyOwnership(resourceType) {
             });
           }
           break;
+        }
 
         case 'customer':
           // Customer can only access their own profile

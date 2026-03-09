@@ -7,9 +7,9 @@ import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { categoryService, comboPackService, menuItemService } from '../services/menuService';
 import { toast } from 'react-toastify';
 import { addToCart } from '../utils/cartStorage';
+import { resolveAssetUrl } from '../config/api';
 
 const Menu = () => {
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [loading, setLoading] = useState(true);
@@ -22,10 +22,7 @@ const Menu = () => {
         if (!imagePath) {
             return null;
         }
-        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-            return imagePath;
-        }
-        return `${apiBaseUrl}${imagePath}`;
+        return resolveAssetUrl(imagePath);
     };
 
     // Load menu items from API
@@ -295,7 +292,7 @@ const Menu = () => {
                                     <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
 
                                     {/* Stock Info */}
-                                        {!item.isCombo && item.stockQuantity !== null && (
+                                    {!item.isCombo && item.stockQuantity !== null && (
                                         <p className="text-xs text-gray-500 mb-2">
                                             Stock: {item.stockQuantity > 0 ? `${item.stockQuantity} available` : 'Out of stock'}
                                         </p>

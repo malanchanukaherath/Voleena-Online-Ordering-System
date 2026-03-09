@@ -7,6 +7,7 @@ import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
 import ImageUpload from '../components/ImageUpload';
 import { menuItemService, categoryService } from '../services/menuService';
+import { resolveAssetUrl } from '../config/api';
 
 const MenuManagement = () => {
     const [menuItems, setMenuItems] = useState([]);
@@ -260,7 +261,7 @@ const MenuManagement = () => {
                         <div key={item.MenuItemID} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                             {item.Image_URL ? (
                                 <img
-                                    src={`http://localhost:3001${item.Image_URL}`}
+                                    src={resolveAssetUrl(item.Image_URL)}
                                     alt={item.Name}
                                     className="w-full h-48 object-cover"
                                 />
@@ -361,7 +362,7 @@ const MenuManagement = () => {
 
                     <ImageUpload
                         onImageSelect={setSelectedImage}
-                        currentImage={editingItem?.Image_URL ? `http://localhost:3001${editingItem.Image_URL}` : null}
+                        currentImage={editingItem?.Image_URL ? resolveAssetUrl(editingItem.Image_URL) : null}
                     />
 
                     <div className="flex items-center">

@@ -6,10 +6,10 @@ import { FaUtensils, FaTruck, FaClock, FaStar } from 'react-icons/fa';
 import { menuItemService } from '../services/menuService';
 import { addToCart } from '../utils/cartStorage';
 import { toast } from 'react-toastify';
+import { resolveAssetUrl } from '../config/api';
 
 const Home = () => {
     const { isAuthenticated } = useAuth();
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     const [featuredItems, setFeaturedItems] = useState([]);
     const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
 
@@ -17,10 +17,7 @@ const Home = () => {
         if (!imagePath) {
             return null;
         }
-        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-            return imagePath;
-        }
-        return `${apiBaseUrl}${imagePath}`;
+        return resolveAssetUrl(imagePath);
     };
 
     useEffect(() => {

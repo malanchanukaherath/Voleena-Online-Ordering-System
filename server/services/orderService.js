@@ -1,4 +1,4 @@
-const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, Delivery, DeliveryStaffAvailability, Payment, sequelize } = require('../models');
+const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, Delivery, DeliveryStaffAvailability, Payment, Address, sequelize } = require('../models');
 const { Transaction, Op } = require('sequelize');
 const stockService = require('./stockService');
 const { validateDeliveryDistanceWithFallback } = require('./distanceValidation');

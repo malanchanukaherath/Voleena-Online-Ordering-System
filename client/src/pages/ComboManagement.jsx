@@ -7,9 +7,9 @@ import Textarea from '../components/ui/Textarea';
 import Select from '../components/ui/Select';
 import Toast from '../components/ui/Toast';
 import { comboPackService, menuItemService } from '../services/menuService';
+import { resolveAssetUrl } from '../config/api';
 
 const ComboManagement = () => {
-    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
     const [combos, setCombos] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -40,10 +40,7 @@ const ComboManagement = () => {
         if (!imagePath) {
             return null;
         }
-        if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
-            return imagePath;
-        }
-        return `${apiBaseUrl}${imagePath}`;
+        return resolveAssetUrl(imagePath);
     };
 
     const mapComboFromApi = (combo) => ({
@@ -336,83 +333,83 @@ const ComboManagement = () => {
                 ) : combos.length === 0 ? (
                     <div className="p-6 text-gray-600">No combo packs found.</div>
                 ) : (
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Combo Name</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Discount</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Schedule</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                        {combos.map(combo => (
-                            <tr key={combo.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center">
-                                        {combo.image && (
-                                            <img src={combo.image} alt={combo.name} className="w-12 h-12 rounded object-cover mr-3" />
-                                        )}
-                                        <div>
-                                            <div className="font-medium">{combo.name}</div>
-                                            <div className="text-sm text-gray-500">{combo.description}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">LKR {combo.price}</td>
-                                <td className="px-6 py-4">{combo.discount}%</td>
-                                <td className="px-6 py-4">
-                                    <div className="text-sm">
-                                        <div className="flex items-center text-gray-600">
-                                            <FaCalendar className="mr-1" />
-                                            {combo.startDate}
-                                        </div>
-                                        <div className="text-xs text-gray-500">to {combo.endDate}</div>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex flex-col gap-1">
-                                        {combo.isActive ? (
-                                            <span className="text-green-600 text-sm">● Active</span>
-                                        ) : (
-                                            <span className="text-gray-400 text-sm">● Inactive</span>
-                                        )}
-                                        {isComboActiveNow(combo) && (
-                                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Live Now</span>
-                                        )}
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex gap-2">
-                                        <button
-                                            onClick={() => handleOpenEdit(combo)}
-                                            className="text-blue-600 hover:text-blue-900"
-                                            title="Edit"
-                                        >
-                                            <FaEdit />
-                                        </button>
-                                        <button
-                                            onClick={() => handleToggleStatus(combo.id, !combo.isActive)}
-                                            className="text-yellow-600 hover:text-yellow-900"
-                                            title={combo.isActive ? 'Deactivate' : 'Activate'}
-                                        >
-                                            {combo.isActive ? '⏸' : '▶'}
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(combo.id)}
-                                            className="text-red-600 hover:text-red-900"
-                                            title="Delete"
-                                        >
-                                            <FaTrash />
-                                        </button>
-                                    </div>
-                                </td>
+                    <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                            <tr>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Combo Name</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Discount</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Schedule</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                            {combos.map(combo => (
+                                <tr key={combo.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4">
+                                        <div className="flex items-center">
+                                            {combo.image && (
+                                                <img src={combo.image} alt={combo.name} className="w-12 h-12 rounded object-cover mr-3" />
+                                            )}
+                                            <div>
+                                                <div className="font-medium">{combo.name}</div>
+                                                <div className="text-sm text-gray-500">{combo.description}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">LKR {combo.price}</td>
+                                    <td className="px-6 py-4">{combo.discount}%</td>
+                                    <td className="px-6 py-4">
+                                        <div className="text-sm">
+                                            <div className="flex items-center text-gray-600">
+                                                <FaCalendar className="mr-1" />
+                                                {combo.startDate}
+                                            </div>
+                                            <div className="text-xs text-gray-500">to {combo.endDate}</div>
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex flex-col gap-1">
+                                            {combo.isActive ? (
+                                                <span className="text-green-600 text-sm">● Active</span>
+                                            ) : (
+                                                <span className="text-gray-400 text-sm">● Inactive</span>
+                                            )}
+                                            {isComboActiveNow(combo) && (
+                                                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Live Now</span>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleOpenEdit(combo)}
+                                                className="text-blue-600 hover:text-blue-900"
+                                                title="Edit"
+                                            >
+                                                <FaEdit />
+                                            </button>
+                                            <button
+                                                onClick={() => handleToggleStatus(combo.id, !combo.isActive)}
+                                                className="text-yellow-600 hover:text-yellow-900"
+                                                title={combo.isActive ? 'Deactivate' : 'Activate'}
+                                            >
+                                                {combo.isActive ? '⏸' : '▶'}
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(combo.id)}
+                                                className="text-red-600 hover:text-red-900"
+                                                title="Delete"
+                                            >
+                                                <FaTrash />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 )}
             </div>
 
