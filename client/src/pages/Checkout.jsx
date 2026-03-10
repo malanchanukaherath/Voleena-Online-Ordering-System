@@ -111,15 +111,74 @@ const Checkout = () => {
         }
     };
 
-    const extractCityFromPlace = (place) => {
-        const components = place?.address_components || [];
+    const extractCityFromAddressComponents = (components = []) => {
         const locality = components.find(component =>
             component.types.includes('locality') ||
             component.types.includes('postal_town') ||
-            component.types.includes('administrative_area_level_2')
+            component.types.includes('administrative_area_level_2') ||
+            component.types.includes('administrative_area_level_1')
         );
 
         return locality?.long_name || '';
+    };
+
+    const extractPostalCodeFromAddressComponents = (components = []) => {
+        const postalCode = components.find(component => component.types.includes('postal_code'));
+        return postalCode?.long_name || '';
+    };
+
+    const reverseGeocodeAndAutofill = async (lat, lng) => {
+        if (!(window.google && window.google.maps && window.google.maps.Geocoder)) {
+            return;
+        }
+
+        try {
+            const geocoder = new window.google.maps.Geocoder();
+            const { results } = await new Promise((resolve, reject) => {
+                geocoder.geocode({ location: { lat, lng } }, (res, status) => {
+                    if (status === 'OK' && Array.isArray(res) && res.length > 0) {
+                        resolve({ results: res });
+                        return;
+                    }
+
+                    reject(new Error(status || 'Reverse geocoding failed'));
+                });
+            });
+
+            const primaryResult = results[0];
+            const components = primaryResult?.address_components || [];
+            const streetNumber = components.find(component => component.types.includes('street_number'))?.long_name;
+            const route = components.find(component => component.types.includes('route'))?.long_name;
+            const neighborhood = components.find(component =>
+                component.types.includes('neighborhood') ||
+                component.types.includes('sublocality') ||
+                component.types.includes('sublocality_level_1')
+            )?.long_name;
+
+            const addressLine1 = [streetNumber, route].filter(Boolean).join(' ') || neighborhood || primaryResult?.formatted_address || `Pinned location (${lat.toFixed(6)}, ${lng.toFixed(6)})`;
+            const city = extractCityFromAddressComponents(components);
+            const postalCode = extractPostalCodeFromAddressComponents(components);
+
+            setMapSearchValue(primaryResult?.formatted_address || '');
+            setFormData(prev => ({
+                ...prev,
+                addressLine1,
+                city: city || prev.city,
+                postalCode: postalCode || prev.postalCode
+            }));
+        } catch (error) {
+            console.warn('Reverse geocoding failed for pinned location:', error.message);
+
+            // Keep the flow safe: validation still works with coordinates even if reverse geocoding fails.
+            setFormData(prev => ({
+                ...prev,
+                addressLine1: prev.addressLine1 || `Pinned location (${lat.toFixed(6)}, ${lng.toFixed(6)})`
+            }));
+        }
+    };
+
+    const extractCityFromPlace = (place) => {
+        return extractCityFromAddressComponents(place?.address_components || []);
     };
 
     const handleChange = (e) => {
@@ -152,12 +211,9 @@ const Checkout = () => {
                 setMapCenter({ lat, lng });
                 setGettingLocation(false);
 
-                await validateCoordinatesForDelivery(lat, lng, 'Your current location');
+                await reverseGeocodeAndAutofill(lat, lng);
 
-                setFormData(prev => ({
-                    ...prev,
-                    addressLine1: prev.addressLine1 || `GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-                }));
+                await validateCoordinatesForDelivery(lat, lng, 'Your current location');
             },
             (error) => {
                 setGettingLocation(false);
@@ -191,6 +247,8 @@ const Checkout = () => {
         setMapCenter({ lat, lng });
         setLocationError('');
 
+        await reverseGeocodeAndAutofill(lat, lng);
+
         await validateCoordinatesForDelivery(lat, lng, 'Pinned location');
     };
 
@@ -204,6 +262,8 @@ const Checkout = () => {
 
         setCurrentLocation({ lat, lng });
         setMapCenter({ lat, lng });
+
+        await reverseGeocodeAndAutofill(lat, lng);
 
         await validateCoordinatesForDelivery(lat, lng, 'Pinned location');
     };
@@ -224,6 +284,7 @@ const Checkout = () => {
 
         const placeLabel = place?.formatted_address || place?.name || '';
         const detectedCity = extractCityFromPlace(place);
+        const detectedPostalCode = extractPostalCodeFromAddressComponents(place?.address_components || []);
 
         setMapSearchValue(placeLabel);
         setCurrentLocation({ lat, lng });
@@ -232,8 +293,9 @@ const Checkout = () => {
 
         setFormData(prev => ({
             ...prev,
-            addressLine1: prev.addressLine1 || placeLabel,
-            city: prev.city || detectedCity
+            addressLine1: placeLabel || prev.addressLine1,
+            city: detectedCity || prev.city,
+            postalCode: detectedPostalCode || prev.postalCode
         }));
 
         await validateCoordinatesForDelivery(lat, lng, 'Selected searched location');
