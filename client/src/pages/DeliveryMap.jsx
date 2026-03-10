@@ -7,6 +7,7 @@ const DeliveryMap = () => {
     const [deliveries, setDeliveries] = useState([]);
     const [selectedDelivery, setSelectedDelivery] = useState(null);
     const [selectedRestaurant, setSelectedRestaurant] = useState(false);
+    const [showCurrentLocation, setShowCurrentLocation] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [currentLocation, setCurrentLocation] = useState(null);
@@ -191,6 +192,7 @@ const DeliveryMap = () => {
     const handleMarkerClick = (delivery) => {
         setSelectedDelivery(delivery);
         setSelectedRestaurant(false);
+        setShowCurrentLocation(false);
     };
 
     const getGoogleMapsNavigationUrl = (delivery) => {
@@ -327,6 +329,7 @@ const DeliveryMap = () => {
                                         icon="http://maps.google.com/mapfiles/ms/icons/red-dot.png"
                                         onClick={() => {
                                             setSelectedDelivery(null);
+                                            setShowCurrentLocation(false);
                                             setSelectedRestaurant(!selectedRestaurant);
                                         }}
                                     >
@@ -365,19 +368,22 @@ const DeliveryMap = () => {
                                                 position={currentLocation}
                                                 title="Your Current Location (Delivery Guy)"
                                                 icon="http://maps.google.com/mapfiles/ms/icons/purple-dot.png"
+                                                onClick={() => setShowCurrentLocation(!showCurrentLocation)}
                                             >
-                                                <InfoWindow onCloseClick={() => {}}>
-                                                    <div className="p-2">
-                                                        <p className="font-bold text-sm">📍 Your Current Location</p>
-                                                        <p className="text-xs text-gray-600 mt-1">
-                                                            Lat: {currentLocation.lat.toFixed(4)}°<br/>
-                                                            Lng: {currentLocation.lng.toFixed(4)}°
-                                                        </p>
-                                                        <p className="text-xs text-gray-500 mt-2">
-                                                            Status: {locationPermission === 'granted' ? '✓ Live' : '⚠ Not Live'}
-                                                        </p>
-                                                    </div>
-                                                </InfoWindow>
+                                                {showCurrentLocation && (
+                                                    <InfoWindow onCloseClick={() => setShowCurrentLocation(false)}>
+                                                        <div className="p-2">
+                                                            <p className="font-bold text-sm">📍 Your Current Location</p>
+                                                            <p className="text-xs text-gray-600 mt-1">
+                                                                Lat: {currentLocation.lat.toFixed(4)}°<br/>
+                                                                Lng: {currentLocation.lng.toFixed(4)}°
+                                                            </p>
+                                                            <p className="text-xs text-gray-500 mt-2">
+                                                                Status: {locationPermission === 'granted' ? '✓ Live' : '⚠ Not Live'}
+                                                            </p>
+                                                        </div>
+                                                    </InfoWindow>
+                                                )}
                                             </Marker>
                                         </>
                                     )}

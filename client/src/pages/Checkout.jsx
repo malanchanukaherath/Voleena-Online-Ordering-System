@@ -26,6 +26,8 @@ const Checkout = () => {
 
     const [errors, setErrors] = useState({});
     const [distanceInfo, setDistanceInfo] = useState(null);
+    const [deliveryFee, setDeliveryFee] = useState(100);
+    const [deliveryFeeBreakdown, setDeliveryFeeBreakdown] = useState('');
     const [validatingDistance, setValidatingDistance] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showStripeModal, setShowStripeModal] = useState(false);
@@ -83,6 +85,24 @@ const Checkout = () => {
                             maxDistance: data.maxDistance,
                             method: data.method
                         });
+
+                        // Calculate delivery fee based on GPS distance
+                        if (data.isValid && data.distance) {
+                            try {
+                                const feeResponse = await fetch('/api/v1/delivery/calculate-fee', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ distanceKm: data.distance })
+                                });
+                                const feeData = await feeResponse.json();
+                                if (feeData.success) {
+                                    setDeliveryFee(feeData.data.totalFee);
+                                    setDeliveryFeeBreakdown(feeData.data.breakdown);
+                                }
+                            } catch (err) {
+                                console.error('Failed to calculate delivery fee:', err);
+                            }
+                        }
 
                         if (!data.isValid) {
                             setErrors(prev => ({
@@ -175,6 +195,24 @@ const Checkout = () => {
                     method: data.method
                 });
 
+                // Calculate delivery fee based on distance
+                if (data.isValid && data.distance) {
+                    try {
+                        const feeResponse = await fetch('/api/v1/delivery/calculate-fee', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ distanceKm: data.distance })
+                        });
+                        const feeData = await feeResponse.json();
+                        if (feeData.success) {
+                            setDeliveryFee(feeData.data.totalFee);
+                            setDeliveryFeeBreakdown(feeData.data.breakdown);
+                        }
+                    } catch (err) {
+                        console.error('Failed to calculate delivery fee:', err);
+                    }
+                }
+
                 if (!data.isValid) {
                     setErrors(prev => ({
                         ...prev,
@@ -193,11 +231,13 @@ const Checkout = () => {
 
             // Show specific error message from server if available
             const errorMessage = error.response?.data?.message || 'Unable to validate delivery distance';
+            const suggestion = error.response?.data?.suggestion;
 
             setDistanceInfo(null);
             setErrors(prev => ({
                 ...prev,
-                distance: errorMessage
+                distance: errorMessage,
+                distanceSuggestion: suggestion === 'USE_GPS_LOCATION' ? 'For accurate delivery validation, please use the "Use My Location" button above.' : null
             }));
         } finally {
             setValidatingDistance(false);
@@ -357,13 +397,12 @@ const Checkout = () => {
         }
     };
 
-    // Cart summary
+    // Cart summary (no tax - business decision to show only delivery fee)
     const cartSummary = {
         subtotal: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        deliveryFee: formData.orderType === 'DELIVERY' ? 100.00 : 0,
-        tax: 100.00,
+        deliveryFee: formData.orderType === 'DELIVERY' ? deliveryFee : 0,
     };
-    cartSummary.total = cartSummary.subtotal + cartSummary.deliveryFee + cartSummary.tax;
+    cartSummary.total = cartSummary.subtotal + cartSummary.deliveryFee;
 
     return (
         <div className="max-w-7xl mx-auto">
@@ -386,7 +425,7 @@ const Checkout = () => {
                                         }`}
                                 >
                                     <div className="font-semibold">Delivery</div>
-                                    <div className="text-sm text-gray-600">LKR 100.00</div>
+                                    <div className="text-sm text-gray-600">Distance-based fee</div>
                                 </button>
                                 <button
                                     type="button"
@@ -440,26 +479,59 @@ const Checkout = () => {
                         {/* Delivery Address (with Distance Validation) */}
                         {formData.orderType === 'DELIVERY' && (
                             <div className="bg-white rounded-lg shadow p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h2 className="text-xl font-semibold">Delivery Address</h2>
-                                    <button
-                                        type="button"
-                                        onClick={handleUseCurrentLocation}
-                                        disabled={gettingLocation}
-                                        className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        {gettingLocation ? (
-                                            <>
-                                                <FaSpinner className="animate-spin" />
-                                                Getting Location...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <FaMapMarkerAlt />
-                                                Use My Location
-                                            </>
-                                        )}
-                                    </button>
+                                <h2 className="text-xl font-semibold mb-4">Delivery Address</h2>
+                                
+                                {/* Two Options Box */}
+                                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <p className="text-sm font-medium text-gray-700 mb-3">Choose how to provide your delivery address:</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {/* Option 1: GPS Location */}
+                                        <div className="flex items-start space-x-3 p-3 bg-white rounded border border-gray-200">
+                                            <div className="flex-shrink-0 mt-0.5">
+                                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                    <FaMapMarkerAlt className="text-blue-600" />
+                                                </div>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-900">GPS Location</p>
+                                                <p className="text-xs text-gray-600 mt-1">Use if you're AT the delivery address now</p>
+                                                <button
+                                                    type="button"
+                                                    onClick={handleUseCurrentLocation}
+                                                    disabled={gettingLocation}
+                                                    className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+                                                >
+                                                    {gettingLocation ? (
+                                                        <>
+                                                            <FaSpinner className="animate-spin" />
+                                                            Getting...
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <FaMapMarkerAlt />
+                                                            Use Current Location
+                                                        </>
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Option 2: Manual Entry */}
+                                        <div className="flex items-start space-x-3 p-3 bg-white rounded border border-gray-200">
+                                            <div className="flex-shrink-0 mt-0.5">
+                                                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-900">Manual Entry</p>
+                                                <p className="text-xs text-gray-600 mt-1">Enter any address (home, office, etc.)</p>
+                                                <p className="text-xs text-blue-600 mt-2">👇 Fill the form below</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {locationError && (
@@ -469,8 +541,15 @@ const Checkout = () => {
                                 )}
 
                                 {currentLocation && (
-                                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-700">
-                                        ✓ Using your current GPS location ({currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)})
+                                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-700 flex items-start">
+                                        <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                        </svg>
+                                        <div>
+                                            <p className="font-medium">GPS coordinates captured successfully!</p>
+                                            <p className="text-xs mt-1 opacity-90">Coordinates: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</p>
+                                            <p className="text-xs mt-1">You can still fill in the address fields below for delivery details.</p>
+                                        </div>
                                     </div>
                                 )}
 
@@ -536,8 +615,32 @@ const Checkout = () => {
                                     )}
 
                                     {errors.distance && (
-                                        <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
-                                            {errors.distance}
+                                        <div className="p-4 bg-red-50 border-l-4 border-red-400 rounded">
+                                            <div className="flex items-start">
+                                                <div className="flex-shrink-0">
+                                                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                <div className="ml-3 flex-1">
+                                                    <p className="text-sm text-red-700 font-medium">{errors.distance}</p>
+                                                    {errors.distanceSuggestion && (
+                                                        <div className="mt-3">
+                                                            <p className="text-sm text-red-600 mb-2">
+                                                                💡 {errors.distanceSuggestion}
+                                                            </p>
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleUseCurrentLocation}
+                                                                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                            >
+                                                                <FaMapMarkerAlt className="mr-1.5" />
+                                                                Use My GPS Location
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -588,15 +691,18 @@ const Checkout = () => {
                                     <span>LKR {cartSummary.subtotal.toFixed(2)}</span>
                                 </div>
                                 {formData.orderType === 'DELIVERY' && (
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Delivery Fee</span>
-                                        <span>LKR {cartSummary.deliveryFee.toFixed(2)}</span>
+                                    <div>
+                                        <div className="flex justify-between">
+                                            <span className="text-gray-600">Delivery Fee</span>
+                                            <span>LKR {cartSummary.deliveryFee.toFixed(2)}</span>
+                                        </div>
+                                        {distanceInfo && deliveryFeeBreakdown && (
+                                            <div className="text-xs text-gray-500 mt-1">
+                                                {distanceInfo.distance.toFixed(2)}km - {deliveryFeeBreakdown}
+                                            </div>
+                                        )}
                                     </div>
                                 )}
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Tax (8%)</span>
-                                    <span>LKR {cartSummary.tax.toFixed(2)}</span>
-                                </div>
                                 <div className="border-t pt-3">
                                     <div className="flex justify-between text-lg font-bold">
                                         <span>Total</span>

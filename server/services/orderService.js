@@ -2,6 +2,7 @@ const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, Del
 const { Transaction, Op } = require('sequelize');
 const stockService = require('./stockService');
 const { validateDeliveryDistanceWithFallback } = require('./distanceValidation');
+const { calculateDeliveryFee } = require('../utils/deliveryFeeCalculator');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('./emailService');
 const { sendOrderConfirmationSMS, sendOrderStatusUpdateSMS } = require('./smsService');
 
@@ -25,6 +26,7 @@ class OrderService {
             const promotionId = orderData.promotionId || orderData.promotion_id;
 
             // Validate delivery distance if delivery order (FR09)
+            let deliveryDistance = 0;
             if (orderType === 'DELIVERY') {
                 if (!addressId) {
                     throw new Error('Address is required for delivery orders');
@@ -47,6 +49,9 @@ class OrderService {
                         `Delivery address is outside our delivery range. Distance: ${distanceValidation.distance.toFixed(2)}km, Maximum: ${distanceValidation.maxDistance}km`
                     );
                 }
+
+                // Store the validated distance for fee calculation
+                deliveryDistance = distanceValidation.distance;
             }
 
             // Calculate order totals
@@ -112,10 +117,13 @@ class OrderService {
                 }
             }
 
-            // Calculate delivery fee
-            const deliveryFee = orderType === 'DELIVERY'
-                ? parseFloat(process.env.DELIVERY_FEE) || 150
-                : 0;
+            // Calculate delivery fee based on distance (dynamic pricing)
+            let deliveryFee = 0;
+            if (orderType === 'DELIVERY' && deliveryDistance > 0) {
+                const feeCalculation = calculateDeliveryFee(deliveryDistance);
+                deliveryFee = feeCalculation.totalFee;
+                console.log(`[Delivery Fee] Distance: ${deliveryDistance.toFixed(2)}km, Fee: LKR ${deliveryFee}, Breakdown: ${feeCalculation.breakdown}`);
+            }
 
             // Generate order number
             const orderNumber = await this.generateOrderNumber();

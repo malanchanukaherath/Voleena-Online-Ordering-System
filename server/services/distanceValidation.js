@@ -8,6 +8,7 @@ const MAX_DISTANCE_KM = parseFloat(process.env.MAX_DELIVERY_DISTANCE_KM) || 15;
 /**
  * Common Sri Lankan city coordinates (fallback for geocoding without API key)
  * Used for development when Google Maps API key is not configured
+ * Also used as last-resort fallback when Google can't find specific addresses
  */
 const SRI_LANKAN_CITIES = {
     'colombo': { lat: 6.9271, lng: 80.7744 },
@@ -24,7 +25,12 @@ const SRI_LANKAN_CITIES = {
     'panadura': { lat: 6.7269, lng: 80.6017 },
     'nugegoda': { lat: 6.8872, lng: 80.7788 },
     'dehiwala': { lat: 6.8320, lng: 80.7735 },
-    'mathara': { lat: 5.7489, lng: 80.5392 }
+    'mathara': { lat: 5.7489, lng: 80.5392 },
+    'kalagedihena': { lat: 7.1167, lng: 80.0583 },
+    'gampaha': { lat: 7.0917, lng: 80.0167 },
+    'kadawatha': { lat: 7.0100, lng: 79.9500 },
+    'kiribathgoda': { lat: 6.9833, lng: 79.9333 },
+    'ragama': { lat: 7.0333, lng: 80.0000 }
 };
 
 /**
@@ -103,11 +109,16 @@ async function validateDeliveryDistance(customerLat, customerLng) {
 
 /**
  * Geocode an address to get latitude and longitude
- * Falls back to approximate city coordinates if API key not configured
+ * Falls back to approximate city coordinates if API key not configured or address not found
+ * 
+ * Implements progressive fallback strategy:
+ * 1. Try full address with Google Maps API
+ * 2. If that fails, try just city name
+ * 3. If that fails, use built-in city coordinates
  * 
  * @param {string} address - Full address string
  * @param {string} city - City name for fallback
- * @returns {Promise<{lat: number, lng: number, formattedAddress: string}>}
+ * @returns {Promise<{lat: number, lng: number, formattedAddress: string, method: string}>}
  */
 async function geocodeAddress(address, city) {
     // If Google Maps API key is not configured, try fallback geocoding
@@ -127,9 +138,10 @@ async function geocodeAddress(address, city) {
             }
         }
 
-        throw new Error('Unable to locate address without Google Maps API. Please configure GOOGLE_MAPS_API_KEY in .env or enable location input');
+        throw new Error('Unable to locate address without Google Maps API. Please configure GOOGLE_MAPS_API_KEY in .env or use GPS location button');
     }
 
+    // Strategy 1: Try full address first
     try {
         const response = await axios.get(
             'https://maps.googleapis.com/maps/api/geocode/json',
@@ -143,23 +155,66 @@ async function geocodeAddress(address, city) {
             }
         );
 
-        if (response.data.status !== 'OK') {
-            throw new Error(`Geocoding failed: ${response.data.status}`);
+        if (response.data.status === 'OK' && response.data.results.length > 0) {
+            const result = response.data.results[0];
+            return {
+                lat: result.geometry.location.lat,
+                lng: result.geometry.location.lng,
+                formattedAddress: result.formatted_address,
+                method: 'google_full_address'
+            };
         }
 
-        const result = response.data.results[0];
-
-        return {
-            lat: result.geometry.location.lat,
-            lng: result.geometry.location.lng,
-            formattedAddress: result.formatted_address
-        };
+        console.log(`[Geocoding] Full address not found (${response.data.status}), trying city-only fallback`);
     } catch (error) {
-        if (error.response) {
-            throw new Error(`Geocoding error: ${error.response.data.error_message || error.response.statusText}`);
-        }
-        throw error;
+        console.warn('[Geocoding] Full address lookup failed:', error.message);
     }
+
+    // Strategy 2: If full address fails, try just the city name + Sri Lanka
+    if (city) {
+        try {
+            const cityResponse = await axios.get(
+                'https://maps.googleapis.com/maps/api/geocode/json',
+                {
+                    params: {
+                        address: `${city}, Sri Lanka`,
+                        key: GOOGLE_MAPS_API_KEY,
+                        region: 'lk'
+                    },
+                    timeout: 5000
+                }
+            );
+
+            if (cityResponse.data.status === 'OK' && cityResponse.data.results.length > 0) {
+                const result = cityResponse.data.results[0];
+                console.log(`[Geocoding] Using city-level coordinates for ${city}`);
+                return {
+                    lat: result.geometry.location.lat,
+                    lng: result.geometry.location.lng,
+                    formattedAddress: `~${city} (approximate)`,
+                    method: 'google_city_only',
+                    isApproximate: true
+                };
+            }
+        } catch (error) {
+            console.warn('[Geocoding] City lookup failed:', error.message);
+        }
+
+        // Strategy 3: Use built-in city coordinates as last resort
+        const cityCoords = getApproximateCityCoordinates(city);
+        if (cityCoords) {
+            console.log(`[Geocoding] Using built-in coordinates for ${city}`);
+            return {
+                lat: cityCoords.lat,
+                lng: cityCoords.lng,
+                formattedAddress: `~${city} (approximate)`,
+                method: 'fallback_city',
+                isApproximate: true
+            };
+        }
+    }
+
+    throw new Error('Unable to locate this address. Please use the "Use My Location" button for accurate GPS coordinates, or verify your city name.');
 }
 
 /**

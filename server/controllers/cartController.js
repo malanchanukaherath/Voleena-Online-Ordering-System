@@ -201,11 +201,11 @@ exports.getCartSummary = async (req, res) => {
             }
         }
 
-        // Calculate fees and tax
-        const deliveryFee = orderType === 'DELIVERY' ? 150 : 0;
-        const taxRate = 0.08; // 8% tax
-        const tax = subtotal * taxRate;
-        const total = subtotal + deliveryFee + tax;
+        // Calculate fees (no tax as per business decision)
+        // Note: Delivery fee shown here is base fee only. Actual fee calculated at checkout based on distance.
+        const BASE_DELIVERY_FEE = parseFloat(process.env.BASE_DELIVERY_FEE) || 100;
+        const deliveryFee = orderType === 'DELIVERY' ? BASE_DELIVERY_FEE : 0;
+        const total = subtotal + deliveryFee;
 
         res.json({
             success: true,
@@ -213,7 +213,7 @@ exports.getCartSummary = async (req, res) => {
                 itemDetails,
                 subtotal: parseFloat(subtotal.toFixed(2)),
                 deliveryFee: parseFloat(deliveryFee.toFixed(2)),
-                tax: parseFloat(tax.toFixed(2)),
+                deliveryFeeNote: orderType === 'DELIVERY' ? 'Base fee only. Actual fee calculated based on delivery distance.' : null,
                 total: parseFloat(total.toFixed(2)),
                 orderType
             }

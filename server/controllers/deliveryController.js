@@ -1,6 +1,7 @@
 const { Delivery, Order, OrderItem, MenuItem, Address, Customer, Staff, DeliveryStaffAvailability, OrderStatusHistory, sequelize, literal } = require('../models');
 const { validateDeliveryDistanceWithFallback, geocodeAddress } = require('../utils/distanceValidator');
 const { validateAddressLine, validateCoordinates } = require('../utils/validationUtils');
+const { calculateDeliveryFee, getDeliveryFeeConfig, estimateDeliveryFee } = require('../utils/deliveryFeeCalculator');
 
 const isAdminRequest = (req) => req.user?.type === 'Staff' && req.user?.role === 'Admin';
 
@@ -473,13 +474,19 @@ exports.validateDeliveryDistance = async (req, res) => {
         lng = geocoded.lng;
 
         // Log geocoding method used (for debugging)
-        console.log(`[Distance Validation] Geocoded via: ${geocoded.method || 'unknown'} -> (${lat}, ${lng})`);
+        console.log(`[Distance Validation] Geocoded via: ${geocoded.method || 'google_full_address'} -> (${lat}, ${lng})`);
+        
+        // If using approximate location, inform the client
+        if (geocoded.isApproximate) {
+          console.log(`[Distance Validation] ⚠️ Using approximate coordinates for: ${address.city}`);
+        }
       } catch (geocodeError) {
         console.error('[Distance Validation] Geocoding error:', geocodeError.message);
         return res.status(400).json({
           success: false,
-          message: 'Unable to locate this address. Please check the address details.',
-          error: geocodeError.message
+          message: 'Unable to locate this address. For accurate delivery, please click "Use My Location" button to provide GPS coordinates.',
+          error: geocodeError.message,
+          suggestion: 'USE_GPS_LOCATION'
         });
       }
     }
@@ -693,6 +700,80 @@ exports.getDeliveryLocation = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch delivery location',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Get delivery fee configuration
+ * Public endpoint - returns the current delivery fee structure
+ * 
+ * GET /api/v1/delivery/fee-config
+ */
+exports.getDeliveryFeeConfig = async (req, res) => {
+  try {
+    const config = getDeliveryFeeConfig();
+
+    res.json({
+      success: true,
+      data: {
+        baseFee: config.baseFee,
+        freeDeliveryDistance: config.freeDeliveryDistance,
+        feePerKm: config.feePerKm,
+        maxFee: config.maxFee,
+        description: `Base fee of LKR ${config.baseFee} applies. Free delivery within ${config.freeDeliveryDistance}km. Additional LKR ${config.feePerKm} per km beyond that, capped at LKR ${config.maxFee}.`
+      }
+    });
+
+  } catch (error) {
+    console.error('Get delivery fee config error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch delivery fee configuration',
+      error: error.message
+    });
+  }
+};
+
+/**
+ * Calculate delivery fee for a given distance
+ * Public endpoint - calculates the exact delivery fee with breakdown
+ * 
+ * POST /api/v1/delivery/calculate-fee
+ * Body: { distanceKm: number }
+ */
+exports.calculateDeliveryFee = async (req, res) => {
+  try {
+    const { distanceKm } = req.body;
+
+    if (typeof distanceKm !== 'number' || distanceKm < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid distanceKm (number >= 0) is required'
+      });
+    }
+
+    const feeCalculation = calculateDeliveryFee(distanceKm);
+
+    res.json({
+      success: true,
+      data: {
+        distanceKm: distanceKm,
+        baseFee: feeCalculation.baseFee,
+        distanceFee: feeCalculation.distanceFee,
+        totalFee: feeCalculation.totalFee,
+        breakdown: feeCalculation.breakdown,
+        isFreeRange: feeCalculation.isFreeRange,
+        isCapped: feeCalculation.isCapped || false
+      }
+    });
+
+  } catch (error) {
+    console.error('Calculate delivery fee error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to calculate delivery fee',
       error: error.message
     });
   }

@@ -13,6 +13,16 @@ const { requireAuth, requireDelivery } = require('../middleware/auth');
 router.post('/validate-distance', deliveryController.validateDeliveryDistance);
 
 /**
+ * Get delivery fee configuration
+ */
+router.get('/fee-config', deliveryController.getDeliveryFeeConfig);
+
+/**
+ * Calculate delivery fee for a specific distance
+ */
+router.post('/calculate-fee', deliveryController.calculateDeliveryFee);
+
+/**
  * Protected routes (require authentication and delivery role or admin)
  */
 
