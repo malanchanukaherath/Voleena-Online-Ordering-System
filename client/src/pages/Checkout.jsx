@@ -191,6 +191,38 @@ const Checkout = () => {
         }
     };
 
+    // Prevent accidental order placement when pressing Enter inside form fields.
+    const handleFormKeyDown = (e) => {
+        if (e.key !== 'Enter') {
+            return;
+        }
+
+        const target = e.target;
+        const tagName = target?.tagName?.toLowerCase();
+        const inputType = target?.getAttribute?.('type')?.toLowerCase() || '';
+        const isTextarea = tagName === 'textarea';
+        const isButton = tagName === 'button';
+        const isActionInput = tagName === 'input' && ['submit', 'button'].includes(inputType);
+
+        if (isTextarea || isButton || isActionInput) {
+            return;
+        }
+
+        e.preventDefault();
+    };
+
+    const handleMapSearchKeyDown = async (e) => {
+        if (e.key !== 'Enter') {
+            return;
+        }
+
+        // Keep Enter from triggering checkout submit when searching locations.
+        e.preventDefault();
+        e.stopPropagation();
+
+        await handlePlaceChanged();
+    };
+
     const handleDeliveryAddressMethodChange = (method) => {
         setDeliveryAddressMethod(method);
         setErrors(prev => {
@@ -290,17 +322,64 @@ const Checkout = () => {
         await validateCoordinatesForDelivery(lat, lng, 'Pinned location');
     };
 
+    const geocodeFromSearchText = async (searchText) => {
+        if (!(window.google && window.google.maps && window.google.maps.Geocoder)) {
+            throw new Error('Google Maps geocoder is not available');
+        }
+
+        const query = (searchText || '').trim();
+        if (!query) {
+            throw new Error('Please type a location to search');
+        }
+
+        const geocoder = new window.google.maps.Geocoder();
+        const { results } = await new Promise((resolve, reject) => {
+            geocoder.geocode(
+                {
+                    address: query,
+                    componentRestrictions: { country: 'LK' }
+                },
+                (res, status) => {
+                    if (status === 'OK' && Array.isArray(res) && res.length > 0) {
+                        resolve({ results: res });
+                        return;
+                    }
+
+                    reject(new Error(status || 'Geocoding failed'));
+                }
+            );
+        });
+
+        return results[0] || null;
+    };
+
     const handlePlaceChanged = async () => {
-        if (!searchAutocomplete) {
+        if (!searchAutocomplete && !mapSearchValue.trim()) {
+            setLocationError('Type and search for a delivery area first.');
             return;
         }
 
-        const place = searchAutocomplete.getPlace();
-        const lat = place?.geometry?.location?.lat?.();
-        const lng = place?.geometry?.location?.lng?.();
+        let place = searchAutocomplete?.getPlace?.();
+        let lat = place?.geometry?.location?.lat?.();
+        let lng = place?.geometry?.location?.lng?.();
+
+        // Fallback: if Enter is pressed without selecting a suggestion,
+        // geocode the typed text so users can still search by place name.
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            try {
+                const geocodedPlace = await geocodeFromSearchText(mapSearchValue);
+                if (geocodedPlace) {
+                    place = geocodedPlace;
+                    lat = geocodedPlace.geometry?.location?.lat?.();
+                    lng = geocodedPlace.geometry?.location?.lng?.();
+                }
+            } catch (geocodeError) {
+                console.error('Search geocoding error:', geocodeError);
+            }
+        }
 
         if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
-            setLocationError('No precise coordinates were found for this search. Try selecting a suggested area.');
+            setLocationError('No precise coordinates were found for this search. Try selecting a suggestion or check API key restrictions.');
             return;
         }
 
@@ -608,7 +687,7 @@ const Checkout = () => {
         <div className="max-w-7xl mx-auto">
             <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} onKeyDown={handleFormKeyDown}>
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     {/* Checkout Form */}
                     <div className="lg:col-span-2 space-y-6">
@@ -774,6 +853,7 @@ const Checkout = () => {
                                                                 type="text"
                                                                 value={mapSearchValue}
                                                                 onChange={(e) => setMapSearchValue(e.target.value)}
+                                                                onKeyDown={handleMapSearchKeyDown}
                                                                 placeholder="Search area, street, or landmark (e.g., Kalagedihena, Gampaha)"
                                                                 className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
                                                             />

@@ -198,6 +198,7 @@ async function sendOrderStatusUpdateEmail(order, customer, newStatus) {
         </div>
       </div>
     </body>
+
     </html>
   `;
 
@@ -341,11 +342,121 @@ async function sendWelcomeEmail(customer) {
   return sendEmail(customer.Email, subject, html);
 }
 
+/**
+ * Send critical system alert to admin
+ * Used for automated job failures, stock issues, payment problems
+ * CRITICAL: Ensures admins are notified of system failures that require manual intervention
+ */
+async function sendAdminCriticalAlert(alertType, details, errorMessage = null) {
+  // Get admin email from environment
+  const adminEmails = (process.env.ADMIN_EMAIL || process.env.SMTP_USER || '').split(',').filter(e => e.trim());
+  
+  if (adminEmails.length === 0) {
+    console.error('❌ Cannot send admin alert: No admin email configured (ADMIN_EMAIL env variable)');
+    return {
+      success: false,
+      skipped: true,
+      reason: 'No admin email configured'
+    };
+  }
+
+  const alertTitles = {
+    DAILY_STOCK_FAILURE: '🚨 CRITICAL: Daily Stock Creation Failed',
+    PAYMENT_FAILURE: '⚠️ Payment Processing Error',
+    STOCK_SYNC_FAILURE: '⚠️ Stock Synchronization Failed',
+    REFUND_FAILURE: '⚠️ Refund Processing Failed',
+    DATABASE_ERROR: '🚨 CRITICAL: Database Error'
+  };
+
+  const subject = alertTitles[alertType] || '🚨 System Alert';
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: 'Courier New', monospace; line-height: 1.6; color: #333; }
+        .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+        .header { background: #d32f2f; color: white; padding: 20px; text-align: center; }
+        .content { padding: 20px; background: #fff3e0; border: 2px solid #ff9800; }
+        .alert-box { background: white; padding: 15px; margin: 15px 0; border-left: 5px solid #d32f2f; }
+        .details { background: #f5f5f5; padding: 15px; margin: 15px 0; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-word; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+        .action-required { background: #ffeb3b; padding: 10px; margin: 15px 0; font-weight: bold; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>${subject}</h1>
+        </div>
+        <div class="content">
+          <div class="action-required">
+            ⚠️ IMMEDIATE ACTION REQUIRED ⚠️
+          </div>
+          
+          <div class="alert-box">
+            <h3>Alert Type: ${alertType}</h3>
+            <p><strong>Timestamp:</strong> ${new Date().toISOString()}</p>
+            <p><strong>Environment:</strong> ${process.env.NODE_ENV || 'development'}</p>
+          </div>
+          
+          <h3>Details:</h3>
+          <div class="details">${details}</div>
+          
+          ${errorMessage ? `
+          <h3>Error Message:</h3>
+          <div class="details" style="border-left: 5px solid #d32f2f; color: #d32f2f;">${errorMessage}</div>
+          ` : ''}
+          
+          <div class="alert-box">
+            <h3>Recommended Actions:</h3>
+            <ul>
+              <li>Check system logs for detailed error traces</li>
+              <li>Verify database connectivity and permissions</li>
+              <li>Check all environment variables are set correctly</li>
+              <li>Restart affected services if necessary</li>
+              <li>Monitor system for repeated failures</li>
+            </ul>
+          </div>
+          
+          <p><strong>This is an automated alert from Voleena Online Ordering System.</strong></p>
+        </div>
+        <div class="footer">
+          <p>Voleena Foods Operations System</p>
+          <p>Server: ${process.env.SERVER_HOST || 'localhost'} | Environment: ${process.env.NODE_ENV || 'development'}</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  // Send to all admin emails
+  const results = [];
+  for (const adminEmail of adminEmails) {
+    try {
+      const result = await sendEmail(adminEmail.trim(), subject, html);
+      results.push({ email: adminEmail, ...result });
+    } catch (error) {
+      console.error(`Failed to send alert to ${adminEmail}:`, error.message);
+      results.push({ email: adminEmail, success: false, error: error.message });
+    }
+  }
+
+  const successCount = results.filter(r => r.success).length;
+  console.log(`📧 Admin alert sent: ${successCount}/${adminEmails.length} successful`);
+
+  return {
+    success: successCount > 0,
+    results
+  };
+}
+
 module.exports = {
   sendEmail,
   sendOrderConfirmationEmail,
   sendOrderStatusUpdateEmail,
   sendOTPEmail,
   sendPasswordResetEmail,
-  sendWelcomeEmail
+  sendWelcomeEmail,
+  sendAdminCriticalAlert
 };

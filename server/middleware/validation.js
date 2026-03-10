@@ -177,6 +177,23 @@ const validateStockUpdate = [
 ];
 
 /**
+ * Validation rules for order cancellation
+ */
+const validateOrderCancellation = [
+    param('id')
+        .notEmpty().withMessage('Order ID is required')
+        .isInt({ min: 1 }).withMessage('Invalid order ID'),
+
+    body('reason')
+        .trim()
+        .notEmpty().withMessage('Cancellation reason is required')
+        .isLength({ min: 5, max: 500 }).withMessage('Reason must be between 5 and 500 characters')
+        .matches(/^[a-zA-Z0-9\s.,!?'-]+$/).withMessage('Reason contains invalid characters'),
+
+    handleValidationErrors
+];
+
+/**
  * Validation rules for combo pack creation
  */
 const validateComboPackCreation = [
@@ -281,6 +298,140 @@ const validateFeedbackSubmission = [
     body('comment')
         .optional()
         .trim()
+        .isLength({ max: 1000 }).withMessage('Comment must not exceed 1000 characters')
+        .matches(/^[a-zA-Z0-9\s.,!?'"-]*$/).withMessage('Comment contains invalid characters'),
+
+    handleValidationErrors
+];
+
+/**
+ * Validation rules for payment processing
+ * CRITICAL: Prevents payment manipulation and fraud
+ */
+const validatePaymentProcessing = [
+    body('order_id')
+        .notEmpty().withMessage('Order ID is required')
+        .isInt({ min: 1 }).withMessage('Invalid order ID'),
+
+    body('payment_method')
+        .notEmpty().withMessage('Payment method is required')
+        .isIn(['CASH', 'CARD', 'ONLINE']).withMessage('Invalid payment method'),
+
+    body('amount')
+        .notEmpty().withMessage('Amount is required')
+        .isFloat({ min: 0.01 }).withMessage('Amount must be greater than 0')
+        .custom((value) => {
+            // Ensure amount has max 2 decimal places
+            if (!/^\d+(\.\d{1,2})?$/.test(value.toString())) {
+                throw new Error('Amount must have at most 2 decimal places');
+            }
+            return true;
+        }),
+
+    body('payment_reference')
+        .optional()
+        .trim()
+        .isLength({ max: 255 }).withMessage('Payment reference too long')
+        .matches(/^[a-zA-Z0-9_-]+$/).withMessage('Payment reference contains invalid characters'),
+
+    handleValidationErrors
+];
+
+/**
+ * Validation rules for stock adjustment
+ * CRITICAL: Prevents unauthorized stock manipulation
+ */
+const validateStockAdjustment = [
+    body('menu_item_id')
+        .notEmpty().withMessage('Menu item ID is required')
+        .isInt({ min: 1 }).withMessage('Invalid menu item ID'),
+
+    body('adjustment_quantity')
+        .notEmpty().withMessage('Adjustment quantity is required')
+        .isInt({ min: -1000, max: 1000 }).withMessage('Adjustment must be between -1000 and 1000'),
+
+    body('reason')
+        .trim()
+        .notEmpty().withMessage('Reason is required for stock adjustment')
+        .isLength({ min: 5, max: 500 }).withMessage('Reason must be between 5 and 500 characters')
+        .matches(/^[a-zA-Z0-9\s.,!?'-]+$/).withMessage('Reason contains invalid characters'),
+
+    body('stock_date')
+        .optional()
+        .isISO8601().withMessage('Invalid date format')
+        .custom((value) => {
+            const date = new Date(value);
+            const today = new Date();
+            const maxFuture = new Date();
+            maxFuture.setDate(today.getDate() + 7);
+            
+            if (date > maxFuture) {
+                throw new Error('Stock date cannot be more than 7 days in the future');
+            }
+            return true;
+        }),
+
+    handleValidationErrors
+];
+
+/**
+ * Validation rules for order status update
+ * CRITICAL: Ensures valid status transitions
+ */
+const validateOrderStatusUpdate = [
+    param('id')
+        .notEmpty().withMessage('Order ID is required')
+        .isInt({ min: 1 }).withMessage('Invalid order ID'),
+
+    body('status')
+        .notEmpty().withMessage('Status is required')
+        .isIn(['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'])
+        .withMessage('Invalid order status'),
+
+    body('notes')
+        .optional()
+        .trim()
+        .isLength({ max: 500 }).withMessage('Notes must not exceed 500 characters')
+        .matches(/^[a-zA-Z0-9\s.,!?'-]*$/).withMessage('Notes contain invalid characters'),
+
+    handleValidationErrors
+];
+
+/**
+ * Validation rules for delivery assignment
+ * CRITICAL: Ensures delivery staff availability and valid assignments
+ */
+const validateDeliveryAssignment = [
+    body('order_id')
+        .notEmpty().withMessage('Order ID is required')
+        .isInt({ min: 1 }).withMessage('Invalid order ID'),
+
+    body('staff_id')
+        .notEmpty().withMessage('Delivery staff ID is required')
+        .isInt({ min: 1 }).withMessage('Invalid staff ID'),
+
+    body('estimated_delivery_time')
+        .optional()
+        .isISO8601().withMessage('Invalid datetime format')
+        .custom((value) => {
+            const deliveryTime = new Date(value);
+            const now = new Date();
+            const maxFuture = new Date();
+            maxFuture.setHours(now.getHours() + 4); // Max 4 hours in future
+            
+            if (deliveryTime < now) {
+                throw new Error('Estimated delivery time cannot be in the past');
+            }
+            if (deliveryTime > maxFuture) {
+                throw new Error('Estimated delivery time cannot be more than 4 hours in the future');
+            }
+            return true;
+        }),
+
+    handleValidationErrors
+];
+
+/**
         .isLength({ max: 1000 }).withMessage('Comment must not exceed 1000 characters'),
 
     body('order_id')
@@ -323,12 +474,17 @@ module.exports = {
     validateLogin,
     validateStaffCreation,
     validateOrderCreation,
+    validateOrderCancellation,
+    validateOrderStatusUpdate,
     validateMenuItemCreation,
     validateStockUpdate,
+    validateStockAdjustment,
     validateComboPackCreation,
     validateAddressCreation,
     validateOTPVerification,
     validatePasswordReset,
     validateFeedbackSubmission,
+    validatePaymentProcessing,
+    validateDeliveryAssignment,
     sanitizeInput
 };

@@ -232,7 +232,12 @@ exports.updateOrderStatus = async (req, res) => {
 
 // Cancel order - ATOMIC transaction with stock restoration
 // CRITICAL: Must restore stock before changing order status
+// Uses SERIALIZABLE transaction to ensure atomicity
+// All validations done in middleware (validateOrderCancellation)
 exports.cancelOrder = async (req, res) => {
+    // Audit timestamp for logging
+    const startTime = Date.now();
+    
     try {
         const { id } = req.params;
         const { reason } = req.body;
@@ -242,7 +247,14 @@ exports.cancelOrder = async (req, res) => {
                 ? 'CASHIER'
                 : 'ADMIN';
 
+        // Log cancellation attempt for auditing
+        console.log(`[AUDIT] Order cancellation attempt - OrderID: ${id}, User: ${req.user.id}, Type: ${cancelledByType}, Reason: ${reason.substring(0, 50)}...`);
+
         const order = await orderService.cancelOrder(id, reason, req.user.id, cancelledByType);
+
+        // Log successful cancellation
+        const duration = Date.now() - startTime;
+        console.log(`[AUDIT] Order cancelled successfully - OrderID: ${id}, Duration: ${duration}ms, StockRestored: ${order.items?.length || 0} items`);
 
         res.json({
             success: true,
@@ -251,7 +263,10 @@ exports.cancelOrder = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Cancel order error:', error);
+        // Log cancellation failure for debugging
+        const duration = Date.now() - startTime;
+        console.error(`[AUDIT] Order cancellation failed - OrderID: ${req.params.id}, User: ${req.user?.id}, Duration: ${duration}ms, Error: ${error.message}`);
+        
         res.status(400).json({
             success: false,
             message: error.message || 'Failed to cancel order. Please try again.'

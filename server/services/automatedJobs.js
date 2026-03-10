@@ -214,7 +214,7 @@ class AutomatedJobsService {
      * Runs at 12:00 AM each day using node-cron
      * 
      * CRITICAL: Includes retry logic with exponential backoff
-     * If job fails 3 times, admin is notified and system logs error
+     * If job fails 3 times, admin is notified via email and system logs error
      * This prevents order confirmation failures due to missing stock records
      * 
      * Process:
@@ -225,7 +225,7 @@ class AutomatedJobsService {
      * 5. Uses SERIALIZABLE transactions and SELECT FOR UPDATE
      * 6. Unique constraint prevents duplicate (MenuItemID, StockDate)
      * 7. Implements 3 retries with exponential backoff (1s, 2s, 4s)
-     * 8. Notifies admin on persistent failure
+     * 8. Notifies admin via email on persistent failure
      */
     async createDailyStockRecords() {
         const maxRetries = 3;
@@ -251,15 +251,16 @@ class AutomatedJobsService {
         }
 
         // ===== ALL RETRIES EXHAUSTED =====
-        console.error('❌ Daily stock creation failed after 3 retries. System is at risk!');
+        console.error('🚨 CRITICAL: Daily stock creation failed after 3 retries. System is at risk!');
         console.error('Error details:', lastError.message);
+        console.error('Stack trace:', lastError.stack);
 
         // Log to activity log for admin review
         const { ActivityLog } = require('../models');
         try {
             await ActivityLog.create({
                 action: 'DAILY_STOCK_JOB_FAILED',
-                description: `Daily stock creation failed after 3 retries: ${lastError.message}`,
+                description: `Daily stock creation failed after ${maxRetries} retries: ${lastError.message}`,
                 severity: 'CRITICAL',
                 affected_entity: 'DailyStock',
                 created_by: null // System-generated
@@ -268,8 +269,46 @@ class AutomatedJobsService {
             console.error('Failed to create activity log:', logError.message);
         }
 
-        // TODO: Implement admin notification (email/SMS)
-        // This should alert admin that the stock job failed
+        // Send critical alert email to admin
+        const { sendAdminCriticalAlert } = require('./emailService');
+        try {
+            const alertDetails = `
+Daily Stock Automation Job Failed
+=====================================
+Job: Daily Stock Record Creation
+Scheduled Time: 12:00 AM (Asia/Colombo)
+Retries Attempted: ${maxRetries}
+All Retries Failed: YES
+
+Impact:
+- New orders may fail due to missing stock records
+- Kitchen staff cannot see today's inventory
+- Stock management dashboard will show incorrect data
+- Order confirmations will be blocked
+
+Immediate Actions Required:
+1. Check database connectivity and permissions
+2. Verify all menu items are accessible
+3. Manually run stock creation: npm run create-stock
+4. Review system logs for detailed error traces
+5. Check server resources (CPU, Memory, Disk)
+
+Date/Time: ${new Date().toISOString()}
+Environment: ${process.env.NODE_ENV || 'development'}
+Server: ${process.env.SERVER_HOST || 'localhost'}
+            `.trim();
+
+            await sendAdminCriticalAlert(
+                'DAILY_STOCK_FAILURE',
+                alertDetails,
+                lastError.stack || lastError.message
+            );
+            console.log('📧 Critical alert email sent to admin');
+        } catch (emailError) {
+            console.error('❌ Failed to send admin alert email:', emailError.message);
+            console.error('CRITICAL: Stock job failed AND admin notification failed!');
+            console.error('Manual intervention required immediately!');
+        }
     }
 
     /**
