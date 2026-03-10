@@ -340,13 +340,46 @@ const DeliveryMap = () => {
                                         )}
                                     </Marker>
 
-                                    {/* Current User Location */}
+                                    {/* Current User Location with Accuracy Radius */}
                                     {currentLocation && (
-                                        <Marker
-                                            position={currentLocation}
-                                            title="Your Current Location"
-                                            icon="http://maps.google.com/mapfiles/ms/icons/purple-dot.png"
-                                        />
+                                        <>
+                                            {/* Accuracy Circle */}
+                                            <Polyline
+                                                path={Array.from({ length: 32 }, (_, i) => {
+                                                    const angle = (i / 32) * Math.PI * 2;
+                                                    const lat = currentLocation.lat + (25 / 111) * Math.cos(angle);
+                                                    const lng = currentLocation.lng + (25 / 111) * Math.sin(angle) / Math.cos(currentLocation.lat * Math.PI / 180);
+                                                    return { lat, lng };
+                                                })}
+                                                options={{
+                                                    strokeColor: '#8B5CF6',
+                                                    strokeOpacity: 0.3,
+                                                    strokeWeight: 1,
+                                                    fillColor: '#8B5CF6',
+                                                    fillOpacity: 0.1,
+                                                    geodesic: true
+                                                }}
+                                            />
+                                            {/* Current Location Marker */}
+                                            <Marker
+                                                position={currentLocation}
+                                                title="Your Current Location (Delivery Guy)"
+                                                icon="http://maps.google.com/mapfiles/ms/icons/purple-dot.png"
+                                            >
+                                                <InfoWindow onCloseClick={() => {}}>
+                                                    <div className="p-2">
+                                                        <p className="font-bold text-sm">📍 Your Current Location</p>
+                                                        <p className="text-xs text-gray-600 mt-1">
+                                                            Lat: {currentLocation.lat.toFixed(4)}°<br/>
+                                                            Lng: {currentLocation.lng.toFixed(4)}°
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 mt-2">
+                                                            Status: {locationPermission === 'granted' ? '✓ Live' : '⚠ Not Live'}
+                                                        </p>
+                                                    </div>
+                                                </InfoWindow>
+                                            </Marker>
+                                        </>
                                     )}
 
                                     {/* CRITICAL FIX: Show both driver location AND destination */}
@@ -426,6 +459,14 @@ const DeliveryMap = () => {
                         <h3 className="font-semibold mb-3">Status Legend</h3>
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div className="flex items-center">
+                                <div className="w-4 h-4 bg-red-400 rounded-full mr-2"></div>
+                                <span>Restaurant</span>
+                            </div>
+                            <div className="flex items-center">
+                                <div className="w-4 h-4 bg-purple-400 rounded-full mr-2"></div>
+                                <span>Your Location</span>
+                            </div>
+                            <div className="flex items-center">
                                 <div className="w-4 h-4 bg-yellow-400 rounded-full mr-2"></div>
                                 <span>Assigned</span>
                             </div>
@@ -447,6 +488,56 @@ const DeliveryMap = () => {
 
                 {/* Deliveries Panel */}
                 <div>
+                    {/* Current Location Card */}
+                    {currentLocation && (
+                        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg shadow p-4 mb-4 border border-purple-200">
+                            <h3 className="font-semibold mb-3 flex items-center text-purple-900">
+                                <FaMapMarkerAlt className="mr-2 text-purple-600" />
+                                Your Current Location
+                            </h3>
+                            <div className="space-y-2 text-sm">
+                                <div className="bg-white rounded p-2">
+                                    <p className="text-xs text-gray-600"><strong>Latitude:</strong></p>
+                                    <p className="text-sm font-medium text-gray-900">{currentLocation.lat.toFixed(6)}</p>
+                                </div>
+                                <div className="bg-white rounded p-2">
+                                    <p className="text-xs text-gray-600"><strong>Longitude:</strong></p>
+                                    <p className="text-sm font-medium text-gray-900">{currentLocation.lng.toFixed(6)}</p>
+                                </div>
+                                <div className="bg-white rounded p-2">
+                                    <p className="text-xs text-gray-600"><strong>Status:</strong></p>
+                                    <p className={`text-sm font-medium ${locationPermission === 'granted' ? 'text-green-600' : 'text-red-600'}`}>
+                                        {locationPermission === 'granted' ? '🟢 Live Tracking Active' : '🔴 Tracking Disabled'}
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={requestCurrentLocation}
+                                    className="w-full mt-2 text-xs bg-purple-600 text-white px-3 py-2 rounded hover:bg-purple-700 transition font-medium"
+                                >
+                                    Refresh Location
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {!currentLocation && (
+                        <div className="bg-yellow-50 rounded-lg shadow p-4 mb-4 border border-yellow-200">
+                            <h3 className="font-semibold mb-2 flex items-center text-yellow-900">
+                                <FaMapMarkerAlt className="mr-2 text-yellow-600" />
+                                Enable Location
+                            </h3>
+                            <p className="text-sm text-yellow-800 mb-3">
+                                Your current location is not available. Enable location permission to track deliveries.
+                            </p>
+                            <button
+                                onClick={requestCurrentLocation}
+                                className="w-full text-xs bg-yellow-600 text-white px-3 py-2 rounded hover:bg-yellow-700 transition font-medium"
+                            >
+                                Enable Location Now
+                            </button>
+                        </div>
+                    )}
+
                     <div className="bg-white rounded-lg shadow p-6">
                         <h3 className="font-semibold mb-4 flex items-center">
                             <FaTruck className="mr-2 text-primary-600" />
@@ -521,7 +612,18 @@ const DeliveryMap = () => {
                         )}
                     </div>
 
-                    {/* Restaurant Info Card */}
+                    {/* Current Location Info */}
+                    {currentLocation && locationPermission === 'granted' && (
+                        <div className="bg-green-50 rounded-lg shadow p-4 mt-4 border border-green-200">
+                            <h3 className="font-semibold mb-2 flex items-center text-green-900">
+                                <span className="animate-pulse text-lg mr-2">🟢</span>
+                                Live Location Active
+                            </h3>
+                            <p className="text-xs text-green-800">
+                                Your location is being broadcast to the admin dashboard every 15 seconds.
+                            </p>
+                        </div>
+                    )}
                     <div className="bg-white rounded-lg shadow p-6 mt-4">
                         <h3 className="font-semibold mb-3 flex items-center">
                             <FaMapMarkerAlt className="mr-2 text-red-600" />
