@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import Button from '../ui/Button';
 
-// Initialize Stripe
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY);
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY?.trim();
+const isStripeConfigured = Boolean(
+    stripePublishableKey && stripePublishableKey.startsWith('pk_') && !stripePublishableKey.includes('your_')
+);
+const stripePromise = isStripeConfigured ? loadStripe(stripePublishableKey) : null;
 
 /**
  * Payment form component that handles Stripe card payment
  */
-const StripePaymentForm = ({ clientSecret, orderId, total, onSuccess, onCancel, onError }) => {
+const StripePaymentForm = ({ clientSecret, orderId, total, billingDetails, onSuccess, onCancel, onError }) => {
     const stripe = useStripe();
     const elements = useElements();
     const [isProcessing, setIsProcessing] = useState(false);
@@ -31,16 +33,28 @@ const StripePaymentForm = ({ clientSecret, orderId, total, onSuccess, onCancel, 
             return;
         }
 
+        if (!clientSecret) {
+            setCardError('Payment session is missing. Please try checkout again.');
+            return;
+        }
+
+        const cardElement = elements.getElement(CardElement);
+        if (!cardElement) {
+            setCardError('Card form is not ready yet. Please wait a moment and try again.');
+            return;
+        }
+
         setIsProcessing(true);
         setCardError(null);
 
         try {
-            // Confirm the payment with Stripe
             const result = await stripe.confirmCardPayment(clientSecret, {
                 payment_method: {
-                    card: elements.getElement(CardElement),
+                    card: cardElement,
                     billing_details: {
-                        // Add customer details from your form if available
+                        name: billingDetails?.name || undefined,
+                        email: billingDetails?.email || undefined,
+                        phone: billingDetails?.phone || undefined
                     }
                 }
             });
@@ -95,12 +109,14 @@ const StripePaymentForm = ({ clientSecret, orderId, total, onSuccess, onCancel, 
             )}
 
             {/* Test Card Info */}
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
-                <p className="font-semibold mb-1">Test Card (Sandbox):</p>
-                <p className="font-mono text-xs mb-1">Card: 4242 4242 4242 4242</p>
-                <p className="font-mono text-xs mb-1">Expiry: 12/25 (any future date)</p>
-                <p className="font-mono text-xs">CVC: 123 (any 3 digits)</p>
-            </div>
+            {import.meta.env.DEV && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
+                    <p className="font-semibold mb-1">Test Card (Sandbox):</p>
+                    <p className="font-mono text-xs mb-1">Card: 4242 4242 4242 4242</p>
+                    <p className="font-mono text-xs mb-1">Expiry: 12/25 (any future date)</p>
+                    <p className="font-mono text-xs">CVC: 123 (any 3 digits)</p>
+                </div>
+            )}
 
             {/* Buttons */}
             <div className="flex gap-3">
@@ -114,7 +130,7 @@ const StripePaymentForm = ({ clientSecret, orderId, total, onSuccess, onCancel, 
                 </button>
                 <button
                     type="submit"
-                    disabled={isProcessing || !stripe || !elements || cardError !== null}
+                    disabled={isProcessing || !stripe || !elements || !clientSecret || cardError !== null}
                     className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
                 >
                     {isProcessing ? (
@@ -144,6 +160,7 @@ export const StripePaymentModal = ({
     clientSecret,
     orderId,
     total,
+    billingDetails,
     onSuccess,
     onCancel,
     onError
@@ -164,6 +181,7 @@ export const StripePaymentModal = ({
                             clientSecret={clientSecret}
                             orderId={orderId}
                             total={total}
+                            billingDetails={billingDetails}
                             onSuccess={onSuccess}
                             onCancel={onCancel}
                             onError={onError}
@@ -171,7 +189,9 @@ export const StripePaymentModal = ({
                     </Elements>
                 ) : (
                     <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
-                        ⚠️ Payment gateway is not available. Please contact support.
+                        {isStripeConfigured
+                            ? 'Payment session is unavailable. Please try checkout again.'
+                            : 'Card payments are not configured for this environment. Please use another payment method.'}
                     </div>
                 )}
             </div>

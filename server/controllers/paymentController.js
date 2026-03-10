@@ -4,6 +4,45 @@ const { Order, Customer, Payment } = require('../models');
 
 const PAYHERE_SUCCESS = '2';
 const PAYHERE_PENDING = '0';
+const ALLOWED_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
+const STRIPE_WEBHOOK_EVENTS = new Set([
+  'payment_intent.succeeded',
+  'payment_intent.payment_failed',
+  'payment_intent.canceled',
+  'payment_intent.processing'
+]);
+
+function normalizePaymentMethod(paymentMethod) {
+  return typeof paymentMethod === 'string' ? paymentMethod.trim().toUpperCase() : '';
+}
+
+function hasConfiguredStripeValue(value, prefix) {
+  return typeof value === 'string' && value.trim().startsWith(prefix) && !value.includes('your_');
+}
+
+function amountsMatch(left, right) {
+  return Math.abs(Number(left) - Number(right)) <= 0.01;
+}
+
+function buildGatewayStatus(status, detail) {
+  return [status, detail]
+    .filter(Boolean)
+    .join('_')
+    .toUpperCase()
+    .replace(/[^A-Z0-9_]+/g, '_')
+    .replace(/_+/g, '_')
+    .slice(0, 50);
+}
+
+async function findStripePaymentRecord(intent) {
+  const metadataPaymentId = Number.parseInt(intent.metadata?.paymentId, 10);
+
+  if (Number.isInteger(metadataPaymentId)) {
+    return Payment.findByPk(metadataPaymentId);
+  }
+
+  return Payment.findOne({ where: { TransactionID: intent.id } });
+}
 
 function verifyPayHereSignature(payload) {
   const merchantSecret = process.env.PAYHERE_MERCHANT_SECRET;
@@ -30,10 +69,15 @@ function verifyPayHereSignature(payload) {
 
 exports.initiatePayment = async (req, res) => {
   try {
-    const { orderId, paymentMethod } = req.body;
+    const { orderId } = req.body;
+    const paymentMethod = normalizePaymentMethod(req.body.paymentMethod);
 
     if (!orderId || !paymentMethod) {
       return res.status(400).json({ error: 'orderId and paymentMethod are required' });
+    }
+
+    if (!ALLOWED_PAYMENT_METHODS.has(paymentMethod)) {
+      return res.status(400).json({ error: 'Unsupported payment method' });
     }
 
     if (req.user.type !== 'Customer') {
@@ -117,11 +161,15 @@ exports.payHereWebhook = async (req, res) => {
     const existingTransaction = await Payment.findOne({
       where: { TransactionID: payload.payment_id }
     });
-    if (existingTransaction) {
+    if (existingTransaction && existingTransaction.PaymentID !== payment.PaymentID) {
       console.warn(`⚠️ Duplicate transaction ID detected: ${payload.payment_id}`);
       return res.status(400).json({ 
         error: 'Duplicate payment transaction detected.' 
       });
+    }
+
+    if (existingTransaction && existingTransaction.PaymentID === payment.PaymentID) {
+      return res.json({ success: true, duplicate: true });
     }
 
     // ===== CRITICAL: Check order is not already cancelled =====
@@ -138,7 +186,7 @@ exports.payHereWebhook = async (req, res) => {
       Status: isPaid ? 'PAID' : isPending ? 'PENDING' : 'FAILED',
       TransactionID: payload.payment_id,
       PaidAt: isPaid ? new Date() : null,
-      GatewayStatus: isPaid ? 'SUCCESS' : isPending ? 'PENDING' : `FAILED_${payload.status_code}`
+      GatewayStatus: isPaid ? 'SUCCESS' : isPending ? 'PENDING' : buildGatewayStatus('FAILED', payload.status_code)
     });
 
     return res.json({ success: true });
@@ -150,7 +198,7 @@ exports.payHereWebhook = async (req, res) => {
 
 exports.stripeWebhook = async (req, res) => {
   try {
-    if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
+    if (!hasConfiguredStripeValue(process.env.STRIPE_SECRET_KEY, 'sk_') || !hasConfiguredStripeValue(process.env.STRIPE_WEBHOOK_SECRET, 'whsec_')) {
       return res.status(501).json({ error: 'Stripe webhook not configured' });
     }
 
@@ -167,17 +215,76 @@ exports.stripeWebhook = async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
 
-    if (event.type === 'payment_intent.succeeded' || event.type === 'payment_intent.payment_failed') {
-      const intent = event.data.object;
-      const payment = await Payment.findOne({ where: { TransactionID: intent.id } });
+    if (!STRIPE_WEBHOOK_EVENTS.has(event.type)) {
+      return res.json({ received: true, ignored: true });
+    }
 
-      if (payment) {
-        await payment.update({
-          Status: event.type === 'payment_intent.succeeded' ? 'PAID' : 'FAILED',
-          PaidAt: event.type === 'payment_intent.succeeded' ? new Date() : null,
-          GatewayStatus: event.type === 'payment_intent.succeeded' ? 'SUCCESS' : (intent.last_payment_error?.message || 'FAILED')
-        });
+    const intent = event.data.object;
+    const payment = await findStripePaymentRecord(intent);
+
+    if (!payment) {
+      console.warn(`⚠️ Stripe webhook received for unknown payment intent: ${intent.id}`);
+      return res.json({ received: true, ignored: true });
+    }
+
+    const order = await Order.findByPk(payment.OrderID);
+    const expectedAmount = Number(payment.Amount ?? order?.FinalAmount);
+    const intentAmount = Number((intent.amount_received ?? intent.amount ?? 0) / 100);
+    const isCurrencyValid = String(intent.currency || '').toLowerCase() === 'lkr';
+    const isOrderCancelled = order?.Status === 'CANCELLED';
+    const amountMismatch = !amountsMatch(intentAmount, expectedAmount);
+
+    if (event.type === 'payment_intent.succeeded') {
+      if (payment.Status === 'PAID') {
+        return res.json({ received: true, duplicate: true });
       }
+
+      if (payment.Method !== 'CARD' || !order || isOrderCancelled || amountMismatch || !isCurrencyValid) {
+        const reviewReason = !order
+          ? 'MISSING_ORDER'
+          : payment.Method !== 'CARD'
+            ? 'METHOD_MISMATCH'
+            : isOrderCancelled
+              ? 'CANCELLED_ORDER'
+              : amountMismatch
+                ? 'AMOUNT_MISMATCH'
+                : 'INVALID_CURRENCY';
+
+        await payment.update({
+          Status: 'PENDING',
+          PaidAt: null,
+          GatewayStatus: buildGatewayStatus('REVIEW', reviewReason)
+        });
+
+        console.error(`❌ Stripe payment requires manual review: ${intent.id} (${reviewReason})`);
+        return res.json({ received: true, review: true });
+      }
+
+      await payment.update({
+        Status: 'PAID',
+        TransactionID: intent.id,
+        PaidAt: new Date(),
+        GatewayStatus: 'SUCCESS'
+      });
+    }
+
+    if (event.type === 'payment_intent.payment_failed' || event.type === 'payment_intent.canceled') {
+      await payment.update({
+        Status: 'FAILED',
+        PaidAt: null,
+        GatewayStatus: buildGatewayStatus(
+          event.type === 'payment_intent.canceled' ? 'CANCELED' : 'FAILED',
+          intent.last_payment_error?.code || intent.status
+        )
+      });
+    }
+
+    if (event.type === 'payment_intent.processing') {
+      await payment.update({
+        Status: 'PENDING',
+        PaidAt: null,
+        GatewayStatus: buildGatewayStatus('PENDING', intent.status)
+      });
     }
 
     return res.json({ received: true });

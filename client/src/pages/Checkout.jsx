@@ -16,6 +16,7 @@ const RESTAURANT_LOCATION = {
 };
 
 const DELIVERY_MAP_LIBRARIES = ['places'];
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -50,6 +51,10 @@ const Checkout = () => {
     const [deliveryAddressMethod, setDeliveryAddressMethod] = useState('');
     const cartItems = useMemo(() => getCart(), []);
     const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY?.trim();
+    const isStripeClientConfigured = Boolean(
+        stripePublishableKey && stripePublishableKey.startsWith('pk_') && !stripePublishableKey.includes('your_')
+    );
 
     const fetchDeliveryFeeByDistance = async (distanceKm) => {
         const numericDistance = Number(distanceKm);
@@ -482,10 +487,17 @@ const Checkout = () => {
 
     const validateForm = () => {
         const newErrors = {};
+        const normalizedEmail = formData.email.trim();
+        const phoneDigits = formData.phone.replace(/\D/g, '');
 
         if (!formData.name.trim()) newErrors.name = 'Name is required';
+        else if (formData.name.trim().length < 2) newErrors.name = 'Name must be at least 2 characters';
+
         if (!formData.email.trim()) newErrors.email = 'Email is required';
+        else if (!EMAIL_REGEX.test(normalizedEmail)) newErrors.email = 'Enter a valid email address';
+
         if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
+        else if (phoneDigits.length < 9 || phoneDigits.length > 15) newErrors.phone = 'Enter a valid phone number';
 
         if (formData.orderType === 'DELIVERY') {
             if (!deliveryAddressMethod) {
@@ -494,8 +506,15 @@ const Checkout = () => {
                 if (!currentLocation) newErrors.location = 'Please pin your delivery location or use your current location';
             } else if (deliveryAddressMethod === 'MANUAL') {
                 if (!formData.addressLine1.trim()) newErrors.addressLine1 = 'Address is required';
+                else if (formData.addressLine1.trim().length < 5) newErrors.addressLine1 = 'Address must be at least 5 characters';
+
                 if (!formData.city.trim()) newErrors.city = 'City is required';
+                else if (formData.city.trim().length < 2) newErrors.city = 'City must be at least 2 characters';
             }
+        }
+
+        if (formData.paymentMethod === 'CARD' && !isStripeClientConfigured) {
+            newErrors.paymentMethod = 'Card payments are temporarily unavailable. Please use cash on delivery.';
         }
 
         setErrors(newErrors);
@@ -523,6 +542,18 @@ const Checkout = () => {
         }
 
         try {
+            setIsSubmitting(true);
+            setErrors(prev => {
+                const next = { ...prev };
+                delete next.submit;
+                delete next.payment;
+                return next;
+            });
+
+            if (formData.paymentMethod === 'CARD' && !isStripeClientConfigured) {
+                throw new Error('Card payments are not configured for this environment');
+            }
+
             let addressId = null;
 
             if (formData.orderType === 'DELIVERY') {
@@ -646,7 +677,7 @@ const Checkout = () => {
             navigate(`/order-confirmation/${orderId}`);
         } catch (error) {
             console.error('Checkout error:', error);
-            const message = error.response?.data?.message || error.message || 'Failed to place order';
+            const message = error.response?.data?.error || error.response?.data?.message || error.message || 'Failed to place order';
             const nextErrors = { submit: message };
 
             if (message.toLowerCase().includes('delivery address is outside')) {
@@ -658,6 +689,8 @@ const Checkout = () => {
             }
 
             setErrors(nextErrors);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -1029,6 +1062,9 @@ const Checkout = () => {
                                     💳 Secure card payments powered by Stripe. Your card details are never stored on our servers.
                                 </div>
                             )}
+                            {errors.paymentMethod && (
+                                <p className="mt-3 text-sm text-red-600">{errors.paymentMethod}</p>
+                            )}
                         </div>
 
                         {/* Special Instructions */}
@@ -1104,8 +1140,15 @@ const Checkout = () => {
                 clientSecret={paymentClientSecret}
                 orderId={currentOrderId}
                 total={cartSummary.total}
+                billingDetails={{
+                    name: formData.name.trim(),
+                    email: formData.email.trim(),
+                    phone: formData.phone.trim()
+                }}
                 onSuccess={(paymentIntent) => {
-                    // Payment succeeded - redirect to confirmation
+                    setShowStripeModal(false);
+                    setCurrentOrderId(null);
+                    setPaymentClientSecret(null);
                     clearCart();
                     navigate(`/order-confirmation/${currentOrderId}`);
                 }}
@@ -1118,6 +1161,7 @@ const Checkout = () => {
                     console.error('Payment error:', error);
                     setErrors(prev => ({
                         ...prev,
+                        submit: '',
                         payment: error || 'Payment failed. Please try again.'
                     }));
                 }}

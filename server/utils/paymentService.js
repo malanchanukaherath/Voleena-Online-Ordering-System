@@ -2,6 +2,32 @@ const { Payment } = require('../models');
 const notificationService = require('./notificationService');
 const crypto = require('crypto');
 
+const SUPPORTED_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
+
+function hasConfiguredStripeValue(value, prefix) {
+    return typeof value === 'string' && value.trim().startsWith(prefix) && !value.includes('your_');
+}
+
+function toMinorUnits(amount) {
+    const numericAmount = Number(amount);
+
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        throw new Error('Order total is invalid for payment processing');
+    }
+
+    return Math.round(numericAmount * 100);
+}
+
+function buildGatewayStatus(status, detail) {
+    return [status, detail]
+        .filter(Boolean)
+        .join('_')
+        .toUpperCase()
+        .replace(/[^A-Z0-9_]+/g, '_')
+        .replace(/_+/g, '_')
+        .slice(0, 50);
+}
+
 /**
  * Payment Service
  * Handles payment processing with third-party gateways (FR30, FR31)
@@ -29,13 +55,19 @@ class PaymentService {
      * @returns {Promise<Object>} Payment details
      */
     async initializePayment(order, customer, paymentMethod = 'CASH') {
+        let payment;
+
         try {
+            if (!SUPPORTED_PAYMENT_METHODS.has(paymentMethod)) {
+                throw new Error('Unsupported payment method');
+            }
+
             // Create payment record
-            const payment = await Payment.create({
+            payment = await Payment.create({
                 OrderID: order.OrderID,
                 Amount: order.FinalAmount,
                 Method: paymentMethod,
-                Status: paymentMethod === 'CASH' ? 'PENDING' : 'PENDING',
+                Status: 'PENDING',
                 TransactionID: this.generateTransactionID()
             });
 
@@ -60,10 +92,18 @@ class PaymentService {
                 const paymentData = await this.initializeCardPayment(order, customer, payment);
                 return paymentData;
             }
-
-            throw new Error('Unsupported payment method');
-
         } catch (error) {
+            if (payment && paymentMethod !== 'CASH') {
+                try {
+                    await payment.update({
+                        Status: 'FAILED',
+                        GatewayStatus: buildGatewayStatus('INIT_FAILED', paymentMethod)
+                    });
+                } catch (updateError) {
+                    console.error('❌ Failed to persist payment initialization failure:', updateError.message);
+                }
+            }
+
             console.error('❌ Payment initialization failed:', error.message);
             throw error;
         }
@@ -74,9 +114,8 @@ class PaymentService {
      */
     async initializeOnlinePayment(order, customer, payment) {
         // PayHere integration
-        if (!this.payHereConfig.merchantId) {
-            console.warn('⚠️  PayHere not configured - using mock payment');
-            return this.mockPaymentFlow(payment, 'ONLINE');
+        if (!this.payHereConfig.merchantId || !this.payHereConfig.merchantSecret || !process.env.FRONTEND_URL || !process.env.BACKEND_URL) {
+            throw new Error('Online payments are not configured');
         }
 
         const hash = this.generatePayHereHash(
@@ -96,7 +135,7 @@ class PaymentService {
                 merchant_id: this.payHereConfig.merchantId,
                 return_url: `${process.env.FRONTEND_URL}/payment/success`,
                 cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
-                notify_url: `${process.env.BACKEND_URL}/api/payments/webhook/payhere`,
+                notify_url: `${process.env.BACKEND_URL}/api/v1/payments/webhook/payhere`,
                 order_id: order.OrderNumber,
                 items: `Order #${order.OrderNumber}`,
                 currency: 'LKR',
@@ -117,22 +156,32 @@ class PaymentService {
      * Initialize Stripe card payment
      */
     async initializeCardPayment(order, customer, payment) {
-        if (!this.stripeConfig.secretKey) {
-            console.warn('⚠️  Stripe not configured - using mock payment');
-            return this.mockPaymentFlow(payment, 'CARD');
+        if (!hasConfiguredStripeValue(this.stripeConfig.secretKey, 'sk_') || !hasConfiguredStripeValue(this.stripeConfig.publishableKey, 'pk_')) {
+            throw new Error('Card payments are not configured');
         }
 
-        // Stripe integration would go here
         const stripe = require('stripe')(this.stripeConfig.secretKey);
+        const amount = toMinorUnits(order.FinalAmount);
 
         const paymentIntent = await stripe.paymentIntents.create({
-            amount: Math.round(order.FinalAmount * 100), // Convert to cents
+            amount,
             currency: 'lkr',
+            payment_method_types: ['card'],
+            payment_method_options: {
+                card: {
+                    request_three_d_secure: 'automatic'
+                }
+            },
             description: `Order #${order.OrderNumber}`,
+            receipt_email: customer.Email,
             metadata: {
                 orderId: order.OrderID,
-                orderNumber: order.OrderNumber
+                orderNumber: order.OrderNumber,
+                paymentId: payment.PaymentID,
+                customerId: customer.CustomerID || customer.id || ''
             }
+        }, {
+            idempotencyKey: `order-${order.OrderID}-payment-${payment.PaymentID}`
         });
 
         await payment.update({
