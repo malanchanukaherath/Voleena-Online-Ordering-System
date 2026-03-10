@@ -3,10 +3,35 @@ import { FaMapMarkedAlt, FaPhone, FaExternalLinkAlt, FaMapMarkerAlt } from 'reac
 import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
 import { deliveryService } from '../services/dashboardService';
+import useDelayedStatusUpdate from '../hooks/useDelayedStatusUpdate';
 
 const ActiveDeliveries = () => {
     const [deliveries, setDeliveries] = useState([]);
     const [error, setError] = useState('');
+
+    const getDeliveryTimestamp = (value) => {
+        const timestamp = new Date(value || 0).getTime();
+        return Number.isNaN(timestamp) ? 0 : timestamp;
+    };
+
+    const {
+        queueStatusUpdate,
+        cancelPendingUpdate,
+        commitPendingUpdateNow,
+        getPendingUpdate,
+        getRemainingSeconds,
+    } = useDelayedStatusUpdate({
+        delayMs: 5000,
+        onCommit: async (update) => {
+            await deliveryService.updateDeliveryStatus(update.itemId, { status: update.toStatus });
+            setDeliveries((prev) => prev.map((delivery) => (
+                delivery.id === update.itemId ? { ...delivery, status: update.toStatus } : delivery
+            )));
+        },
+        onError: (err) => {
+            setError(err.message || 'Failed to update delivery status');
+        }
+    });
 
     useEffect(() => {
         let isMounted = true;
@@ -15,18 +40,21 @@ const ActiveDeliveries = () => {
             try {
                 const response = await deliveryService.getMyDeliveries();
                 const data = response.data || response?.data?.data || [];
-                const mapped = data.map((delivery) => ({
-                    id: delivery.DeliveryID,
-                    orderNumber: delivery.order?.OrderNumber || 'N/A',
-                    customer: delivery.order?.customer?.Name || 'Unknown',
-                    phone: delivery.order?.customer?.Phone || '',
-                    address: delivery.address
-                        ? [delivery.address.AddressLine1, delivery.address.City].filter(Boolean).join(', ')
-                        : 'N/A',
-                    lat: delivery.address?.Latitude != null ? Number(delivery.address.Latitude) : null,
-                    lng: delivery.address?.Longitude != null ? Number(delivery.address.Longitude) : null,
-                    status: delivery.Status
-                }));
+                const mapped = data
+                    .map((delivery) => ({
+                        id: delivery.DeliveryID,
+                        orderNumber: delivery.order?.OrderNumber || 'N/A',
+                        customer: delivery.order?.customer?.Name || 'Unknown',
+                        phone: delivery.order?.customer?.Phone || '',
+                        address: delivery.address
+                            ? [delivery.address.AddressLine1, delivery.address.City].filter(Boolean).join(', ')
+                            : 'N/A',
+                        lat: delivery.address?.Latitude != null ? Number(delivery.address.Latitude) : null,
+                        lng: delivery.address?.Longitude != null ? Number(delivery.address.Longitude) : null,
+                        status: delivery.Status,
+                        assignedAt: delivery.AssignedAt || delivery.createdAt || delivery.created_at || delivery.order?.CreatedAt || null,
+                    }))
+                    .sort((a, b) => getDeliveryTimestamp(b.assignedAt) - getDeliveryTimestamp(a.assignedAt));
 
                 if (isMounted) {
                     setDeliveries(mapped);
@@ -54,18 +82,19 @@ const ActiveDeliveries = () => {
         return map[status];
     };
 
-    const handleAdvanceStatus = async (deliveryId, status) => {
+    const getActionLabel = (status) => {
         const nextStatus = getNextStatus(status);
+        if (nextStatus === 'PICKED_UP') return 'Mark Picked Up';
+        if (nextStatus === 'IN_TRANSIT') return 'Mark In Transit';
+        if (nextStatus === 'DELIVERED') return 'Mark Delivered';
+        return 'Update Status';
+    };
+
+    const handleQueueAdvanceStatus = (delivery) => {
+        const nextStatus = getNextStatus(delivery.status);
         if (!nextStatus) return;
 
-        try {
-            await deliveryService.updateDeliveryStatus(deliveryId, { status: nextStatus });
-            setDeliveries((prev) => prev.map((delivery) => (
-                delivery.id === deliveryId ? { ...delivery, status: nextStatus } : delivery
-            )));
-        } catch (err) {
-            setError(err.message || 'Failed to update delivery status');
-        }
+        queueStatusUpdate(delivery.id, delivery.status, nextStatus);
     };
 
     const getGoogleMapsNavigationUrl = (delivery) => {
@@ -108,13 +137,35 @@ const ActiveDeliveries = () => {
                             )}
                         </div>
                         <div className="flex gap-2">
-                            <Button
-                                size="sm"
-                                onClick={() => handleAdvanceStatus(delivery.id, delivery.status)}
-                                disabled={!getNextStatus(delivery.status)}
-                            >
-                                Advance Status
-                            </Button>
+                            {getPendingUpdate(delivery.id) ? (
+                                <>
+                                    <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 flex items-center">
+                                        Changing to {getPendingUpdate(delivery.id).toStatus} in {getRemainingSeconds(delivery.id)}s
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant="success"
+                                        onClick={() => commitPendingUpdateNow(delivery.id)}
+                                    >
+                                        Confirm Now
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => cancelPendingUpdate(delivery.id)}
+                                    >
+                                        Undo
+                                    </Button>
+                                </>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    onClick={() => handleQueueAdvanceStatus(delivery)}
+                                    disabled={!getNextStatus(delivery.status)}
+                                >
+                                    Queue {getActionLabel(delivery.status)}
+                                </Button>
+                            )}
                             {delivery.phone && (
                                 <Button size="sm" variant="outline" onClick={() => window.open(`tel:${delivery.phone}`)}>Call Customer</Button>
                             )}

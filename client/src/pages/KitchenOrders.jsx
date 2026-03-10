@@ -2,23 +2,31 @@ import React, { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
 import { kitchenService } from '../services/dashboardService';
+import useDelayedStatusUpdate from '../hooks/useDelayedStatusUpdate';
 
 const KitchenOrders = () => {
     const [orders, setOrders] = useState([]);
     const [error, setError] = useState('');
 
+    const getOrderTimestamp = (value) => {
+        const timestamp = new Date(value || 0).getTime();
+        return Number.isNaN(timestamp) ? 0 : timestamp;
+    };
+
     const loadOrders = useCallback(async () => {
         try {
             const response = await kitchenService.getAssignedOrders();
             const data = response.data || response?.data?.data || [];
-            const mapped = data.map((order) => ({
-                id: order.OrderID,
-                orderNumber: order.OrderNumber,
-                items: (order.items || []).map((item) => `${item.Quantity}x ${item.menuItem?.Name || 'Item'}`),
-                time: order.created_at || order.CreatedAt,
-                status: order.Status,
-                priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
-            }));
+            const mapped = data
+                .map((order) => ({
+                    id: order.OrderID,
+                    orderNumber: order.OrderNumber,
+                    items: (order.items || []).map((item) => `${item.Quantity}x ${item.menuItem?.Name || 'Item'}`),
+                    time: order.created_at || order.CreatedAt || order.createdAt,
+                    status: order.Status,
+                    priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
+                }))
+                .sort((a, b) => getOrderTimestamp(b.time) - getOrderTimestamp(a.time));
 
             setOrders(mapped);
             setError('');
@@ -54,16 +62,34 @@ const KitchenOrders = () => {
         return map[status];
     };
 
-    const handleStatusUpdate = async (orderId, status) => {
-        const nextStatus = getNextStatus(status);
+    const getActionLabel = (status) => {
+        if (status === 'CONFIRMED') return 'Start Preparing';
+        if (status === 'PREPARING') return 'Mark Ready';
+        return 'Update Status';
+    };
+
+    const {
+        queueStatusUpdate,
+        cancelPendingUpdate,
+        commitPendingUpdateNow,
+        getPendingUpdate,
+        getRemainingSeconds,
+    } = useDelayedStatusUpdate({
+        delayMs: 5000,
+        onCommit: async (update) => {
+            await kitchenService.updateOrderStatus(update.itemId, update.toStatus);
+            await loadOrders();
+        },
+        onError: (err) => {
+            setError(err.message || 'Failed to update order status');
+        },
+    });
+
+    const handleQueueStatusUpdate = (order) => {
+        const nextStatus = getNextStatus(order.status);
         if (!nextStatus) return;
 
-        try {
-            await kitchenService.updateOrderStatus(orderId, nextStatus);
-            await loadOrders();
-        } catch (err) {
-            setError(err.message || 'Failed to update order status');
-        }
+        queueStatusUpdate(order.id, order.status, nextStatus);
     };
 
     return (
@@ -92,9 +118,23 @@ const KitchenOrders = () => {
                             </ul>
                         </div>
                         <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleStatusUpdate(order.id, order.status)} disabled={!getNextStatus(order.status)}>
-                                {order.status === 'CONFIRMED' ? 'Start Preparing' : 'Mark Ready'}
-                            </Button>
+                            {getPendingUpdate(order.id) ? (
+                                <>
+                                    <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 flex items-center">
+                                        Status will update in {getRemainingSeconds(order.id)}s
+                                    </div>
+                                    <Button size="sm" variant="success" onClick={() => commitPendingUpdateNow(order.id)}>
+                                        Confirm Now
+                                    </Button>
+                                    <Button size="sm" variant="outline" onClick={() => cancelPendingUpdate(order.id)}>
+                                        Undo
+                                    </Button>
+                                </>
+                            ) : (
+                                <Button size="sm" onClick={() => handleQueueStatusUpdate(order)} disabled={!getNextStatus(order.status)}>
+                                    Queue {getActionLabel(order.status)}
+                                </Button>
+                            )}
                         </div>
                     </div>
                 ))}

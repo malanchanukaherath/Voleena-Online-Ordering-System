@@ -24,14 +24,20 @@ const KitchenDashboard = () => {
 
                 const statsData = statsResponse.stats || statsResponse.data?.stats || statsResponse.data || stats;
                 const orders = ordersResponse.data || ordersResponse?.data?.data || [];
-                const mappedOrders = orders.map((order) => ({
-                    id: order.OrderID,
-                    orderNumber: order.OrderNumber,
-                    items: order.orderItems?.reduce((sum, item) => sum + (item.Quantity || 0), 0) || 0,
-                    time: order.CreatedAt || order.createdAt || order.created_at,
-                    status: order.Status,
-                    priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
-                }));
+                const mappedOrders = orders
+                    .map((order) => ({
+                        id: order.OrderID,
+                        orderNumber: order.OrderNumber,
+                        items: (order.items || order.orderItems || []).reduce((sum, item) => sum + (item.Quantity || 0), 0),
+                        time: order.CreatedAt || order.createdAt || order.created_at,
+                        status: order.Status,
+                        priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
+                    }))
+                    .sort((a, b) => {
+                        const aTime = new Date(a.time || 0).getTime();
+                        const bTime = new Date(b.time || 0).getTime();
+                        return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+                    });
 
                 if (isMounted) {
                     setStats(statsData);

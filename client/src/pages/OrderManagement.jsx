@@ -7,12 +7,14 @@ import EmptyState from '../components/ui/EmptyState';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import backendApi from '../services/backendApi';
 import { getOrders } from '../services/orderApi';
+import useDelayedStatusUpdate from '../hooks/useDelayedStatusUpdate';
 
 const OrderManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [loading, setLoading] = useState(true);
     const [orders, setOrders] = useState([]);
+    const [draftStatuses, setDraftStatuses] = useState({});
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -76,12 +78,18 @@ const OrderManagement = () => {
     ];
 
     const filteredOrders = useMemo(() => {
-        return orders.filter(order => {
-            const matchesSearch = order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                order.customerName?.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesStatus = !statusFilter || order.status === statusFilter;
-            return matchesSearch && matchesStatus;
-        });
+        return orders
+            .filter(order => {
+                const matchesSearch = order.orderNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    order.customerName?.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesStatus = !statusFilter || order.status === statusFilter;
+                return matchesSearch && matchesStatus;
+            })
+            .sort((a, b) => {
+                const aTime = new Date(a.createdAt || 0).getTime();
+                const bTime = new Date(b.createdAt || 0).getTime();
+                return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+            });
     }, [orders, searchTerm, statusFilter]);
 
     const handleStatusUpdate = async (orderId, newStatus) => {
@@ -90,9 +98,69 @@ const OrderManagement = () => {
             setOrders((prev) => prev.map((order) => (
                 order.id === orderId ? { ...order, status: newStatus } : order
             )));
+            setError('');
         } catch (err) {
-            setError(err.response?.data?.message || err.message || 'Failed to update status');
+            const message = err.response?.data?.message || err.message || 'Failed to update status';
+            setError(message);
+            throw err;
         }
+    };
+
+    const {
+        queueStatusUpdate,
+        cancelPendingUpdate,
+        commitPendingUpdateNow,
+        getPendingUpdate,
+        getRemainingSeconds,
+    } = useDelayedStatusUpdate({
+        delayMs: 5000,
+        onCommit: async (update) => {
+            await handleStatusUpdate(update.itemId, update.toStatus);
+            setDraftStatuses((prev) => {
+                if (!Object.prototype.hasOwnProperty.call(prev, update.itemId)) {
+                    return prev;
+                }
+
+                const next = { ...prev };
+                delete next[update.itemId];
+                return next;
+            });
+        },
+        onError: (err) => {
+            setError(err.response?.data?.message || err.message || 'Failed to update status');
+        },
+    });
+
+    const getSelectedStatus = (order) => {
+        const pending = getPendingUpdate(order.id);
+        if (pending) return pending.toStatus;
+        return draftStatuses[order.id] || order.status;
+    };
+
+    const handleDraftStatusChange = (orderId, status) => {
+        setDraftStatuses((prev) => ({
+            ...prev,
+            [orderId]: status,
+        }));
+    };
+
+    const resetDraftStatus = (order) => {
+        setDraftStatuses((prev) => {
+            if (!Object.prototype.hasOwnProperty.call(prev, order.id)) {
+                return prev;
+            }
+
+            const next = { ...prev };
+            delete next[order.id];
+            return next;
+        });
+    };
+
+    const queueOrderStatusUpdate = (order) => {
+        const selectedStatus = getSelectedStatus(order);
+        if (!selectedStatus || selectedStatus === order.status) return;
+
+        queueStatusUpdate(order.id, order.status, selectedStatus);
     };
 
     return (
@@ -170,12 +238,55 @@ const OrderManagement = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <Select
-                                                value={order.status}
-                                                onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
-                                                options={statusOptions.slice(1)}
-                                                className="text-xs"
-                                            />
+                                            <div className="space-y-2 min-w-[210px]">
+                                                <Select
+                                                    value={getSelectedStatus(order)}
+                                                    onChange={(e) => handleDraftStatusChange(order.id, e.target.value)}
+                                                    options={statusOptions.slice(1)}
+                                                    className="text-xs"
+                                                    disabled={!!getPendingUpdate(order.id)}
+                                                />
+                                                {getPendingUpdate(order.id) ? (
+                                                    <div className="flex flex-wrap gap-2 items-center">
+                                                        <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                                                            Applying in {getRemainingSeconds(order.id)}s
+                                                        </span>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="success"
+                                                            onClick={() => commitPendingUpdateNow(order.id)}
+                                                        >
+                                                            Confirm
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            onClick={() => cancelPendingUpdate(order.id)}
+                                                        >
+                                                            Undo
+                                                        </Button>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex gap-2">
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => queueOrderStatusUpdate(order)}
+                                                            disabled={getSelectedStatus(order) === order.status}
+                                                        >
+                                                            Queue Update
+                                                        </Button>
+                                                        {getSelectedStatus(order) !== order.status && (
+                                                            <Button
+                                                                size="sm"
+                                                                variant="secondary"
+                                                                onClick={() => resetDraftStatus(order)}
+                                                            >
+                                                                Reset
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm font-medium text-gray-900">

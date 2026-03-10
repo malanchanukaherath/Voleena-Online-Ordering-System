@@ -4,6 +4,7 @@ import { FaTruck, FaMapMarkedAlt, FaCheckCircle, FaClock, FaMapMarkerAlt, FaTogg
 import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
 import { deliveryService } from '../services/dashboardService';
+import useDelayedStatusUpdate from '../hooks/useDelayedStatusUpdate';
 
 const DeliveryDashboard = () => {
     const [stats, setStats] = useState({
@@ -18,6 +19,31 @@ const DeliveryDashboard = () => {
     const [loadingError, setLoadingError] = useState(null);
     const [updatingAvailability, setUpdatingAvailability] = useState(false);
 
+    const getDeliveryTimestamp = (value) => {
+        const timestamp = new Date(value || 0).getTime();
+        return Number.isNaN(timestamp) ? 0 : timestamp;
+    };
+
+    const {
+        queueStatusUpdate,
+        cancelPendingUpdate,
+        commitPendingUpdateNow,
+        getPendingUpdate,
+        getRemainingSeconds,
+    } = useDelayedStatusUpdate({
+        delayMs: 5000,
+        onCommit: async (update) => {
+            await deliveryService.updateDeliveryStatus(update.itemId, { status: update.toStatus });
+            setActiveDeliveries((prev) => prev.map((delivery) => (
+                delivery.id === update.itemId ? { ...delivery, status: update.toStatus } : delivery
+            )));
+        },
+        onError: (err) => {
+            console.error('Failed to update delivery status:', err);
+            alert('Failed to update delivery status. Please try again.');
+        }
+    });
+
     useEffect(() => {
         let isMounted = true;
 
@@ -28,18 +54,21 @@ const DeliveryDashboard = () => {
 
                 if (isMounted) {
                     const deliveries = deliveriesResponse.data || deliveriesResponse?.data?.data || [];
-                    const mapped = deliveries.map((delivery) => ({
-                        id: delivery.DeliveryID,
-                        orderNumber: delivery.order?.OrderNumber || 'N/A',
-                        customer: delivery.order?.customer?.Name || 'Unknown',
-                        phone: delivery.order?.customer?.Phone || '',
-                        address: delivery.address
-                            ? [delivery.address.AddressLine1, delivery.address.City, delivery.address.District].filter(Boolean).join(', ')
-                            : 'N/A',
-                        lat: delivery.address?.Latitude != null ? Number(delivery.address.Latitude) : null,
-                        lng: delivery.address?.Longitude != null ? Number(delivery.address.Longitude) : null,
-                        status: delivery.Status
-                    }));
+                    const mapped = deliveries
+                        .map((delivery) => ({
+                            id: delivery.DeliveryID,
+                            orderNumber: delivery.order?.OrderNumber || 'N/A',
+                            customer: delivery.order?.customer?.Name || 'Unknown',
+                            phone: delivery.order?.customer?.Phone || '',
+                            address: delivery.address
+                                ? [delivery.address.AddressLine1, delivery.address.City, delivery.address.District].filter(Boolean).join(', ')
+                                : 'N/A',
+                            lat: delivery.address?.Latitude != null ? Number(delivery.address.Latitude) : null,
+                            lng: delivery.address?.Longitude != null ? Number(delivery.address.Longitude) : null,
+                            status: delivery.Status,
+                            assignedAt: delivery.AssignedAt || delivery.createdAt || delivery.created_at || delivery.order?.CreatedAt || null,
+                        }))
+                        .sort((a, b) => getDeliveryTimestamp(b.assignedAt) - getDeliveryTimestamp(a.assignedAt));
                     setActiveDeliveries(mapped);
                     setLoadingError(null);
                 }
@@ -165,19 +194,19 @@ const DeliveryDashboard = () => {
         return map[status];
     };
 
-    const handleAdvanceStatus = async (deliveryId, status) => {
+    const getActionLabel = (status) => {
         const nextStatus = getNextStatus(status);
+        if (nextStatus === 'PICKED_UP') return 'Mark Picked Up';
+        if (nextStatus === 'IN_TRANSIT') return 'Mark In Transit';
+        if (nextStatus === 'DELIVERED') return 'Mark Delivered';
+        return 'Update Status';
+    };
+
+    const handleQueueAdvanceStatus = (delivery) => {
+        const nextStatus = getNextStatus(delivery.status);
         if (!nextStatus) return;
 
-        try {
-            await deliveryService.updateDeliveryStatus(deliveryId, { status: nextStatus });
-            setActiveDeliveries((prev) => prev.map((delivery) => (
-                delivery.id === deliveryId ? { ...delivery, status: nextStatus } : delivery
-            )));
-        } catch (err) {
-            console.error('Failed to update delivery status:', err);
-            alert('Failed to update delivery status. Please try again.');
-        }
+        queueStatusUpdate(delivery.id, delivery.status, nextStatus);
     };
 
     const getGoogleMapsNavigationUrl = (delivery) => {
@@ -319,13 +348,35 @@ const DeliveryDashboard = () => {
                                 </div>
 
                                 <div className="flex flex-wrap gap-2 mt-3">
-                                    <Button
-                                        size="sm"
-                                        onClick={() => handleAdvanceStatus(delivery.id, delivery.status)}
-                                        disabled={!getNextStatus(delivery.status)}
-                                    >
-                                        Advance Status
-                                    </Button>
+                                    {getPendingUpdate(delivery.id) ? (
+                                        <>
+                                            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 flex items-center">
+                                                Changing to {getPendingUpdate(delivery.id).toStatus} in {getRemainingSeconds(delivery.id)}s
+                                            </div>
+                                            <Button
+                                                size="sm"
+                                                variant="success"
+                                                onClick={() => commitPendingUpdateNow(delivery.id)}
+                                            >
+                                                Confirm Now
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                onClick={() => cancelPendingUpdate(delivery.id)}
+                                            >
+                                                Undo
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <Button
+                                            size="sm"
+                                            onClick={() => handleQueueAdvanceStatus(delivery)}
+                                            disabled={!getNextStatus(delivery.status)}
+                                        >
+                                            Queue {getActionLabel(delivery.status)}
+                                        </Button>
+                                    )}
                                     {delivery.phone && (
                                         <a
                                             href={`tel:${delivery.phone}`}

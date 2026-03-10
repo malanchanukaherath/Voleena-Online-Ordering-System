@@ -121,7 +121,7 @@ exports.getMyDeliveries = async (req, res) => {
           attributes: ['AddressLine1', 'AddressLine2', 'City', 'District', 'PostalCode', 'Latitude', 'Longitude']
         }
       ],
-      order: [['AssignedAt', 'ASC']]
+      order: [['AssignedAt', 'DESC'], ['created_at', 'DESC']]
     });
 
     return res.json({

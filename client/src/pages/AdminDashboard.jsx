@@ -29,14 +29,21 @@ const AdminDashboard = () => {
 
                 const stats = statsResponse?.stats || statsResponse?.data?.stats || statsResponse?.data || {};
                 const apiOrders = ordersResponse.data?.data || ordersResponse.data || [];
-                const mappedOrders = apiOrders.slice(0, 4).map((order) => ({
-                    id: order.OrderID,
-                    orderNumber: order.OrderNumber,
-                    customer: order.customer?.Name || 'Unknown',
-                    total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
-                    status: order.Status,
-                    time: order.CreatedAt || order.createdAt || order.created_at
-                }));
+                const mappedOrders = apiOrders
+                    .map((order) => ({
+                        id: order.OrderID,
+                        orderNumber: order.OrderNumber,
+                        customer: order.customer?.Name || 'Unknown',
+                        total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
+                        status: order.Status,
+                        time: order.CreatedAt || order.createdAt || order.created_at
+                    }))
+                    .sort((a, b) => {
+                        const aTime = new Date(a.time || 0).getTime();
+                        const bTime = new Date(b.time || 0).getTime();
+                        return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+                    })
+                    .slice(0, 4);
 
                 if (isMounted) {
                     setStatsData(stats);
