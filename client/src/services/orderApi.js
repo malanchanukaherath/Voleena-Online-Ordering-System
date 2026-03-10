@@ -34,6 +34,13 @@ export const validateDeliveryDistance = async (data) => {
 };
 
 /**
+ * Calculate delivery fee for a validated distance
+ */
+export const calculateDeliveryFeeByDistance = async (distanceKm) => {
+  return backendApi.post('/api/v1/delivery/calculate-fee', { distanceKm });
+};
+
+/**
  * Order Management APIs
  */
 

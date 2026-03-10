@@ -8,7 +8,7 @@ import Select from '../components/ui/Select';
 import Textarea from '../components/ui/Textarea';
 import { StripePaymentModal } from '../components/payment/StripePaymentModal';
 import { getCart, clearCart } from '../utils/cartStorage';
-import { createAddress, createOrder, initiatePayment, validateDeliveryDistance } from '../services/orderApi';
+import { calculateDeliveryFeeByDistance, createAddress, createOrder, initiatePayment, validateDeliveryDistance } from '../services/orderApi';
 
 const RESTAURANT_LOCATION = {
     lat: 7.120035696626918,
@@ -52,18 +52,16 @@ const Checkout = () => {
     const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
     const fetchDeliveryFeeByDistance = async (distanceKm) => {
-        if (!distanceKm) return;
+        const numericDistance = Number(distanceKm);
+        if (!Number.isFinite(numericDistance) || numericDistance < 0) {
+            return;
+        }
 
         try {
-            const feeResponse = await fetch('/api/v1/delivery/calculate-fee', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ distanceKm })
-            });
-            const feeData = await feeResponse.json();
-            if (feeData.success) {
-                setDeliveryFee(feeData.data.totalFee);
-                setDeliveryFeeBreakdown(feeData.data.breakdown);
+            const feeResponse = await calculateDeliveryFeeByDistance(numericDistance);
+            if (feeResponse.data?.success) {
+                setDeliveryFee(feeResponse.data.data.totalFee);
+                setDeliveryFeeBreakdown(feeResponse.data.data.breakdown);
             }
         } catch (err) {
             console.error('Failed to calculate delivery fee:', err);
@@ -448,20 +446,7 @@ const Checkout = () => {
 
                 // Calculate delivery fee based on distance
                 if (data.isValid && data.distance) {
-                    try {
-                        const feeResponse = await fetch('/api/v1/delivery/calculate-fee', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ distanceKm: data.distance })
-                        });
-                        const feeData = await feeResponse.json();
-                        if (feeData.success) {
-                            setDeliveryFee(feeData.data.totalFee);
-                            setDeliveryFeeBreakdown(feeData.data.breakdown);
-                        }
-                    } catch (err) {
-                        console.error('Failed to calculate delivery fee:', err);
-                    }
+                    await fetchDeliveryFeeByDistance(data.distance);
                 }
 
                 if (!data.isValid) {

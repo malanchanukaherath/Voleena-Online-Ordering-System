@@ -746,20 +746,21 @@ exports.getDeliveryFeeConfig = async (req, res) => {
 exports.calculateDeliveryFee = async (req, res) => {
   try {
     const { distanceKm } = req.body;
+    const parsedDistanceKm = Number(distanceKm);
 
-    if (typeof distanceKm !== 'number' || distanceKm < 0) {
+    if (!Number.isFinite(parsedDistanceKm) || parsedDistanceKm < 0) {
       return res.status(400).json({
         success: false,
         message: 'Valid distanceKm (number >= 0) is required'
       });
     }
 
-    const feeCalculation = calculateDeliveryFee(distanceKm);
+    const feeCalculation = calculateDeliveryFee(parsedDistanceKm);
 
     res.json({
       success: true,
       data: {
-        distanceKm: distanceKm,
+        distanceKm: parsedDistanceKm,
         baseFee: feeCalculation.baseFee,
         distanceFee: feeCalculation.distanceFee,
         totalFee: feeCalculation.totalFee,

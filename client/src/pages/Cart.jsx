@@ -12,6 +12,7 @@ const Cart = () => {
 
     const [cartItems, setCartItems] = useState([]);
     const [validatingStock, setValidatingStock] = useState(true);
+    const [estimatedBaseDeliveryFee, setEstimatedBaseDeliveryFee] = useState(100);
 
     useEffect(() => {
         const validateCartStock = async () => {
@@ -59,6 +60,23 @@ const Cart = () => {
         validateCartStock();
     }, []);
 
+    useEffect(() => {
+        const fetchDeliveryFeeConfig = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/v1/delivery/fee-config`);
+                const data = await response.json();
+
+                if (data?.success && Number.isFinite(Number(data?.data?.baseFee))) {
+                    setEstimatedBaseDeliveryFee(Number(data.data.baseFee));
+                }
+            } catch (error) {
+                console.warn('Failed to fetch delivery fee config, using default estimate:', error);
+            }
+        };
+
+        fetchDeliveryFeeConfig();
+    }, []);
+
     const updateQuantity = (id, type, delta) => {
         setCartItems((items) => {
             const nextItems = items.map((item) => {
@@ -103,7 +121,7 @@ const Cart = () => {
     };
 
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    const deliveryFee = 100.00;
+    const deliveryFee = estimatedBaseDeliveryFee;
     const tax = subtotal * 0.08; // 8% tax
     const total = subtotal + deliveryFee + tax;
 
@@ -233,8 +251,11 @@ const Cart = () => {
                                 <span className="font-medium">LKR {subtotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Delivery Fee</span>
+                                <span className="text-gray-600">Estimated Delivery Fee (base)</span>
                                 <span className="font-medium">LKR {deliveryFee.toFixed(2)}</span>
+                            </div>
+                            <div className="text-xs text-gray-500">
+                                Final delivery fee is calculated at checkout based on distance.
                             </div>
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Tax (8%)</span>
