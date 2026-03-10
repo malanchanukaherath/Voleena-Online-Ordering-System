@@ -7,6 +7,18 @@ const getFromAddress = () => {
   return process.env.EMAIL_FROM || 'onboarding@resend.dev';
 };
 
+const shouldLogVerificationLink = () => {
+  return process.env.NODE_ENV !== 'production' && process.env.EMAIL_VERIFICATION_CONSOLE_LOG !== 'false';
+};
+
+const logVerificationLink = (email, verificationUrl, source = 'generated') => {
+  if (!shouldLogVerificationLink()) {
+    return;
+  }
+
+  console.log(`[DEV][email-verification:${source}] ${email} -> ${verificationUrl}`);
+};
+
 const isResendSandboxRestriction = (message = '') => {
   return (
     /only send testing emails to your own email address/i.test(message) ||
@@ -20,7 +32,7 @@ async function sendEmailVerificationLink(email, customerName, verificationUrl) {
       throw new Error('RESEND_API_KEY is missing in production');
     }
 
-    console.log('DEV email verification link for', email, verificationUrl);
+    logVerificationLink(email, verificationUrl, 'console_only');
     return {
       success: true,
       provider: 'console'
@@ -65,7 +77,7 @@ async function sendEmailVerificationLink(email, customerName, verificationUrl) {
 
     if (process.env.NODE_ENV !== 'production' && isResendSandboxRestriction(errorMessage)) {
       console.warn('Resend sandbox restriction encountered. Falling back to console email log.');
-      console.log('DEV email verification link for', email, verificationUrl);
+      logVerificationLink(email, verificationUrl, 'sandbox_fallback');
 
       return {
         success: true,
@@ -76,6 +88,8 @@ async function sendEmailVerificationLink(email, customerName, verificationUrl) {
 
     throw new Error(errorMessage);
   }
+
+  logVerificationLink(email, verificationUrl, 'resend_sent');
 
   return {
     success: true,
