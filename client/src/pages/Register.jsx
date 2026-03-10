@@ -115,8 +115,15 @@ const Register = () => {
     setLoading(false);
 
     if (result.success) {
-      const from = location.state?.from?.pathname || '/';
-      navigate(from, { replace: true });
+      navigate('/login', {
+        replace: true,
+        state: {
+          showVerifyHint: true,
+          email: formData.email.trim(),
+          registrationMessage: result.message,
+          emailSent: result.emailSent
+        }
+      });
     } else {
       setShowToast(true);
     }

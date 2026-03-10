@@ -39,7 +39,9 @@ class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        const authError = new Error(data.error || 'Login failed');
+        authError.code = data.code;
+        throw authError;
       }
 
       const { user, token } = data;
@@ -54,7 +56,8 @@ class AuthService {
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Login failed'
+        error: error.message || 'Login failed',
+        code: error.code
       };
     }
   }
@@ -71,7 +74,9 @@ class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Login failed');
+        const authError = new Error(data.error || 'Login failed');
+        authError.code = data.code;
+        throw authError;
       }
 
       const { user, token } = data;
@@ -86,7 +91,8 @@ class AuthService {
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Login failed'
+        error: error.message || 'Login failed',
+        code: error.code
       };
     }
   }
@@ -95,16 +101,13 @@ class AuthService {
   async register(userData) {
     try {
       const response = await realApi.register(userData);
-      const { user, token } = response.data;
 
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
-      if (response.data?.refreshToken) {
-        localStorage.setItem('refreshToken', response.data.refreshToken);
-      }
-      this.setTokenExpiry(response.data?.expiresIn);
-
-      return { success: true, user, token };
+      return {
+        success: true,
+        requiresEmailVerification: !!response.data?.requiresEmailVerification,
+        emailSent: response.data?.emailSent !== false,
+        message: response.data?.message || 'Registration successful'
+      };
     } catch (error) {
       return {
         success: false,
@@ -221,6 +224,57 @@ class AuthService {
       return {
         success: false,
         error: error.message || 'Password reset request failed'
+      };
+    }
+  }
+
+  // Verify customer email token
+  async verifyEmail(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/verify-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        const verifyError = new Error(data.error || 'Email verification failed');
+        verifyError.code = data.code;
+        throw verifyError;
+      }
+
+      return { success: true, ...data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Email verification failed',
+        code: error.code
+      };
+    }
+  }
+
+  // Resend customer verification email
+  async resendVerificationEmail(email) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/email-verification/resend`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to resend verification email');
+      }
+
+      return { success: true, ...data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.message || 'Failed to resend verification email'
       };
     }
   }

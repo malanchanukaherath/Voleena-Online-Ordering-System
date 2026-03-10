@@ -21,6 +21,7 @@ const AUTH_ACTIONS = {
   LOGIN_FAILURE: 'LOGIN_FAILURE',
   REGISTER_START: 'REGISTER_START',
   REGISTER_SUCCESS: 'REGISTER_SUCCESS',
+  REGISTER_COMPLETE: 'REGISTER_COMPLETE',
   REGISTER_FAILURE: 'REGISTER_FAILURE',
   LOGOUT: 'LOGOUT',
   CLEAR_ERROR: 'CLEAR_ERROR',
@@ -45,6 +46,13 @@ const authReducer = (state, action) => {
         user: action.payload.user,
         token: action.payload.token,
         isAuthenticated: true,
+        isLoading: false,
+        error: null
+      };
+
+    case AUTH_ACTIONS.REGISTER_COMPLETE:
+      return {
+        ...state,
         isLoading: false,
         error: null
       };
@@ -223,7 +231,7 @@ export const AuthProvider = ({ children }) => {
         type: AUTH_ACTIONS.LOGIN_FAILURE,
         payload: result.error
       });
-      return { success: false, error: result.error };
+      return { success: false, error: result.error, code: result.code };
     }
   };
 
@@ -235,10 +243,9 @@ export const AuthProvider = ({ children }) => {
 
     if (result.success) {
       dispatch({
-        type: AUTH_ACTIONS.REGISTER_SUCCESS,
-        payload: { user: result.user, token: result.token }
+        type: AUTH_ACTIONS.REGISTER_COMPLETE
       });
-      return { success: true };
+      return result;
     } else {
       dispatch({
         type: AUTH_ACTIONS.REGISTER_FAILURE,

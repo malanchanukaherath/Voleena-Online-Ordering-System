@@ -25,6 +25,19 @@ router.post('/customer/login', authLimiter, authController.customerLogin);
 router.post('/register', authLimiter, authController.register);
 
 /**
+ * @route POST /api/auth/verify-email
+ * @desc Verify customer email via one-time token
+ */
+router.post('/verify-email', authController.verifyEmail);
+
+/**
+ * @route POST /api/auth/email-verification/resend
+ * @desc Resend customer verification email
+ * CRITICAL: Rate limited to 3 attempts per 15 minutes
+ */
+router.post('/email-verification/resend', otpLimiter, authController.resendEmailVerification);
+
+/**
  * @route POST /api/auth/refresh
  * @desc Refresh authentication token
  */

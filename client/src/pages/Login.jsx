@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import authService from '../services/authService';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Card from '../components/ui/Card';
@@ -20,6 +21,9 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [verificationEmail, setVerificationEmail] = useState('');
+  const [resendingVerification, setResendingVerification] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -36,12 +40,23 @@ const Login = () => {
     }
   }, [error]);
 
+  useEffect(() => {
+    if (location.state?.showVerifyHint) {
+      setVerificationEmail((location.state?.email || '').trim().toLowerCase());
+      setNotice(location.state?.registrationMessage || 'Please verify your email before logging in.');
+    }
+  }, [location.state]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    if (name === 'email') {
+      setVerificationEmail(value.trim().toLowerCase());
+    }
 
     // Clear error when user starts typing
     if (errors[name]) {
@@ -54,6 +69,26 @@ const Login = () => {
     // Clear auth error
     if (error) {
       clearError();
+    }
+  };
+
+  const handleResendVerification = async () => {
+    const targetEmail = verificationEmail || formData.email.trim().toLowerCase();
+
+    if (!targetEmail) {
+      setNotice('Enter your email address first to resend verification.');
+      return;
+    }
+
+    setResendingVerification(true);
+    const result = await authService.resendVerificationEmail(targetEmail);
+    setResendingVerification(false);
+
+    if (result.success) {
+      setNotice(result.message || 'Verification email sent. Please check your inbox.');
+      setVerificationEmail(targetEmail);
+    } else {
+      setNotice(result.error || 'Unable to resend verification email. Try again shortly.');
     }
   };
 
@@ -89,6 +124,11 @@ const Login = () => {
       const from = location.state?.from?.pathname || '/';
       navigate(from, { replace: true });
     } else {
+      if (result.code === 'EMAIL_NOT_VERIFIED') {
+        const normalizedEmail = formData.email.trim().toLowerCase();
+        setVerificationEmail(normalizedEmail);
+        setNotice('Your email is not verified yet. Resend the verification email and complete verification to continue.');
+      }
       setShowToast(true);
     }
   };
@@ -117,6 +157,24 @@ const Login = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <Card className="py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          {notice && (
+            <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              {notice}
+              {(verificationEmail || formData.email.trim()) && (
+                <div className="mt-3">
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={resendingVerification}
+                    className="font-medium text-amber-900 underline hover:text-amber-700 disabled:opacity-60"
+                  >
+                    {resendingVerification ? 'Sending verification email...' : 'Resend verification email'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           <form className="space-y-6" onSubmit={handleSubmit}>
             <Input
               label="Email address"
@@ -164,9 +222,9 @@ const Login = () => {
               </div>
 
               <div className="text-sm">
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500">
+                <Link to="/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
                   Forgot your password?
-                </a>
+                </Link>
               </div>
             </div>
 
