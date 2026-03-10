@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaTruck, FaMapMarkedAlt, FaCheckCircle, FaClock, FaMapMarkerAlt, FaToggleOn, FaToggleOff, FaPhone, FaExternalLinkAlt } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
+import Button from '../components/ui/Button';
 import { deliveryService } from '../services/dashboardService';
 
 const DeliveryDashboard = () => {
@@ -155,6 +156,30 @@ const DeliveryDashboard = () => {
         }
     };
 
+    const getNextStatus = (status) => {
+        const map = {
+            ASSIGNED: 'PICKED_UP',
+            PICKED_UP: 'IN_TRANSIT',
+            IN_TRANSIT: 'DELIVERED'
+        };
+        return map[status];
+    };
+
+    const handleAdvanceStatus = async (deliveryId, status) => {
+        const nextStatus = getNextStatus(status);
+        if (!nextStatus) return;
+
+        try {
+            await deliveryService.updateDeliveryStatus(deliveryId, { status: nextStatus });
+            setActiveDeliveries((prev) => prev.map((delivery) => (
+                delivery.id === deliveryId ? { ...delivery, status: nextStatus } : delivery
+            )));
+        } catch (err) {
+            console.error('Failed to update delivery status:', err);
+            alert('Failed to update delivery status. Please try again.');
+        }
+    };
+
     const getGoogleMapsNavigationUrl = (delivery) => {
         if (!Number.isFinite(delivery?.lat) || !Number.isFinite(delivery?.lng)) {
             return null;
@@ -284,11 +309,31 @@ const DeliveryDashboard = () => {
                                         <p className="font-bold">{delivery.orderNumber}</p>
                                         <p className="text-sm text-gray-600">{delivery.customer}</p>
                                         <p className="text-xs text-gray-500">{delivery.address}</p>
+                                        {delivery.lat && delivery.lng && (
+                                            <p className="text-xs text-gray-400 mt-1">
+                                                GPS: {delivery.lat}, {delivery.lng}
+                                            </p>
+                                        )}
                                     </div>
                                     <StatusBadge status={delivery.status} type="delivery" />
                                 </div>
 
                                 <div className="flex flex-wrap gap-2 mt-3">
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleAdvanceStatus(delivery.id, delivery.status)}
+                                        disabled={!getNextStatus(delivery.status)}
+                                    >
+                                        Advance Status
+                                    </Button>
+                                    {delivery.phone && (
+                                        <a
+                                            href={`tel:${delivery.phone}`}
+                                            className="inline-flex items-center text-xs bg-primary-600 text-white px-3 py-1.5 rounded hover:bg-primary-700 transition"
+                                        >
+                                            <FaPhone className="mr-1" /> Call Customer
+                                        </a>
+                                    )}
                                     {getGoogleMapsNavigationUrl(delivery) && (
                                         <a
                                             href={getGoogleMapsNavigationUrl(delivery)}
@@ -297,14 +342,6 @@ const DeliveryDashboard = () => {
                                             className="inline-flex items-center text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition"
                                         >
                                             <FaExternalLinkAlt className="mr-1" /> Navigate
-                                        </a>
-                                    )}
-                                    {delivery.phone && (
-                                        <a
-                                            href={`tel:${delivery.phone}`}
-                                            className="inline-flex items-center text-xs bg-primary-600 text-white px-3 py-1.5 rounded hover:bg-primary-700 transition"
-                                        >
-                                            <FaPhone className="mr-1" /> Call
                                         </a>
                                     )}
                                 </div>

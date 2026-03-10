@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FaMapMarkedAlt, FaPhone, FaExternalLinkAlt } from 'react-icons/fa';
+import { FaMapMarkedAlt, FaPhone, FaExternalLinkAlt, FaMapMarkerAlt } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
 import { deliveryService } from '../services/dashboardService';
@@ -100,6 +100,12 @@ const ActiveDeliveries = () => {
                             <p className="text-sm text-gray-600 flex items-center">
                                 <FaMapMarkedAlt className="mr-2" />{delivery.address}
                             </p>
+                            {delivery.lat && delivery.lng && (
+                                <p className="text-xs text-gray-500 mt-2 flex items-center">
+                                    <FaMapMarkerAlt className="mr-2" />
+                                    GPS: {delivery.lat}, {delivery.lng}
+                                </p>
+                            )}
                         </div>
                         <div className="flex gap-2">
                             <Button

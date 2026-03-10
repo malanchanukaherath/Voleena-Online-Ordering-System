@@ -194,6 +194,10 @@ exports.updateDeliveryStatus = async (req, res) => {
 
     await delivery.update(updateData, { transaction });
 
+    // Fetch the current order to get its status BEFORE updating
+    const order = await Order.findByPk(delivery.OrderID, { transaction });
+    const previousOrderStatus = order ? order.Status : 'READY';
+
     // Update order status
     if (status === 'PICKED_UP' || status === 'IN_TRANSIT') {
       await Order.update(
@@ -238,7 +242,7 @@ exports.updateDeliveryStatus = async (req, res) => {
 
     await OrderStatusHistory.create({
       OrderID: delivery.OrderID,
-      OldStatus: previousStatus,
+      OldStatus: previousOrderStatus,
       NewStatus: status === 'DELIVERED' ? 'DELIVERED' : status === 'FAILED' ? 'READY' : 'OUT_FOR_DELIVERY',
       ChangedBy: staffId,
       ChangedByType: 'STAFF',
