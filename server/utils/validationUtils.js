@@ -133,11 +133,11 @@ function validateQuantity(quantity) {
 /**
  * Validate order type
  * 
- * @param {string} orderType - Order type (DELIVERY, TAKEAWAY)
+ * @param {string} orderType - Order type (ONLINE, DELIVERY, TAKEAWAY, WALK_IN)
  * @returns {boolean} True if valid order type
  */
 function validateOrderType(orderType) {
-    return ['DELIVERY', 'TAKEAWAY'].includes(orderType);
+    return ['ONLINE', 'DELIVERY', 'TAKEAWAY', 'WALK_IN'].includes(orderType);
 }
 
 /**

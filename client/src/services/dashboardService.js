@@ -125,6 +125,22 @@ class CashierService {
     return handleResponse(response);
   }
 
+  async createWalkInOrder(orderData) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/cashier/walkin-order`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(orderData)
+    });
+    return handleResponse(response);
+  }
+
+  async getMenuItemsForPos() {
+    const response = await fetch(`${API_BASE_URL}/api/v1/menu?isActive=true`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  }
+
   async confirmOrder(orderId) {
     const response = await fetch(`${API_BASE_URL}/api/v1/cashier/orders/${orderId}/confirm`, {
       method: 'PUT',

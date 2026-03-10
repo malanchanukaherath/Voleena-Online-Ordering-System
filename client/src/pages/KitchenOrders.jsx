@@ -24,6 +24,7 @@ const KitchenOrders = () => {
                     items: (order.items || []).map((item) => `${item.Quantity}x ${item.menuItem?.Name || 'Item'}`),
                     time: order.created_at || order.CreatedAt || order.createdAt,
                     status: order.Status,
+                    orderType: order.OrderType,
                     priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
                 }))
                 .sort((a, b) => getOrderTimestamp(b.time) - getOrderTimestamp(a.time));
@@ -104,7 +105,14 @@ const KitchenOrders = () => {
                     <div key={order.id} className={`bg-white rounded-lg shadow p-6 ${order.priority === 'high' ? 'border-l-4 border-red-500' : ''}`}>
                         <div className="flex justify-between items-start mb-4">
                             <div>
-                                <h3 className="font-bold text-lg">{order.orderNumber}</h3>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-bold text-lg">{order.orderNumber}</h3>
+                                    {order.orderType === 'WALK_IN' && (
+                                        <span className="text-xs font-semibold bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                                            WALK-IN
+                                        </span>
+                                    )}
+                                </div>
                                 <p className="text-sm text-gray-500">
                                     {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
                                 </p>

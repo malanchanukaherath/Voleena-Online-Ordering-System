@@ -15,6 +15,7 @@ router.get('/dashboard/stats', cashierController.getDashboardStats);
  * Orders Management
  */
 router.get('/orders', cashierController.getAllOrders);
+router.post('/walkin-order', cashierController.createWalkInOrder);
 router.put('/orders/:orderId/confirm', cashierController.confirmOrder);
 router.put('/orders/:orderId/cancel', cashierController.cancelOrder);
 

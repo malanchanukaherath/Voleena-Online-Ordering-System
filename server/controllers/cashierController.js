@@ -1,12 +1,43 @@
-const { Order, Customer, OrderItem, MenuItem, Delivery, Address, OrderStatusHistory, sequelize } = require('../models');
+const { Order, Customer, OrderItem, MenuItem, Delivery, Address, OrderStatusHistory, Payment, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const orderService = require('../services/orderService');
+
+const DEFAULT_GUEST_NAME = 'Walk-in Customer';
+const DEFAULT_GUEST_PHONE = process.env.WALKIN_GUEST_PHONE || '7000000000';
+
+async function findOrCreateGuestCustomer() {
+  const existingGuest = await Customer.findOne({
+    where: {
+      Name: DEFAULT_GUEST_NAME,
+      Phone: DEFAULT_GUEST_PHONE
+    }
+  });
+
+  if (existingGuest) {
+    return existingGuest;
+  }
+
+  const fallbackPassword = `${crypto.randomBytes(8).toString('hex')}A1!`;
+
+  return Customer.create({
+    Name: DEFAULT_GUEST_NAME,
+    Email: null,
+    Phone: DEFAULT_GUEST_PHONE,
+    Password: fallbackPassword,
+    AccountStatus: 'ACTIVE',
+    IsEmailVerified: false,
+    IsPhoneVerified: false,
+    PreferredNotification: 'SMS'
+  });
+}
 
 /**
  * Get cashier dashboard statistics
  */
 exports.getDashboardStats = async (req, res) => {
   try {
+    const { Op } = sequelize.Sequelize;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -40,7 +71,29 @@ exports.getDashboardStats = async (req, res) => {
     const newCustomers = await Customer.count({
       where: {
         created_at: {
-          [sequelize.Sequelize.Op.gte]: today
+          [Op.gte]: today
+        }
+      }
+    });
+
+    // Today's walk-in orders
+    const walkInOrders = await Order.count({
+      where: {
+        created_at: {
+          [Op.gte]: today
+        },
+        OrderType: 'WALK_IN'
+      }
+    });
+
+    // Today's online-channel orders (keeps legacy DELIVERY/TAKEAWAY compatible)
+    const onlineOrders = await Order.count({
+      where: {
+        created_at: {
+          [Op.gte]: today
+        },
+        OrderType: {
+          [Op.in]: ['ONLINE', 'DELIVERY', 'TAKEAWAY']
         }
       }
     });
@@ -51,12 +104,114 @@ exports.getDashboardStats = async (req, res) => {
         pendingOrders,
         todayOrders,
         todayRevenue: todayRevenue || 0,
-        newCustomers
+        newCustomers,
+        walkInOrders,
+        onlineOrders
       }
     });
   } catch (error) {
     console.error('Cashier dashboard stats error:', error);
     return res.status(500).json({ error: 'Failed to fetch dashboard statistics' });
+  }
+};
+
+/**
+ * Create walk-in order from cashier dashboard
+ */
+exports.createWalkInOrder = async (req, res) => {
+  try {
+    const { items, payment_method: paymentMethod, special_instructions: specialInstructions } = req.body;
+
+    if (!Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Order must contain at least one item' });
+    }
+
+    const normalizedPaymentMethod = String(paymentMethod || 'CASH').toUpperCase();
+    const allowedPaymentMethods = ['CASH', 'CARD', 'ONLINE', 'WALLET'];
+    if (!allowedPaymentMethods.includes(normalizedPaymentMethod)) {
+      return res.status(400).json({ error: 'Invalid payment method' });
+    }
+
+    const normalizedItems = items.map((item) => {
+      const rawMenuItemId = item.menuItemId ?? item.menu_item_id;
+      const rawComboId = item.comboId ?? item.combo_id;
+
+      return {
+        menuItemId: rawMenuItemId != null ? Number.parseInt(rawMenuItemId, 10) : null,
+        comboId: rawComboId != null ? Number.parseInt(rawComboId, 10) : null,
+        quantity: Number.parseInt(item.quantity, 10) || 0,
+        notes: item.notes || item.item_notes || null
+      };
+    });
+
+    const hasInvalidItem = normalizedItems.some((item) => {
+      const hasSelectableItem = Number.isInteger(item.menuItemId) || Number.isInteger(item.comboId);
+      return !hasSelectableItem || item.quantity < 1;
+    });
+
+    if (hasInvalidItem) {
+      return res.status(400).json({
+        error: 'Each item must include a valid menu_item_id or combo_id and quantity greater than 0'
+      });
+    }
+
+    const guestCustomer = await findOrCreateGuestCustomer();
+
+    const order = await orderService.createOrder(guestCustomer.CustomerID, {
+      orderType: 'WALK_IN',
+      specialInstructions: specialInstructions || null,
+      items: normalizedItems
+    });
+
+    const amount = Number(order.FinalAmount ?? order.TotalAmount ?? 0);
+    const isPaidAtCounter = normalizedPaymentMethod === 'CASH';
+
+    await Payment.create({
+      OrderID: order.OrderID,
+      Amount: amount,
+      Method: normalizedPaymentMethod,
+      Status: isPaidAtCounter ? 'PAID' : 'PENDING',
+      PaidAt: isPaidAtCounter ? new Date() : null,
+      GatewayStatus: isPaidAtCounter ? 'PAID_AT_COUNTER' : 'PENDING'
+    });
+
+    const completeOrder = await Order.findByPk(order.OrderID, {
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['CustomerID', 'Name', 'Email', 'Phone']
+        },
+        {
+          model: Payment,
+          as: 'payment',
+          attributes: ['PaymentID', 'Method', 'Status', 'Amount', 'PaidAt']
+        },
+        {
+          model: OrderItem,
+          as: 'items',
+          include: [{
+            model: MenuItem,
+            as: 'menuItem',
+            attributes: ['MenuItemID', 'Name', 'Price']
+          }]
+        }
+      ]
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: 'Walk-in order created and sent to kitchen',
+      data: completeOrder
+    });
+  } catch (error) {
+    console.error('Create walk-in order error:', error);
+    const errorMessage = error.message || 'Failed to create walk-in order';
+    const statusCode = /required|invalid|available|stock|outside|at least one item/i.test(errorMessage)
+      ? 400
+      : 500;
+
+    return res.status(statusCode).json({ error: errorMessage });
   }
 };
 

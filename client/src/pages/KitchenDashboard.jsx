@@ -31,6 +31,7 @@ const KitchenDashboard = () => {
                         items: (order.items || order.orderItems || []).reduce((sum, item) => sum + (item.Quantity || 0), 0),
                         time: order.CreatedAt || order.createdAt || order.created_at,
                         status: order.Status,
+                        orderType: order.OrderType,
                         priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
                     }))
                     .sort((a, b) => {
@@ -102,6 +103,11 @@ const KitchenDashboard = () => {
                                             <FaExclamationTriangle className="text-red-600" />
                                         )}
                                         <p className="font-bold">{order.orderNumber}</p>
+                                        {order.orderType === 'WALK_IN' && (
+                                            <span className="text-xs font-semibold bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                                                WALK-IN
+                                            </span>
+                                        )}
                                     </div>
                                     <p className="text-sm text-gray-600">
                                         {order.items} items • {order.time ? new Date(order.time).toLocaleString() : 'N/A'}

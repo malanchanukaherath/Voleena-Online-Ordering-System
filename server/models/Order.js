@@ -68,7 +68,7 @@ module.exports = (sequelize) => {
             field: 'status'
         },
         OrderType: {
-            type: DataTypes.ENUM('DELIVERY', 'TAKEAWAY'),
+            type: DataTypes.ENUM('ONLINE', 'DELIVERY', 'TAKEAWAY', 'WALK_IN'),
             allowNull: false,
             field: 'order_type'
         },

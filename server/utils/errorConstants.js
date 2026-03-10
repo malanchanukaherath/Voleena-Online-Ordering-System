@@ -74,7 +74,7 @@ const ERROR_CODES = {
   },
   INVALID_ORDER_TYPE: {
     code: '4207',
-    message: 'Invalid order type. Must be DELIVERY or TAKEAWAY',
+    message: 'Invalid order type. Must be ONLINE, DELIVERY, TAKEAWAY, or WALK_IN',
     statusCode: 400
   },
 

@@ -199,7 +199,7 @@ class OrderService {
             // Send confirmation notifications (FR15) - after successful commit
             try {
                 const customer = await Customer.findByPk(customerId);
-                if (customer) {
+                if (customer && orderType !== 'WALK_IN') {
                     if (customer.Email) {
                         await sendOrderConfirmationEmail(order, customer);
                     }
@@ -374,10 +374,10 @@ class OrderService {
 
             // Send notifications (FR15)
             try {
-                if (order.customer.Email) {
+                if (order.OrderType !== 'WALK_IN' && order.customer.Email) {
                     await sendOrderStatusUpdateEmail(order, order.customer, newStatus);
                 }
-                if (order.customer.Phone) {
+                if (order.OrderType !== 'WALK_IN' && order.customer.Phone) {
                     await sendOrderStatusUpdateSMS(order.customer.Phone, order.OrderNumber, newStatus);
                 }
             } catch (notifError) {

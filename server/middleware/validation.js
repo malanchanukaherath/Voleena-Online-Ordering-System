@@ -103,7 +103,7 @@ const validateStaffCreation = [
 const validateOrderCreation = [
     body('order_type')
         .notEmpty().withMessage('Order type is required')
-        .isIn(['DELIVERY', 'TAKEAWAY']).withMessage('Invalid order type'),
+        .isIn(['ONLINE', 'DELIVERY', 'TAKEAWAY', 'WALK_IN']).withMessage('Invalid order type'),
 
     body('items')
         .isArray({ min: 1 }).withMessage('Order must contain at least one item'),
