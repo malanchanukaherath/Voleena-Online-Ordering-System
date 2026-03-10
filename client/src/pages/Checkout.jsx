@@ -47,6 +47,7 @@ const Checkout = () => {
     const [mapCenter, setMapCenter] = useState(RESTAURANT_LOCATION);
     const [searchAutocomplete, setSearchAutocomplete] = useState(null);
     const [mapSearchValue, setMapSearchValue] = useState('');
+    const [deliveryAddressMethod, setDeliveryAddressMethod] = useState('');
     const cartItems = useMemo(() => getCart(), []);
     const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
@@ -187,6 +188,27 @@ const Checkout = () => {
         // Clear error when user starts typing
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const handleDeliveryAddressMethodChange = (method) => {
+        setDeliveryAddressMethod(method);
+        setErrors(prev => {
+            const next = { ...prev };
+            delete next.deliveryAddressMethod;
+            delete next.location;
+            delete next.submit;
+            return next;
+        });
+
+        setDistanceInfo(null);
+        setDeliveryFee(100);
+        setDeliveryFeeBreakdown('');
+        setLocationError('');
+
+        if (method === 'MANUAL') {
+            setCurrentLocation(null);
+            setMapCenter(RESTAURANT_LOCATION);
         }
     };
 
@@ -402,8 +424,14 @@ const Checkout = () => {
         if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
 
         if (formData.orderType === 'DELIVERY') {
-            if (!formData.addressLine1.trim()) newErrors.addressLine1 = 'Address is required';
-            if (!formData.city.trim()) newErrors.city = 'City is required';
+            if (!deliveryAddressMethod) {
+                newErrors.deliveryAddressMethod = 'Please choose one delivery address method';
+            } else if (deliveryAddressMethod === 'GPS') {
+                if (!currentLocation) newErrors.location = 'Please pin your delivery location or use your current location';
+            } else if (deliveryAddressMethod === 'MANUAL') {
+                if (!formData.addressLine1.trim()) newErrors.addressLine1 = 'Address is required';
+                if (!formData.city.trim()) newErrors.city = 'City is required';
+            }
         }
 
         setErrors(newErrors);
@@ -422,6 +450,14 @@ const Checkout = () => {
             return;
         }
 
+        if (formData.orderType === 'DELIVERY' && !deliveryAddressMethod) {
+            setErrors(prev => ({
+                ...prev,
+                deliveryAddressMethod: 'Please choose one delivery address method'
+            }));
+            return;
+        }
+
         try {
             let addressId = null;
 
@@ -429,8 +465,11 @@ const Checkout = () => {
                 // Validate delivery distance before placing order
                 let distanceValidation;
 
-                // If we have GPS coordinates, use them directly
-                if (currentLocation) {
+                if (deliveryAddressMethod === 'GPS') {
+                    if (!currentLocation) {
+                        throw new Error('Please pin your delivery location or use your current location');
+                    }
+
                     distanceValidation = await validateDeliveryDistance({
                         latitude: currentLocation.lat,
                         longitude: currentLocation.lng
@@ -457,15 +496,26 @@ const Checkout = () => {
                     );
                 }
 
-                // Create address - include GPS coordinates if available
+                const fallbackGpsAddress = currentLocation
+                    ? `Pinned location (${currentLocation.lat.toFixed(6)}, ${currentLocation.lng.toFixed(6)})`
+                    : '';
+
+                const resolvedAddressLine1 = formData.addressLine1.trim() || (deliveryAddressMethod === 'GPS' ? fallbackGpsAddress : '');
+                const resolvedCity = formData.city.trim() || (deliveryAddressMethod === 'GPS' ? 'Location Pin' : '');
+
+                if (!resolvedAddressLine1 || !resolvedCity) {
+                    throw new Error('Delivery address details are incomplete. Please provide address and city.');
+                }
+
+                // Create address - include coordinates only for GPS mode
                 const addressResponse = await createAddress({
-                    addressLine1: formData.addressLine1,
+                    addressLine1: resolvedAddressLine1,
                     addressLine2: formData.addressLine2 || null,
-                    city: formData.city,
+                    city: resolvedCity,
                     postalCode: formData.postalCode || null,
                     district: null,
-                    latitude: currentLocation?.lat || null,
-                    longitude: currentLocation?.lng || null
+                    latitude: deliveryAddressMethod === 'GPS' ? currentLocation?.lat || null : null,
+                    longitude: deliveryAddressMethod === 'GPS' ? currentLocation?.lng || null : null
                 });
                 addressId = addressResponse.data?.address?.id || addressResponse.data?.addressId || null;
             }
@@ -635,8 +685,14 @@ const Checkout = () => {
                                 <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                     <p className="text-sm font-medium text-gray-700 mb-3">Choose how to provide your delivery address:</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {/* Option 1: GPS Location */}
-                                        <div className="flex items-start space-x-3 p-3 bg-white rounded border border-gray-200">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeliveryAddressMethodChange('GPS')}
+                                            className={`text-left flex items-start space-x-3 p-3 bg-white rounded border-2 transition-colors ${deliveryAddressMethod === 'GPS'
+                                                ? 'border-blue-500 bg-blue-50'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                        >
                                             <div className="flex-shrink-0 mt-0.5">
                                                 <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                                                     <FaMapMarkerAlt className="text-blue-600" />
@@ -644,30 +700,18 @@ const Checkout = () => {
                                             </div>
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium text-gray-900">GPS Location</p>
-                                                <p className="text-xs text-gray-600 mt-1">Use if you're AT the delivery address now</p>
-                                                <button
-                                                    type="button"
-                                                    onClick={handleUseCurrentLocation}
-                                                    disabled={gettingLocation}
-                                                    className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-1.5 text-xs bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-                                                >
-                                                    {gettingLocation ? (
-                                                        <>
-                                                            <FaSpinner className="animate-spin" />
-                                                            Getting...
-                                                        </>
-                                                    ) : (
-                                                        <>
-                                                            <FaMapMarkerAlt />
-                                                            Use Current Location
-                                                        </>
-                                                    )}
-                                                </button>
+                                                <p className="text-xs text-gray-600 mt-1">Pin on map or use your current location</p>
                                             </div>
-                                        </div>
+                                        </button>
 
-                                        {/* Option 2: Manual Entry */}
-                                        <div className="flex items-start space-x-3 p-3 bg-white rounded border border-gray-200">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeliveryAddressMethodChange('MANUAL')}
+                                            className={`text-left flex items-start space-x-3 p-3 bg-white rounded border-2 transition-colors ${deliveryAddressMethod === 'MANUAL'
+                                                ? 'border-green-500 bg-green-50'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                        >
                                             <div className="flex-shrink-0 mt-0.5">
                                                 <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
                                                     <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -677,180 +721,228 @@ const Checkout = () => {
                                             </div>
                                             <div className="flex-1">
                                                 <p className="text-sm font-medium text-gray-900">Manual Entry</p>
-                                                <p className="text-xs text-gray-600 mt-1">Enter any address (home, office, etc.)</p>
-                                                <p className="text-xs text-blue-600 mt-2">👇 Fill the form below</p>
+                                                <p className="text-xs text-gray-600 mt-1">Type your full delivery address</p>
                                             </div>
-                                        </div>
+                                        </button>
                                     </div>
+
+                                    {errors.deliveryAddressMethod && (
+                                        <p className="text-sm text-red-600 mt-3">{errors.deliveryAddressMethod}</p>
+                                    )}
                                 </div>
 
-                                {googleMapsApiKey ? (
-                                    <div className="mb-6 rounded-lg border border-gray-200 overflow-hidden">
-                                        <LoadScript googleMapsApiKey={googleMapsApiKey} libraries={DELIVERY_MAP_LIBRARIES}>
-                                            <div className="p-4 border-b border-gray-200 bg-white">
-                                                <p className="text-sm font-medium text-gray-800 mb-2">Pin exact delivery point on map</p>
-                                                <p className="text-xs text-gray-600 mb-3">
-                                                    Search a nearby area, then click or drag the marker to the exact location.
-                                                </p>
-                                                <Autocomplete
-                                                    onLoad={setSearchAutocomplete}
-                                                    onPlaceChanged={handlePlaceChanged}
-                                                    options={{
-                                                        componentRestrictions: { country: 'lk' },
-                                                        fields: ['formatted_address', 'geometry', 'address_components', 'name']
-                                                    }}
-                                                >
-                                                    <input
-                                                        type="text"
-                                                        value={mapSearchValue}
-                                                        onChange={(e) => setMapSearchValue(e.target.value)}
-                                                        placeholder="Search area, street, or landmark (e.g., Kalagedihena, Gampaha)"
-                                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
-                                                    />
-                                                </Autocomplete>
-                                            </div>
-
-                                            <GoogleMap
-                                                mapContainerStyle={{ width: '100%', height: '320px' }}
-                                                center={currentLocation || mapCenter}
-                                                zoom={currentLocation ? 16 : 13}
-                                                onClick={handleMapClick}
-                                                options={{
-                                                    fullscreenControl: false,
-                                                    mapTypeControl: false,
-                                                    streetViewControl: false,
-                                                }}
+                                {deliveryAddressMethod === 'GPS' && (
+                                    <>
+                                        <div className="mb-4">
+                                            <button
+                                                type="button"
+                                                onClick={handleUseCurrentLocation}
+                                                disabled={gettingLocation}
+                                                className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
                                             >
-                                                {currentLocation && (
-                                                    <Marker
-                                                        position={currentLocation}
-                                                        draggable
-                                                        onDragEnd={handleMarkerDragEnd}
-                                                    />
+                                                {gettingLocation ? (
+                                                    <>
+                                                        <FaSpinner className="animate-spin" />
+                                                        Getting current location...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <FaMapMarkerAlt />
+                                                        Use Current Location
+                                                    </>
                                                 )}
-                                            </GoogleMap>
-                                        </LoadScript>
-
-                                        <div className="p-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-700">
-                                            Tip: This works even when you are not physically at the delivery address. Pick the home/office location directly on the map.
+                                            </button>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-                                        Map pinning is unavailable because Google Maps key is missing. You can still place orders using manual address fields.
-                                    </div>
-                                )}
 
-                                {locationError && (
-                                    <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
-                                        {locationError}
-                                    </div>
-                                )}
+                                        {googleMapsApiKey ? (
+                                            <div className="mb-6 rounded-lg border border-gray-200 overflow-hidden">
+                                                <LoadScript googleMapsApiKey={googleMapsApiKey} libraries={DELIVERY_MAP_LIBRARIES}>
+                                                    <div className="p-4 border-b border-gray-200 bg-white">
+                                                        <p className="text-sm font-medium text-gray-800 mb-2">Pin exact delivery point on map</p>
+                                                        <p className="text-xs text-gray-600 mb-3">
+                                                            Search a nearby area, then click or drag the marker to the exact location.
+                                                        </p>
+                                                        <Autocomplete
+                                                            onLoad={setSearchAutocomplete}
+                                                            onPlaceChanged={handlePlaceChanged}
+                                                            options={{
+                                                                componentRestrictions: { country: 'lk' },
+                                                                fields: ['formatted_address', 'geometry', 'address_components', 'name']
+                                                            }}
+                                                        >
+                                                            <input
+                                                                type="text"
+                                                                value={mapSearchValue}
+                                                                onChange={(e) => setMapSearchValue(e.target.value)}
+                                                                placeholder="Search area, street, or landmark (e.g., Kalagedihena, Gampaha)"
+                                                                className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                            />
+                                                        </Autocomplete>
+                                                    </div>
 
-                                {currentLocation && (
-                                    <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-700 flex items-start">
-                                        <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                        </svg>
-                                        <div>
-                                            <p className="font-medium">GPS coordinates captured successfully!</p>
-                                            <p className="text-xs mt-1 opacity-90">Coordinates: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</p>
-                                            <p className="text-xs mt-1">You can still fill in the address fields below for delivery details.</p>
-                                        </div>
-                                    </div>
-                                )}
+                                                    <GoogleMap
+                                                        mapContainerStyle={{ width: '100%', height: '320px' }}
+                                                        center={currentLocation || mapCenter}
+                                                        zoom={currentLocation ? 16 : 13}
+                                                        onClick={handleMapClick}
+                                                        options={{
+                                                            fullscreenControl: false,
+                                                            mapTypeControl: false,
+                                                            streetViewControl: false,
+                                                        }}
+                                                    >
+                                                        {currentLocation && (
+                                                            <Marker
+                                                                position={currentLocation}
+                                                                draggable
+                                                                onDragEnd={handleMarkerDragEnd}
+                                                            />
+                                                        )}
+                                                    </GoogleMap>
+                                                </LoadScript>
 
-                                <div className="space-y-4">
-                                    <Input
-                                        label="Address Line 1"
-                                        name="addressLine1"
-                                        value={formData.addressLine1}
-                                        onChange={handleChange}
-                                        onBlur={validateDeliveryAddressDistance}
-                                        error={errors.addressLine1}
-                                        required
-                                    />
-                                    <Input
-                                        label="Address Line 2"
-                                        name="addressLine2"
-                                        value={formData.addressLine2}
-                                        onChange={handleChange}
-                                    />
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <Input
-                                            label="City"
-                                            name="city"
-                                            value={formData.city}
-                                            onChange={handleChange}
-                                            onBlur={validateDeliveryAddressDistance}
-                                            error={errors.city}
-                                            required
-                                        />
-                                        <Input
-                                            label="Postal Code"
-                                            name="postalCode"
-                                            value={formData.postalCode}
-                                            onChange={handleChange}
-                                        />
-                                    </div>
-
-                                    {/* Distance Validation Status */}
-                                    {validatingDistance && (
-                                        <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
-                                            Validating delivery distance...
-                                        </div>
-                                    )}
-
-                                    {distanceInfo && (
-                                        <div className={`p-3 rounded border-2 ${distanceInfo.isValid
-                                            ? 'bg-green-50 border-green-200 text-green-700'
-                                            : 'bg-red-50 border-red-200 text-red-700'
-                                            }`}>
-                                            <div className="text-sm font-semibold">
-                                                Delivery Distance: {distanceInfo.distance.toFixed(2)} km
-                                            </div>
-                                            <div className="text-xs mt-1">
-                                                {distanceInfo.isValid
-                                                    ? `✓ Within service area (max ${distanceInfo.maxDistance}km)`
-                                                    : `✗ Outside service area (max ${distanceInfo.maxDistance}km)`
-                                                }
-                                            </div>
-                                            <div className="text-xs mt-1 opacity-75">
-                                                Calculated via {distanceInfo.method === 'google_maps' ? 'Google Maps' : 'straight-line approximation'}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {errors.distance && (
-                                        <div className="p-4 bg-red-50 border-l-4 border-red-400 rounded">
-                                            <div className="flex items-start">
-                                                <div className="flex-shrink-0">
-                                                    <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                                                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                                                    </svg>
+                                                <div className="p-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-700">
+                                                    Tip: This works even when you are not physically at the delivery address. Pick the home/office location directly on the map.
                                                 </div>
-                                                <div className="ml-3 flex-1">
-                                                    <p className="text-sm text-red-700 font-medium">{errors.distance}</p>
-                                                    {errors.distanceSuggestion && (
-                                                        <div className="mt-3">
-                                                            <p className="text-sm text-red-600 mb-2">
-                                                                💡 {errors.distanceSuggestion}
-                                                            </p>
-                                                            <button
-                                                                type="button"
-                                                                onClick={handleUseCurrentLocation}
-                                                                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
-                                                            >
-                                                                <FaMapMarkerAlt className="mr-1.5" />
-                                                                Use My GPS Location
-                                                            </button>
-                                                        </div>
+                                            </div>
+                                        ) : (
+                                            <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                                                Map pinning is unavailable because Google Maps key is missing. You can still use your current GPS location.
+                                            </div>
+                                        )}
+
+                                        {errors.location && (
+                                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                                                {errors.location}
+                                            </div>
+                                        )}
+
+                                        {locationError && (
+                                            <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
+                                                {locationError}
+                                            </div>
+                                        )}
+
+                                        {currentLocation && (
+                                            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded text-sm text-green-700 flex items-start">
+                                                <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                </svg>
+                                                <div>
+                                                    <p className="font-medium">GPS coordinates captured successfully!</p>
+                                                    <p className="text-xs mt-1 opacity-90">Coordinates: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</p>
+                                                    {(formData.addressLine1 || formData.city) && (
+                                                        <p className="text-xs mt-1">Detected address: {formData.addressLine1 || 'Pinned location'}{formData.city ? `, ${formData.city}` : ''}</p>
                                                     )}
                                                 </div>
                                             </div>
+                                        )}
+
+                                        <Input
+                                            label="Additional Delivery Details (Optional)"
+                                            name="addressLine2"
+                                            value={formData.addressLine2}
+                                            onChange={handleChange}
+                                            placeholder="Apartment, floor, landmark, etc."
+                                        />
+                                    </>
+                                )}
+
+                                {deliveryAddressMethod === 'MANUAL' && (
+                                    <div className="space-y-4">
+                                        <Input
+                                            label="Address Line 1"
+                                            name="addressLine1"
+                                            value={formData.addressLine1}
+                                            onChange={handleChange}
+                                            onBlur={validateDeliveryAddressDistance}
+                                            error={errors.addressLine1}
+                                            required
+                                        />
+                                        <Input
+                                            label="Address Line 2"
+                                            name="addressLine2"
+                                            value={formData.addressLine2}
+                                            onChange={handleChange}
+                                        />
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <Input
+                                                label="City"
+                                                name="city"
+                                                value={formData.city}
+                                                onChange={handleChange}
+                                                onBlur={validateDeliveryAddressDistance}
+                                                error={errors.city}
+                                                required
+                                            />
+                                            <Input
+                                                label="Postal Code"
+                                                name="postalCode"
+                                                value={formData.postalCode}
+                                                onChange={handleChange}
+                                            />
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                )}
+
+                                {deliveryAddressMethod && validatingDistance && (
+                                    <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
+                                        Validating delivery distance...
+                                    </div>
+                                )}
+
+                                {deliveryAddressMethod && distanceInfo && (
+                                    <div className={`mt-4 p-3 rounded border-2 ${distanceInfo.isValid
+                                        ? 'bg-green-50 border-green-200 text-green-700'
+                                        : 'bg-red-50 border-red-200 text-red-700'
+                                        }`}>
+                                        <div className="text-sm font-semibold">
+                                            Delivery Distance: {distanceInfo.distance.toFixed(2)} km
+                                        </div>
+                                        <div className="text-xs mt-1">
+                                            {distanceInfo.isValid
+                                                ? `✓ Within service area (max ${distanceInfo.maxDistance}km)`
+                                                : `✗ Outside service area (max ${distanceInfo.maxDistance}km)`
+                                            }
+                                        </div>
+                                        <div className="text-xs mt-1 opacity-75">
+                                            Calculated via {distanceInfo.method === 'google_maps' ? 'Google Maps' : 'straight-line approximation'}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {deliveryAddressMethod && errors.distance && (
+                                    <div className="mt-4 p-4 bg-red-50 border-l-4 border-red-400 rounded">
+                                        <div className="flex items-start">
+                                            <div className="flex-shrink-0">
+                                                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                </svg>
+                                            </div>
+                                            <div className="ml-3 flex-1">
+                                                <p className="text-sm text-red-700 font-medium">{errors.distance}</p>
+                                                {errors.distanceSuggestion && (
+                                                    <div className="mt-3">
+                                                        <p className="text-sm text-red-600 mb-2">
+                                                            {errors.distanceSuggestion}
+                                                        </p>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                handleDeliveryAddressMethodChange('GPS');
+                                                                handleUseCurrentLocation();
+                                                            }}
+                                                            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                                                        >
+                                                            <FaMapMarkerAlt className="mr-1.5" />
+                                                            Use My GPS Location
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
 
