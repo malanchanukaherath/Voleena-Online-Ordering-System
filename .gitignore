@@ -6,3 +6,37 @@ node_modules
 !.env.example
 server/.env
 client/.env
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs
+*.log
+logs/
+
+# Node
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Build artifacts
+client/dist/
+coverage/
+
+# Env files
+.env
+.env.*
+!.env.example
+server/.env
+client/.env
+server/.env.local
+client/.env.local
+
+# Docker/K8s local secrets
+docker-compose.override.yml
+k8s/*.local.yaml
+k8s/secrets*.yaml
