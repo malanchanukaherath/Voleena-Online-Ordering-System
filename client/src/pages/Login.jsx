@@ -25,6 +25,14 @@ const Login = () => {
   const [verificationEmail, setVerificationEmail] = useState('');
   const [resendingVerification, setResendingVerification] = useState(false);
 
+  const buildRetryMessage = (result, fallbackMessage) => {
+    if (result?.retryAfterSeconds) {
+      return `${fallbackMessage} Try again in ${result.retryAfterSeconds} seconds.`;
+    }
+
+    return fallbackMessage;
+  };
+
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
@@ -88,7 +96,7 @@ const Login = () => {
       setNotice(result.message || 'Verification email sent. Please check your inbox.');
       setVerificationEmail(targetEmail);
     } else {
-      setNotice(result.error || 'Unable to resend verification email. Try again shortly.');
+      setNotice(buildRetryMessage(result, result.error || 'Unable to resend verification email. Try again shortly.'));
     }
   };
 

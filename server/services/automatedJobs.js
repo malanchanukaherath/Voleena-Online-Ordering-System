@@ -204,6 +204,23 @@ class AutomatedJobsService {
             if (deleted > 0) {
                 console.log(`✅ Cleaned ${deleted} expired tokens from blacklist`);
             }
+
+            const cleanupResult = await sequelize.query(
+                `DELETE FROM email_verification_token
+                 WHERE expires_at < NOW()
+                    OR (used_at IS NOT NULL AND used_at < DATE_SUB(NOW(), INTERVAL 7 DAY))`,
+                {
+                    type: sequelize.QueryTypes.DELETE
+                }
+            );
+
+            const deletedVerificationTokens = typeof cleanupResult === 'number'
+                ? cleanupResult
+                : Number(cleanupResult?.affectedRows || 0);
+
+            if (deletedVerificationTokens > 0) {
+                console.log(`✅ Cleaned ${deletedVerificationTokens} stale email verification tokens`);
+            }
         } catch (error) {
             console.error('❌ Error cleaning expired tokens:', error);
         }

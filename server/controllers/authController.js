@@ -10,6 +10,7 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || JWT_SECRET;
 const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRE || '7d';
 const EMAIL_VERIFICATION_TTL_MINUTES = parseInt(process.env.EMAIL_VERIFICATION_TTL_MINUTES || '30', 10);
 const EMAIL_RESEND_COOLDOWN_SECONDS = parseInt(process.env.EMAIL_RESEND_COOLDOWN_SECONDS || '60', 10);
+const VERIFICATION_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
 
 /**
  * Generate JWT Token with 30-minute expiry
@@ -61,7 +62,68 @@ const createEmailVerificationToken = async (customerId, invalidateExisting = tru
     }
   );
 
-  return token;
+  return {
+    token,
+    tokenHash
+  };
+};
+
+const markEmailVerificationTokenUsed = async (tokenHash) => {
+  await sequelize.query(
+    `UPDATE email_verification_token
+     SET used_at = NOW()
+     WHERE token_hash = ? AND used_at IS NULL`,
+    {
+      replacements: [tokenHash],
+      type: sequelize.QueryTypes.UPDATE
+    }
+  );
+};
+
+const issueVerificationEmail = async (customer, options = {}) => {
+  const { enforceCooldown = false } = options;
+
+  if (enforceCooldown) {
+    const [latestToken] = await sequelize.query(
+      `SELECT created_at
+       FROM email_verification_token
+       WHERE customer_id = ? AND used_at IS NULL
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      {
+        replacements: [customer.CustomerID],
+        type: sequelize.QueryTypes.SELECT
+      }
+    );
+
+    if (latestToken) {
+      const ageInSeconds = Math.floor((Date.now() - new Date(latestToken.created_at).getTime()) / 1000);
+      const retryAfterSeconds = Math.max(EMAIL_RESEND_COOLDOWN_SECONDS - ageInSeconds, 0);
+
+      if (retryAfterSeconds > 0) {
+        return {
+          sent: false,
+          skipped: true,
+          retryAfterSeconds
+        };
+      }
+    }
+  }
+
+  const { token, tokenHash } = await createEmailVerificationToken(customer.CustomerID);
+  const verificationUrl = buildEmailVerificationUrl(token);
+
+  try {
+    const delivery = await sendEmailVerificationLink(customer.Email, customer.Name, verificationUrl);
+
+    return {
+      sent: true,
+      delivery
+    };
+  } catch (error) {
+    await markEmailVerificationTokenUsed(tokenHash);
+    throw error;
+  }
 };
 
 /**
@@ -260,12 +322,10 @@ exports.register = async (req, res) => {
       PreferredNotification: 'BOTH'
     });
 
-    const verificationToken = await createEmailVerificationToken(customer.CustomerID);
-    const verificationUrl = buildEmailVerificationUrl(verificationToken);
     let emailSent = true;
 
     try {
-      await sendEmailVerificationLink(customer.Email, customer.Name, verificationUrl);
+      await issueVerificationEmail(customer);
     } catch (emailError) {
       emailSent = false;
       console.error('Email verification send failed:', emailError.message);
@@ -435,16 +495,18 @@ exports.verifyToken = async (req, res) => {
  * Verify email using one-time verification token
  */
 exports.verifyEmail = async (req, res) => {
+  const rawToken = (req.body?.token || '').trim();
+
+  if (!rawToken || !VERIFICATION_TOKEN_PATTERN.test(rawToken)) {
+    return res.status(400).json({
+      error: 'Invalid verification link',
+      code: 'INVALID_VERIFICATION_TOKEN'
+    });
+  }
+
   const transaction = await sequelize.transaction();
 
   try {
-    const rawToken = (req.body?.token || '').trim();
-
-    if (!rawToken) {
-      await transaction.rollback();
-      return res.status(400).json({ error: 'Verification token is required' });
-    }
-
     const tokenHash = hashVerificationToken(rawToken);
 
     const [record] = await sequelize.query(
@@ -533,7 +595,9 @@ exports.verifyEmail = async (req, res) => {
       message: 'Email verified successfully. You can now log in.'
     });
   } catch (error) {
-    await transaction.rollback();
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
     console.error('Email verification error:', error);
     return res.status(500).json({ error: 'Email verification failed' });
   }
@@ -568,32 +632,16 @@ exports.resendEmailVerification = async (req, res) => {
       });
     }
 
-    const [latestToken] = await sequelize.query(
-      `SELECT created_at
-       FROM email_verification_token
-       WHERE customer_id = ? AND used_at IS NULL
-       ORDER BY created_at DESC
-       LIMIT 1`,
-      {
-        replacements: [customer.CustomerID],
-        type: sequelize.QueryTypes.SELECT
-      }
-    );
+    const issueResult = await issueVerificationEmail(customer, { enforceCooldown: true });
 
-    if (latestToken) {
-      const ageInSeconds = Math.floor((Date.now() - new Date(latestToken.created_at).getTime()) / 1000);
-      if (ageInSeconds < EMAIL_RESEND_COOLDOWN_SECONDS) {
-        return res.json({
-          success: true,
-          message: 'A verification email was sent recently. Please check your inbox.'
-        });
-      }
+    if (issueResult.skipped) {
+      return res.status(429).json({
+        success: false,
+        code: 'VERIFICATION_EMAIL_COOLDOWN',
+        error: 'A verification email was sent recently. Please wait before requesting another.',
+        retryAfterSeconds: issueResult.retryAfterSeconds
+      });
     }
-
-    const verificationToken = await createEmailVerificationToken(customer.CustomerID);
-    const verificationUrl = buildEmailVerificationUrl(verificationToken);
-
-    await sendEmailVerificationLink(customer.Email, customer.Name, verificationUrl);
 
     return res.json(genericSuccess);
   } catch (error) {

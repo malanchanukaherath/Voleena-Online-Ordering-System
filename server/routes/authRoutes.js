@@ -1,7 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
-const { authLimiter, otpLimiter, passwordResetLimiter } = require('../middleware/rateLimiter');
+const {
+	authLimiter,
+	otpLimiter,
+	passwordResetLimiter,
+	verifyEmailLimiter
+} = require('../middleware/rateLimiter');
 
 /**
  * @route POST /api/auth/staff/login
@@ -28,7 +33,7 @@ router.post('/register', authLimiter, authController.register);
  * @route POST /api/auth/verify-email
  * @desc Verify customer email via one-time token
  */
-router.post('/verify-email', authController.verifyEmail);
+router.post('/verify-email', verifyEmailLimiter, authController.verifyEmail);
 
 /**
  * @route POST /api/auth/email-verification/resend

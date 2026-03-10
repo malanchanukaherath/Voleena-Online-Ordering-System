@@ -5,6 +5,13 @@ import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import authService from '../services/authService';
 
+const verificationMessages = {
+  INVALID_VERIFICATION_TOKEN: 'This verification link is invalid.',
+  VERIFICATION_TOKEN_USED: 'This verification link has already been used.',
+  VERIFICATION_TOKEN_EXPIRED: 'This verification link has expired. Enter your email below to request a new one.',
+  VERIFICATION_EMAIL_COOLDOWN: 'A verification email was sent recently. Please wait before requesting another.'
+};
+
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const token = useMemo(() => searchParams.get('token') || '', [searchParams]);
@@ -14,11 +21,19 @@ const VerifyEmail = () => {
   const [email, setEmail] = useState('');
   const [resending, setResending] = useState(false);
 
+  const buildRetryMessage = (result, fallbackMessage) => {
+    if (result?.retryAfterSeconds) {
+      return `${fallbackMessage} Try again in ${result.retryAfterSeconds} seconds.`;
+    }
+
+    return fallbackMessage;
+  };
+
   useEffect(() => {
     const verify = async () => {
       if (!token) {
         setStatus('error');
-        setMessage('Invalid verification link.');
+        setMessage(verificationMessages.INVALID_VERIFICATION_TOKEN);
         return;
       }
 
@@ -30,7 +45,10 @@ const VerifyEmail = () => {
       }
 
       setStatus('error');
-      setMessage(result.error || 'Verification failed. Please request a new verification email.');
+      setMessage(buildRetryMessage(
+        result,
+        verificationMessages[result.code] || result.error || 'Verification failed. Please request a new verification email.'
+      ));
     };
 
     verify();
@@ -51,7 +69,10 @@ const VerifyEmail = () => {
       return;
     }
 
-    setMessage(result.error || 'Unable to resend verification email.');
+    setMessage(buildRetryMessage(
+      result,
+      verificationMessages[result.code] || result.error || 'Unable to resend verification email.'
+    ));
   };
 
   return (

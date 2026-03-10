@@ -69,6 +69,22 @@ const otpLimiter = rateLimit({
 });
 
 /**
+ * Email verification token validation limiter
+ */
+const verifyEmailLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 20,
+    message: {
+        success: false,
+        error: 'Too many verification attempts, please try again later'
+    },
+    store: redisClient ? new RedisStore({
+        client: redisClient,
+        prefix: 'rl:verify-email:'
+    }) : undefined
+});
+
+/**
  * Order creation rate limiter
  */
 const orderLimiter = rateLimit({
@@ -145,6 +161,7 @@ module.exports = {
     apiLimiter,
     authLimiter,
     otpLimiter,
+    verifyEmailLimiter,
     orderLimiter,
     paymentLimiter,
     confirmOrderLimiter,

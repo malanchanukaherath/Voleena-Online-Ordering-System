@@ -267,14 +267,19 @@ class AuthService {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to resend verification email');
+        const resendError = new Error(data.error || 'Failed to resend verification email');
+        resendError.code = data.code;
+        resendError.retryAfterSeconds = data.retryAfterSeconds;
+        throw resendError;
       }
 
       return { success: true, ...data };
     } catch (error) {
       return {
         success: false,
-        error: error.message || 'Failed to resend verification email'
+        error: error.message || 'Failed to resend verification email',
+        code: error.code,
+        retryAfterSeconds: error.retryAfterSeconds
       };
     }
   }
