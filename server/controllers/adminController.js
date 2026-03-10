@@ -11,8 +11,7 @@ const {
   Delivery,
   DeliveryStaffAvailability,
   Feedback,
-  sequelize,
-  literal
+  sequelize
 } = require('../models');
 const bcrypt = require('bcryptjs');
 
@@ -115,7 +114,12 @@ exports.getDashboardStats = async (req, res) => {
  */
 exports.getMonthlySalesReport = async (req, res) => {
   try {
-    const { year, month } = req.query;
+    const year = parseInt(req.query.year, 10);
+    const month = parseInt(req.query.month, 10);
+
+    if (!year || !month || isNaN(year) || isNaN(month) || month < 1 || month > 12 || year < 2000 || year > 2100) {
+      return res.status(400).json({ error: 'Valid year and month (1-12) are required' });
+    }
 
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0, 23, 59, 59);
@@ -356,7 +360,7 @@ exports.getAllStaff = async (req, res) => {
         as: 'role',
         attributes: ['RoleID', 'RoleName', 'Description']
       }],
-      order: [[literal('`Staff`.`created_at`'), 'DESC']]
+      order: [[sequelize.literal('`Staff`.`created_at`'), 'DESC']]
     });
 
     return res.json({

@@ -46,12 +46,6 @@ export const validatePhone = (phone) => {
   return phoneRegex.test(phone.replace(/\s/g, ''));
 };
 
-// Calculate tax
-export const calculateTax = (amount, taxRate = 0.08) => {
-  // Return rounded tax in LKR
-  return Math.round(amount * taxRate);
-};
-
 // Calculate delivery fee
 export const calculateDeliveryFee = (distance) => {
   // Use LKR values for delivery fee

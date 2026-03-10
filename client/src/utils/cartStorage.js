@@ -158,14 +158,11 @@ export const getCartTotal = (orderType = 'DELIVERY') => {
   const items = getCart();
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   const deliveryFee = orderType === 'DELIVERY' ? 150 : 0;
-  const taxRate = 0.08;
-  const tax = subtotal * taxRate;
-  const total = subtotal + deliveryFee + tax;
+  const total = subtotal + deliveryFee;
 
   return {
     subtotal: parseFloat(subtotal.toFixed(2)),
     deliveryFee: parseFloat(deliveryFee.toFixed(2)),
-    tax: parseFloat(tax.toFixed(2)),
     total: parseFloat(total.toFixed(2))
   };
 };

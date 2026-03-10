@@ -3,7 +3,6 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const compression = require('compression');
-const csrf = require('csurf');
 require('dotenv').config();
 
 const sequelize = require('./config/database');

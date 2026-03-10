@@ -11,7 +11,7 @@ function handleValidationErrors(req, res, next) {
             success: false,
             error: 'Validation failed',
             details: errors.array().map(err => ({
-                field: err.param,
+                field: err.path,
                 message: err.msg,
                 value: err.value
             }))

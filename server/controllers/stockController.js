@@ -1,4 +1,4 @@
-const { DailyStock, StockMovement, MenuItem, sequelize, literal } = require('../models');
+const { DailyStock, StockMovement, MenuItem, sequelize } = require('../models');
 const stockService = require('../services/stockService');
 
 /**
@@ -281,7 +281,7 @@ exports.getStockMovements = async (req, res) => {
                 as: 'menuItem',
                 attributes: ['MenuItemID', 'Name']
             }],
-            order: [[literal('`StockMovement`.`created_at`'), 'DESC']],
+            order: [[sequelize.literal('`StockMovement`.`created_at`'), 'DESC']],
             limit: 100
         });
 

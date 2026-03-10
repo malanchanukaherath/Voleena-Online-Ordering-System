@@ -694,7 +694,7 @@ const Checkout = () => {
         }
     };
 
-    // Cart summary (no tax - business decision to show only delivery fee)
+    // Cart summary (business decision: show only delivery fee)
     const cartSummary = {
         subtotal: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
         deliveryFee: formData.orderType === 'DELIVERY' ? deliveryFee : 0,

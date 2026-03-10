@@ -122,8 +122,7 @@ const Cart = () => {
 
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const deliveryFee = estimatedBaseDeliveryFee;
-    const tax = subtotal * 0.08; // 8% tax
-    const total = subtotal + deliveryFee + tax;
+    const total = subtotal + deliveryFee;
 
     if (cartItems.length === 0) {
         return (
@@ -256,10 +255,6 @@ const Cart = () => {
                             </div>
                             <div className="text-xs text-gray-500">
                                 Final delivery fee is calculated at checkout based on distance.
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Tax (8%)</span>
-                                <span className="font-medium">LKR {tax.toFixed(2)}</span>
                             </div>
                             <div className="border-t pt-3 flex justify-between">
                                 <span className="font-semibold text-lg">Total</span>

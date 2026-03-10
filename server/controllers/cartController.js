@@ -155,7 +155,7 @@ exports.validateCart = async (req, res) => {
 
 /**
  * Get cart summary with pricing
- * Includes subtotal, estimated delivery fee, tax
+ * Includes subtotal and estimated delivery fee
  * 
  * POST /api/v1/cart/summary
  */
@@ -201,7 +201,7 @@ exports.getCartSummary = async (req, res) => {
             }
         }
 
-        // Calculate fees (no tax as per business decision)
+        // Calculate fees (business decision: delivery fee only)
         // Note: Delivery fee shown here is base fee only. Actual fee calculated at checkout based on distance.
         const BASE_DELIVERY_FEE = parseFloat(process.env.BASE_DELIVERY_FEE) || 100;
         const deliveryFee = orderType === 'DELIVERY' ? BASE_DELIVERY_FEE : 0;

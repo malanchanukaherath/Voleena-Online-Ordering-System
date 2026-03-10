@@ -10,10 +10,24 @@ try {
         redisClient = redis.createClient({
             url: process.env.REDIS_URL
         });
-        redisClient.connect();
+        redisClient.connect().catch(err => {
+            console.warn('Redis connection failed, using memory store for rate limiting:', err.message);
+            redisClient = null;
+        });
     }
 } catch (error) {
     console.warn('Redis not available, using memory store for rate limiting');
+}
+
+/**
+ * Helper to create a RedisStore using the rate-limit-redis v4 API (sendCommand)
+ */
+function makeRedisStore(prefix) {
+    if (!redisClient) return undefined;
+    return new RedisStore({
+        sendCommand: (...args) => redisClient.sendCommand(args),
+        prefix
+    });
 }
 
 /**
@@ -28,28 +42,22 @@ const apiLimiter = rateLimit({
     },
     standardHeaders: true,
     legacyHeaders: false,
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:api:'
-    }) : undefined
+    store: makeRedisStore('rl:api:')
 });
 
 /**
  * Strict rate limiter for authentication endpoints
- * In development, limit is raised to 1000 to avoid blocking test logins
+ * Production: 10 attempts per 15 minutes; Development: 100 attempts
  */
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: process.env.NODE_ENV === 'production' ? 1000 : 1000,
+    max: process.env.NODE_ENV === 'production' ? 10 : 100,
     message: {
         success: false,
         error: 'Too many login attempts, please try again after 15 minutes'
     },
     skipSuccessfulRequests: true,
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:auth:'
-    }) : undefined
+    store: makeRedisStore('rl:auth:')
 });
 
 /**
@@ -62,10 +70,7 @@ const otpLimiter = rateLimit({
         success: false,
         error: 'Too many OTP requests, please try again after 15 minutes'
     },
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:otp:'
-    }) : undefined
+    store: makeRedisStore('rl:otp:')
 });
 
 /**
@@ -78,10 +83,7 @@ const verifyEmailLimiter = rateLimit({
         success: false,
         error: 'Too many verification attempts, please try again later'
     },
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:verify-email:'
-    }) : undefined
+    store: makeRedisStore('rl:verify-email:')
 });
 
 /**
@@ -94,10 +96,7 @@ const orderLimiter = rateLimit({
         success: false,
         error: 'Too many orders, please slow down'
     },
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:order:'
-    }) : undefined
+    store: makeRedisStore('rl:order:')
 });
 
 /**
@@ -110,10 +109,7 @@ const passwordResetLimiter = rateLimit({
         success: false,
         error: 'Too many password reset attempts, please try again after 1 hour'
     },
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:reset:'
-    }) : undefined
+    store: makeRedisStore('rl:reset:')
 });
 
 /**
@@ -134,10 +130,7 @@ const paymentLimiter = rateLimit({
         }
         return false;
     },
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:payment:'
-    }) : undefined
+    store: makeRedisStore('rl:payment:')
 });
 
 /**
@@ -151,10 +144,7 @@ const confirmOrderLimiter = rateLimit({
         success: false,
         error: 'Too many confirmation attempts, please slow down'
     },
-    store: redisClient ? new RedisStore({
-        client: redisClient,
-        prefix: 'rl:confirm:'
-    }) : undefined
+    store: makeRedisStore('rl:confirm:')
 });
 
 module.exports = {
