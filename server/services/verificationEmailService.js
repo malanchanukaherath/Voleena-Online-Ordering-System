@@ -4,7 +4,14 @@ const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 const getFromAddress = () => {
-  return process.env.EMAIL_FROM || process.env.SMTP_FROM || 'Voleena Foods <noreply@voleenafoods.lk>';
+  return process.env.EMAIL_FROM || 'onboarding@resend.dev';
+};
+
+const isResendSandboxRestriction = (message = '') => {
+  return (
+    /only send testing emails to your own email address/i.test(message) ||
+    /verify a domain/i.test(message)
+  );
 };
 
 async function sendEmailVerificationLink(email, customerName, verificationUrl) {
@@ -23,9 +30,9 @@ async function sendEmailVerificationLink(email, customerName, verificationUrl) {
   const safeName = customerName || 'Customer';
   const ttlMinutes = parseInt(process.env.EMAIL_VERIFICATION_TTL_MINUTES || '30', 10);
 
-  const { data, error } = await resend.emails.send({
+  const payload = {
     from: getFromAddress(),
-    to: [email],
+    to: email,
     subject: 'Verify your Voleena Foods account',
     html: `
       <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.5;">
@@ -40,10 +47,34 @@ async function sendEmailVerificationLink(email, customerName, verificationUrl) {
         <p>If you did not create this account, you can ignore this email.</p>
       </div>
     `
-  });
+  };
+
+  let data;
+  let error;
+
+  try {
+    const response = await resend.emails.send(payload);
+    data = response?.data;
+    error = response?.error;
+  } catch (sendError) {
+    error = sendError;
+  }
 
   if (error) {
-    throw new Error(error.message || 'Failed to send verification email');
+    const errorMessage = error.message || 'Failed to send verification email';
+
+    if (process.env.NODE_ENV !== 'production' && isResendSandboxRestriction(errorMessage)) {
+      console.warn('Resend sandbox restriction encountered. Falling back to console email log.');
+      console.log('DEV email verification link for', email, verificationUrl);
+
+      return {
+        success: true,
+        provider: 'console',
+        reason: 'resend_sandbox_restriction'
+      };
+    }
+
+    throw new Error(errorMessage);
   }
 
   return {

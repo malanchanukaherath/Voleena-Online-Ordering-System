@@ -49,7 +49,7 @@ export const realApi = {
    * Login user
    */
   login: async (email, password, userType = 'staff') => {
-    const endpoint = userType === 'customer' ? '/api/auth/customer/login' : '/api/auth/staff/login';
+    const endpoint = userType === 'customer' ? '/api/v1/auth/customer/login' : '/api/v1/auth/staff/login';
     return await backendApi.post(endpoint, { email, password });
   },
 
@@ -57,14 +57,14 @@ export const realApi = {
    * Register new customer
    */
   register: async (userData) => {
-    return await backendApi.post('/api/auth/register', userData);
+    return await backendApi.post('/api/v1/auth/register', userData);
   },
 
   /**
    * Verify JWT token
    */
   verifyToken: async () => {
-    return await backendApi.get('/api/auth/verify');
+    return await backendApi.get('/api/v1/auth/verify');
   },
 };
 

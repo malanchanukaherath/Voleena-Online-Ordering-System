@@ -30,7 +30,7 @@ class AuthService {
   // Staff Login (Admin, Cashier, Kitchen, Delivery)
   async staffLogin(email, password) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/staff/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/staff/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -65,7 +65,7 @@ class AuthService {
   // Customer Login
   async customerLogin(email, password) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/customer/login`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/customer/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -171,7 +171,7 @@ class AuthService {
         throw new Error('No refresh token available');
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -207,7 +207,7 @@ class AuthService {
   // Request password reset
   async requestPasswordReset(email, userType = 'Customer') {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/password-reset/request`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/password-reset/request`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, userType })
@@ -231,7 +231,7 @@ class AuthService {
   // Verify customer email token
   async verifyEmail(token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/verify-email`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token })
@@ -258,7 +258,7 @@ class AuthService {
   // Resend customer verification email
   async resendVerificationEmail(email) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/email-verification/resend`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/email-verification/resend`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -282,7 +282,7 @@ class AuthService {
   // Verify OTP
   async verifyResetOTP(email, otp, userType = 'Customer') {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/password-reset/verify-otp`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/password-reset/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, userType })
@@ -306,7 +306,7 @@ class AuthService {
   // Reset password
   async resetPassword(email, otp, newPassword, userType = 'Customer') {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/password-reset/reset`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/password-reset/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, otp, newPassword, userType })
