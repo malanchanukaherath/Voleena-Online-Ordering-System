@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
+import { LoadScript, GoogleMap, Marker, Autocomplete } from '@react-google-maps/api';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
@@ -8,6 +9,13 @@ import Textarea from '../components/ui/Textarea';
 import { StripePaymentModal } from '../components/payment/StripePaymentModal';
 import { getCart, clearCart } from '../utils/cartStorage';
 import { createAddress, createOrder, initiatePayment, validateDeliveryDistance } from '../services/orderApi';
+
+const RESTAURANT_LOCATION = {
+    lat: 7.120035696626918,
+    lng: 80.05250172082567,
+};
+
+const DELIVERY_MAP_LIBRARIES = ['places'];
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -36,7 +44,83 @@ const Checkout = () => {
     const [currentLocation, setCurrentLocation] = useState(null);
     const [gettingLocation, setGettingLocation] = useState(false);
     const [locationError, setLocationError] = useState('');
+    const [mapCenter, setMapCenter] = useState(RESTAURANT_LOCATION);
+    const [searchAutocomplete, setSearchAutocomplete] = useState(null);
+    const [mapSearchValue, setMapSearchValue] = useState('');
     const cartItems = useMemo(() => getCart(), []);
+    const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+    const fetchDeliveryFeeByDistance = async (distanceKm) => {
+        if (!distanceKm) return;
+
+        try {
+            const feeResponse = await fetch('/api/v1/delivery/calculate-fee', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ distanceKm })
+            });
+            const feeData = await feeResponse.json();
+            if (feeData.success) {
+                setDeliveryFee(feeData.data.totalFee);
+                setDeliveryFeeBreakdown(feeData.data.breakdown);
+            }
+        } catch (err) {
+            console.error('Failed to calculate delivery fee:', err);
+        }
+    };
+
+    const validateCoordinatesForDelivery = async (lat, lng, outsideMessagePrefix = 'Selected location') => {
+        try {
+            setValidatingDistance(true);
+            const response = await validateDeliveryDistance({ latitude: lat, longitude: lng });
+
+            if (response.data?.success) {
+                const data = response.data.data;
+                setDistanceInfo({
+                    isValid: data.isValid,
+                    distance: data.distance,
+                    maxDistance: data.maxDistance,
+                    method: data.method
+                });
+
+                if (data.isValid && data.distance) {
+                    await fetchDeliveryFeeByDistance(data.distance);
+                }
+
+                if (!data.isValid) {
+                    setErrors(prev => ({
+                        ...prev,
+                        distance: `${outsideMessagePrefix} is outside our delivery area (${data.distance.toFixed(2)}km > ${data.maxDistance}km)`,
+                        distanceSuggestion: null
+                    }));
+                } else {
+                    setErrors(prev => {
+                        const next = { ...prev };
+                        delete next.distance;
+                        delete next.distanceSuggestion;
+                        return next;
+                    });
+                    setLocationError('');
+                }
+            }
+        } catch (error) {
+            console.error('Coordinate validation error:', error);
+            setLocationError(error.response?.data?.message || 'Unable to validate selected location');
+        } finally {
+            setValidatingDistance(false);
+        }
+    };
+
+    const extractCityFromPlace = (place) => {
+        const components = place?.address_components || [];
+        const locality = components.find(component =>
+            component.types.includes('locality') ||
+            component.types.includes('postal_town') ||
+            component.types.includes('administrative_area_level_2')
+        );
+
+        return locality?.long_name || '';
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -65,71 +149,15 @@ const Checkout = () => {
                 const lng = position.coords.longitude;
 
                 setCurrentLocation({ lat, lng });
+                setMapCenter({ lat, lng });
                 setGettingLocation(false);
 
-                // Validate the GPS location directly
-                try {
-                    setValidatingDistance(true);
-                    const response = await validateDeliveryDistance({
-                        latitude: lat,
-                        longitude: lng
-                    });
+                await validateCoordinatesForDelivery(lat, lng, 'Your current location');
 
-                    console.log('[GPS Location Validation] Response:', response.data);
-
-                    if (response.data?.success) {
-                        const data = response.data.data;
-                        setDistanceInfo({
-                            isValid: data.isValid,
-                            distance: data.distance,
-                            maxDistance: data.maxDistance,
-                            method: data.method
-                        });
-
-                        // Calculate delivery fee based on GPS distance
-                        if (data.isValid && data.distance) {
-                            try {
-                                const feeResponse = await fetch('/api/v1/delivery/calculate-fee', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ distanceKm: data.distance })
-                                });
-                                const feeData = await feeResponse.json();
-                                if (feeData.success) {
-                                    setDeliveryFee(feeData.data.totalFee);
-                                    setDeliveryFeeBreakdown(feeData.data.breakdown);
-                                }
-                            } catch (err) {
-                                console.error('Failed to calculate delivery fee:', err);
-                            }
-                        }
-
-                        if (!data.isValid) {
-                            setErrors(prev => ({
-                                ...prev,
-                                distance: `Your current location is outside our delivery area (${data.distance.toFixed(2)}km > ${data.maxDistance}km)`
-                            }));
-                            setLocationError(`Your current location is outside our delivery area (${data.distance.toFixed(2)}km away)`);
-                        } else {
-                            setErrors(prev => {
-                                const newErrors = { ...prev };
-                                delete newErrors.distance;
-                                return newErrors;
-                            });
-                            setLocationError('');
-                            // Suggest to fill in address details
-                            setFormData(prev => ({
-                                ...prev,
-                                addressLine1: prev.addressLine1 || `GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
-                            }));
-                        }
-                    }
-                } catch (error) {
-                    console.error('GPS location validation error:', error);
-                    setLocationError(error.response?.data?.message || 'Unable to validate your current location');
-                } finally {
-                    setValidatingDistance(false);
-                }
+                setFormData(prev => ({
+                    ...prev,
+                    addressLine1: prev.addressLine1 || `GPS: ${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+                }));
             },
             (error) => {
                 setGettingLocation(false);
@@ -149,6 +177,66 @@ const Checkout = () => {
                 maximumAge: 30000
             }
         );
+    };
+
+    const handleMapClick = async (event) => {
+        const lat = event.latLng?.lat();
+        const lng = event.latLng?.lng();
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            return;
+        }
+
+        setCurrentLocation({ lat, lng });
+        setMapCenter({ lat, lng });
+        setLocationError('');
+
+        await validateCoordinatesForDelivery(lat, lng, 'Pinned location');
+    };
+
+    const handleMarkerDragEnd = async (event) => {
+        const lat = event.latLng?.lat();
+        const lng = event.latLng?.lng();
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            return;
+        }
+
+        setCurrentLocation({ lat, lng });
+        setMapCenter({ lat, lng });
+
+        await validateCoordinatesForDelivery(lat, lng, 'Pinned location');
+    };
+
+    const handlePlaceChanged = async () => {
+        if (!searchAutocomplete) {
+            return;
+        }
+
+        const place = searchAutocomplete.getPlace();
+        const lat = place?.geometry?.location?.lat?.();
+        const lng = place?.geometry?.location?.lng?.();
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+            setLocationError('No precise coordinates were found for this search. Try selecting a suggested area.');
+            return;
+        }
+
+        const placeLabel = place?.formatted_address || place?.name || '';
+        const detectedCity = extractCityFromPlace(place);
+
+        setMapSearchValue(placeLabel);
+        setCurrentLocation({ lat, lng });
+        setMapCenter({ lat, lng });
+        setLocationError('');
+
+        setFormData(prev => ({
+            ...prev,
+            addressLine1: prev.addressLine1 || placeLabel,
+            city: prev.city || detectedCity
+        }));
+
+        await validateCoordinatesForDelivery(lat, lng, 'Selected searched location');
     };
 
     /**
@@ -237,7 +325,7 @@ const Checkout = () => {
             setErrors(prev => ({
                 ...prev,
                 distance: errorMessage,
-                distanceSuggestion: suggestion === 'USE_GPS_LOCATION' ? 'For accurate delivery validation, please use the "Use My Location" button above.' : null
+                distanceSuggestion: suggestion === 'USE_GPS_LOCATION' ? 'Use map pin/search or the "Use Current Location" button to set coordinates accurately.' : null
             }));
         } finally {
             setValidatingDistance(false);
@@ -533,6 +621,63 @@ const Checkout = () => {
                                         </div>
                                     </div>
                                 </div>
+
+                                {googleMapsApiKey ? (
+                                    <div className="mb-6 rounded-lg border border-gray-200 overflow-hidden">
+                                        <LoadScript googleMapsApiKey={googleMapsApiKey} libraries={DELIVERY_MAP_LIBRARIES}>
+                                            <div className="p-4 border-b border-gray-200 bg-white">
+                                                <p className="text-sm font-medium text-gray-800 mb-2">Pin exact delivery point on map</p>
+                                                <p className="text-xs text-gray-600 mb-3">
+                                                    Search a nearby area, then click or drag the marker to the exact location.
+                                                </p>
+                                                <Autocomplete
+                                                    onLoad={setSearchAutocomplete}
+                                                    onPlaceChanged={handlePlaceChanged}
+                                                    options={{
+                                                        componentRestrictions: { country: 'lk' },
+                                                        fields: ['formatted_address', 'geometry', 'address_components', 'name']
+                                                    }}
+                                                >
+                                                    <input
+                                                        type="text"
+                                                        value={mapSearchValue}
+                                                        onChange={(e) => setMapSearchValue(e.target.value)}
+                                                        placeholder="Search area, street, or landmark (e.g., Kalagedihena, Gampaha)"
+                                                        className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                                    />
+                                                </Autocomplete>
+                                            </div>
+
+                                            <GoogleMap
+                                                mapContainerStyle={{ width: '100%', height: '320px' }}
+                                                center={currentLocation || mapCenter}
+                                                zoom={currentLocation ? 16 : 13}
+                                                onClick={handleMapClick}
+                                                options={{
+                                                    fullscreenControl: false,
+                                                    mapTypeControl: false,
+                                                    streetViewControl: false,
+                                                }}
+                                            >
+                                                {currentLocation && (
+                                                    <Marker
+                                                        position={currentLocation}
+                                                        draggable
+                                                        onDragEnd={handleMarkerDragEnd}
+                                                    />
+                                                )}
+                                            </GoogleMap>
+                                        </LoadScript>
+
+                                        <div className="p-3 bg-gray-50 border-t border-gray-200 text-xs text-gray-700">
+                                            Tip: This works even when you are not physically at the delivery address. Pick the home/office location directly on the map.
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                                        Map pinning is unavailable because Google Maps key is missing. You can still place orders using manual address fields.
+                                    </div>
+                                )}
 
                                 {locationError && (
                                     <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-700">
