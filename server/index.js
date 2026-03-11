@@ -209,8 +209,23 @@ app.use((err, req, res, next) => {
 
 async function startServer() {
   try {
-    // Test database connection
-    await sequelize.authenticate();
+    // Wait for database readiness with retries for container startup race conditions.
+    const maxRetries = parseInt(process.env.DB_CONNECT_RETRIES || '30', 10);
+    const retryDelayMs = parseInt(process.env.DB_CONNECT_RETRY_DELAY_MS || '2000', 10);
+
+    for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
+      try {
+        await sequelize.authenticate();
+        break;
+      } catch (dbError) {
+        if (attempt === maxRetries) {
+          throw dbError;
+        }
+        console.warn(`Database not ready (attempt ${attempt}/${maxRetries}). Retrying in ${retryDelayMs}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+      }
+    }
+
     console.log('✅ Database connected');
 
     // Sync models only when explicitly enabled

@@ -36,7 +36,5 @@ client/.env
 server/.env.local
 client/.env.local
 
-# Docker/K8s local secrets
+# Docker local secrets
 docker-compose.override.yml
-k8s/*.local.yaml
-k8s/secrets*.yaml

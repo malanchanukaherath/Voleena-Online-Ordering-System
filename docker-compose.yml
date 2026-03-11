@@ -1,22 +1,22 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: voleena-mysql
+    container_name: ${COMPOSE_PROJECT_NAME:-voleena}-mysql
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: voleena_foods_db
-      MYSQL_USER: voleena_user
-      MYSQL_PASSWORD: voleena_password
-      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: ${DB_NAME:-voleena_foods_db}
+      MYSQL_USER: ${DB_USER:-voleena_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-voleena_password}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root_password}
     ports:
-      - "3306:3306"
+      - "${DB_PUBLIC_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/production_schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
     networks:
       - voleena-net
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-proot_password"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p${DB_ROOT_PASSWORD:-root_password} --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -25,70 +25,78 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
-    container_name: voleena-backend
+    container_name: ${COMPOSE_PROJECT_NAME:-voleena}-backend
     restart: unless-stopped
     environment:
-      NODE_ENV: production
-      PORT: 3001
-      FRONTEND_URL: http://localhost:8080
-      BACKEND_URL: http://localhost:3001
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: ${BACKEND_CONTAINER_PORT:-3001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:3001}
 
       DB_HOST: mysql
-      DB_PORT: 3306
-      DB_NAME: voleena_foods_db
-      DB_USER: voleena_user
-      DB_PASSWORD: voleena_password
-      DB_POOL_MAX: "20"
-      DB_POOL_MIN: "5"
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-voleena_foods_db}
+      DB_USER: ${DB_USER:-voleena_user}
+      DB_PASSWORD: ${DB_PASSWORD:-voleena_password}
+      DB_POOL_MAX: ${DB_POOL_MAX:-20}
+      DB_POOL_MIN: ${DB_POOL_MIN:-5}
+      DB_CONNECT_RETRIES: ${DB_CONNECT_RETRIES:-30}
+      DB_CONNECT_RETRY_DELAY_MS: ${DB_CONNECT_RETRY_DELAY_MS:-2000}
 
-      JWT_SECRET: "dev_jwt_secret_minimum_32_characters_long!@#_v1"
-      JWT_REFRESH_SECRET: "dev_refresh_secret_minimum_32_characters!@#_v1"
-      JWT_EXPIRE: "30m"
-      JWT_REFRESH_EXPIRE: "7d"
+      JWT_SECRET: ${JWT_SECRET:-dev_jwt_secret_minimum_32_characters_long!@#_v1}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev_refresh_secret_minimum_32_characters!@#_v1}
+      JWT_EXPIRE: ${JWT_EXPIRE:-30m}
+      JWT_REFRESH_EXPIRE: ${JWT_REFRESH_EXPIRE:-7d}
 
-      GOOGLE_MAPS_API_KEY: "replace_me"
-      RESTAURANT_LATITUDE: "7.0000000"
-      RESTAURANT_LONGITUDE: "80.0000000"
-      MAX_DELIVERY_DISTANCE_KM: "15"
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY:-replace_me}
+      RESTAURANT_LATITUDE: ${RESTAURANT_LATITUDE:-7.0000000}
+      RESTAURANT_LONGITUDE: ${RESTAURANT_LONGITUDE:-80.0000000}
+      MAX_DELIVERY_DISTANCE_KM: ${MAX_DELIVERY_DISTANCE_KM:-15}
 
-      STRIPE_SECRET_KEY: "replace_me"
-      STRIPE_WEBHOOK_SECRET: "replace_me"
-      STRIPE_PUBLISHABLE_KEY: "replace_me"
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-replace_me}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-replace_me}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:-replace_me}
 
-      PAYHERE_MERCHANT_ID: "replace_me"
-      PAYHERE_MERCHANT_SECRET: "replace_me"
-      PAYHERE_MODE: "sandbox"
+      PAYHERE_MERCHANT_ID: ${PAYHERE_MERCHANT_ID:-replace_me}
+      PAYHERE_MERCHANT_SECRET: ${PAYHERE_MERCHANT_SECRET:-replace_me}
+      PAYHERE_MODE: ${PAYHERE_MODE:-sandbox}
 
-      SMTP_HOST: "smtp.gmail.com"
-      SMTP_PORT: "587"
-      SMTP_SECURE: "false"
-      SMTP_USER: "replace_me"
-      SMTP_PASS: "replace_me"
-      SMTP_FROM: "replace_me"
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-replace_me}
+      SMTP_PASS: ${SMTP_PASS:-replace_me}
+      SMTP_FROM: ${SMTP_FROM:-replace_me}
 
-      EMAIL_PROVIDER: "resend"
-      RESEND_API_KEY: "replace_me"
-      EMAIL_FROM: "onboarding@resend.dev"
-      EMAIL_VERIFICATION_TTL_MINUTES: "30"
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-resend}
+      RESEND_API_KEY: ${RESEND_API_KEY:-replace_me}
+      EMAIL_FROM: ${EMAIL_FROM:-onboarding@resend.dev}
+      EMAIL_VERIFICATION_TTL_MINUTES: ${EMAIL_VERIFICATION_TTL_MINUTES:-30}
 
-      SMS_PROVIDER: "console"
-      TWILIO_ACCOUNT_SID: "replace_me"
-      TWILIO_AUTH_TOKEN: "replace_me"
-      TWILIO_PHONE_NUMBER: "replace_me"
+      SMS_PROVIDER: ${SMS_PROVIDER:-console}
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-replace_me}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-replace_me}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:-replace_me}
 
-      BASE_DELIVERY_FEE: "100"
-      FREE_DELIVERY_DISTANCE_KM: "3"
-      DELIVERY_FEE_PER_KM: "20"
-      MAX_DELIVERY_FEE: "300"
+      BASE_DELIVERY_FEE: ${BASE_DELIVERY_FEE:-100}
+      FREE_DELIVERY_DISTANCE_KM: ${FREE_DELIVERY_DISTANCE_KM:-3}
+      DELIVERY_FEE_PER_KM: ${DELIVERY_FEE_PER_KM:-20}
+      MAX_DELIVERY_FEE: ${MAX_DELIVERY_FEE:-300}
 
-      RATE_LIMIT_WINDOW_MS: "900000"
-      RATE_LIMIT_MAX_REQUESTS: "100"
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
 
     depends_on:
       mysql:
         condition: service_healthy
     ports:
-      - "3001:3001"
+      - "${BACKEND_PUBLIC_PORT:-3001}:${BACKEND_CONTAINER_PORT:-3001}"
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 45s
     networks:
       - voleena-net
 
@@ -97,15 +105,16 @@ services:
       context: ./client
       dockerfile: Dockerfile
       args:
-        VITE_API_BASE_URL: http://localhost:3001
-        VITE_GOOGLE_MAPS_API_KEY: replace_me
-        VITE_STRIPE_PUBLISHABLE_KEY: replace_me
-    container_name: voleena-frontend
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3001}
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY:-replace_me}
+        VITE_STRIPE_PUBLISHABLE_KEY: ${VITE_STRIPE_PUBLISHABLE_KEY:-replace_me}
+    container_name: ${COMPOSE_PROJECT_NAME:-voleena}-frontend
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
-      - "8080:80"
+      - "${FRONTEND_PUBLIC_PORT:-8080}:80"
     networks:
       - voleena-net
 

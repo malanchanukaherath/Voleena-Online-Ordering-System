@@ -159,3 +159,35 @@ jobs:
           labels: ${{ steps.frontend_meta.outputs.labels }}
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/voleena-frontend:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/voleena-frontend:buildcache,mode=max
+
+  docker-compose-smoke:
+    needs: [backend-quality, frontend-quality]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare environment
+        run: cp .env.example .env
+
+      - name: Validate docker compose config
+        run: docker compose config
+
+      - name: Build and start stack
+        run: docker compose up --build -d
+
+      - name: Wait for backend health
+        run: |
+          for i in {1..30}; do
+            if curl -fsS http://localhost:3001/health > /dev/null; then
+              echo "Backend is healthy"
+              exit 0
+            fi
+            sleep 5
+          done
+          docker compose logs backend
+          exit 1
+
+      - name: Stop stack
+        if: always()
+        run: docker compose down -v

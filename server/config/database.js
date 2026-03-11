@@ -1,6 +1,5 @@
 const { Sequelize } = require('sequelize');
 require('dotenv').config();
-const crypto = require('crypto');
 
 // Validate required environment variables
 const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_NAME', 'JWT_SECRET', 'FRONTEND_URL'];
@@ -43,8 +42,8 @@ const sequelize = new Sequelize(
     pool: {
       // Production-optimized connection pool settings
       // For 100 concurrent users, keep pool small but responsive
-      max: parseInt(process.env.DB_POOL_MAX) || 20,  // Max 20 connections
-      min: parseInt(process.env.DB_POOL_MIN) || 5,   // Keep 5 warm
+      max: parseInt(process.env.DB_POOL_MAX || '20', 10),  // Max 20 connections
+      min: parseInt(process.env.DB_POOL_MIN || '5', 10),   // Keep 5 warm
       acquire: 30000,  // Max 30s to acquire a connection
       idle: 30000      // Keep connections 30s before release
     },
