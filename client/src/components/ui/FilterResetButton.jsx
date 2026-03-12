@@ -1,4 +1,5 @@
 import React from 'react';
+import { FaTimes } from 'react-icons/fa';
 import Button from './Button';
 
 const FilterResetButton = ({
@@ -7,15 +8,19 @@ const FilterResetButton = ({
     label = 'Clear Filters',
     className = ''
 }) => {
+    if (disabled) {
+        return null;
+    }
+
     return (
         <Button
             type="button"
             variant="ghost"
             size="sm"
             onClick={onClick}
-            disabled={disabled}
-            className={`whitespace-nowrap ${className}`.trim()}
+            className={`group whitespace-nowrap border border-rose-200/80 bg-gradient-to-r from-rose-50 via-white to-amber-50 text-rose-700 shadow-sm shadow-rose-100/70 transition-all duration-200 hover:-translate-y-0.5 hover:border-rose-300 hover:from-rose-100 hover:to-amber-100 hover:text-rose-800 focus:ring-rose-300 ${className}`.trim()}
         >
+            <FaTimes className="mr-2 text-xs opacity-70 transition-opacity duration-200 group-hover:opacity-100" />
             {label}
         </Button>
     );

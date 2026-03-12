@@ -238,13 +238,14 @@ const MenuManagement = () => {
                             ]}
                         />
                     </div>
-                    <div className="flex items-end">
-                        <FilterResetButton
-                            onClick={clearFilters}
-                            disabled={!hasActiveFilters}
-                            className="w-full justify-center md:w-auto"
-                        />
-                    </div>
+                    {hasActiveFilters && (
+                        <div className="flex items-end">
+                            <FilterResetButton
+                                onClick={clearFilters}
+                                className="w-full justify-center md:w-auto"
+                            />
+                        </div>
+                    )}
                 </div>
                 <div className="mt-4">
                     <Button onClick={() => handleOpenModal()}>

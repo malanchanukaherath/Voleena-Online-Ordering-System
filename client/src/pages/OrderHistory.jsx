@@ -169,8 +169,8 @@ const OrderHistory = () => {
                     title="No orders found"
                     description={statusFilter ? 'No orders match the selected filter' : "You haven't placed any orders yet"}
                     action={
-                        statusFilter ? (
-                            <Button onClick={clearFilters}>Clear Filter</Button>
+                        hasActiveFilters ? (
+                            <FilterResetButton onClick={clearFilters} label="Clear Filter" />
                         ) : (
                             <Link to="/menu">
                                 <Button>Browse Menu</Button>

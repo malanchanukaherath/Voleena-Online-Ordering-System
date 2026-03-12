@@ -291,13 +291,14 @@ const Menu = () => {
                         label="Category"
                         name="category"
                     />
-                    <div className="flex items-end">
-                        <FilterResetButton
-                            onClick={clearFilters}
-                            disabled={!hasActiveFilters}
-                            className="w-full justify-center md:w-auto"
-                        />
-                    </div>
+                    {hasActiveFilters && (
+                        <div className="flex items-end">
+                            <FilterResetButton
+                                onClick={clearFilters}
+                                className="w-full justify-center md:w-auto"
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -396,11 +397,7 @@ const Menu = () => {
                     type="search"
                     title="No items found"
                     description="Try adjusting your search or filter criteria"
-                    action={
-                        <Button onClick={clearFilters}>
-                            Clear Filters
-                        </Button>
-                    }
+                    action={hasActiveFilters ? <FilterResetButton onClick={clearFilters} /> : null}
                 />
             )}
         </div>

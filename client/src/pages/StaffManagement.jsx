@@ -155,13 +155,14 @@ const StaffManagement = () => {
                         onChange={(e) => setRoleFilter(e.target.value)}
                         options={roleOptions}
                     />
-                    <div className="flex items-end">
-                        <FilterResetButton
-                            onClick={clearFilters}
-                            disabled={!hasActiveFilters}
-                            className="w-full justify-center md:w-auto"
-                        />
-                    </div>
+                    {hasActiveFilters && (
+                        <div className="flex items-end">
+                            <FilterResetButton
+                                onClick={clearFilters}
+                                className="w-full justify-center md:w-auto"
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -274,11 +275,7 @@ const StaffManagement = () => {
                     type="search"
                     title="No staff members found"
                     description="No staff match your search criteria"
-                    action={
-                        <Button onClick={clearFilters}>
-                            Clear Filters
-                        </Button>
-                    }
+                    action={hasActiveFilters ? <FilterResetButton onClick={clearFilters} /> : null}
                 />
             )}
 

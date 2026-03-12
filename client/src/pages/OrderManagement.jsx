@@ -194,13 +194,14 @@ const OrderManagement = () => {
                         onChange={(e) => setStatusFilter(e.target.value)}
                         options={statusOptions}
                     />
-                    <div className="flex items-end">
-                        <FilterResetButton
-                            onClick={clearFilters}
-                            disabled={!hasActiveFilters}
-                            className="w-full justify-center md:w-auto"
-                        />
-                    </div>
+                    {hasActiveFilters && (
+                        <div className="flex items-end">
+                            <FilterResetButton
+                                onClick={clearFilters}
+                                className="w-full justify-center md:w-auto"
+                            />
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -324,11 +325,7 @@ const OrderManagement = () => {
                     type="search"
                     title="No orders found"
                     description={error || 'No orders match your search criteria'}
-                    action={
-                        <Button onClick={clearFilters}>
-                            Clear Filters
-                        </Button>
-                    }
+                    action={hasActiveFilters ? <FilterResetButton onClick={clearFilters} /> : null}
                 />
             )}
         </div>
