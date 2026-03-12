@@ -11,7 +11,7 @@
 3. [Docker Setup (Local Testing)](#docker-setup-local-testing)
 4. [GitHub Actions (CI/CD)](#github-actions-cicd)
 5. [Docker Image Registry](#docker-image-registry)
-6. [Kubernetes Deployment](#kubernetes-deployment)
+6. [Production Deployment (Docker Compose)](#production-deployment-docker-compose)
 7. [Complete Deployment Checklist](#complete-deployment-checklist)
 8. [Common Issues & Debugging](#common-issues--debugging)
 
@@ -105,47 +105,38 @@ Backend validates required env vars on startup (see [server/config/database.js](
 │  GitHub Actions CD Workflow Triggered                           │
 │          ↓                                                        │
 │  ┌────────────────────────────────────────────────────────┐    │
-│  │ DEPLOYMENT TO KUBERNETES (.github/workflows/cd.yml)   │    │
-│  │ ├─ Configure kubectl                                   │    │
-│  │ ├─ Apply ConfigMaps & Secrets                          │    │
-│  │ ├─ Apply PV/PVC (MySQL storage)                        │    │
-│  │ ├─ Deploy MySQL Stateful Service                       │    │
-│  │ ├─ Deploy Backend (2 replicas)                         │    │
-│  │ ├─ Deploy Frontend (2 replicas)                        │    │
-│  │ ├─ Configure Ingress (app.example.com, api.example.com)│    │
-│  │ └─ Health checks & rollout status                      │    │
+│  │ DEPLOYMENT WITH DOCKER COMPOSE (cd.yml)               │    │
+│  │ ├─ SSH into production server                         │    │
+│  │ ├─ Login to GHCR                                      │    │
+│  │ ├─ docker compose pull (latest images)                │    │
+│  │ ├─ docker compose up -d --remove-orphans              │    │
+│  │ └─ Verify services running                            │    │
 │  └────────────────────────────────────────────────────────┘    │
 │          ↓                                                        │
-│  Production: Running on Kubernetes                              │
-│          ↓                                                        │
-│  ┌───────────────────────────────────────┐                     │
-│  │ Ingress (NGINX)                       │                     │
-│  │ ├─ app.example.com → Frontend Service │                     │
-│  │ └─ api.example.com → Backend Service  │                     │
-│  └───────────────────────────────────────┘                     │
+│  Production: Running with Docker Compose on VPS                │
 │          ↓                                                        │
 │  ┌──────────────────┐  ┌─────────────────┐                    │
-│  │ Frontend Pods (2)│  │ Backend Pods (2)│                    │
-│  │ nginx:1.27      │  │ node:20         │                    │
+│  │ frontend         │  │ backend         │                    │
+│  │ nginx:1.27       │  │ node:20         │                    │
 │  └──────────────────┘  └────────┬────────┘                    │
 │                                 ↓                               │
 │                        ┌─────────────────────┐                 │
-│                        │ MySQL Pod (1)       │                 │
-│                        │ Persistent Volume   │                 │
-│                        │ (20GB storage)      │                 │
+│                        │ mysql               │                 │
+│                        │ Named Volume        │                 │
+│                        │ (mysql_data)        │                 │
 │                        └─────────────────────┘                 │
 │                                                                  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### High-Availability Design
+### Production Design
 
-- **Frontend**: 2 replicas across nodes (pod anti-affinity)
-- **Backend**: 2 replicas across nodes (pod anti-affinity)
-- **MySQL**: 1 replica with persistent volume (upgrade to replication later)
-- **Rolling updates**: Max 1 surge, 0 unavailable (zero-downtime deployments)
-- **Health checks**: Readiness + liveness probes all services
-- **Secrets management**: GitHub Actions secrets → K8s secrets at deploy time
+- **Frontend**: Single container, nginx static file server
+- **Backend**: Single container, Node.js + Express
+- **MySQL**: Single container with named Docker volume for persistence
+- **Zero-downtime updates**: `docker compose pull` + `up -d --remove-orphans` replaces containers
+- **Health checks**: Docker Compose `healthcheck` on all services
+- **Secrets management**: `.env` file on production server (never committed to git)
 
 ---
 
@@ -233,8 +224,9 @@ docker compose down -v  # Also remove volumes
 **For production:**
 
 - Never store secrets in docker-compose.yml
-- Use GitHub Actions secrets → pushed to Kubernetes secrets at deploy time
-- See [GitHub Actions CD Workflow](#github-actions-cd-workflow) for how secrets are injected
+- Create a `.env` file on the production server alongside docker-compose.yml
+- The CD workflow SSHes into the server and runs `docker compose pull && docker compose up -d`
+- See [GitHub Actions CD Workflow](#github-actions-cd-workflow) for how deployment is triggered
 
 ---
 
@@ -271,44 +263,32 @@ docker compose down -v  # Also remove volumes
 
 **Prerequisites:**
 
-- GitHub Secrets configured (see [Setup section](#kubernetes-secrets-setup) below)
-- Kubernetes cluster with kubeconfig
+- GitHub Secrets configured (see [Setup section](#setup-github-secrets-required) below)
+- A VPS/server with Docker + Docker Compose installed
+- SSH key access to the server
+- `docker-compose.yml` and `.env` file present on the server at `DEPLOY_PATH`
 
 **Steps:**
 
-1. Configure kubectl with KUBE_CONFIG secret (base64 encoded kubeconfig)
-2. Create `voleena` namespace
-3. Apply ConfigMaps (non-secret config)
-4. Apply Secrets (from GitHub Actions secrets)
-5. Apply MySQL deployment + MySQL credentials secret
-6. Update backend image tag → triggers rolling deployment
-7. Update frontend image tag → triggers rolling deployment
-8. Wait for rollout status (300s timeout)
-9. Verify all services are running
+1. SSH into production server using `appleboy/ssh-action`
+2. Login to GHCR with `GHCR_TOKEN`
+3. `docker compose pull` — pulls latest images
+4. `docker compose up -d --remove-orphans` — restarts containers with new images
+5. `docker image prune -f` — cleans up old unused images
+6. Verify all services are running with `docker compose ps`
 
 ### Setup GitHub Secrets (REQUIRED)
 
 Go to **GitHub Repo → Settings → Secrets and variables → Actions**
 
-Create these secrets:
+Create these secrets for CD deployment:
 
 ```
-KUBE_CONFIG                    # base64-encoded kubeconfig file
-DB_PASSWORD                    # MySQL password for voleena_user
-JWT_SECRET                     # 32+ chars, mixed case & special chars
-JWT_REFRESH_SECRET             # Different from JWT_SECRET, 32+ chars
-GOOGLE_MAPS_API_KEY           # From Google Cloud Console
-STRIPE_SECRET_KEY             # From Stripe Dashboard
-STRIPE_WEBHOOK_SECRET         # From Stripe Dashboard
-STRIPE_PUBLISHABLE_KEY        # From Stripe Dashboard
-SMTP_HOST                     # e.g., smtp.gmail.com
-SMTP_PORT                     # e.g., 587
-SMTP_SECURE                   # "false" or "true"
-SMTP_USER                     # Email address
-SMTP_PASS                     # App-specific password
-SMTP_FROM                     # noreply@yourdomain.com
-RESEND_API_KEY               # From Resend.dev
-MYSQL_ROOT_PASSWORD           # Root MySQL password
+DEPLOY_HOST                   # Server IP or hostname (e.g., 123.45.67.89)
+DEPLOY_USER                   # SSH username (e.g., ubuntu or deploy)
+DEPLOY_SSH_KEY                # SSH private key (contents of id_rsa or similar)
+DEPLOY_PATH                   # Path on server (e.g., /opt/voleena)
+GHCR_TOKEN                    # GitHub PAT with read:packages scope
 ```
 
 Create these variables (non-sensitive):
@@ -316,6 +296,8 @@ Create these variables (non-sensitive):
 ```
 VITE_API_BASE_URL            # https://api.example.com
 ```
+
+> **Note:** App secrets (DB*PASSWORD, JWT_SECRET, SMTP*\*, etc.) are stored in a `.env` file directly on the production server at `DEPLOY_PATH`. They are NOT passed through GitHub Actions.
 
 ---
 
@@ -361,212 +343,140 @@ docker push ghcr.io/yourname/voleena-backend:v1.0.0
 
 ---
 
-## KUBERNETES DEPLOYMENT
-
-### Files Created
-
-```
-k8s/00-namespace.yaml          # Create 'voleena' namespace
-k8s/01-configmap.yaml          # Non-sensitive config values
-k8s/02-secrets.yaml            # Sensitive values (passwords, API keys)
-k8s/03-pv-pvc.yaml             # Persistent volume for MySQL
-k8s/04-mysql.yaml              # MySQL Deployment + Service
-k8s/05-backend.yaml            # Backend Deployment (2 replicas) + Service
-k8s/06-frontend.yaml           # Frontend Deployment (2 replicas) + Service
-k8s/07-ingress.yaml            # Routing: app.example.com & api.example.com
-```
+## PRODUCTION DEPLOYMENT (Docker Compose)
 
 ### Prerequisites
 
-1. **Kubernetes cluster** running (minikube, EKS, GKE, DigitalOcean, etc.)
-2. **kubectl** configured and authenticated
-3. **NGINX Ingress Controller** installed (if not already)
+1. **A VPS or cloud server** (DigitalOcean Droplet, AWS EC2, Hetzner, etc.) with:
+   - Docker Engine installed
+   - Docker Compose plugin installed
+   - SSH access via key pair
+2. **DNS** pointing your domain(s) to the server IP
+3. **GitHub secrets** configured (see [Setup section](#setup-github-secrets-required))
 
-Check cluster:
-
-```bash
-kubectl cluster-info
-kubectl get nodes
-```
-
-Install NGINX Ingress Controller (if needed):
+### Server Setup (one-time)
 
 ```bash
-helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
-helm repo update
-helm install nginx-ingress ingress-nginx/ingress-nginx \
-  --namespace ingress-nginx \
-  --create-namespace
+# Install Docker on Ubuntu/Debian
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+
+# Create app directory
+sudo mkdir -p /opt/voleena
+sudo chown $USER:$USER /opt/voleena
+
+# Copy docker-compose.yml to server
+scp docker-compose.yml user@your-server:/opt/voleena/
+
+# Create .env file on server with all secrets
+nano /opt/voleena/.env
+# Fill in DB_PASSWORD, JWT_SECRET, STRIPE_*, SMTP_*, etc.
 ```
 
-### Kubernetes Secrets Setup
+### Environment File on Server
 
-**Option 1: Manual (for testing)**
+Create `/opt/voleena/.env` on the production server:
 
-Edit `k8s/02-secrets.yaml` and replace `change_me` placeholders with real values:
+```dotenv
+# Database
+DB_HOST=mysql
+DB_PORT=3306
+DB_NAME=voleena_foods_db
+DB_USER=voleena_user
+DB_PASSWORD=your_strong_password_here
+MYSQL_ROOT_PASSWORD=your_root_password_here
 
-```yaml
-stringData:
-  DB_PASSWORD: "your_actual_password_here"
-  JWT_SECRET: "your_32_char_secret_hereAbcDef!@#$%^"
-  # ... etc
-```
+# Auth
+JWT_SECRET=your_32_char_secret_here_AbcDef!@#
+JWT_REFRESH_SECRET=different_refresh_secret_here!@#
 
-**Option 2: GitHub Actions (RECOMMENDED for production)**
+# App URLs
+NODE_ENV=production
+PORT=3001
+FRONTEND_URL=https://app.example.com
+BACKEND_URL=https://api.example.com
 
-CI/CD automatically creates secrets from GitHub Actions secrets:
+# Payments
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+STRIPE_PUBLISHABLE_KEY=pk_live_...
 
-```bash
-kubectl -n voleena create secret generic voleena-backend-secret \
-  --from-literal=DB_PASSWORD='...' \
-  --from-literal=JWT_SECRET='...' \
-  # ... (CD workflow does this automatically)
-```
+# Email
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your@email.com
+SMTP_PASS=your_app_password
+SMTP_FROM=noreply@yourdomain.com
+RESEND_API_KEY=re_...
 
-### Important: Update Image Names
-
-In `k8s/05-backend.yaml` and `k8s/06-frontend.yaml`, replace:
-
-```yaml
-image: ghcr.io/REPLACE_WITH_ORG/voleena-backend:latest
-```
-
-With:
-
-```yaml
-image: ghcr.io/your-github-username/voleena-backend:latest
-image: ghcr.io/your-github-username/voleena-frontend:latest
-```
-
-### Important: Update DNS Names
-
-In `k8s/07-ingress.yaml`, replace example domains:
-
-```yaml
-- host: app.example.com # YOUR ACTUAL FRONTEND DOMAIN
-- host: api.example.com # YOUR ACTUAL API DOMAIN
-```
-
-**Then point DNS A records to your Ingress IP:**
-
-```bash
-kubectl get ingress -n voleena -w
-# Note the EXTERNAL-IP, point DNS to it
+# Maps
+GOOGLE_MAPS_API_KEY=AIza...
+RESTAURANT_LATITUDE=6.9271
+RESTAURANT_LONGITUDE=79.8612
 ```
 
 ### Deployment Instructions
 
-**1. Deploy in order:**
+**Automatic (via GitHub Actions CD):**
+
+Push to `main` → CI builds and pushes images → CD SSHes in and deploys automatically.
+
+**Manual deployment:**
 
 ```bash
-# Navigate to repo root
-cd c:\Git\ Projects\Voleena-Online-Ordering-System
+# SSH into server
+ssh user@your-server
+cd /opt/voleena
 
-# Create namespace
-kubectl apply -f k8s/00-namespace.yaml
+# Login to GHCR
+echo "YOUR_PAT" | docker login ghcr.io -u YOUR_GITHUB_USERNAME --password-stdin
 
-# ConfigMaps (non-secret config)
-kubectl apply -f k8s/01-configmap.yaml
+# Pull latest images and restart
+docker compose pull
+docker compose up -d --remove-orphans
 
-# Secrets - EDIT FIRST with your real values!
-kubectl apply -f k8s/02-secrets.yaml
-
-# Storage (PV/PVC for MySQL)
-kubectl apply -f k8s/03-pv-pvc.yaml
-
-# MySQL
-kubectl apply -f k8s/04-mysql.yaml
-
-# Wait for MySQL to be ready
-kubectl -n voleena wait --for=condition=ready pod -l app=mysql --timeout=300s
-
-# Backend
-kubectl apply -f k8s/05-backend.yaml
-
-# Frontend
-kubectl apply -f k8s/06-frontend.yaml
-
-# Ingress
-kubectl apply -f k8s/07-ingress.yaml
+# Verify
+docker compose ps
+docker compose logs -f backend
 ```
 
-**2. Verify deployment:**
+### Zero-Downtime Updates
 
 ```bash
-# Check all resources
-kubectl -n voleena get all
+# Pull new images (old containers keep running)
+docker compose pull
 
-# Watch rollout progress
-kubectl -n voleena rollout status deployment/backend
-kubectl -n voleena rollout status deployment/frontend
+# Replace containers one by one
+docker compose up -d --remove-orphans
 
-# Check services
-kubectl -n voleena get svc
-
-# Check ingress
-kubectl -n voleena get ingress
-
-# View logs
-kubectl -n voleena logs -f deployment/backend
-kubectl -n voleena logs deployment/frontend
+# Clean up old images
+docker image prune -f
 ```
 
-### Zero-Downtime Deployments
-
-Update image (triggers automatic rollout):
+Rollback to previous image:
 
 ```bash
-kubectl -n voleena set image deployment/backend \
-  backend=ghcr.io/yourname/voleena-backend:v1.1.0 \
-  --record
-```
+# List available image tags
+docker images ghcr.io/yourname/voleena-backend
 
-Watch deployment:
-
-```bash
-kubectl -n voleena rollout status deployment/backend --watch
-```
-
-Rollback if needed:
-
-```bash
-kubectl -n voleena rollout history deployment/backend
-kubectl -n voleena rollout undo deployment/backend
-kubectl -n voleena rollout undo deployment/backend --to-revision=1
+# Edit docker-compose.yml to pin a specific tag, then:
+docker compose up -d
 ```
 
 ### Accessing the Application
 
-**Get your Ingress IP/hostname:**
+**With proper DNS (recommended):**
+
+- Point `app.example.com` A record → server IP
+- Point `api.example.com` A record → server IP
+- Configure nginx reverse proxy or use the included nginx in the frontend container
+
+**Health check:**
 
 ```bash
-kubectl -n voleena get ingress voleena-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-```
-
-**Option A: With proper DNS (recommended for production)**
-
-- Point `app.example.com` DNS to Ingress IP
-- Point `api.example.com` DNS to Ingress IP
-- Access: `https://app.example.com` and `https://api.example.com`
-
-**Option B: Port-forwarding (for testing)**
-
-```bash
-# Port-forward frontend
-kubectl -n voleena port-forward svc/frontend-service 8080:80 &
-
-# Port-forward backend
-kubectl -n voleena port-forward svc/backend-service 3001:80 &
-
-# Access
-curl http://localhost:3001/health
-open http://localhost:8080
-```
-
-**Option C: Temporary /etc/hosts for Mac/Linux:**
-
-```bash
-echo "1.2.3.4 app.example.com api.example.com" | sudo tee -a /etc/hosts
+curl http://your-server-ip:3001/health
+curl http://your-server-ip:8080
 ```
 
 ---
@@ -599,50 +509,44 @@ echo "1.2.3.4 app.example.com api.example.com" | sudo tee -a /etc/hosts
 - [ ] Generate strong JWT secrets (32+ chars, mixed case, special chars)
 - [ ] Add API keys from Stripe, Google Maps, etc.
 
-### Phase 4: Kubernetes Cluster Setup (Day 2-3)
+### Phase 4: Production Server Setup (Day 2-3)
 
-- [ ] Provision Kubernetes cluster (AWS EKS, GCP GKE, DigitalOcean, etc.)
-- [ ] Configure kubectl: `kubectl cluster-info`
-- [ ] Install NGINX Ingress Controller
-- [ ] Verify: `kubectl get deployment -n ingress-nginx`
-- [ ] Generate kubeconfig and base64 encode it
+- [ ] Provision VPS (DigitalOcean, Hetzner, AWS EC2, etc.)
+- [ ] Install Docker: `curl -fsSL https://get.docker.com | sh`
+- [ ] Create app directory: `sudo mkdir -p /opt/voleena`
+- [ ] Copy `docker-compose.yml` to server: `scp docker-compose.yml user@server:/opt/voleena/`
+- [ ] Generate SSH deploy key pair and add public key to server `~/.ssh/authorized_keys`
+- [ ] Add private key as `DEPLOY_SSH_KEY` GitHub secret
 
-### Phase 5: Kubernetes Secrets & Config (Day 3)
+### Phase 5: Production Secrets & Config (Day 3)
 
-- [ ] Update image names in `k8s/05-backend.yaml` and `k8s/06-frontend.yaml`
-- [ ] Update domain names in `k8s/07-ingress.yaml`
-- [ ] IMPORTANT: Edit `k8s/02-secrets.yaml` with real values OR rely on CD workflow
-- [ ] Create GitHub secret: `KUBE_CONFIG` (base64 kubeconfig)
-- [ ] Add remaining GitHub secrets from checklist
+- [ ] Create `/opt/voleena/.env` on server with all secrets (see [Environment File](#environment-file-on-server))
+- [ ] Create GitHub PAT with `read:packages` scope → add as `GHCR_TOKEN` secret
+- [ ] Add `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_PATH` GitHub secrets
+- [ ] Update `VITE_API_BASE_URL` variable in GitHub repo settings
+- [ ] Point DNS records to server IP
 
-### Phase 6: First Kubernetes Deployment (Day 3-4)
+### Phase 6: First Production Deployment (Day 3-4)
 
-- [ ] Pull latest code: `git pull origin main`
-- [ ] Apply manifests in order:
+- [ ] SSH into server and manually test:
   ```bash
-  kubectl apply -f k8s/00-namespace.yaml
-  kubectl apply -f k8s/01-configmap.yaml
-  kubectl apply -f k8s/02-secrets.yaml
-  kubectl apply -f k8s/03-pv-pvc.yaml
-  kubectl apply -f k8s/04-mysql.yaml
-  kubectl apply -f k8s/05-backend.yaml
-  kubectl apply -f k8s/06-frontend.yaml
-  kubectl apply -f k8s/07-ingress.yaml
+  cd /opt/voleena
+  echo "YOUR_PAT" | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+  docker compose pull
+  docker compose up -d
+  docker compose ps
   ```
-- [ ] Wait for MySQL: `kubectl -n voleena wait --for=condition=ready pod -l app=mysql --timeout=300s`
-- [ ] Check rollout: `kubectl -n voleena rollout status deployment/backend`
-- [ ] Check logs: `kubectl -n voleena logs pod/*-backend* -f`
-- [ ] Get Ingress IP: `kubectl -n voleena get ingress`
-- [ ] Point DNS or use port-forward to access application
-- [ ] Test: verify frontend loads, backend responds, MySQL connected
+- [ ] Verify backend health: `curl http://localhost:3001/health`
+- [ ] Verify frontend: `curl http://localhost:8080`
+- [ ] Verify end-to-end order flow
 
 ### Phase 7: Continuous Deployment (Day 4+)
 
-- [ ] Push feature to main branch
+- [ ] Push a commit to main branch
 - [ ] GitHub Actions CI runs automatically
-- [ ] GitHub Actions CD automatically deploys to Kubernetes
-- [ ] Validate deployment: `kubectl -n voleena rollout status deployment/backend --watch`
-- [ ] Monitor: `kubectl -n voleena logs -f deployment/backend`
+- [ ] GitHub Actions CD SSHes in and deploys automatically
+- [ ] Validate: `docker compose ps` on server
+- [ ] Monitor: `docker compose logs -f backend`
 
 ---
 
@@ -692,106 +596,60 @@ docker compose logs backend
 - Ensure MySQL is healthy: `docker compose ps mysql`
 - Check database connection: `docker compose exec backend node -e "require('./config/database')"`
 
-### Kubernetes Issues
+### Production Deployment Issues
 
-**Issue: Pod stuck in "CrashLoopBackOff"**
+**Issue: Container stuck in restart loop**
 
 **Debug:**
 
 ```bash
-kubectl -n voleena describe pod backend-xyz
-kubectl -n voleena logs backend-xyz
-kubectl -n voleena logs backend-xyz --previous  # Previous failed attempt
+docker compose logs backend
+docker compose logs --tail=50 backend  # Last 50 lines
+docker compose ps  # Check exit codes
 ```
 
 **Common causes:**
 
-1. Image not found (wrong registry, not pushed yet)
-2. Secret/ConfigMap missing or misnamed
-3. Database password mismatch
-4. MySQL not ready yet
+1. Missing or incorrect `.env` file on server
+2. MySQL not ready yet (backend starts before DB is healthy)
+3. Wrong GHCR image tag pulled
 
 **Solution:**
 
-- Verify image exists: `docker pull ghcr.io/yourname/voleena-backend:latest`
-- Check secrets: `kubectl -n voleena get secrets`
-- Check ConfigMaps: `kubectl -n voleena get configmaps`
-- View pod events: `kubectl -n voleena describe pod backend-xyz`
+- Verify `.env` exists: `ls -la /opt/voleena/.env`
+- Check all required vars are set
+- Restart with fresh pull: `docker compose down && docker compose pull && docker compose up -d`
 
-**Issue: Ingress showing IP but frontend/backend not accessible**
-
-**Causes:**
-
-1. Ingress controller not installed
-2. DNS not pointing to Ingress IP
-3. Service selector wrong
-4. Pod health checks failing
+**Issue: Cannot pull image from GHCR**
 
 **Debug:**
 
 ```bash
-# Check ingress controller
-kubectl get pods -n ingress-nginx
-
-# Check ingress rules
-kubectl -n voleena describe ingress voleena-ingress
-
-# Test internally with port-forward
-kubectl -n voleena port-forward svc/backend-service 3001:80
-curl http://localhost:3001/health
-
-# Check service endpoints
-kubectl -n voleena get endpoints backend-service
+docker compose pull 2>&1
+# Look for "unauthorized" or "not found" errors
 ```
 
-**Fix DNS (example):**
+**Solution:**
 
 ```bash
-# Get Ingress IP
-export INGRESS_IP=$(kubectl -n voleena get ingress voleena-ingress -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
-
-# On your DNS provider, add A records:
-# app.example.com -> $INGRESS_IP
-# api.example.com -> $INGRESS_IP
-
-# Verify (wait ~5 minutes for DNS to propagate)
-nslookup app.example.com
-curl https://app.example.com
+# Re-authenticate
+echo "YOUR_GHCR_TOKEN" | docker login ghcr.io -u YOUR_USERNAME --password-stdin
+docker compose pull
 ```
 
-**Issue: TLS certificate errors**
+**Issue: SSL/TLS for production**
 
-**Current status:** Ingress manifest includes TLS block but no cert-manager configured.
-
-**Solution (optional, for production):**
+Use Certbot with nginx for free Let's Encrypt certificates:
 
 ```bash
-# Install cert-manager
-helm repo add jetstack https://charts.jetstack.io
-helm install cert-manager jetstack/cert-manager --namespace cert-manager --create-namespace --set installCRDs=true
+# Install certbot
+sudo apt install certbot python3-certbot-nginx
 
-# Create ClusterIssuer for Let's Encrypt
-kubectl apply -f - <<EOF
-apiVersion: cert-manager.io/v1
-kind: ClusterIssuer
-metadata:
-  name: letsencrypt-prod
-spec:
-  acme:
-    server: https://acme-v02.api.letsencrypt.org/directory
-    email: your-email@example.com
-    privateKeySecretRef:
-      name: letsencrypt-prod
-    solvers:
-    - http01:
-        ingress:
-          class: nginx
-EOF
+# Obtain certificate
+sudo certbot --nginx -d app.example.com -d api.example.com
 
-# Update Ingress annotation:
-kubectl annotate ingress voleena-ingress --overwrite \
-  cert-manager.io/cluster-issuer=letsencrypt-prod \
-  -n voleena
+# Auto-renewal (already configured by certbot)
+crontab -l  # Verify renewal cron job
 ```
 
 ### Environment Variable Mismatches
@@ -801,72 +659,58 @@ kubectl annotate ingress voleena-ingress --overwrite \
 **Check:**
 
 ```bash
-# In frontend pod, verify env was baked in at build time:
-kubectl -n voleena exec deployment/frontend -- grep -r "http://localhost:3001" /usr/share/nginx/html/assets/*.js
-
-# It should show: http://api.example.com (or whatever VITE_API_BASE_URL was at build time)
+# Verify env was baked into the frontend image at CI build time
+docker compose exec frontend grep -r "localhost:3001" /usr/share/nginx/html/assets/ 2>/dev/null
+# Should show your production API URL, not localhost
 ```
 
 **Solution:**
 
-- Rebuild frontend with correct `VITE_API_BASE_URL`
-- Or update frontend build args in CI workflow
-- Frontend API URL is baked at build time (not runtime), so CI must have correct value
+- Update `VITE_API_BASE_URL` in GitHub repo variables
+- Re-run CI to rebuild frontend image with correct URL
+- Frontend API URL is baked at build time (not runtime), so CI must have the correct value
 
 **Issue: Backend can't send emails/SMS**
 
 **Check logs:**
 
 ```bash
-kubectl -n voleena logs deployment/backend | grep -i "email\|smtp\|twilio"
+docker compose logs backend | grep -i "email\|smtp\|resend"
 ```
 
-**Verify secrets exist:**
+**Verify env vars are set on server:**
 
 ```bash
-kubectl -n voleena get secret voleena-backend-secret -o jsonpath='{.data.RESEND_API_KEY}' | base64 -d
+docker compose exec backend printenv | grep -i smtp
 ```
 
 **Solution:**
 
-- Verify GitHub secrets are set correctly
-- Re-deploy: `kubectl apply -f k8s/02-secrets.yaml`
-- Re-deploy backend: `kubectl apply -f k8s/05-backend.yaml`
+- Edit `/opt/voleena/.env` and add/fix SMTP\_\* or RESEND_API_KEY values
+- Restart backend: `docker compose restart backend`
 
 ### Performance Tuning
 
-**To increase replicas (handle more traffic):**
+**To limit container memory (prevent OOM crashes):**
 
-```bash
-kubectl -n voleena scale deployment backend --replicas=4
-kubectl -n voleena scale deployment frontend --replicas=4
-```
-
-**To adjust resource limits (if pod OOMKilled):**
-Edit `k8s/05-backend.yaml` or `k8s/06-frontend.yaml`:
+Edit `docker-compose.yml` and add `mem_limit`:
 
 ```yaml
-resources:
-  requests:
-    memory: "512Mi" # Increased from 256Mi
-    cpu: "500m" # Increased from 250m
-  limits:
-    memory: "1Gi"
-    cpu: "1000m"
-```
-
-Apply:
-
-```bash
-kubectl apply -f k8s/05-backend.yaml
+services:
+  backend:
+    mem_limit: 512m
+  frontend:
+    mem_limit: 128m
 ```
 
 **Monitor resource usage:**
 
 ```bash
-kubectl top nodes
-kubectl top pods -n voleena
+docker stats  # Live CPU/memory usage for all containers
+docker compose top  # Process list inside containers
 ```
+
+**Scale up:** For higher traffic, upgrade your VPS to a larger instance size (more CPU/RAM).
 
 ---
 
@@ -876,33 +720,32 @@ kubectl top pods -n voleena
 
 1. ✅ Local Docker testing passes
 2. ✅ GitHub Actions CI/CD pipelines created and working
-3. ✅ Kubernetes manifests created
-4. Deploy to Kubernetes cluster
+3. Provision VPS and install Docker
+4. Configure `.env` on server and test manual deployment
 5. Configure DNS and test end-to-end
 
 ### Short Term (Week 2-3)
 
-1. Set up log aggregation (ELK, Splunk, CloudWatch)
-2. Configure monitoring & alerting (Prometheus, Grafana)
-3. Set up database backups (daily snapshots to S3)
-4. Configure horizontal auto-scaling based on CPU/memory
-5. Add SSL/TLS with cert-manager
+1. Set up log aggregation (e.g., Loki + Grafana, or Papertrail)
+2. Configure monitoring & alerting (Uptime Kuma, Better Stack)
+3. Set up automated database backups (daily mysqldump to S3 or B2)
+4. Add SSL/TLS with Certbot + Let's Encrypt
+5. Configure automatic Docker log rotation
 
 ### Medium Term (Month 2)
 
-1. Implement database replication (MySQL master-slave)
-2. Add Redis caching layer
-3. Set up CI/CD QA environment (staging)
-4. Implement synthetic monitoring (uptime checks)
-5. Document runbooks for common incidents
+1. Add Redis caching layer for sessions/cart
+2. Set up staging environment (duplicate docker-compose stack on staging server)
+3. Implement synthetic monitoring (uptime checks)
+4. Document runbooks for common incidents
+5. Set up database replication or managed DB (PlanetScale, AWS RDS)
 
 ### Long Term (Month 3+)
 
-1. Service mesh (Istio/Linkerd) for advanced traffic management
-2. Multi-region failover
-3. Cost optimization (reserved instances, spot instances)
-4. Implement GitOps (ArgoCD for pull-based deployments)
-5. Disaster recovery plan & regular drills
+1. Migrate to Docker Swarm or managed container service if scaling requires it
+2. Multi-region setup with load balancer
+3. Cost optimization (reserved instances, right-sizing)
+4. Disaster recovery plan & regular drills
 
 ---
 
@@ -921,19 +764,8 @@ kubectl top pods -n voleena
 
 **GitHub Actions (CI/CD):**
 
-- [.github/workflows/ci.yml](.github/workflows/ci.yml) - Lint, test, build images
-- [.github/workflows/cd.yml](.github/workflows/cd.yml) - Deploy to Kubernetes
-
-**Kubernetes:**
-
-- [k8s/00-namespace.yaml](k8s/00-namespace.yaml) - Create voleena namespace
-- [k8s/01-configmap.yaml](k8s/01-configmap.yaml) - Backend config (non-secrets)
-- [k8s/02-secrets.yaml](k8s/02-secrets.yaml) - Passwords, API keys (EDIT BEFORE APPLYING)
-- [k8s/03-pv-pvc.yaml](k8s/03-pv-pvc.yaml) - MySQL persistent storage
-- [k8s/04-mysql.yaml](k8s/04-mysql.yaml) - MySQL 8.0 deployment + service
-- [k8s/05-backend.yaml](k8s/05-backend.yaml) - Backend 2 replicas + service
-- [k8s/06-frontend.yaml](k8s/06-frontend.yaml) - Frontend 2 replicas + service
-- [k8s/07-ingress.yaml](k8s/07-ingress.yaml) - Routing to frontend & backend
+- [.github/workflows/ci.yml](.github/workflows/ci.yml) - Lint, test, build & push Docker images
+- [.github/workflows/cd.yml](.github/workflows/cd.yml) - SSH deploy via Docker Compose
 
 **Original Files (unchanged):**
 
