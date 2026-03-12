@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const adminController = require('../controllers/adminController');
-const { requireAuth, requireAdmin } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/auth');
 
 // All routes require authentication and admin role
-router.use(requireAuth, requireAdmin);
+router.use(requireAdmin);
 
 /**
  * Dashboard & Analytics

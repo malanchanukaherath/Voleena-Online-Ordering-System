@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 const { Staff, Role, Customer } = require('../models');
-const { authenticateToken, requireAdmin } = require('../middleware/auth');
+const { requireAdmin } = require('../middleware/auth');
 const { logStaffCreation } = require('../utils/auditLogger');
 
 /**
  * GET /api/staff/roles
  * Admin-only: Get available staff roles
  */
-router.get('/roles', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/roles', requireAdmin, async (req, res) => {
     try {
         const roles = await Role.findAll({
             attributes: ['RoleID', 'RoleName']
@@ -33,7 +33,7 @@ router.get('/roles', authenticateToken, requireAdmin, async (req, res) => {
  * POST /api/staff
  * Admin-only: Create new staff account
  */
-router.post('/', authenticateToken, requireAdmin, async (req, res) => {
+router.post('/', requireAdmin, async (req, res) => {
     try {
         const { name, email, phone, password, roleId, profileImageUrl, ProfileImageURL } = req.body;
 
@@ -168,7 +168,7 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
  * GET /api/staff
  * Admin-only: Get all staff accounts
  */
-router.get('/', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/', requireAdmin, async (req, res) => {
     try {
         const staff = await Staff.findAll({
             include: [{
@@ -191,7 +191,7 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
  * PATCH /api/staff/:id
  * Admin-only: Update staff account (activate/deactivate)
  */
-router.patch('/:id', authenticateToken, requireAdmin, async (req, res) => {
+router.patch('/:id', requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { isActive } = req.body;

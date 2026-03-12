@@ -12,213 +12,219 @@ const requestIdMiddleware = require('./middleware/requestId');
 const rateLimitHeadersMiddleware = require('./middleware/rateLimitHeaders');
 const automatedJobs = require('./services/automatedJobs'); // Daily stock creation, order timeout, etc.
 
-// Initialize Express app
-const app = express();
 const PORT = process.env.PORT || 3001;
 
-// =====================================================
-// SECURITY MIDDLEWARE
-// =====================================================
+function createApp() {
+  const app = express();
 
-// Helmet for security headers
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
-      scriptSrc: ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com"],
-      imgSrc: ["'self'", "data:", "https:", "https://maps.gstatic.com", "https://maps.googleapis.com", "https://mts.googleapis.com", "https://khms.googleapis.com"],
-      connectSrc: ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com"],
+  // =====================================================
+  // SECURITY MIDDLEWARE
+  // =====================================================
+
+  // Helmet for security headers
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
+        scriptSrc: ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https:", "https://maps.gstatic.com", "https://maps.googleapis.com", "https://mts.googleapis.com", "https://khms.googleapis.com"],
+        connectSrc: ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com"],
+      },
     },
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+      preload: true
+    }
+  }));
+
+  // CORS configuration - CRITICAL: Require explicit FRONTEND_URL
+  if (!process.env.FRONTEND_URL || process.env.FRONTEND_URL === '*') {
+    throw new Error('CRITICAL: FRONTEND_URL must be explicitly set in .env (CORS cannot be wildcard)');
   }
-}));
 
-// CORS configuration - CRITICAL: Require explicit FRONTEND_URL
-if (!process.env.FRONTEND_URL || process.env.FRONTEND_URL === '*') {
-  throw new Error('CRITICAL: FRONTEND_URL must be explicitly set in .env (CORS cannot be wildcard)');
-}
+  const corsOptions = {
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    optionsSuccessStatus: 200,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
+  };
+  app.use(cors(corsOptions));
 
-const corsOptions = {
-  origin: process.env.FRONTEND_URL,
-  credentials: true,
-  optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
-};
-app.use(cors(corsOptions));
+  // =====================================================
+  // GENERAL MIDDLEWARE
+  // =====================================================
 
-// =====================================================
-// GENERAL MIDDLEWARE
-// =====================================================
+  // Request ID middleware - add before other middleware for tracing
+  app.use(requestIdMiddleware);
 
-// Request ID middleware - add before other middleware for tracing
-app.use(requestIdMiddleware);
+  // Body parsing
+  app.use(express.json({
+    limit: '10mb',
+    verify: (req, res, buf) => {
+      req.rawBody = buf;
+    }
+  }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Body parsing
-app.use(express.json({
-  limit: '10mb',
-  verify: (req, res, buf) => {
-    req.rawBody = buf;
+  // Compression
+  app.use(compression());
+
+  // Request logging
+  if (process.env.NODE_ENV === 'development') {
+    app.use(morgan('dev'));
+  } else {
+    app.use(morgan('combined'));
   }
-}));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Compression
-app.use(compression());
+  // Input sanitization
+  app.use(sanitizeInput);
 
-// Request logging
-if (process.env.NODE_ENV === 'development') {
-  app.use(morgan('dev'));
-} else {
-  app.use(morgan('combined'));
-}
+  // Rate limit headers middleware
+  app.use(rateLimitHeadersMiddleware);
 
-// Input sanitization
-app.use(sanitizeInput);
+  // Audit logging middleware (logs all state-changing operations)
+  app.use(auditLogMiddleware);
 
-// Rate limit headers middleware
-app.use(rateLimitHeadersMiddleware);
+  // =====================================================
+  // API ROUTES
+  // =====================================================
 
-// Audit logging middleware (logs all state-changing operations)
-app.use(auditLogMiddleware);
-
-// =====================================================
-// API ROUTES
-// =====================================================
-
-// Health check
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV
+  // Health check
+  app.get('/health', (req, res) => {
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV
+    });
   });
-});
 
-// API version 1 routes
-app.use('/api/v1/auth', require('./routes/authRoutes'));
-app.use('/api/v1/customers', require('./routes/customers'));
-app.use('/api/v1/staff', require('./routes/staff'));
-app.use('/api/v1/menu', require('./routes/menuItems'));
-app.use('/api/v1/categories', require('./routes/categories'));
-app.use('/api/v1/orders', require('./routes/orders'));
-app.use('/api/v1/combos', require('./routes/comboPacks'));
-app.use('/api/v1/cart', require('./routes/cart'));
-app.use('/api/v1/stock', require('./routes/stock'));
-app.use('/api/v1/payments', require('./routes/payments'));
-app.use('/api/v1/delivery', require('./routes/deliveryRoutes'));
-app.use('/api/v1/admin', require('./routes/adminRoutes'));
-app.use('/api/v1/kitchen', require('./routes/kitchenRoutes'));
-app.use('/api/v1/cashier', require('./routes/cashierRoutes'));
-app.use('/api/v1/upload', require('./routes/uploadRoutes'));
+  // API version 1 routes
+  app.use('/api/v1/auth', require('./routes/authRoutes'));
+  app.use('/api/v1/customers', require('./routes/customers'));
+  app.use('/api/v1/staff', require('./routes/staff'));
+  app.use('/api/v1/menu', require('./routes/menuItems'));
+  app.use('/api/v1/categories', require('./routes/categories'));
+  app.use('/api/v1/orders', require('./routes/orders'));
+  app.use('/api/v1/combos', require('./routes/comboPacks'));
+  app.use('/api/v1/cart', require('./routes/cart'));
+  app.use('/api/v1/stock', require('./routes/stock'));
+  app.use('/api/v1/payments', require('./routes/payments'));
+  app.use('/api/v1/delivery', require('./routes/deliveryRoutes'));
+  app.use('/api/v1/admin', require('./routes/adminRoutes'));
+  app.use('/api/v1/kitchen', require('./routes/kitchenRoutes'));
+  app.use('/api/v1/cashier', require('./routes/cashierRoutes'));
+  app.use('/api/v1/upload', require('./routes/uploadRoutes'));
 
-// DEPRECATED: Legacy aliases for backward compatibility only
-// These routes will be removed in v3.0 (2026-06-01)
-// Please migrate to /api/v1/* routes
-const deprecationMiddleware = require('./middleware/deprecation');
+  // DEPRECATED: Legacy aliases for backward compatibility only
+  // These routes will be removed in v3.0 (2026-06-01)
+  // Please migrate to /api/v1/* routes
+  const deprecationMiddleware = require('./middleware/deprecation');
 
-app.use('/api/auth', deprecationMiddleware('/auth'), require('./routes/authRoutes'));
-app.use('/api/customers', deprecationMiddleware('/customers'), require('./routes/customers'));
-app.use('/api/staff', deprecationMiddleware('/staff'), require('./routes/staff'));
-app.use('/api/menu', deprecationMiddleware('/menu'), require('./routes/menuItems'));
-app.use('/api/categories', deprecationMiddleware('/categories'), require('./routes/categories'));
-app.use('/api/orders', deprecationMiddleware('/orders'), require('./routes/orders'));
-app.use('/api/combos', deprecationMiddleware('/combos'), require('./routes/comboPacks'));
-app.use('/api/cart', deprecationMiddleware('/cart'), require('./routes/cart'));
-app.use('/api/stock', deprecationMiddleware('/stock'), require('./routes/stock'));
-app.use('/api/payments', deprecationMiddleware('/payments'), require('./routes/payments'));
-app.use('/api/delivery', deprecationMiddleware('/delivery'), require('./routes/deliveryRoutes'));
-app.use('/api/admin', deprecationMiddleware('/admin'), require('./routes/adminRoutes'));
-app.use('/api/kitchen', deprecationMiddleware('/kitchen'), require('./routes/kitchenRoutes'));
-app.use('/api/cashier', deprecationMiddleware('/cashier'), require('./routes/cashierRoutes'));
-app.use('/api/upload', require('./routes/uploadRoutes'));
+  app.use('/api/auth', deprecationMiddleware('/auth'), require('./routes/authRoutes'));
+  app.use('/api/customers', deprecationMiddleware('/customers'), require('./routes/customers'));
+  app.use('/api/staff', deprecationMiddleware('/staff'), require('./routes/staff'));
+  app.use('/api/menu', deprecationMiddleware('/menu'), require('./routes/menuItems'));
+  app.use('/api/categories', deprecationMiddleware('/categories'), require('./routes/categories'));
+  app.use('/api/orders', deprecationMiddleware('/orders'), require('./routes/orders'));
+  app.use('/api/combos', deprecationMiddleware('/combos'), require('./routes/comboPacks'));
+  app.use('/api/cart', deprecationMiddleware('/cart'), require('./routes/cart'));
+  app.use('/api/stock', deprecationMiddleware('/stock'), require('./routes/stock'));
+  app.use('/api/payments', deprecationMiddleware('/payments'), require('./routes/payments'));
+  app.use('/api/delivery', deprecationMiddleware('/delivery'), require('./routes/deliveryRoutes'));
+  app.use('/api/admin', deprecationMiddleware('/admin'), require('./routes/adminRoutes'));
+  app.use('/api/kitchen', deprecationMiddleware('/kitchen'), require('./routes/kitchenRoutes'));
+  app.use('/api/cashier', deprecationMiddleware('/cashier'), require('./routes/cashierRoutes'));
+  app.use('/api/upload', require('./routes/uploadRoutes'));
 
-// =====================================================
-// ERROR HANDLING
-// =====================================================
+  // =====================================================
+  // ERROR HANDLING
+  // =====================================================
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    error: 'Route not found',
-    path: req.path
+  // 404 handler
+  app.use((req, res) => {
+    res.status(404).json({
+      success: false,
+      error: 'Route not found',
+      path: req.path
+    });
   });
-});
 
-// Global error handler
-app.use((err, req, res, next) => {
-  console.error('Error:', err);
+  // Global error handler
+  app.use((err, req, res, next) => {
+    console.error('Error:', err);
 
-  // Sequelize validation errors
-  if (err.name === 'SequelizeValidationError') {
-    return res.status(400).json({
-      success: false,
-      error: 'Validation error',
-      details: err.errors.map(e => ({
-        field: e.path,
-        message: e.message
-      }))
-    });
-  }
-
-  // Sequelize unique constraint errors
-  if (err.name === 'SequelizeUniqueConstraintError') {
-    return res.status(409).json({
-      success: false,
-      error: 'Duplicate entry',
-      details: err.errors.map(e => ({
-        field: e.path,
-        message: `${e.path} already exists`
-      }))
-    });
-  }
-
-  // JWT errors
-  if (err.name === 'JsonWebTokenError') {
-    return res.status(401).json({
-      success: false,
-      error: 'Invalid token'
-    });
-  }
-
-  if (err.name === 'TokenExpiredError') {
-    return res.status(401).json({
-      success: false,
-      error: 'Token expired',
-      code: 'TOKEN_EXPIRED'
-    });
-  }
-
-  // Multer upload errors
-  if (err.name === 'MulterError') {
-    if (err.code === 'LIMIT_FILE_SIZE') {
+    // Sequelize validation errors
+    if (err.name === 'SequelizeValidationError') {
       return res.status(400).json({
         success: false,
-        error: 'Image size exceeds 5MB limit'
+        error: 'Validation error',
+        details: err.errors.map((e) => ({
+          field: e.path,
+          message: e.message
+        }))
       });
     }
 
-    return res.status(400).json({
-      success: false,
-      error: err.message || 'Invalid upload request'
-    });
-  }
+    // Sequelize unique constraint errors
+    if (err.name === 'SequelizeUniqueConstraintError') {
+      return res.status(409).json({
+        success: false,
+        error: 'Duplicate entry',
+        details: err.errors.map((e) => ({
+          field: e.path,
+          message: `${e.path} already exists`
+        }))
+      });
+    }
 
-  // Default error
-  const statusCode = err.statusCode || 500;
-  res.status(statusCode).json({
-    success: false,
-    error: err.message || 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    // JWT errors
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        error: 'Invalid token'
+      });
+    }
+
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({
+        success: false,
+        error: 'Token expired',
+        code: 'TOKEN_EXPIRED'
+      });
+    }
+
+    // Multer upload errors
+    if (err.name === 'MulterError') {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          error: 'Image size exceeds 5MB limit'
+        });
+      }
+
+      return res.status(400).json({
+        success: false,
+        error: err.message || 'Invalid upload request'
+      });
+    }
+
+    // Default error
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({
+      success: false,
+      error: err.message || 'Internal server error',
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    });
   });
-});
+
+  return app;
+}
+
+const app = createApp();
 
 // =====================================================
 // SERVER INITIALIZATION
@@ -278,7 +284,12 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-// Start the server
-startServer();
+if (require.main === module) {
+  startServer();
+}
 
-module.exports = app;
+module.exports = {
+  app,
+  createApp,
+  startServer
+};

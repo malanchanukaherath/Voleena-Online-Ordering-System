@@ -4,10 +4,49 @@ import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
+import FilterResetButton from '../components/ui/FilterResetButton';
 import { categoryService, comboPackService, menuItemService } from '../services/menuService';
 import { toast } from 'react-toastify';
 import { addToCart } from '../utils/cartStorage';
 import { resolveAssetUrl } from '../config/api';
+
+const normalizeItemText = (value) => String(value || '').trim().toLowerCase();
+
+const dedupeDisplayItems = (items) => {
+    const seenEntityKeys = new Set();
+    const seenSignatures = new Set();
+
+    return items.filter((item) => {
+        const itemType = item.type || (item.isCombo ? 'combo' : 'menu');
+        const entityId = item.id ?? item.menuItemId ?? item.comboId ?? null;
+        const entityKey = entityId !== null ? `${itemType}:${entityId}` : null;
+        const signature = [
+            itemType,
+            normalizeItemText(item.name),
+            normalizeItemText(item.description),
+            String(item.categoryId ?? item.categoryName ?? ''),
+            Number.isFinite(item.price) ? item.price.toFixed(2) : String(item.price ?? ''),
+            Number.isFinite(item.originalPrice) ? item.originalPrice.toFixed(2) : String(item.originalPrice ?? ''),
+            Number.isFinite(item.discount) ? item.discount.toFixed(2) : String(item.discount ?? ''),
+            String(item.stockQuantity ?? ''),
+            item.image || ''
+        ].join('|');
+
+        if (entityKey && seenEntityKeys.has(entityKey)) {
+            return false;
+        }
+
+        if (seenSignatures.has(signature)) {
+            return false;
+        }
+
+        if (entityKey) {
+            seenEntityKeys.add(entityKey);
+        }
+        seenSignatures.add(signature);
+        return true;
+    });
+};
 
 const Menu = () => {
     const [searchTerm, setSearchTerm] = useState('');
@@ -48,7 +87,7 @@ const Menu = () => {
                         stockQuantity: item.StockQuantity ?? null,
                         isAvailable: item.IsAvailable !== undefined ? !!item.IsAvailable : !!item.IsActive,
                     }));
-                    setMenuItems(transformedItems);
+                    setMenuItems(dedupeDisplayItems(transformedItems));
                 } else {
                     setError('Failed to load menu items');
                     toast.error('Failed to load menu items');
@@ -89,6 +128,7 @@ const Menu = () => {
                 if (response.success && Array.isArray(response.data)) {
                     const mapped = response.data.map(combo => ({
                         id: combo.ComboID || combo.ComboPackID,
+                        type: 'combo',
                         name: combo.Name,
                         description: combo.Description || 'No description available',
                         price: parseFloat(combo.Price),
@@ -99,7 +139,7 @@ const Menu = () => {
                         scheduleStartDate: combo.ScheduleStartDate,
                         scheduleEndDate: combo.ScheduleEndDate
                     }));
-                    setComboPacks(mapped);
+                    setComboPacks(dedupeDisplayItems(mapped));
                 } else {
                     setComboPacks([]);
                 }
@@ -132,7 +172,7 @@ const Menu = () => {
     }, [categories, menuItems, comboPacks]);
 
     // Convert combo packs to menu item format
-    const comboMenuItems = comboPacks.map(combo => ({
+    const comboMenuItems = useMemo(() => comboPacks.map(combo => ({
         id: combo.id,
         type: 'combo',
         comboId: combo.id,
@@ -148,19 +188,29 @@ const Menu = () => {
         stockQuantity: null,
         isAvailable: true,
         isCombo: true
-    }));
+    })), [comboPacks]);
 
     // Combine regular items and combos
-    const allItems = [...menuItems, ...comboMenuItems];
+    const allItems = useMemo(
+        () => dedupeDisplayItems([...menuItems, ...comboMenuItems]),
+        [menuItems, comboMenuItems]
+    );
 
-    const filteredItems = allItems.filter(item => {
+    const filteredItems = useMemo(() => allItems.filter(item => {
         const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             item.description.toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCategory = !selectedCategory
             || (selectedCategory === 'combos' && item.isCombo)
             || (selectedCategory !== 'combos' && String(item.categoryId || '') === selectedCategory);
         return matchesSearch && matchesCategory;
-    });
+    }), [allItems, searchTerm, selectedCategory]);
+
+    const hasActiveFilters = Boolean(searchTerm || selectedCategory);
+
+    const clearFilters = () => {
+        setSearchTerm('');
+        setSelectedCategory('');
+    };
 
     // Get stock badge info
     const getStockBadge = (item) => {
@@ -209,8 +259,8 @@ const Menu = () => {
 
             {/* Search and Filter Bar */}
             <div className="bg-white p-4 rounded-lg shadow mb-8">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+                    <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Search
                         </label>
@@ -241,6 +291,13 @@ const Menu = () => {
                         label="Category"
                         name="category"
                     />
+                    <div className="flex items-end">
+                        <FilterResetButton
+                            onClick={clearFilters}
+                            disabled={!hasActiveFilters}
+                            className="w-full justify-center md:w-auto"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -253,7 +310,7 @@ const Menu = () => {
                         const stockBadge = getStockBadge(item);
                         return (
                             <div
-                                key={item.id}
+                                key={`${item.type || (item.isCombo ? 'combo' : 'menu')}:${item.id}`}
                                 className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${!item.isAvailable || item.stockQuantity === 0 ? 'opacity-60' : ''
                                     }`}
                             >
@@ -340,7 +397,7 @@ const Menu = () => {
                     title="No items found"
                     description="Try adjusting your search or filter criteria"
                     action={
-                        <Button onClick={() => { setSearchTerm(''); setSelectedCategory(''); }}>
+                        <Button onClick={clearFilters}>
                             Clear Filters
                         </Button>
                     }

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const { authenticateToken } = require('../middleware/auth');
 const {
 	authLimiter,
 	otpLimiter,
@@ -52,13 +53,13 @@ router.post('/refresh', authController.refreshToken);
  * @route POST /api/auth/logout
  * @desc Logout user
  */
-router.post('/logout', authController.logout);
+router.post('/logout', authenticateToken, authController.logout);
 
 /**
  * @route GET /api/auth/verify
  * @desc Verify current token
  */
-router.get('/verify', authController.verifyToken);
+router.get('/verify', authenticateToken, authController.verifyToken);
 
 /**
  * @route POST /api/auth/password-reset/request

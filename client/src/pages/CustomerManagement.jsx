@@ -6,6 +6,7 @@ import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
+import FilterResetButton from '../components/ui/FilterResetButton';
 import AddCustomerModal from '../components/AddCustomerModal';
 import { customerApi } from '../services/staffCustomerApi';
 
@@ -143,6 +144,10 @@ const CustomerManagement = () => {
         customer.Phone?.includes(searchTerm)
     );
 
+    const clearSearch = () => {
+        setSearchTerm('');
+    };
+
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString('en-US', {
@@ -175,12 +180,21 @@ const CustomerManagement = () => {
 
             {/* Search Bar */}
             <div className="bg-white rounded-lg shadow p-4 mb-6">
-                <Input
-                    placeholder="Search by name, email, or phone..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    icon={FaSearch}
-                />
+                <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                    <div className="flex-1">
+                        <Input
+                            placeholder="Search by name, email, or phone..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            icon={FaSearch}
+                        />
+                    </div>
+                    <FilterResetButton
+                        onClick={clearSearch}
+                        disabled={!searchTerm}
+                        label="Clear Search"
+                    />
+                </div>
             </div>
 
             {/* Statistics Cards */}
@@ -295,7 +309,7 @@ const CustomerManagement = () => {
                     title="No customers found"
                     description="No customers match your search criteria"
                     action={
-                        <Button onClick={() => setSearchTerm('')}>
+                        <Button onClick={clearSearch}>
                             Clear Search
                         </Button>
                     }

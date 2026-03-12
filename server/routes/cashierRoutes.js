@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const cashierController = require('../controllers/cashierController');
-const { requireAuth, requireCashier } = require('../middleware/auth');
+const { requireCashier } = require('../middleware/auth');
 
 // All routes require authentication and cashier role (or admin)
-router.use(requireAuth, requireCashier);
+router.use(requireCashier);
 
 /**
  * Dashboard

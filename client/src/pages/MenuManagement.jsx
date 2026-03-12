@@ -3,6 +3,7 @@ import { FaSearch, FaEdit, FaTrash, FaPlus, FaToggleOn, FaToggleOff } from 'reac
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
+import FilterResetButton from '../components/ui/FilterResetButton';
 import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
 import ImageUpload from '../components/ImageUpload';
@@ -191,6 +192,13 @@ const MenuManagement = () => {
     };
 
     const filteredItems = menuItems;
+    const hasActiveFilters = Boolean(searchTerm || categoryFilter || isActiveFilter !== '');
+
+    const clearFilters = () => {
+        setSearchTerm('');
+        setCategoryFilter('');
+        setIsActiveFilter('');
+    };
 
     return (
         <div className="p-6">
@@ -200,7 +208,7 @@ const MenuManagement = () => {
             </div>
 
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
                     <div className="lg:col-span-2">
                         <Input
                             label="Search"
@@ -228,6 +236,13 @@ const MenuManagement = () => {
                                 { value: 'true', label: 'Active' },
                                 { value: 'false', label: 'Inactive' }
                             ]}
+                        />
+                    </div>
+                    <div className="flex items-end">
+                        <FilterResetButton
+                            onClick={clearFilters}
+                            disabled={!hasActiveFilters}
+                            className="w-full justify-center md:w-auto"
                         />
                     </div>
                 </div>

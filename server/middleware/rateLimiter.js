@@ -87,6 +87,20 @@ const verifyEmailLimiter = rateLimit({
 });
 
 /**
+ * Public lookup rate limiter
+ * Used for anonymous geocoding and fee lookups during checkout.
+ */
+const publicLookupLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: process.env.NODE_ENV === 'production' ? 60 : 300,
+    message: {
+        success: false,
+        error: 'Too many lookup requests, please try again later'
+    },
+    store: makeRedisStore('rl:lookup:')
+});
+
+/**
  * Order creation rate limiter
  */
 const orderLimiter = rateLimit({
@@ -152,6 +166,7 @@ module.exports = {
     authLimiter,
     otpLimiter,
     verifyEmailLimiter,
+    publicLookupLimiter,
     orderLimiter,
     paymentLimiter,
     confirmOrderLimiter,

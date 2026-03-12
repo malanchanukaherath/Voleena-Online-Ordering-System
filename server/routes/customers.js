@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crypto = require('crypto');
 const { Customer, Address } = require('../models');
-const { authenticateToken, requireAdmin, requireCashier, requireCustomer } = require('../middleware/auth');
+const { requireCashier, requireCustomer } = require('../middleware/auth');
 const { logCustomerCreation } = require('../utils/auditLogger');
 
 /**
@@ -10,7 +10,7 @@ const { logCustomerCreation } = require('../utils/auditLogger');
  * Admin/Cashier: Manually register a new customer
  * Checks for duplicates by phone and email
  */
-router.post('/', authenticateToken, requireCashier, async (req, res) => {
+router.post('/', requireCashier, async (req, res) => {
     try {
         const { name, phone, email, address, password, profileImageUrl, ProfileImageURL } = req.body;
 
@@ -154,7 +154,7 @@ router.post('/', authenticateToken, requireCashier, async (req, res) => {
  * GET /api/customers
  * Admin/Cashier: Get all customers
  */
-router.get('/', authenticateToken, requireCashier, async (req, res) => {
+router.get('/', requireCashier, async (req, res) => {
     try {
         const { status, search, limit = 50, offset = 0 } = req.query;
         const parsedLimit = Number.parseInt(limit, 10);
@@ -299,7 +299,7 @@ router.post('/me/addresses', requireCustomer, async (req, res) => {
  * GET /api/customers/:id
  * Admin/Cashier: Get customer by ID
  */
-router.get('/:id', authenticateToken, requireCashier, async (req, res) => {
+router.get('/:id', requireCashier, async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -326,7 +326,7 @@ router.get('/:id', authenticateToken, requireCashier, async (req, res) => {
  * PUT /api/customers/:id
  * Admin/Cashier: Update customer details
  */
-router.put('/:id', authenticateToken, requireCashier, async (req, res) => {
+router.put('/:id', requireCashier, async (req, res) => {
     try {
         const { id } = req.params;
         const { name, email, phone, accountStatus } = req.body;

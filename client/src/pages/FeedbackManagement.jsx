@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaStar, FaReply, FaTrash } from 'react-icons/fa';
 import Select from '../components/ui/Select';
+import FilterResetButton from '../components/ui/FilterResetButton';
 
 const FeedbackManagement = () => {
     const [typeFilter, setTypeFilter] = useState('');
@@ -8,6 +9,11 @@ const FeedbackManagement = () => {
     const feedbacks = [];
 
     const filteredFeedback = typeFilter ? feedbacks.filter(f => f.type === typeFilter) : feedbacks;
+    const hasActiveFilters = Boolean(typeFilter);
+
+    const clearFilters = () => {
+        setTypeFilter('');
+    };
 
     const renderStars = (rating) => {
         return [...Array(5)].map((_, i) => (
@@ -23,23 +29,31 @@ const FeedbackManagement = () => {
             </div>
 
             <div className="bg-white rounded-lg shadow p-4 mb-6">
-                <Select
-                    label="Filter by Type"
-                    value={typeFilter}
-                    onChange={(e) => setTypeFilter(e.target.value)}
-                    options={[
-                        { value: '', label: 'All Feedback' },
-                        { value: 'ORDER', label: 'Order Experience' },
-                        { value: 'DELIVERY', label: 'Delivery Service' },
-                        { value: 'GENERAL', label: 'General Feedback' },
-                    ]}
-                />
+                <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                    <div className="w-full md:max-w-xs">
+                        <Select
+                            label="Filter by Type"
+                            value={typeFilter}
+                            onChange={(e) => setTypeFilter(e.target.value)}
+                            options={[
+                                { value: '', label: 'All Feedback' },
+                                { value: 'ORDER', label: 'Order Experience' },
+                                { value: 'DELIVERY', label: 'Delivery Service' },
+                                { value: 'GENERAL', label: 'General Feedback' },
+                            ]}
+                        />
+                    </div>
+                    <FilterResetButton onClick={clearFilters} disabled={!hasActiveFilters} />
+                </div>
             </div>
 
             <div className="space-y-4">
                 {filteredFeedback.length === 0 ? (
                     <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500">
-                        No feedback records available yet.
+                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <span>{hasActiveFilters ? 'No feedback matches the selected filter.' : 'No feedback records available yet.'}</span>
+                            {hasActiveFilters && <FilterResetButton onClick={clearFilters} />}
+                        </div>
                     </div>
                 ) : filteredFeedback.map(feedback => (
                     <div key={feedback.id} className={`bg-white rounded-lg shadow p-6 ${!feedback.replied ? 'border-l-4 border-yellow-400' : ''}`}>

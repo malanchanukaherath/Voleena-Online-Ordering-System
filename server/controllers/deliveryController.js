@@ -667,7 +667,7 @@ exports.getDeliveryLocation = async (req, res) => {
     // SECURITY FIX: Check authorization
     const isDeliveryStaff = delivery.DeliveryStaffID === userId;
     const isCustomer = delivery.order?.CustomerID === userId;
-    const isAdmin = userRole === 'ADMIN' || userRole === 'SUPER_ADMIN';
+    const isAdmin = req.user.type === 'Staff' && userRole === 'Admin';
 
     if (!isDeliveryStaff && !isCustomer && !isAdmin) {
       return res.status(403).json({

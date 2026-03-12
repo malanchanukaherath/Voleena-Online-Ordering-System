@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const deliveryController = require('../controllers/deliveryController');
-const { requireAuth, requireDelivery } = require('../middleware/auth');
+const { requireAuth, requireDelivery, requireRole } = require('../middleware/auth');
+const { publicLookupLimiter } = require('../middleware/rateLimiter');
 
 /**
  * Public endpoints (no authentication required)
@@ -10,24 +11,27 @@ const { requireAuth, requireDelivery } = require('../middleware/auth');
 /**
  * Validate delivery distance for checkout
  */
-router.post('/validate-distance', deliveryController.validateDeliveryDistance);
+router.post('/validate-distance', publicLookupLimiter, deliveryController.validateDeliveryDistance);
 
 /**
  * Get delivery fee configuration
  */
-router.get('/fee-config', deliveryController.getDeliveryFeeConfig);
+router.get('/fee-config', publicLookupLimiter, deliveryController.getDeliveryFeeConfig);
 
 /**
  * Calculate delivery fee for a specific distance
  */
-router.post('/calculate-fee', deliveryController.calculateDeliveryFee);
+router.post('/calculate-fee', publicLookupLimiter, deliveryController.calculateDeliveryFee);
+
+// Authenticated location lookup for customers, assigned riders, and admins.
+router.get('/deliveries/:deliveryId/location', requireAuth, deliveryController.getDeliveryLocation);
 
 /**
  * Protected routes (require authentication and delivery role or admin)
  */
 
 // All routes below require authentication and delivery role (or admin)
-router.use(requireAuth, requireDelivery);
+router.use(requireDelivery);
 
 /**
  * Dashboard
@@ -46,12 +50,10 @@ router.get('/history', deliveryController.getDeliveryHistory);
  * Location Tracking (Rider sends location, Admin/Customer retrieves it)
  */
 router.post('/deliveries/:deliveryId/location', deliveryController.trackDeliveryLocation);
-router.get('/deliveries/:deliveryId/location', deliveryController.getDeliveryLocation);
-
 /**
  * Available staff (admin endpoint)
  */
-router.get('/staff/available', deliveryController.getAvailableDeliveryStaff);
+router.get('/staff/available', requireRole('Admin'), deliveryController.getAvailableDeliveryStaff);
 
 /**
  * Availability Management

@@ -5,6 +5,7 @@ import StatusBadge from '../components/ui/StatusBadge';
 import Select from '../components/ui/Select';
 import EmptyState from '../components/ui/EmptyState';
 import Button from '../components/ui/Button';
+import FilterResetButton from '../components/ui/FilterResetButton';
 import { getOrders } from '../services/orderApi';
 
 const OrderHistory = () => {
@@ -65,6 +66,12 @@ const OrderHistory = () => {
         ? orders.filter(order => order.status === statusFilter)
         : orders;
 
+    const hasActiveFilters = Boolean(statusFilter);
+
+    const clearFilters = () => {
+        setStatusFilter('');
+    };
+
     const handleReorder = (orderId) => {
         console.log('Reordering:', orderId);
         alert('Items added to cart!');
@@ -79,13 +86,16 @@ const OrderHistory = () => {
 
             {/* Filter */}
             <div className="bg-white rounded-lg shadow p-4 mb-6">
-                <div className="max-w-xs">
-                    <Select
-                        label="Filter by Status"
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        options={statusOptions}
-                    />
+                <div className="flex flex-col gap-4 md:flex-row md:items-end">
+                    <div className="w-full md:max-w-xs">
+                        <Select
+                            label="Filter by Status"
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            options={statusOptions}
+                        />
+                    </div>
+                    <FilterResetButton onClick={clearFilters} disabled={!hasActiveFilters} label="Clear Filter" />
                 </div>
             </div>
 
@@ -160,7 +170,7 @@ const OrderHistory = () => {
                     description={statusFilter ? 'No orders match the selected filter' : "You haven't placed any orders yet"}
                     action={
                         statusFilter ? (
-                            <Button onClick={() => setStatusFilter('')}>Clear Filter</Button>
+                            <Button onClick={clearFilters}>Clear Filter</Button>
                         ) : (
                             <Link to="/menu">
                                 <Button>Browse Menu</Button>

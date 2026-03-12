@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const kitchenController = require('../controllers/kitchenController');
-const { requireAuth, requireKitchen } = require('../middleware/auth');
+const { requireKitchen } = require('../middleware/auth');
 
 // All routes require authentication and kitchen role (or admin)
-router.use(requireAuth, requireKitchen);
+router.use(requireKitchen);
 
 /**
  * Dashboard

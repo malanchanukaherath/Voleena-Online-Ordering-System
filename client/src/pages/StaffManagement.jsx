@@ -5,6 +5,7 @@ import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import EmptyState from '../components/ui/EmptyState';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
+import FilterResetButton from '../components/ui/FilterResetButton';
 import AddStaffModal from '../components/AddStaffModal';
 import { staffApi } from '../services/staffCustomerApi';
 
@@ -91,6 +92,13 @@ const StaffManagement = () => {
         return matchesSearch && matchesRole;
     });
 
+    const hasActiveFilters = Boolean(searchTerm || roleFilter);
+
+    const clearFilters = () => {
+        setSearchTerm('');
+        setRoleFilter('');
+    };
+
     const getRoleBadgeColor = (role) => {
         const colors = {
             Admin: 'bg-purple-100 text-purple-800',
@@ -133,7 +141,7 @@ const StaffManagement = () => {
 
             {/* Search and Filter Bar */}
             <div className="bg-white rounded-lg shadow p-4 mb-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div className="md:col-span-2">
                         <Input
                             placeholder="Search by name or email..."
@@ -147,6 +155,13 @@ const StaffManagement = () => {
                         onChange={(e) => setRoleFilter(e.target.value)}
                         options={roleOptions}
                     />
+                    <div className="flex items-end">
+                        <FilterResetButton
+                            onClick={clearFilters}
+                            disabled={!hasActiveFilters}
+                            className="w-full justify-center md:w-auto"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -260,7 +275,7 @@ const StaffManagement = () => {
                     title="No staff members found"
                     description="No staff match your search criteria"
                     action={
-                        <Button onClick={() => { setSearchTerm(''); setRoleFilter(''); }}>
+                        <Button onClick={clearFilters}>
                             Clear Filters
                         </Button>
                     }
