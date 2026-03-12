@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { FaPlus, FaEdit, FaTrash, FaCalendar, FaImage } from 'react-icons/fa';
+import { FaPlus, FaEdit, FaTrash, FaCalendar } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Input from '../components/ui/Input';
 import Textarea from '../components/ui/Textarea';
 import Select from '../components/ui/Select';
 import Toast from '../components/ui/Toast';
+import ImageUpload from '../components/ImageUpload';
 import { comboPackService, menuItemService } from '../services/menuService';
 import { resolveAssetUrl } from '../config/api';
 
@@ -19,7 +20,6 @@ const ComboManagement = () => {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
-    const [imageFile, setImageFile] = useState(null);
 
     const [formData, setFormData] = useState({
         name: '',
@@ -28,13 +28,12 @@ const ComboManagement = () => {
         discount: '',
         startDate: '',
         endDate: '',
-        image: null,
+        imageUrl: '',
         isActive: true,
         items: [{ menuItemId: '', quantity: '1' }]
     });
 
     const [errors, setErrors] = useState({});
-    const [imagePreview, setImagePreview] = useState(null);
 
     const resolveImageUrl = (imagePath) => {
         if (!imagePath) {
@@ -111,12 +110,10 @@ const ComboManagement = () => {
             discount: '',
             startDate: '',
             endDate: '',
-            image: null,
+            imageUrl: '',
             isActive: true,
             items: [{ menuItemId: '', quantity: '1' }]
         });
-        setImagePreview(null);
-        setImageFile(null);
         setErrors({});
         setShowModal(true);
     };
@@ -130,12 +127,10 @@ const ComboManagement = () => {
             discount: combo.discount.toString(),
             startDate: combo.startDate,
             endDate: combo.endDate,
-            image: combo.image,
+            imageUrl: combo.image,
             isActive: combo.isActive,
             items: combo.items.length ? combo.items : [{ menuItemId: '', quantity: '1' }]
         });
-        setImagePreview(combo.image);
-        setImageFile(null);
         setErrors({});
         setShowModal(true);
     };
@@ -148,16 +143,6 @@ const ComboManagement = () => {
         }));
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
-        }
-    };
-
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const previewUrl = URL.createObjectURL(file);
-            setImagePreview(previewUrl);
-            setImageFile(file);
-            setFormData(prev => ({ ...prev, image: previewUrl }));
         }
     };
 
@@ -238,6 +223,7 @@ const ComboManagement = () => {
             Price: parseFloat(formData.price),
             ScheduleStartDate: formData.startDate,
             ScheduleEndDate: formData.endDate,
+            ImageURL: formData.imageUrl || null,
             IsActive: formData.isActive,
             items: formData.items
                 .filter(item => item.menuItemId && Number(item.quantity) >= 1)
@@ -258,10 +244,6 @@ const ComboManagement = () => {
                 const response = await comboPackService.create(payload);
                 comboId = response?.data?.ComboID || response?.data?.ComboPackID;
                 setToastMessage('Combo created successfully!');
-            }
-
-            if (comboId && imageFile) {
-                await comboPackService.uploadImage(comboId, imageFile);
             }
 
             await fetchCombos();
@@ -536,30 +518,15 @@ const ComboManagement = () => {
                             />
                         </div>
 
-                        {/* Image Upload */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Combo Image
-                            </label>
-                            <div className="flex items-center gap-4">
-                                {imagePreview && (
-                                    <img src={imagePreview} alt="Preview" className="w-24 h-24 rounded object-cover" />
-                                )}
-                                <label className="cursor-pointer">
-                                    <div className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50">
-                                        <FaImage />
-                                        <span className="text-sm">Choose Image</span>
-                                    </div>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleImageChange}
-                                        className="hidden"
-                                    />
-                                </label>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">Upload an image for this combo pack</p>
-                        </div>
+                        <ImageUpload
+                            label="Combo Image"
+                            folder="combo"
+                            currentImage={formData.imageUrl}
+                            onUploadComplete={(imageUrl) => setFormData((prev) => ({
+                                ...prev,
+                                imageUrl: imageUrl || ''
+                            }))}
+                        />
 
                         <div className="flex items-center">
                             <input

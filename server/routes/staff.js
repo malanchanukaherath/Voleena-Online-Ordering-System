@@ -35,7 +35,7 @@ router.get('/roles', authenticateToken, requireAdmin, async (req, res) => {
  */
 router.post('/', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const { name, email, phone, password, roleId } = req.body;
+        const { name, email, phone, password, roleId, profileImageUrl, ProfileImageURL } = req.body;
 
         // Validation
         if (!name || !email || !phone || !password || !roleId) {
@@ -129,6 +129,7 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
             Phone: phone.trim(),
             Password: password,  // Will be hashed by model beforeCreate hook
             RoleID: roleId,
+            ProfileImageURL: profileImageUrl || ProfileImageURL || null,
             IsActive: true
         });
 

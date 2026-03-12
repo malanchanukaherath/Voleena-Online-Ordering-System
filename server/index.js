@@ -116,6 +116,7 @@ app.use('/api/v1/delivery', require('./routes/deliveryRoutes'));
 app.use('/api/v1/admin', require('./routes/adminRoutes'));
 app.use('/api/v1/kitchen', require('./routes/kitchenRoutes'));
 app.use('/api/v1/cashier', require('./routes/cashierRoutes'));
+app.use('/api/v1/upload', require('./routes/uploadRoutes'));
 
 // DEPRECATED: Legacy aliases for backward compatibility only
 // These routes will be removed in v3.0 (2026-06-01)
@@ -136,6 +137,7 @@ app.use('/api/delivery', deprecationMiddleware('/delivery'), require('./routes/d
 app.use('/api/admin', deprecationMiddleware('/admin'), require('./routes/adminRoutes'));
 app.use('/api/kitchen', deprecationMiddleware('/kitchen'), require('./routes/kitchenRoutes'));
 app.use('/api/cashier', deprecationMiddleware('/cashier'), require('./routes/cashierRoutes'));
+app.use('/api/upload', require('./routes/uploadRoutes'));
 
 // =====================================================
 // ERROR HANDLING
@@ -191,6 +193,21 @@ app.use((err, req, res, next) => {
       success: false,
       error: 'Token expired',
       code: 'TOKEN_EXPIRED'
+    });
+  }
+
+  // Multer upload errors
+  if (err.name === 'MulterError') {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        error: 'Image size exceeds 5MB limit'
+      });
+    }
+
+    return res.status(400).json({
+      success: false,
+      error: err.message || 'Invalid upload request'
     });
   }
 

@@ -6,7 +6,9 @@ import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
+import ImageUpload from '../components/ImageUpload';
 import { categoryService, menuItemService } from '../services/menuService';
+import { resolveAssetUrl } from '../config/api';
 
 const CategoryManagement = () => {
     const [categories, setCategories] = useState([]);
@@ -19,6 +21,7 @@ const CategoryManagement = () => {
     const [formData, setFormData] = useState({
         Name: '',
         Description: '',
+        ImageURL: '',
         DisplayOrder: 0,
         IsActive: true
     });
@@ -72,6 +75,7 @@ const CategoryManagement = () => {
             setFormData({
                 Name: category.Name || '',
                 Description: category.Description || '',
+                ImageURL: category.ImageURL || category.Image_URL || '',
                 DisplayOrder: category.DisplayOrder ?? 0,
                 IsActive: category.IsActive !== undefined ? category.IsActive : true
             });
@@ -80,6 +84,7 @@ const CategoryManagement = () => {
             setFormData({
                 Name: '',
                 Description: '',
+                ImageURL: '',
                 DisplayOrder: 0,
                 IsActive: true
             });
@@ -94,6 +99,7 @@ const CategoryManagement = () => {
         setFormData({
             Name: '',
             Description: '',
+            ImageURL: '',
             DisplayOrder: 0,
             IsActive: true
         });
@@ -207,6 +213,13 @@ const CategoryManagement = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {categories.map(category => (
                         <div key={category.CategoryID} className="bg-white rounded-lg shadow p-6">
+                            {(category.ImageURL || category.Image_URL) && (
+                                <img
+                                    src={resolveAssetUrl(category.ImageURL || category.Image_URL)}
+                                    alt={category.Name}
+                                    className="w-full h-40 object-cover rounded-md mb-4"
+                                />
+                            )}
                             <div className="flex items-start justify-between">
                                 <div>
                                     <h3 className="text-xl font-semibold mb-2">{category.Name}</h3>
@@ -260,6 +273,17 @@ const CategoryManagement = () => {
                         onChange={handleChange}
                         placeholder="Short description"
                     />
+
+                    <ImageUpload
+                        label="Category Image"
+                        folder="category"
+                        currentImage={formData.ImageURL ? resolveAssetUrl(formData.ImageURL) : null}
+                        onUploadComplete={(imageUrl) => setFormData((prev) => ({
+                            ...prev,
+                            ImageURL: imageUrl || ''
+                        }))}
+                    />
+
                     <Input
                         label="Display Order"
                         name="DisplayOrder"

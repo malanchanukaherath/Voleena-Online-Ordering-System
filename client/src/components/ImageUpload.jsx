@@ -1,10 +1,23 @@
-import React, { useState, useRef } from 'react';
-import { FaCloudUploadAlt, FaImage, FaTimes } from 'react-icons/fa';
+import React, { useEffect, useRef, useState } from 'react';
+import { FaCloudUploadAlt, FaTimes } from 'react-icons/fa';
+import { imageUploadService } from '../services/menuService';
 
-const ImageUpload = ({ onImageSelect, currentImage, label = "Upload Image" }) => {
+const ImageUpload = ({
+    onImageSelect,
+    onUploadComplete,
+    currentImage,
+    folder = 'menu',
+    label = 'Upload Image'
+}) => {
     const [preview, setPreview] = useState(currentImage || null);
     const [dragActive, setDragActive] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadError, setUploadError] = useState('');
     const fileInputRef = useRef(null);
+
+    useEffect(() => {
+        setPreview(currentImage || null);
+    }, [currentImage]);
 
     const handleDrag = (e) => {
         e.preventDefault();
@@ -33,17 +46,18 @@ const ImageUpload = ({ onImageSelect, currentImage, label = "Upload Image" }) =>
         }
     };
 
-    const handleFile = (file) => {
+    const handleFile = async (file) => {
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         const maxSize = 5 * 1024 * 1024;
+        setUploadError('');
 
         if (!validTypes.includes(file.type)) {
-            alert('Please upload a valid image file (JPG, PNG, or WEBP)');
+            setUploadError('Please upload a valid image file (JPG, PNG, or WEBP)');
             return;
         }
 
         if (file.size > maxSize) {
-            alert('File size must be less than 5MB');
+            setUploadError('File size must be less than 5MB');
             return;
         }
 
@@ -53,7 +67,30 @@ const ImageUpload = ({ onImageSelect, currentImage, label = "Upload Image" }) =>
         };
         reader.readAsDataURL(file);
 
-        onImageSelect(file);
+        if (onImageSelect) {
+            onImageSelect(file);
+        }
+
+        if (!onUploadComplete) {
+            return;
+        }
+
+        try {
+            setUploading(true);
+            const response = await imageUploadService.uploadImage(file, folder);
+            if (response?.imageUrl) {
+                setPreview(response.imageUrl);
+                onUploadComplete(response.imageUrl);
+            } else {
+                throw new Error('Upload response did not include image URL');
+            }
+        } catch (error) {
+            const message = error.response?.data?.error || error.message || 'Image upload failed';
+            setUploadError(message);
+            onUploadComplete(null);
+        } finally {
+            setUploading(false);
+        }
     };
 
     const handleClick = () => {
@@ -63,7 +100,13 @@ const ImageUpload = ({ onImageSelect, currentImage, label = "Upload Image" }) =>
     const handleRemove = (e) => {
         e.stopPropagation();
         setPreview(null);
-        onImageSelect(null);
+        setUploadError('');
+        if (onImageSelect) {
+            onImageSelect(null);
+        }
+        if (onUploadComplete) {
+            onUploadComplete(null);
+        }
         if (fileInputRef.current) {
             fileInputRef.current.value = '';
         }
@@ -123,6 +166,14 @@ const ImageUpload = ({ onImageSelect, currentImage, label = "Upload Image" }) =>
                     </div>
                 )}
             </div>
+
+            {uploading && (
+                <p className="mt-2 text-sm text-blue-600">Uploading image...</p>
+            )}
+
+            {uploadError && (
+                <p className="mt-2 text-sm text-red-600">{uploadError}</p>
+            )}
         </div>
     );
 };

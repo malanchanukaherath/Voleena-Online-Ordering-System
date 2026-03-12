@@ -35,6 +35,9 @@ server/.env
 client/.env
 server/.env.local
 client/.env.local
+.env.example
+.env.local
+.env
 
 # Docker local overrides
 docker-compose.override.yml

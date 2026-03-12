@@ -272,7 +272,7 @@ exports.customerLogin = async (req, res) => {
  */
 exports.register = async (req, res) => {
   try {
-    const { name, email, phone, password } = req.body;
+    const { name, email, phone, password, profileImageUrl, ProfileImageURL } = req.body;
 
     if (!name || !email || !phone || !password) {
       return res.status(400).json({ error: 'Name, email, phone, and password are required' });
@@ -314,6 +314,7 @@ exports.register = async (req, res) => {
       Name: name.trim(),
       Email: normalizedEmail,
       Phone: normalizedPhone,
+      ProfileImageURL: profileImageUrl || ProfileImageURL || null,
       Password: password,
       AccountStatus: 'ACTIVE',
       IsEmailVerified: false,

@@ -1,12 +1,13 @@
 const { ComboPack, ComboPackItem, MenuItem } = require('../models');
 const { Op, literal } = require('sequelize');
 const db = require('../models');
+const { uploadImageFile, deleteImageByUrl } = require('../services/uploadService');
 
 const createComboPack = async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
     try {
-        const { Name, Description, Price, ScheduleStartDate, ScheduleEndDate, IsActive, items } = req.body;
+        const { Name, Description, Price, ScheduleStartDate, ScheduleEndDate, IsActive, items, ImageURL } = req.body;
 
         if (!Name || Name.trim().length < 3) {
             await transaction.rollback();
@@ -49,6 +50,7 @@ const createComboPack = async (req, res) => {
             Name: Name.trim(),
             Description: Description ? Description.trim() : null,
             Price: parseFloat(Price),
+            ImageURL: ImageURL || null,
             ScheduleStartDate,
             ScheduleEndDate,
             IsActive: IsActive !== undefined ? IsActive : true,
@@ -65,7 +67,7 @@ const createComboPack = async (req, res) => {
 
         await transaction.commit();
 
-        const createdCombo = await ComboPack.findByPk(comboPack.ComboPackID, {
+        const createdCombo = await ComboPack.findByPk(comboPack.ComboID, {
             include: [{
                 model: ComboPackItem,
                 as: 'items',
@@ -230,13 +232,15 @@ const updateComboPack = async (req, res) => {
 
     try {
         const { id } = req.params;
-        const { Name, Description, Price, ScheduleStartDate, ScheduleEndDate, IsActive, items } = req.body;
+        const { Name, Description, Price, ScheduleStartDate, ScheduleEndDate, IsActive, items, ImageURL } = req.body;
 
         const comboPack = await ComboPack.findByPk(id);
         if (!comboPack) {
             await transaction.rollback();
             return res.status(404).json({ error: 'Combo pack not found' });
         }
+
+        const previousImageUrl = comboPack.ImageURL || null;
 
         if (Name && Name.trim().length < 3) {
             await transaction.rollback();
@@ -257,6 +261,7 @@ const updateComboPack = async (req, res) => {
         if (Name) updateData.Name = Name.trim();
         if (Description !== undefined) updateData.Description = Description ? Description.trim() : null;
         if (Price) updateData.Price = parseFloat(Price);
+        if (ImageURL !== undefined) updateData.ImageURL = ImageURL || null;
         if (ScheduleStartDate) updateData.ScheduleStartDate = ScheduleStartDate;
         if (ScheduleEndDate) updateData.ScheduleEndDate = ScheduleEndDate;
         if (IsActive !== undefined) updateData.IsActive = IsActive;
@@ -298,6 +303,17 @@ const updateComboPack = async (req, res) => {
         }
 
         await transaction.commit();
+
+        if (ImageURL !== undefined) {
+            const nextImageUrl = ImageURL || null;
+            if (previousImageUrl && previousImageUrl !== nextImageUrl) {
+                try {
+                    await deleteImageByUrl(previousImageUrl);
+                } catch (cleanupError) {
+                    console.warn('Combo old image cleanup failed:', cleanupError.message);
+                }
+            }
+        }
 
         const updatedCombo = await ComboPack.findByPk(id, {
             include: [{
@@ -360,18 +376,34 @@ const uploadImage = async (req, res) => {
             return res.status(404).json({ error: 'Combo pack not found' });
         }
 
-        const imageUrl = `/uploads/menu-images/${req.file.filename}`;
-        await comboPack.update({ Image_URL: imageUrl });
+        const previousImageUrl = comboPack.ImageURL || null;
+
+        const { secureUrl } = await uploadImageFile(req.file, 'combo');
+        const imageUrl = secureUrl;
+        await comboPack.update({ ImageURL: imageUrl });
+
+        if (previousImageUrl && previousImageUrl !== imageUrl) {
+            try {
+                await deleteImageByUrl(previousImageUrl);
+            } catch (cleanupError) {
+                console.warn('Combo old image cleanup failed:', cleanupError.message);
+            }
+        }
 
         res.json({
             success: true,
             data: {
-                ComboPackID: comboPack.ComboPackID,
-                Image_URL: imageUrl
+                ComboID: comboPack.ComboID,
+                ImageURL: imageUrl
             }
         });
     } catch (error) {
         console.error('Upload image error:', error);
+
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({ error: error.message });
+        }
+
         res.status(500).json({ error: 'Failed to upload image' });
     }
 };

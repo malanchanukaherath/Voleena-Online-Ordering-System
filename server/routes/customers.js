@@ -12,7 +12,7 @@ const { logCustomerCreation } = require('../utils/auditLogger');
  */
 router.post('/', authenticateToken, requireCashier, async (req, res) => {
     try {
-        const { name, phone, email, address, password } = req.body;
+        const { name, phone, email, address, password, profileImageUrl, ProfileImageURL } = req.body;
 
         // Validation
         if (!name || !phone) {
@@ -85,6 +85,7 @@ router.post('/', authenticateToken, requireCashier, async (req, res) => {
             Name: name.trim(),
             Phone: cleanPhone,
             Email: normalizedEmail,
+            ProfileImageURL: profileImageUrl || ProfileImageURL || null,
             Password: customerPassword, // Will be hashed by model hook
             IsActive: true,
             AccountStatus: 'ACTIVE',

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { API_V1_BASE_URL } from '../config/api';
+import { API_BASE_URL as API_ROOT_URL, API_V1_BASE_URL } from '../config/api';
 
 const API_BASE_URL = API_V1_BASE_URL;
 
@@ -144,6 +144,23 @@ export const categoryService = {
         const response = await axios.delete(`${API_BASE_URL}/categories/${id}`, {
             headers: getAuthHeader()
         });
+        return response.data;
+    }
+};
+
+export const imageUploadService = {
+    uploadImage: async (file, folder = 'menu') => {
+        const formData = new FormData();
+        formData.append('image', file);
+        formData.append('folder', folder);
+
+        const response = await axios.post(`${API_ROOT_URL}/api/upload/image`, formData, {
+            headers: {
+                ...getAuthHeader(),
+                'Content-Type': 'multipart/form-data'
+            }
+        });
+
         return response.data;
     }
 };

@@ -19,13 +19,13 @@ const MenuManagement = () => {
     const [showModal, setShowModal] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-    const [selectedImage, setSelectedImage] = useState(null);
 
     const [formData, setFormData] = useState({
         Name: '',
         Description: '',
         Price: '',
         CategoryID: '',
+        ImageURL: '',
         IsActive: true
     });
 
@@ -82,6 +82,7 @@ const MenuManagement = () => {
                 Description: item.Description || '',
                 Price: item.Price,
                 CategoryID: item.CategoryID,
+                ImageURL: item.ImageURL || item.Image_URL || '',
                 IsActive: item.IsActive
             });
         } else {
@@ -91,10 +92,10 @@ const MenuManagement = () => {
                 Description: '',
                 Price: '',
                 CategoryID: '',
+                ImageURL: '',
                 IsActive: true
             });
         }
-        setSelectedImage(null);
         setErrors({});
         setShowModal(true);
     };
@@ -107,9 +108,9 @@ const MenuManagement = () => {
             Description: '',
             Price: '',
             CategoryID: '',
+            ImageURL: '',
             IsActive: true
         });
-        setSelectedImage(null);
         setErrors({});
     };
 
@@ -138,18 +139,12 @@ const MenuManagement = () => {
         if (!validateForm()) return;
 
         try {
-            let response;
             if (editingItem) {
-                response = await menuItemService.update(editingItem.MenuItemID, formData);
+                await menuItemService.update(editingItem.MenuItemID, formData);
                 showToast('Menu item updated successfully');
             } else {
-                response = await menuItemService.create(formData);
+                await menuItemService.create(formData);
                 showToast('Menu item created successfully');
-            }
-
-            if (selectedImage && response.data) {
-                const itemId = editingItem ? editingItem.MenuItemID : response.data.MenuItemID;
-                await menuItemService.uploadImage(itemId, selectedImage);
             }
 
             handleCloseModal();
@@ -266,9 +261,9 @@ const MenuManagement = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredItems.map(item => (
                         <div key={item.MenuItemID} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                            {item.Image_URL ? (
+                            {(item.ImageURL || item.Image_URL) ? (
                                 <img
-                                    src={resolveAssetUrl(item.Image_URL)}
+                                    src={resolveAssetUrl(item.ImageURL || item.Image_URL)}
                                     alt={item.Name}
                                     className="w-full h-48 object-cover"
                                 />
@@ -368,8 +363,12 @@ const MenuManagement = () => {
                     />
 
                     <ImageUpload
-                        onImageSelect={setSelectedImage}
-                        currentImage={editingItem?.Image_URL ? resolveAssetUrl(editingItem.Image_URL) : null}
+                        folder="menu"
+                        currentImage={formData.ImageURL ? resolveAssetUrl(formData.ImageURL) : null}
+                        onUploadComplete={(imageUrl) => setFormData((prev) => ({
+                            ...prev,
+                            ImageURL: imageUrl || ''
+                        }))}
                     />
 
                     <div className="flex items-center">

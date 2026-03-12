@@ -1,10 +1,10 @@
 const { MenuItem, Category, Staff, DailyStock } = require('../models');
-const path = require('path');
 const { Op, col, literal } = require('sequelize');
+const { uploadImageFile, deleteImageByUrl } = require('../services/uploadService');
 
 const createMenuItem = async (req, res) => {
     try {
-        const { Name, Description, Price, CategoryID, IsActive } = req.body;
+        const { Name, Description, Price, CategoryID, IsActive, ImageURL } = req.body;
 
         if (!Name || Name.trim().length < 3) {
             return res.status(400).json({ error: 'Name must be at least 3 characters' });
@@ -28,6 +28,7 @@ const createMenuItem = async (req, res) => {
             Description: Description ? Description.trim() : null,
             Price: parseFloat(Price),
             CategoryID,
+            ImageURL: ImageURL || null,
             IsActive: IsActive !== undefined ? IsActive : true,
             CreatedBy: req.user.id
         });
@@ -143,12 +144,14 @@ const getMenuItem = async (req, res) => {
 const updateMenuItem = async (req, res) => {
     try {
         const { id } = req.params;
-        const { Name, Description, Price, CategoryID, IsActive } = req.body;
+        const { Name, Description, Price, CategoryID, IsActive, ImageURL } = req.body;
 
         const menuItem = await MenuItem.findByPk(id);
         if (!menuItem) {
             return res.status(404).json({ error: 'Menu item not found' });
         }
+
+        const previousImageUrl = menuItem.ImageURL || null;
 
         if (Name && Name.trim().length < 3) {
             return res.status(400).json({ error: 'Name must be at least 3 characters' });
@@ -170,10 +173,22 @@ const updateMenuItem = async (req, res) => {
         if (Description !== undefined) updateData.Description = Description ? Description.trim() : null;
         if (Price) updateData.Price = parseFloat(Price);
         if (CategoryID) updateData.CategoryID = CategoryID;
+        if (ImageURL !== undefined) updateData.ImageURL = ImageURL || null;
         if (IsActive !== undefined) updateData.IsActive = IsActive;
         updateData.updatedAt = new Date();
 
         await menuItem.update(updateData);
+
+        if (ImageURL !== undefined) {
+            const nextImageUrl = ImageURL || null;
+            if (previousImageUrl && previousImageUrl !== nextImageUrl) {
+                try {
+                    await deleteImageByUrl(previousImageUrl);
+                } catch (cleanupError) {
+                    console.warn('Menu old image cleanup failed:', cleanupError.message);
+                }
+            }
+        }
 
         res.json({
             success: true,
@@ -219,8 +234,19 @@ const uploadImage = async (req, res) => {
             return res.status(404).json({ error: 'Menu item not found' });
         }
 
-        const imageUrl = `/uploads/menu-images/${req.file.filename}`;
+        const previousImageUrl = menuItem.ImageURL || null;
+
+        const { secureUrl } = await uploadImageFile(req.file, 'menu');
+        const imageUrl = secureUrl;
         await menuItem.update({ ImageURL: imageUrl });
+
+        if (previousImageUrl && previousImageUrl !== imageUrl) {
+            try {
+                await deleteImageByUrl(previousImageUrl);
+            } catch (cleanupError) {
+                console.warn('Menu old image cleanup failed:', cleanupError.message);
+            }
+        }
 
         res.json({
             success: true,
@@ -231,6 +257,11 @@ const uploadImage = async (req, res) => {
         });
     } catch (error) {
         console.error('Upload image error:', error);
+
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({ error: error.message });
+        }
+
         res.status(500).json({ error: 'Failed to upload image' });
     }
 };

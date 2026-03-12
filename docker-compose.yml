@@ -71,6 +71,11 @@ services:
       EMAIL_FROM: "onboarding@resend.dev"
       EMAIL_VERIFICATION_TTL_MINUTES: "30"
 
+      CLOUDINARY_CLOUD_NAME: "replace_me"
+      CLOUDINARY_API_KEY: "replace_me"
+      CLOUDINARY_API_SECRET: "replace_me"
+      CLOUDINARY_ROOT_FOLDER: "voleena"
+
       SMS_PROVIDER: "console"
       TWILIO_ACCOUNT_SID: "replace_me"
       TWILIO_AUTH_TOKEN: "replace_me"
