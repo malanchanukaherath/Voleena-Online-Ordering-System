@@ -68,9 +68,10 @@ export const comboPackService = {
         return response.data;
     },
 
-    getActive: async () => {
+    getActive: async (params = {}) => {
         const response = await axios.get(`${API_BASE_URL}/combos/active`, {
-            headers: getAuthHeader()
+            headers: getAuthHeader(),
+            params
         });
         return response.data;
     },

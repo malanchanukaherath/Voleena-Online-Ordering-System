@@ -87,17 +87,23 @@ const MenuItemDetail = () => {
             return;
         }
 
-        addToCart({
-            id: item.id,
-            type: 'menu',
-            menuItemId: item.id,
-            comboId: null,
-            name: item.name,
-            price: item.price,
-            image: item.image
-        }, 1);
+        try {
+            addToCart({
+                id: item.id,
+                type: 'menu',
+                menuItemId: item.id,
+                comboId: null,
+                name: item.name,
+                price: item.price,
+                image: item.image,
+                stockQuantity: item.stockQuantity,
+                isAvailable: item.isAvailable
+            }, 1);
 
-        toast.success(`✓ ${item.name} added to cart!`);
+            toast.success(`✓ ${item.name} added to cart!`);
+        } catch (error) {
+            toast.error(error.message || 'Unable to add item to cart');
+        }
     };
 
     if (loading) {

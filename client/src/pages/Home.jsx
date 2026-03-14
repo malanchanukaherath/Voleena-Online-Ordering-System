@@ -33,6 +33,7 @@ const Home = () => {
                         description: item.Description || 'No description available',
                         price: parseFloat(item.Price),
                         image: resolveImageUrl(item.ImageURL || item.Image_URL || null),
+                        stockQuantity: item.StockQuantity ?? null,
                         isAvailable: item.IsAvailable !== undefined ? !!item.IsAvailable : !!item.IsActive
                     }));
                     setFeaturedItems(items);
@@ -70,16 +71,20 @@ const Home = () => {
     }, []);
 
     const handleAddComboToCart = (combo) => {
-        addToCart({
-            id: combo.ComboID || combo.ComboPackID,
-            type: 'combo',
-            comboId: combo.ComboID || combo.ComboPackID,
-            menuItemId: null,
-            name: combo.Name,
-            price: parseFloat(combo.Price),
-            image: resolveImageUrl(combo.ImageURL || combo.Image_URL || null)
-        }, 1);
-        toast.success(`✓ ${combo.Name} added to cart!`);
+        try {
+            addToCart({
+                id: combo.ComboID || combo.ComboPackID,
+                type: 'combo',
+                comboId: combo.ComboID || combo.ComboPackID,
+                menuItemId: null,
+                name: combo.Name,
+                price: parseFloat(combo.Price),
+                image: resolveImageUrl(combo.ImageURL || combo.Image_URL || null)
+            }, 1);
+            toast.success(`✓ ${combo.Name} added to cart!`);
+        } catch (error) {
+            toast.error(error.message || 'Unable to add combo to cart');
+        }
     };
 
     const handleAddToCart = (item) => {
@@ -88,17 +93,23 @@ const Home = () => {
             return;
         }
 
-        addToCart({
-            id: item.id,
-            type: 'menu',
-            menuItemId: item.id,
-            comboId: null,
-            name: item.name,
-            price: item.price,
-            image: item.image || null
-        }, 1);
+        try {
+            addToCart({
+                id: item.id,
+                type: 'menu',
+                menuItemId: item.id,
+                comboId: null,
+                name: item.name,
+                price: item.price,
+                image: item.image || null,
+                stockQuantity: item.stockQuantity,
+                isAvailable: item.isAvailable
+            }, 1);
 
-        toast.success(`✓ ${item.name} added to cart!`);
+            toast.success(`✓ ${item.name} added to cart!`);
+        } catch (error) {
+            toast.error(error.message || 'Unable to add item to cart');
+        }
     };
 
     const features = [

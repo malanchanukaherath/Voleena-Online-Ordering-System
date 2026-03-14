@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FaSearch, FaTimes, FaTag, FaExclamationTriangle } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
@@ -64,92 +64,138 @@ const Menu = () => {
         return resolveAssetUrl(imagePath);
     };
 
-    // Load menu items from API
-    useEffect(() => {
-        const fetchMenuItems = async () => {
-            try {
+    const fetchMenuItems = useCallback(async ({ showLoading = false } = {}) => {
+        try {
+            if (showLoading) {
                 setLoading(true);
-                setError(null);
-                const response = await menuItemService.getAll({ isActive: 'true' });
+            }
 
-                if (response.success && response.data) {
-                    // Transform API data to match component format
-                    const transformedItems = response.data.map(item => ({
-                        id: item.MenuItemID || item.ItemID,
-                        type: 'menu',
-                        menuItemId: item.MenuItemID || item.ItemID,
-                        name: item.Name,
-                        description: item.Description || 'No description available',
-                        price: parseFloat(item.Price),
-                        categoryId: item.CategoryID || item.category?.CategoryID || null,
-                        categoryName: item.category?.Name || 'Other',
-                        image: resolveImageUrl(item.ImageURL || item.Image_URL || null),
-                        stockQuantity: item.StockQuantity ?? null,
-                        isAvailable: item.IsAvailable !== undefined ? !!item.IsAvailable : !!item.IsActive,
-                    }));
-                    setMenuItems(dedupeDisplayItems(transformedItems));
-                } else {
-                    setError('Failed to load menu items');
-                    toast.error('Failed to load menu items');
-                }
-            } catch (error) {
-                console.error('Error fetching menu items:', error);
-                setError(error.message || 'Failed to load menu items');
-                toast.error('Failed to load menu items');
-            } finally {
+            const response = await menuItemService.getAll({
+                isActive: 'true',
+                _: Date.now()
+            });
+
+            if (response.success && Array.isArray(response.data)) {
+                const transformedItems = response.data.map(item => ({
+                    id: item.MenuItemID || item.ItemID,
+                    type: 'menu',
+                    menuItemId: item.MenuItemID || item.ItemID,
+                    name: item.Name,
+                    description: item.Description || 'No description available',
+                    price: parseFloat(item.Price),
+                    categoryId: item.CategoryID || item.category?.CategoryID || null,
+                    categoryName: item.category?.Name || 'Other',
+                    image: resolveImageUrl(item.ImageURL || item.Image_URL || null),
+                    stockQuantity: item.StockQuantity ?? null,
+                    isAvailable: item.IsAvailable !== undefined ? !!item.IsAvailable : !!item.IsActive,
+                }));
+
+                setMenuItems(dedupeDisplayItems(transformedItems));
+                setError(null);
+                return;
+            }
+
+            throw new Error('Failed to load menu items');
+        } catch (fetchError) {
+            console.error('Error fetching menu items:', fetchError);
+            setError(fetchError.message || 'Failed to load menu items');
+        } finally {
+            if (showLoading) {
                 setLoading(false);
             }
+        }
+    }, []);
+
+    const fetchCombos = useCallback(async () => {
+        try {
+            const response = await comboPackService.getActive({ _: Date.now() });
+            if (response.success && Array.isArray(response.data)) {
+                const mapped = response.data.map(combo => ({
+                    id: combo.ComboID || combo.ComboPackID,
+                    type: 'combo',
+                    name: combo.Name,
+                    description: combo.Description || 'No description available',
+                    price: parseFloat(combo.Price),
+                    originalPrice: combo.OriginalPrice ? parseFloat(combo.OriginalPrice) : null,
+                    discount: combo.DiscountPercentage ? parseFloat(combo.DiscountPercentage) : 0,
+                    image: resolveImageUrl(combo.ImageURL || combo.Image_URL || null),
+                    isActive: !!combo.IsActive,
+                    scheduleStartDate: combo.ScheduleStartDate,
+                    scheduleEndDate: combo.ScheduleEndDate
+                }));
+                setComboPacks(dedupeDisplayItems(mapped));
+                return;
+            }
+
+            setComboPacks([]);
+        } catch (fetchError) {
+            console.error('Error loading combos:', fetchError);
+            setComboPacks([]);
+        }
+    }, []);
+
+    // Load menu items from API
+    useEffect(() => {
+        let isActive = true;
+
+        const loadInitialMenu = async () => {
+            if (!isActive) {
+                return;
+            }
+
+            await Promise.allSettled([
+                fetchMenuItems({ showLoading: true }),
+                fetchCombos()
+            ]);
         };
 
-        fetchMenuItems();
-    }, []);
+        loadInitialMenu();
+
+        const refreshVisibleMenu = async () => {
+            if (!isActive || document.hidden) {
+                return;
+            }
+
+            await Promise.allSettled([
+                fetchMenuItems(),
+                fetchCombos()
+            ]);
+        };
+
+        const intervalId = setInterval(refreshVisibleMenu, 15000);
+        window.addEventListener('focus', refreshVisibleMenu);
+        document.addEventListener('visibilitychange', refreshVisibleMenu);
+
+        return () => {
+            isActive = false;
+            clearInterval(intervalId);
+            window.removeEventListener('focus', refreshVisibleMenu);
+            document.removeEventListener('visibilitychange', refreshVisibleMenu);
+        };
+    }, [fetchCombos, fetchMenuItems]);
 
     useEffect(() => {
         const fetchCategories = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setCategories([]);
+                return;
+            }
+
             try {
                 const response = await categoryService.getAll();
                 if (response.success && Array.isArray(response.data)) {
                     setCategories(response.data);
                 }
             } catch (error) {
-                console.warn('Categories not available for menu:', error);
+                if (error?.response?.status !== 401) {
+                    console.warn('Categories not available for menu:', error);
+                }
                 setCategories([]);
             }
         };
 
         fetchCategories();
-    }, []);
-
-    // Load combo packs from API
-    useEffect(() => {
-        const fetchCombos = async () => {
-            try {
-                const response = await comboPackService.getActive();
-                if (response.success && Array.isArray(response.data)) {
-                    const mapped = response.data.map(combo => ({
-                        id: combo.ComboID || combo.ComboPackID,
-                        type: 'combo',
-                        name: combo.Name,
-                        description: combo.Description || 'No description available',
-                        price: parseFloat(combo.Price),
-                        originalPrice: combo.OriginalPrice ? parseFloat(combo.OriginalPrice) : null,
-                        discount: combo.DiscountPercentage ? parseFloat(combo.DiscountPercentage) : 0,
-                        image: resolveImageUrl(combo.ImageURL || combo.Image_URL || null),
-                        isActive: !!combo.IsActive,
-                        scheduleStartDate: combo.ScheduleStartDate,
-                        scheduleEndDate: combo.ScheduleEndDate
-                    }));
-                    setComboPacks(dedupeDisplayItems(mapped));
-                } else {
-                    setComboPacks([]);
-                }
-            } catch (error) {
-                console.error('Error loading combos:', error);
-                setComboPacks([]);
-            }
-        };
-
-        fetchCombos();
     }, []);
 
     const categoryOptions = useMemo(() => {
@@ -232,17 +278,23 @@ const Menu = () => {
             return;
         }
 
-        addToCart({
-            id: item.id,
-            type: item.type || (item.isCombo ? 'combo' : 'menu'),
-            menuItemId: item.menuItemId || null,
-            comboId: item.comboId || null,
-            name: item.name,
-            price: item.price,
-            image: item.image || null
-        }, 1);
+        try {
+            addToCart({
+                id: item.id,
+                type: item.type || (item.isCombo ? 'combo' : 'menu'),
+                menuItemId: item.menuItemId || null,
+                comboId: item.comboId || null,
+                name: item.name,
+                price: item.price,
+                image: item.image || null,
+                stockQuantity: item.type === 'menu' ? item.stockQuantity : undefined,
+                isAvailable: item.isAvailable
+            }, 1);
 
-        toast.success(`✓ ${item.name} added to cart!`);
+            toast.success(`✓ ${item.name} added to cart!`);
+        } catch (error) {
+            toast.error(error.message || 'Unable to add item to cart');
+        }
     };
 
     return (

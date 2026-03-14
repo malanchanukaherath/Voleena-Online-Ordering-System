@@ -150,13 +150,13 @@ class AuthService {
       }
     }
 
-    // Otherwise, try staff first (staff use login pages more commonly), then customer
-    const staffResult = await this.staffLogin(email, password);
-    if (staffResult.success) {
-      return staffResult;
+    // Otherwise, try customer first (default public login), then staff
+    const customerResult = await this.customerLogin(email, password);
+    if (customerResult.success) {
+      return customerResult;
     }
 
-    return this.customerLogin(email, password);
+    return this.staffLogin(email, password);
   }
 
   // Refresh token

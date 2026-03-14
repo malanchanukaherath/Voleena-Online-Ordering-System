@@ -96,6 +96,11 @@ const KitchenOrders = () => {
     return (
         <div className="p-6">
             <h1 className="text-2xl font-bold mb-6">Kitchen Orders</h1>
+            {error && (
+                <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                    {error}
+                </div>
+            )}
             <div className="space-y-4">
                 {orders.length === 0 ? (
                     <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500">

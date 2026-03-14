@@ -16,6 +16,7 @@ const DeliveryDashboard = () => {
     const [availability, setAvailability] = useState(null);
     const [currentLocation, setCurrentLocation] = useState(null);
     const [locationPermission, setLocationPermission] = useState('prompt');
+    const [locationTrackingError, setLocationTrackingError] = useState('');
     const [loadingError, setLoadingError] = useState(null);
     const [updatingAvailability, setUpdatingAvailability] = useState(false);
 
@@ -153,11 +154,35 @@ const DeliveryDashboard = () => {
     useEffect(() => {
         if (!currentLocation || activeDeliveries.length === 0) return;
 
+        const trackableDeliveries = activeDeliveries.filter((delivery) =>
+            ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(delivery.status)
+        );
+
+        if (trackableDeliveries.length === 0) {
+            return;
+        }
+
+        let trackingDisabled = false;
+
         const broadcastLocation = async () => {
-            for (const delivery of activeDeliveries) {
+            if (trackingDisabled) {
+                return;
+            }
+
+            for (const delivery of trackableDeliveries) {
                 try {
                     await deliveryService.trackDeliveryLocation(delivery.id, currentLocation);
+                    setLocationTrackingError('');
                 } catch (error) {
+                    if (error?.status === 503) {
+                        trackingDisabled = true;
+                        setLocationTrackingError(
+                            error.message ||
+                            'Live location tracking is temporarily unavailable. Please apply delivery location migration v2.2 and restart the server.'
+                        );
+                        return;
+                    }
+
                     console.error(`Failed to track location for delivery ${delivery.id}:`, error);
                 }
             }
@@ -272,6 +297,12 @@ const DeliveryDashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {locationTrackingError && (
+                <div className="mb-6 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    {locationTrackingError}
+                </div>
+            )}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white rounded-lg shadow p-6">

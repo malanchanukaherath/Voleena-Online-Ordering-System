@@ -1,4 +1,5 @@
 const request = require('supertest');
+const bcrypt = require('bcryptjs');
 
 const mockCustomer = {
   findOne: jest.fn(),
@@ -127,6 +128,106 @@ describe('customer routes', () => {
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
     expect(mockCustomer.findByPk).toHaveBeenCalledWith(5, expect.any(Object));
+  });
+
+  test('updates the logged-in customer profile settings', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    const save = jest.fn().mockResolvedValue(undefined);
+    const customerRecord = {
+      CustomerID: 5,
+      Name: 'Old Name',
+      Email: 'old@example.com',
+      Phone: '+94770000000',
+      PreferredNotification: 'BOTH',
+      ProfileImageURL: null,
+      save,
+      toJSON: jest.fn(() => ({
+        CustomerID: 5,
+        Name: 'Updated Name',
+        Email: 'updated@example.com',
+        Phone: '+94771112233',
+        PreferredNotification: 'SMS'
+      }))
+    };
+
+    mockCustomer.findByPk.mockResolvedValue(customerRecord);
+    mockCustomer.findOne.mockResolvedValue(null);
+
+    const response = await request(app)
+      .put('/api/v1/customers/me')
+      .send({
+        name: 'Updated Name',
+        email: 'updated@example.com',
+        phone: '+94771112233',
+        preferredNotification: 'SMS'
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(save).toHaveBeenCalled();
+    expect(customerRecord.Name).toBe('Updated Name');
+    expect(customerRecord.PreferredNotification).toBe('SMS');
+  });
+
+  test('rejects profile update when email belongs to another customer', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    mockCustomer.findByPk.mockResolvedValue({ CustomerID: 5 });
+    mockCustomer.findOne.mockResolvedValue({ CustomerID: 9, Email: 'taken@example.com', Phone: '+94771112233' });
+
+    const response = await request(app)
+      .put('/api/v1/customers/me')
+      .send({
+        name: 'Updated Name',
+        email: 'taken@example.com',
+        phone: '+94771112233',
+        preferredNotification: 'BOTH'
+      });
+
+    expect(response.status).toBe(409);
+    expect(response.body.error).toMatch(/Email is already used/i);
+  });
+
+  test('changes password for the logged-in customer', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    const save = jest.fn().mockResolvedValue(undefined);
+    const customerRecord = {
+      CustomerID: 5,
+      Password: await bcrypt.hash('CurrentPass123', 10),
+      save
+    };
+
+    mockCustomer.findByPk.mockResolvedValue(customerRecord);
+
+    const response = await request(app)
+      .put('/api/v1/customers/me/password')
+      .send({
+        currentPassword: 'CurrentPass123',
+        newPassword: 'NewSecret123'
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(customerRecord.Password).toBe('NewSecret123');
+    expect(save).toHaveBeenCalled();
+  });
+
+  test('rejects password change with incorrect current password', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    mockCustomer.findByPk.mockResolvedValue({
+      CustomerID: 5,
+      Password: await bcrypt.hash('CurrentPass123', 10),
+      save: jest.fn()
+    });
+
+    const response = await request(app)
+      .put('/api/v1/customers/me/password')
+      .send({
+        currentPassword: 'WrongPass123',
+        newPassword: 'NewSecret123'
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/incorrect/i);
   });
 
   test('validates required address fields before creating an address', async () => {

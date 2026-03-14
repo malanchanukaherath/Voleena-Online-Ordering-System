@@ -6,6 +6,21 @@
 
 const STORAGE_KEY = 'voleena_cart';
 
+const hasFiniteStockLimit = (item) => Number.isFinite(item?.stockQuantity) && item.stockQuantity >= 0;
+
+const normalizeCartEntry = (entry) => {
+  const normalized = {
+    ...entry,
+    isAvailable: entry?.isAvailable !== false
+  };
+
+  if (!hasFiniteStockLimit(entry)) {
+    delete normalized.stockQuantity;
+  }
+
+  return normalized;
+};
+
 /**
  * Emit cart update event for listeners to react to changes
  */
@@ -60,22 +75,51 @@ export const addToCart = (item, quantity = 1) => {
     throw new Error('Quantity must be a positive integer');
   }
 
+  if (item.isAvailable === false) {
+    throw new Error(`${item.name || 'Item'} is not available right now`);
+  }
+
   const items = getCart();
   const existingIndex = items.findIndex(
     (entry) => entry.id === item.id && entry.type === item.type
   );
 
+  const normalizedItem = normalizeCartEntry(item);
+  const stockLimit = hasFiniteStockLimit(normalizedItem) ? normalizedItem.stockQuantity : null;
+  const currentQuantity = existingIndex >= 0 ? items[existingIndex].quantity : 0;
+
+  if (stockLimit !== null && stockLimit <= 0) {
+    throw new Error(`${normalizedItem.name || 'Item'} is out of stock`);
+  }
+
+  const desiredQuantity = currentQuantity + quantity;
+  const nextQuantity = stockLimit !== null
+    ? Math.min(desiredQuantity, stockLimit)
+    : desiredQuantity;
+
+  if (nextQuantity <= currentQuantity) {
+    throw new Error(`Only ${stockLimit} item(s) available for ${normalizedItem.name || 'this item'}`);
+  }
+
   if (existingIndex >= 0) {
-    items[existingIndex].quantity += quantity;
+    items[existingIndex] = {
+      ...items[existingIndex],
+      ...normalizedItem,
+      quantity: nextQuantity
+    };
   } else {
     items.push({
-      id: item.id,
-      type: item.type,
-      name: item.name,
-      price: item.price,
-      image: item.image || null,
+      id: normalizedItem.id,
+      type: normalizedItem.type,
+      menuItemId: normalizedItem.menuItemId || null,
+      comboId: normalizedItem.comboId || null,
+      name: normalizedItem.name,
+      price: normalizedItem.price,
+      image: normalizedItem.image || null,
+      ...(hasFiniteStockLimit(normalizedItem) ? { stockQuantity: normalizedItem.stockQuantity } : {}),
+      isAvailable: normalizedItem.isAvailable !== false,
       notes: '',
-      quantity,
+      quantity: nextQuantity,
       addedAt: new Date().toISOString()
     });
   }
@@ -94,7 +138,13 @@ export const addToCart = (item, quantity = 1) => {
 export const updateCartItem = (id, type, updates) => {
   const items = getCart().map((item) => {
     if (item.id === id && item.type === type) {
-      return { ...item, ...updates };
+      const merged = normalizeCartEntry({ ...item, ...updates });
+
+      if (typeof merged.quantity === 'number' && hasFiniteStockLimit(merged)) {
+        merged.quantity = Math.min(Math.max(merged.quantity, 1), merged.stockQuantity);
+      }
+
+      return merged;
     }
     return item;
   });

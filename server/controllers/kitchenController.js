@@ -1,6 +1,39 @@
 const { Order, OrderItem, MenuItem, DailyStock, OrderStatusHistory, Payment, sequelize } = require('../models');
 const orderService = require('../services/orderService');
 
+const hasConfiguredStripeSecret = () => {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  return typeof secretKey === 'string' && secretKey.trim().startsWith('sk_') && !secretKey.includes('your_');
+};
+
+const trySyncCardPaymentStatus = async (payment) => {
+  if (!payment || payment.Method !== 'CARD' || payment.Status === 'PAID' || !payment.TransactionID) {
+    return false;
+  }
+
+  if (!hasConfiguredStripeSecret()) {
+    return false;
+  }
+
+  try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const intent = await stripe.paymentIntents.retrieve(payment.TransactionID);
+
+    if (intent?.status === 'succeeded') {
+      await payment.update({
+        Status: 'PAID',
+        PaidAt: payment.PaidAt || new Date(),
+        GatewayStatus: 'SUCCESS'
+      });
+      return true;
+    }
+  } catch (error) {
+    console.warn(`[KITCHEN] Stripe payment sync failed for transaction ${payment.TransactionID}:`, error.message);
+  }
+
+  return false;
+};
+
 /**
  * Get kitchen dashboard statistics
  */
@@ -121,6 +154,15 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(404).json({ error: 'Order not found' });
     }
 
+    // Idempotent guard: if frontend retries the same status update, treat it as success.
+    if (order.Status === status) {
+      return res.json({
+        success: true,
+        message: `Order is already in ${status} status`,
+        data: order
+      });
+    }
+
     // Validate status transitions
     const validTransitions = {
       'CONFIRMED': ['PREPARING'],
@@ -134,16 +176,18 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    // FR21: Verify payment before marking as READY (critical for cash orders)
+    // Verify payment before marking as READY for non-cash methods.
     if (status === 'READY' && order.payment) {
-      // CASH orders require verification before kitchen marks ready
-      if (order.payment.Method === 'CASH' && order.payment.Status !== 'PAID') {
-        return res.status(400).json({
-          error: 'Cannot mark order ready: Payment verification pending for cash order'
-        });
+      // For CARD payments, attempt just-in-time sync in case webhook has not yet updated status.
+      if (order.payment.Method === 'CARD' && order.payment.Status !== 'PAID') {
+        const synced = await trySyncCardPaymentStatus(order.payment);
+        if (synced) {
+          await order.payment.reload();
+        }
       }
-      // CARD/ONLINE orders must show as PAID
-      if (['CARD', 'ONLINE'].includes(order.payment.Method) && order.payment.Status !== 'PAID') {
+
+      // CARD/ONLINE/WALLET orders must show as PAID before kitchen can mark ready.
+      if (['CARD', 'ONLINE', 'WALLET'].includes(order.payment.Method) && order.payment.Status !== 'PAID') {
         return res.status(400).json({
           error: 'Cannot mark order ready: Online payment not completed'
         });

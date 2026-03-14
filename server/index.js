@@ -26,10 +26,12 @@ function createApp() {
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "https://fonts.googleapis.com", "https://fonts.gstatic.com"],
-        scriptSrc: ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com"],
-        imgSrc: ["'self'", "data:", "https:", "https://maps.gstatic.com", "https://maps.googleapis.com", "https://mts.googleapis.com", "https://khms.googleapis.com"],
-        connectSrc: ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://fonts.gstatic.com", "https://js.stripe.com", "https://m.stripe.network"],
+        scriptSrc: ["'self'", "blob:", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://js.stripe.com", "https://m.stripe.network"],
+        frameSrc: ["'self'", "https://js.stripe.com", "https://hooks.stripe.com", "https://m.stripe.network"],
+        imgSrc: ["'self'", "data:", "https:", "https://maps.gstatic.com", "https://maps.googleapis.com", "https://mts.googleapis.com", "https://khms.googleapis.com", "https://*.stripe.com", "https://q.stripe.com"],
+        connectSrc: ["'self'", "https://maps.googleapis.com", "https://maps.gstatic.com", "https://api.stripe.com", "https://js.stripe.com", "https://m.stripe.network", "https://q.stripe.com", "https://r.stripe.com"],
+        workerSrc: ["'self'", "blob:"],
       },
     },
     hsts: {

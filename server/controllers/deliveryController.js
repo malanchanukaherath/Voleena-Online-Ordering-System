@@ -467,7 +467,8 @@ exports.validateDeliveryDistance = async (req, res) => {
       }
 
       try {
-        const addressText = `${address.addressLine1}${address.city ? ', ' + address.city : ''}${address.district ? ', ' + address.district : ''}`;
+        const regionSegment = address.district || address.postalCode || '';
+        const addressText = `${address.addressLine1}${address.city ? ', ' + address.city : ''}${regionSegment ? ', ' + regionSegment : ''}`;
         // Pass city parameter for fallback geocoding (when API key not configured)
         const geocoded = await geocodeAddress(addressText, address.city);
         lat = geocoded.lat;

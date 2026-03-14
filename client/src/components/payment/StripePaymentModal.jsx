@@ -6,7 +6,19 @@ const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY?.trim()
 const isStripeConfigured = Boolean(
     stripePublishableKey && stripePublishableKey.startsWith('pk_') && !stripePublishableKey.includes('your_')
 );
-const stripePromise = isStripeConfigured ? loadStripe(stripePublishableKey) : null;
+let stripePromise = null;
+
+const getStripePromise = () => {
+    if (!isStripeConfigured) {
+        return null;
+    }
+
+    if (!stripePromise) {
+        stripePromise = loadStripe(stripePublishableKey);
+    }
+
+    return stripePromise;
+};
 
 /**
  * Payment form component that handles Stripe card payment
@@ -167,6 +179,8 @@ export const StripePaymentModal = ({
 }) => {
     if (!isOpen) return null;
 
+    const stripeElementsPromise = clientSecret ? getStripePromise() : null;
+
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
@@ -175,8 +189,8 @@ export const StripePaymentModal = ({
                     Order #{orderId} • <span className="font-semibold">LKR {total.toFixed(2)}</span>
                 </p>
 
-                {clientSecret && stripePromise ? (
-                    <Elements stripe={stripePromise} options={{ clientSecret }}>
+                {clientSecret && stripeElementsPromise ? (
+                    <Elements stripe={stripeElementsPromise} options={{ clientSecret }}>
                         <StripePaymentForm
                             clientSecret={clientSecret}
                             orderId={orderId}

@@ -1,9 +1,27 @@
 const express = require('express');
 const router = express.Router();
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const { Op } = require('sequelize');
 const { Customer, Address } = require('../models');
 const { requireCashier, requireCustomer } = require('../middleware/auth');
 const { logCustomerCreation } = require('../utils/auditLogger');
+
+const normalizeOptionalEmail = (email) => {
+    if (email === undefined || email === null) {
+        return null;
+    }
+
+    const trimmed = String(email).trim().toLowerCase();
+    return trimmed || null;
+};
+
+const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
+
+const isValidProfileName = (name) => typeof name === 'string' && name.trim().length >= 2;
+const isValidProfileEmail = (email) => email === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidProfilePhone = (phone) => /^[+]?[0-9]{9,15}$/.test(phone);
+const isValidNotificationPreference = (value) => ['EMAIL', 'SMS', 'BOTH'].includes(value);
 
 /**
  * POST /api/customers
@@ -214,6 +232,131 @@ router.get('/me', requireCustomer, async (req, res) => {
     } catch (error) {
         console.error('Get customer profile error:', error);
         return res.status(500).json({ error: 'Failed to retrieve customer profile' });
+    }
+});
+
+/**
+ * PUT /api/customers/me
+ * Customer: Update own profile settings
+ */
+router.put('/me', requireCustomer, async (req, res) => {
+    try {
+        const { name, email, phone, preferredNotification, profileImageUrl, ProfileImageURL } = req.body;
+
+        const customer = await Customer.findByPk(req.user.id);
+
+        if (!customer) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        const normalizedName = typeof name === 'string' ? name.trim() : '';
+        const normalizedEmail = normalizeOptionalEmail(email);
+        const normalizedPhone = normalizePhone(phone);
+        const normalizedPreferredNotification = preferredNotification
+            ? String(preferredNotification).trim().toUpperCase()
+            : customer.PreferredNotification;
+
+        if (!isValidProfileName(normalizedName)) {
+            return res.status(400).json({ error: 'Name must be at least 2 characters' });
+        }
+
+        if (!normalizedEmail || !isValidProfileEmail(normalizedEmail)) {
+            return res.status(400).json({ error: 'Invalid email format' });
+        }
+
+        if (!isValidProfilePhone(normalizedPhone)) {
+            return res.status(400).json({ error: 'Invalid phone number format' });
+        }
+
+        if (!isValidNotificationPreference(normalizedPreferredNotification)) {
+            return res.status(400).json({ error: 'Preferred notification must be EMAIL, SMS, or BOTH' });
+        }
+
+        const duplicateCustomer = await Customer.findOne({
+            where: {
+                CustomerID: { [Op.ne]: req.user.id },
+                [Op.or]: [
+                    { Email: normalizedEmail },
+                    { Phone: normalizedPhone }
+                ]
+            }
+        });
+
+        if (duplicateCustomer) {
+            if (normalizedEmail && duplicateCustomer.Email === normalizedEmail) {
+                return res.status(409).json({ error: 'Email is already used by another customer' });
+            }
+
+            if (duplicateCustomer.Phone === normalizedPhone) {
+                return res.status(409).json({ error: 'Phone number is already used by another customer' });
+            }
+        }
+
+        customer.Name = normalizedName;
+        customer.Email = normalizedEmail;
+        customer.Phone = normalizedPhone;
+        customer.PreferredNotification = normalizedPreferredNotification;
+
+        if (profileImageUrl !== undefined || ProfileImageURL !== undefined) {
+            customer.ProfileImageURL = profileImageUrl || ProfileImageURL || null;
+        }
+
+        await customer.save();
+
+        return res.json({
+            success: true,
+            message: 'Profile updated successfully',
+            data: customer.toJSON()
+        });
+    } catch (error) {
+        console.error('Update current customer profile error:', error);
+
+        if (error.name === 'SequelizeValidationError') {
+            return res.status(400).json({
+                error: error.errors.map(e => e.message).join(', ')
+            });
+        }
+
+        return res.status(500).json({ error: 'Failed to update customer profile' });
+    }
+});
+
+/**
+ * PUT /api/customers/me/password
+ * Customer: Change own password
+ */
+router.put('/me/password', requireCustomer, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({ error: 'Current password and new password are required' });
+        }
+
+        if (String(newPassword).length < 8) {
+            return res.status(400).json({ error: 'New password must be at least 8 characters' });
+        }
+
+        const customer = await Customer.findByPk(req.user.id);
+        if (!customer) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        const passwordMatches = await bcrypt.compare(currentPassword, customer.Password);
+        if (!passwordMatches) {
+            return res.status(400).json({ error: 'Current password is incorrect' });
+        }
+
+        customer.Password = newPassword;
+        await customer.save();
+
+        return res.json({
+            success: true,
+            message: 'Password updated successfully'
+        });
+    } catch (error) {
+        console.error('Update customer password error:', error);
+        return res.status(500).json({ error: 'Failed to update password' });
     }
 });
 

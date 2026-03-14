@@ -33,6 +33,46 @@ const SRI_LANKAN_CITIES = {
     'mathara': { lat: 5.7489, lng: 80.5392 }
 };
 
+async function geocodeAddressWithNominatim(address, city) {
+    const query = [address, city, 'Sri Lanka'].filter(Boolean).join(', ');
+
+    const response = await axios.get(
+        'https://nominatim.openstreetmap.org/search',
+        {
+            params: {
+                q: query,
+                format: 'jsonv2',
+                countrycodes: 'lk',
+                limit: 1,
+                addressdetails: 0
+            },
+            headers: {
+                'User-Agent': 'Voleena-Online-Ordering-System/1.0'
+            },
+            timeout: 8000
+        }
+    );
+
+    const firstResult = Array.isArray(response.data) ? response.data[0] : null;
+    if (!firstResult || !firstResult.lat || !firstResult.lon) {
+        throw new Error('Address could not be found');
+    }
+
+    const lat = parseFloat(firstResult.lat);
+    const lng = parseFloat(firstResult.lon);
+
+    if (Number.isNaN(lat) || Number.isNaN(lng)) {
+        throw new Error('Invalid geocoding coordinates returned');
+    }
+
+    return {
+        lat,
+        lng,
+        formattedAddress: firstResult.display_name || query,
+        method: 'nominatim'
+    };
+}
+
 /**
  * Get approximate coordinates for a city (fallback geocoding)
  * Used when Google Maps API key is not configured
@@ -124,7 +164,13 @@ async function validateDeliveryDistance(customerLat, customerLng) {
 async function geocodeAddress(address, city) {
     // If Google Maps API key is not configured, try fallback geocoding
     if (!GOOGLE_MAPS_API_KEY) {
-        console.warn('Google Maps API key not configured, using city-based fallback geocoding');
+        console.warn('Google Maps API key not configured, trying fallback geocoding');
+
+        try {
+            return await geocodeAddressWithNominatim(address, city);
+        } catch (nominatimError) {
+            console.warn('Nominatim fallback geocoding failed:', nominatimError.message);
+        }
 
         // Try to get coordinates from city name
         if (city) {
@@ -139,7 +185,7 @@ async function geocodeAddress(address, city) {
             }
         }
 
-        throw new Error('Unable to locate address without Google Maps API. Please configure GOOGLE_MAPS_API_KEY in .env or enable location input');
+        throw new Error('Unable to locate address without Google Maps API. Please configure GOOGLE_MAPS_API_KEY in .env or use GPS location input');
     }
 
     if (!address || address.trim().length === 0) {
@@ -178,9 +224,17 @@ async function geocodeAddress(address, city) {
         };
     } catch (error) {
         if (error.response) {
-            throw new Error(`Geocoding error: ${error.response.data.error_message || error.response.statusText}`);
+            console.warn(`Google geocoding failed (${error.response.data.error_message || error.response.statusText}), trying fallback`);
         }
-        throw error;
+
+        try {
+            return await geocodeAddressWithNominatim(address, city);
+        } catch (nominatimError) {
+            if (error.response) {
+                throw new Error(`Geocoding error: ${error.response.data.error_message || error.response.statusText}`);
+            }
+            throw nominatimError;
+        }
     }
 }
 

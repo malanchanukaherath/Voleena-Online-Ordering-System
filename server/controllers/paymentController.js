@@ -116,6 +116,101 @@ exports.initiatePayment = async (req, res) => {
   }
 };
 
+exports.confirmCardPayment = async (req, res) => {
+  try {
+    const { orderId, paymentIntentId } = req.body;
+
+    if (!orderId || !paymentIntentId) {
+      return res.status(400).json({ error: 'orderId and paymentIntentId are required' });
+    }
+
+    if (req.user.type !== 'Customer') {
+      return res.status(403).json({ error: 'Only customers can confirm card payments' });
+    }
+
+    if (!hasConfiguredStripeValue(process.env.STRIPE_SECRET_KEY, 'sk_')) {
+      return res.status(501).json({ error: 'Stripe server configuration is missing' });
+    }
+
+    const order = await Order.findByPk(orderId);
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    if (order.CustomerID !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    if (order.Status === 'CANCELLED') {
+      return res.status(400).json({ error: 'Cannot confirm payment for a cancelled order' });
+    }
+
+    const payment = await Payment.findOne({
+      where: {
+        OrderID: orderId,
+        Method: 'CARD'
+      }
+    });
+
+    if (!payment) {
+      return res.status(404).json({ error: 'Card payment record not found for this order' });
+    }
+
+    if (payment.Status === 'PAID') {
+      return res.json({
+        success: true,
+        duplicate: true,
+        data: {
+          paymentId: payment.PaymentID,
+          status: payment.Status
+        }
+      });
+    }
+
+    if (payment.TransactionID && payment.TransactionID !== paymentIntentId) {
+      return res.status(400).json({ error: 'Payment intent does not match the initialized payment record' });
+    }
+
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (!intent) {
+      return res.status(404).json({ error: 'Payment intent not found' });
+    }
+
+    if (intent.status !== 'succeeded') {
+      return res.status(400).json({ error: `Payment is not completed yet (status: ${intent.status})` });
+    }
+
+    const expectedAmount = Number(payment.Amount ?? order.FinalAmount ?? order.TotalAmount ?? 0);
+    const receivedAmount = Number((intent.amount_received ?? intent.amount ?? 0) / 100);
+    const isCurrencyValid = String(intent.currency || '').toLowerCase() === 'lkr';
+
+    if (!amountsMatch(receivedAmount, expectedAmount) || !isCurrencyValid) {
+      return res.status(400).json({ error: 'Payment verification failed due to currency or amount mismatch' });
+    }
+
+    await payment.update({
+      Status: 'PAID',
+      PaidAt: new Date(),
+      TransactionID: intent.id,
+      GatewayStatus: 'SUCCESS'
+    });
+
+    return res.json({
+      success: true,
+      data: {
+        paymentId: payment.PaymentID,
+        status: 'PAID',
+        orderId: order.OrderID
+      }
+    });
+  } catch (error) {
+    console.error('Confirm card payment error:', error);
+    return res.status(500).json({ error: 'Failed to confirm card payment' });
+  }
+};
+
 exports.payHereWebhook = async (req, res) => {
   try {
     const payload = req.body || {};

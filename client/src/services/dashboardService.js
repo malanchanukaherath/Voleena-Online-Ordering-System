@@ -18,7 +18,10 @@ const handleResponse = async (response) => {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Request failed');
+    const error = new Error(data.error || data.message || 'Request failed');
+    error.status = response.status;
+    error.data = data;
+    throw error;
   }
 
   return data;
@@ -135,8 +138,17 @@ class CashierService {
   }
 
   async getMenuItemsForPos() {
-    const response = await fetch(`${API_BASE_URL}/api/v1/menu?isActive=true`, {
-      headers: getAuthHeaders()
+    const response = await fetch(`${API_BASE_URL}/api/v1/menu?isActive=true&_=${Date.now()}`, {
+      headers: getAuthHeaders(),
+      cache: 'no-store'
+    });
+    return handleResponse(response);
+  }
+
+  async getComboPacksForPos() {
+    const response = await fetch(`${API_BASE_URL}/api/v1/combos/active?_=${Date.now()}`, {
+      headers: getAuthHeaders(),
+      cache: 'no-store'
     });
     return handleResponse(response);
   }

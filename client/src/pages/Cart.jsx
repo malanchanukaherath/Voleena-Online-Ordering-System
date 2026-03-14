@@ -4,7 +4,7 @@ import { FaTrash, FaMinus, FaPlus } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
 import { useAuth } from '../contexts/AuthContext';
-import { getCart, updateCartItem, removeCartItem } from '../utils/cartStorage';
+import { getCart, setCart, updateCartItem, removeCartItem } from '../utils/cartStorage';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../config/api';
 
@@ -50,6 +50,7 @@ const Cart = () => {
                     });
 
                     setCartItems(validatedItems);
+                    setCart(validatedItems);
                 }
             } catch (error) {
                 console.error('Failed to validate cart stock:', error);
@@ -79,27 +80,52 @@ const Cart = () => {
         fetchDeliveryFeeConfig();
     }, []);
 
+    const hasFiniteStockLimit = (item) => Number.isFinite(item?.stockQuantity) && item.stockQuantity >= 0;
+
+    const isOutOfStock = (item) => hasFiniteStockLimit(item) && item.stockQuantity === 0;
+
+    const isQuantityOverStock = (item) => hasFiniteStockLimit(item) && item.stockQuantity > 0 && item.quantity > item.stockQuantity;
+
+    const hasItemStockIssue = (item) => item.isAvailable === false || isOutOfStock(item) || isQuantityOverStock(item);
+
     const updateQuantity = (id, type, delta) => {
-        setCartItems((items) => {
-            const nextItems = items.map((item) => {
-                if (item.id === id && item.type === type) {
-                    const nextQuantity = Math.max(1, item.quantity + delta);
-                    updateCartItem(id, type, { quantity: nextQuantity });
-                    return { ...item, quantity: nextQuantity };
-                }
-                return item;
-            });
-            return nextItems;
+        const currentItem = cartItems.find((item) => item.id === id && item.type === type);
+        if (!currentItem) {
+            return;
+        }
+
+        if (delta > 0 && hasFiniteStockLimit(currentItem)) {
+            if (isOutOfStock(currentItem) || currentItem.isAvailable === false) {
+                toast.warning(`${currentItem.name} is out of stock today.`);
+                return;
+            }
+
+            if (currentItem.quantity >= currentItem.stockQuantity) {
+                toast.info(`Only ${currentItem.stockQuantity} item(s) available for ${currentItem.name} today.`);
+                return;
+            }
+        }
+
+        const nextQuantity = Math.max(1, currentItem.quantity + delta);
+        const nextItems = cartItems.map((item) => {
+            if (item.id === id && item.type === type) {
+                return { ...item, quantity: nextQuantity };
+            }
+            return item;
         });
+
+        setCartItems(nextItems);
+        updateCartItem(id, type, { quantity: nextQuantity });
     };
 
     const removeItem = (id, type) => {
-        setCartItems(() => removeCartItem(id, type));
+        const nextItems = removeCartItem(id, type);
+        setCartItems(nextItems);
     };
 
     const handleCheckout = () => {
         if (hasStockIssues()) {
-            removeUnavailableItems();
+            fixStockIssues();
             return;
         }
 
@@ -117,20 +143,42 @@ const Cart = () => {
     };
 
     const hasStockIssues = () => {
-        // Check if any items have stock issues (unavailable or out of stock)
-        return cartItems.some(item => item.isAvailable === false || item.stockQuantity === 0);
+        return cartItems.some(hasItemStockIssue);
     };
 
-    const removeUnavailableItems = () => {
-        const unavailableItems = cartItems.filter(item => item.isAvailable === false || item.stockQuantity === 0);
+    const fixStockIssues = () => {
+        let removedCount = 0;
+        let adjustedCount = 0;
 
-        unavailableItems.forEach(item => {
-            removeCartItem(item.id, item.type);
+        const normalizedItems = cartItems.flatMap((item) => {
+            if (item.isAvailable === false || isOutOfStock(item)) {
+                removedCount += 1;
+                return [];
+            }
+
+            if (isQuantityOverStock(item)) {
+                adjustedCount += 1;
+                return [{ ...item, quantity: item.stockQuantity }];
+            }
+
+            return [item];
         });
 
-        setCartItems(prev => prev.filter(item => item.isAvailable !== false && item.stockQuantity !== 0));
+        const persistedCartItems = normalizedItems.map(({ isAvailable, stockQuantity, ...persistedItem }) => persistedItem);
+        setCart(persistedCartItems);
+        setCartItems(normalizedItems);
 
-        toast.success(`Removed ${unavailableItems.length} unavailable item(s)`);
+        const updates = [];
+        if (adjustedCount > 0) {
+            updates.push(`Adjusted ${adjustedCount} item(s) to available stock`);
+        }
+        if (removedCount > 0) {
+            updates.push(`Removed ${removedCount} unavailable item(s)`);
+        }
+
+        if (updates.length > 0) {
+            toast.info(updates.join('. '));
+        }
     };
 
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -140,7 +188,7 @@ const Cart = () => {
     const checkoutButtonLabel = validatingStock
         ? 'Checking availability...'
         : hasStockIssues()
-            ? 'Remove Unavailable Items'
+            ? 'Fix Stock Issues'
             : showLoginPrompt
                 ? 'Login to Checkout'
                 : 'Proceed to Checkout';
@@ -178,12 +226,15 @@ const Cart = () => {
                         </div>
                         <div className="divide-y">
                             {cartItems.map((item) => {
-                                const isUnavailable = item.isAvailable === false || item.stockQuantity === 0;
+                                const isUnavailable = item.isAvailable === false || isOutOfStock(item);
+                                const isOverStock = isQuantityOverStock(item);
+                                const isStockIssue = isUnavailable || isOverStock;
+                                const disableIncrease = !item.isAvailable || (hasFiniteStockLimit(item) && item.quantity >= item.stockQuantity);
 
                                 return (
                                     <div
                                         key={`${item.type}-${item.id}`}
-                                        className={`p-6 ${isUnavailable ? 'bg-red-50 border-l-4 border-red-500' : ''}`}
+                                        className={`p-6 ${isStockIssue ? 'bg-red-50 border-l-4 border-red-500' : ''}`}
                                     >
                                         <div className="flex items-start gap-4">
                                             {/* Image */}
@@ -207,10 +258,25 @@ const Cart = () => {
                                                     {isUnavailable && (
                                                         <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">Unavailable</span>
                                                     )}
+                                                    {!isUnavailable && isOverStock && (
+                                                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">Exceeds Stock</span>
+                                                    )}
                                                 </div>
                                                 <p className="text-primary-600 font-medium mb-2">
                                                     LKR {item.price.toFixed(2)}
                                                 </p>
+                                                {hasFiniteStockLimit(item) && (
+                                                    <p className={`text-xs mb-2 ${isStockIssue ? 'text-red-600' : 'text-gray-500'}`}>
+                                                        {isOutOfStock(item)
+                                                            ? 'Out of stock today'
+                                                            : `Available today: ${item.stockQuantity}`}
+                                                    </p>
+                                                )}
+                                                {isOverStock && (
+                                                    <p className="text-xs text-red-600 mb-2">
+                                                        Quantity is above daily stock. Click "Fix Stock Issues" to auto-adjust.
+                                                    </p>
+                                                )}
 
                                                 {/* Quantity Controls */}
                                                 <div className="flex items-center gap-3">
@@ -225,7 +291,9 @@ const Cart = () => {
                                                         <span className="px-4 py-1 border-x">{item.quantity}</span>
                                                         <button
                                                             onClick={() => updateQuantity(item.id, item.type, 1)}
-                                                            className="px-3 py-1 hover:bg-gray-100"
+                                                            className="px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                            disabled={disableIncrease}
+                                                            title={disableIncrease ? 'Maximum available stock reached' : 'Increase quantity'}
                                                         >
                                                             <FaPlus className="w-3 h-3" />
                                                         </button>
@@ -302,7 +370,7 @@ const Cart = () => {
 
                         {hasStockIssues() && !validatingStock && (
                             <p className="text-xs text-red-600 mt-2 text-center">
-                                Click to remove unavailable items
+                                Click to remove unavailable items and adjust over-stock quantities
                             </p>
                         )}
 

@@ -8,7 +8,7 @@ import Select from '../components/ui/Select';
 import Textarea from '../components/ui/Textarea';
 import { StripePaymentModal } from '../components/payment/StripePaymentModal';
 import { getCart, clearCart } from '../utils/cartStorage';
-import { calculateDeliveryFeeByDistance, createAddress, createOrder, initiatePayment, validateDeliveryDistance } from '../services/orderApi';
+import { calculateDeliveryFeeByDistance, confirmCardPayment, createAddress, createOrder, initiatePayment, validateDeliveryDistance } from '../services/orderApi';
 
 const RESTAURANT_LOCATION = {
     lat: 7.120035696626918,
@@ -429,9 +429,9 @@ const Checkout = () => {
         try {
             const payload = {
                 address: {
-                    addressLine1: formData.addressLine1,
-                    city: formData.city,
-                    district: formData.postalCode
+                    addressLine1: formData.addressLine1.trim(),
+                    city: formData.city.trim(),
+                    postalCode: formData.postalCode?.trim() || null
                 }
             };
 
@@ -573,9 +573,9 @@ const Checkout = () => {
                     // Otherwise, use address
                     distanceValidation = await validateDeliveryDistance({
                         address: {
-                            addressLine1: formData.addressLine1,
-                            city: formData.city,
-                            district: formData.postalCode
+                            addressLine1: formData.addressLine1.trim(),
+                            city: formData.city.trim(),
+                            postalCode: formData.postalCode?.trim() || null
                         }
                     });
                 }
@@ -1145,12 +1145,24 @@ const Checkout = () => {
                     email: formData.email.trim(),
                     phone: formData.phone.trim()
                 }}
-                onSuccess={(paymentIntent) => {
+                onSuccess={async (paymentIntent) => {
+                    const completedOrderId = currentOrderId;
+
+                    try {
+                        if (completedOrderId && paymentIntent?.id) {
+                            await confirmCardPayment(completedOrderId, paymentIntent.id);
+                        }
+                    } catch (syncError) {
+                        console.error('Card payment confirmation sync failed:', syncError);
+                    }
+
                     setShowStripeModal(false);
                     setCurrentOrderId(null);
                     setPaymentClientSecret(null);
                     clearCart();
-                    navigate(`/order-confirmation/${currentOrderId}`);
+                    if (completedOrderId) {
+                        navigate(`/order-confirmation/${completedOrderId}`);
+                    }
                 }}
                 onCancel={() => {
                     setShowStripeModal(false);

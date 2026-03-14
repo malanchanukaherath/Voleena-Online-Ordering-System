@@ -52,6 +52,10 @@ export const initiatePayment = async (orderId, paymentMethod) => {
   return backendApi.post('/api/v1/payments/initiate', { orderId, paymentMethod });
 };
 
+export const confirmCardPayment = async (orderId, paymentIntentId) => {
+  return backendApi.post('/api/v1/payments/confirm-card', { orderId, paymentIntentId });
+};
+
 export const getOrders = async () => {
   return backendApi.get('/api/v1/orders');
 };

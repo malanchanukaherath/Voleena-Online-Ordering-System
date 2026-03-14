@@ -4,12 +4,120 @@ import {
     FaCashRegister,
     FaCalculator,
     FaClipboardList,
+    FaLayerGroup,
     FaDollarSign,
     FaExclamationCircle,
     FaUsers
 } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
 import { cashierService } from '../services/dashboardService';
+
+const parseApiArray = (response) => {
+    if (Array.isArray(response)) {
+        return response;
+    }
+
+    if (Array.isArray(response?.data)) {
+        return response.data;
+    }
+
+    if (Array.isArray(response?.menuItems)) {
+        return response.menuItems;
+    }
+
+    return [];
+};
+
+const parseApiObject = (response) => {
+    if (response && typeof response === 'object' && !Array.isArray(response)) {
+        if (response.stats && typeof response.stats === 'object') {
+            return response.stats;
+        }
+        if (response.data && typeof response.data === 'object' && !Array.isArray(response.data)) {
+            return response.data;
+        }
+        return response;
+    }
+
+    return {};
+};
+
+const getMenuItemId = (menuItem) => Number.parseInt(menuItem?.MenuItemID ?? menuItem?.menuItemId, 10);
+const getMenuItemName = (menuItem) => menuItem?.Name ?? menuItem?.name ?? 'Unknown Item';
+const getMenuItemPrice = (menuItem) => Number.parseFloat(menuItem?.Price ?? menuItem?.price ?? 0);
+const getMenuItemStockQuantity = (menuItem) => {
+    const stockQuantity = menuItem?.StockQuantity ?? menuItem?.stockQuantity;
+    return Number.isFinite(stockQuantity) ? stockQuantity : null;
+};
+
+const isMenuItemActive = (menuItem) => {
+    const isActive = menuItem?.IsActive ?? menuItem?.isActive;
+    return isActive !== false;
+};
+
+const isMenuItemAvailable = (menuItem) => {
+    const availability = menuItem?.IsAvailable ?? menuItem?.isAvailable;
+    return availability !== false;
+};
+
+const normalizeMenuItemsForPos = (menuResponse) => {
+    const items = parseApiArray(menuResponse);
+
+    return items
+        .map((item) => ({
+            ...item,
+            MenuItemID: getMenuItemId(item),
+            Name: getMenuItemName(item),
+            Price: getMenuItemPrice(item),
+            StockQuantity: getMenuItemStockQuantity(item),
+            IsActive: isMenuItemActive(item),
+            IsAvailable: isMenuItemAvailable(item)
+        }))
+        .filter((item) => Number.isInteger(item.MenuItemID))
+        .filter((item) => item.IsActive && item.IsAvailable);
+};
+
+const getComboPackId = (combo) => Number.parseInt(combo?.ComboID ?? combo?.ComboPackID ?? combo?.comboId, 10);
+const normalizeComboPacksForPos = (comboResponse) => {
+    const combos = parseApiArray(comboResponse);
+
+    return combos
+        .map((combo) => ({
+            ...combo,
+            ComboID: getComboPackId(combo),
+            Name: combo?.Name ?? combo?.name ?? 'Combo Pack',
+            Price: Number.parseFloat(combo?.Price ?? combo?.price ?? 0),
+            OriginalPrice: Number.parseFloat(combo?.OriginalPrice ?? combo?.originalPrice ?? 0),
+            DiscountPercentage: Number.parseFloat(combo?.DiscountPercentage ?? combo?.discountPercentage ?? 0),
+            IsActive: combo?.IsActive !== false
+        }))
+        .filter((combo) => Number.isInteger(combo.ComboID))
+        .filter((combo) => combo.IsActive);
+};
+
+const createPosEntryKey = (item) => {
+    if (item.type === 'combo') {
+        return `combo:${item.ComboID}`;
+    }
+
+    return `menu:${item.MenuItemID}`;
+};
+
+const createOrderEntryKey = (item) => {
+    if (item.type === 'combo' || item.comboId) {
+        return `combo:${item.comboId}`;
+    }
+
+    return `menu:${item.menuItemId}`;
+};
+
+const getCatalogStockLimit = (item) => {
+    if (item?.type !== 'menu') {
+        return null;
+    }
+
+    return Number.isFinite(item?.StockQuantity) ? item.StockQuantity : null;
+};
 
 const CashierDashboard = () => {
     const [stats, setStats] = useState({
@@ -21,7 +129,7 @@ const CashierDashboard = () => {
         newCustomers: 0
     });
     const [recentOrders, setRecentOrders] = useState([]);
-    const [menuItems, setMenuItems] = useState([]);
+    const [posItems, setPosItems] = useState([]);
     const [isWalkInOpen, setIsWalkInOpen] = useState(false);
     const [currentWalkInOrder, setCurrentWalkInOrder] = useState([]);
     const [walkInPaymentMethod, setWalkInPaymentMethod] = useState('CASH');
@@ -51,38 +159,107 @@ const CashierDashboard = () => {
         return paid - bill;
     }, [changeBillTotal, changePaidAmount]);
 
-    const loadData = useCallback(async () => {
-        const [statsResponse, ordersResponse, menuResponse] = await Promise.all([
-            cashierService.getDashboardStats(),
-            cashierService.getAllOrders({ limit: 5 }),
-            cashierService.getMenuItemsForPos()
+    const reconcileWalkInOrderWithCatalog = useCallback((catalogItems) => {
+        const catalogByKey = new Map(catalogItems.map((item) => [createPosEntryKey(item), item]));
+
+        setCurrentWalkInOrder((previousOrder) => previousOrder
+            .flatMap((orderItem) => {
+                const catalogItem = catalogByKey.get(createOrderEntryKey(orderItem));
+                if (!catalogItem) {
+                    return [];
+                }
+
+                const currentQuantity = Number.parseInt(orderItem.quantity, 10) || 0;
+                const maxStock = catalogItem.type === 'menu' && Number.isFinite(catalogItem.StockQuantity)
+                    ? catalogItem.StockQuantity
+                    : null;
+                const cappedQuantity = maxStock !== null
+                    ? Math.min(Math.max(currentQuantity, 1), Math.max(maxStock, 0))
+                    : Math.max(currentQuantity, 1);
+
+                if (cappedQuantity <= 0) {
+                    return [];
+                }
+
+                return [{
+                    ...orderItem,
+                    name: catalogItem.Name,
+                    price: catalogItem.Price,
+                    quantity: cappedQuantity
+                }];
+            }));
+    }, []);
+
+    const loadPosCatalog = useCallback(async () => {
+        const [menuResponse, comboResponse] = await Promise.all([
+            cashierService.getMenuItemsForPos(),
+            cashierService.getComboPacksForPos()
         ]);
 
-        const statsData = statsResponse.stats || statsResponse.data?.stats || statsResponse.data || {};
-        setStats((prev) => ({
-            ...prev,
-            ...statsData,
-            todayRevenue: Number.parseFloat(statsData.todayRevenue || 0),
-            walkInOrders: Number.parseInt(statsData.walkInOrders || 0, 10),
-            onlineOrders: Number.parseInt(statsData.onlineOrders || 0, 10)
+        const availableMenuItems = normalizeMenuItemsForPos(menuResponse).map((item) => ({
+            ...item,
+            type: 'menu'
         }));
-
-        const orders = ordersResponse.data || ordersResponse?.data?.data || [];
-        const mappedOrders = orders.map((order) => ({
-            id: order.OrderID,
-            orderNumber: order.OrderNumber,
-            customer: order.customer?.Name || 'Unknown',
-            total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
-            status: order.Status,
-            orderType: order.OrderType,
-            isPending: order.Status === 'PENDING'
+        const activeComboPacks = normalizeComboPacksForPos(comboResponse).map((combo) => ({
+            ...combo,
+            type: 'combo'
         }));
-        setRecentOrders(mappedOrders);
+        const nextCatalog = [...activeComboPacks, ...availableMenuItems];
 
-        const menu = menuResponse.data || menuResponse?.data?.data || [];
-        const availableMenuItems = menu.filter((item) => item.IsActive && item.IsAvailable !== false);
-        setMenuItems(availableMenuItems);
-    }, []);
+        setPosItems(nextCatalog);
+        reconcileWalkInOrderWithCatalog(nextCatalog);
+    }, [reconcileWalkInOrderWithCatalog]);
+
+    const loadData = useCallback(async () => {
+        const [statsResult, ordersResult, menuResult, comboResult] = await Promise.allSettled([
+            cashierService.getDashboardStats(),
+            cashierService.getAllOrders({ limit: 5 }),
+            cashierService.getMenuItemsForPos(),
+            cashierService.getComboPacksForPos()
+        ]);
+
+        if (statsResult.status === 'fulfilled') {
+            const statsData = parseApiObject(statsResult.value);
+            setStats((prev) => ({
+                ...prev,
+                ...statsData,
+                todayRevenue: Number.parseFloat(statsData.todayRevenue || 0),
+                walkInOrders: Number.parseInt(statsData.walkInOrders || 0, 10),
+                onlineOrders: Number.parseInt(statsData.onlineOrders || 0, 10)
+            }));
+        }
+
+        if (ordersResult.status === 'fulfilled') {
+            const orders = parseApiArray(ordersResult.value);
+            const mappedOrders = orders.map((order) => ({
+                id: order.OrderID,
+                orderNumber: order.OrderNumber,
+                customer: order.customer?.Name || 'Unknown',
+                total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
+                status: order.Status,
+                orderType: order.OrderType,
+                isPending: order.Status === 'PENDING'
+            }));
+            setRecentOrders(mappedOrders);
+        } else {
+            setRecentOrders([]);
+        }
+
+        const availableMenuItems = menuResult.status === 'fulfilled'
+            ? normalizeMenuItemsForPos(menuResult.value).map((item) => ({ ...item, type: 'menu' }))
+            : [];
+        const activeComboPacks = comboResult.status === 'fulfilled'
+            ? normalizeComboPacksForPos(comboResult.value).map((combo) => ({ ...combo, type: 'combo' }))
+            : [];
+
+        if (availableMenuItems.length > 0 || activeComboPacks.length > 0) {
+            const nextCatalog = [...activeComboPacks, ...availableMenuItems];
+            setPosItems(nextCatalog);
+            reconcileWalkInOrderWithCatalog(nextCatalog);
+        } else {
+            setPosItems([]);
+        }
+    }, [reconcileWalkInOrderWithCatalog]);
 
     useEffect(() => {
         let isMounted = true;
@@ -95,7 +272,7 @@ const CashierDashboard = () => {
             } catch (error) {
                 if (isMounted) {
                     setRecentOrders([]);
-                    setMenuItems([]);
+                    setPosItems([]);
                 }
             }
         };
@@ -107,14 +284,56 @@ const CashierDashboard = () => {
         };
     }, [loadData]);
 
-    const addToWalkInOrder = (menuItem) => {
+    useEffect(() => {
+        if (!isWalkInOpen) {
+            return undefined;
+        }
+
+        let isActive = true;
+
+        const refreshMenu = async () => {
+            try {
+                if (!isActive) {
+                    return;
+                }
+                await loadPosCatalog();
+            } catch (error) {
+                if (isActive) {
+                    setWalkInError(error.message || 'Failed to refresh POS items for walk-in orders');
+                }
+            }
+        };
+
+        refreshMenu();
+        const menuRefreshInterval = setInterval(refreshMenu, 15000);
+
+        return () => {
+            isActive = false;
+            clearInterval(menuRefreshInterval);
+        };
+    }, [isWalkInOpen, loadPosCatalog]);
+
+    const addToWalkInOrder = (catalogItem) => {
         setWalkInError('');
         setWalkInSuccess('');
+
+        const stockLimit = getCatalogStockLimit(catalogItem);
+        if (stockLimit !== null && stockLimit <= 0) {
+            setWalkInError(`${catalogItem.Name} is out of stock today.`);
+            return;
+        }
+
         setCurrentWalkInOrder((prev) => {
-            const existing = prev.find((item) => item.menuItemId === menuItem.MenuItemID);
+            const orderEntryKey = createPosEntryKey(catalogItem);
+            const existing = prev.find((item) => createOrderEntryKey(item) === orderEntryKey);
             if (existing) {
+                if (stockLimit !== null && existing.quantity >= stockLimit) {
+                    setWalkInError(`Only ${stockLimit} item(s) available for ${catalogItem.Name} today.`);
+                    return prev;
+                }
+
                 return prev.map((item) => (
-                    item.menuItemId === menuItem.MenuItemID
+                    createOrderEntryKey(item) === orderEntryKey
                         ? { ...item, quantity: item.quantity + 1 }
                         : item
                 ));
@@ -123,20 +342,36 @@ const CashierDashboard = () => {
             return [
                 ...prev,
                 {
-                    menuItemId: menuItem.MenuItemID,
-                    name: menuItem.Name,
-                    price: Number.parseFloat(menuItem.Price || 0),
+                    type: catalogItem.type,
+                    menuItemId: catalogItem.type === 'menu' ? catalogItem.MenuItemID : null,
+                    comboId: catalogItem.type === 'combo' ? catalogItem.ComboID : null,
+                    name: catalogItem.Name,
+                    price: Number.parseFloat(catalogItem.Price || 0),
                     quantity: 1
                 }
             ];
         });
     };
 
-    const updateWalkInQuantity = (menuItemId, delta) => {
+    const updateWalkInQuantity = (entryKey, delta) => {
+        setWalkInError('');
         setCurrentWalkInOrder((prev) => prev
-            .map((item) => item.menuItemId === menuItemId
-                ? { ...item, quantity: Math.max(item.quantity + delta, 0) }
-                : item)
+            .map((item) => {
+                if (createOrderEntryKey(item) !== entryKey) {
+                    return item;
+                }
+
+                const catalogItem = posItems.find((catalogEntry) => createPosEntryKey(catalogEntry) === entryKey);
+                const stockLimit = getCatalogStockLimit(catalogItem);
+                const requestedQuantity = Math.max(item.quantity + delta, 0);
+
+                if (delta > 0 && stockLimit !== null && requestedQuantity > stockLimit) {
+                    setWalkInError(`Only ${stockLimit} item(s) available for ${item.name} today.`);
+                    return item;
+                }
+
+                return { ...item, quantity: requestedQuantity };
+            })
             .filter((item) => item.quantity > 0));
     };
 
@@ -159,7 +394,8 @@ const CashierDashboard = () => {
         try {
             const payload = {
                 items: currentWalkInOrder.map((item) => ({
-                    menu_item_id: item.menuItemId,
+                    ...(item.menuItemId ? { menu_item_id: item.menuItemId } : {}),
+                    ...(item.comboId ? { combo_id: item.comboId } : {}),
                     quantity: item.quantity
                 })),
                 payment_method: walkInPaymentMethod
@@ -292,21 +528,40 @@ const CashierDashboard = () => {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div>
-                            <h4 className="font-semibold mb-3">Menu Items</h4>
+                            <h4 className="font-semibold mb-3">Available Items</h4>
                             <div className="max-h-80 overflow-y-auto border rounded-lg divide-y">
-                                {menuItems.length === 0 ? (
-                                    <div className="p-4 text-sm text-gray-500">No menu items available.</div>
-                                ) : menuItems.map((item) => (
+                                {posItems.length === 0 ? (
+                                    <div className="p-4 text-sm text-gray-500">No menu items or combo packs available.</div>
+                                ) : posItems.map((item) => (
                                     <button
-                                        key={item.MenuItemID}
+                                        key={createPosEntryKey(item)}
                                         type="button"
                                         onClick={() => addToWalkInOrder(item)}
                                         className="w-full text-left p-3 hover:bg-gray-50"
                                     >
                                         <div className="flex justify-between items-center">
-                                            <span className="font-medium">{item.Name}</span>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-medium">{item.Name}</span>
+                                                {item.type === 'combo' && (
+                                                    <span className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700">
+                                                        <FaLayerGroup className="h-3 w-3" /> Combo
+                                                    </span>
+                                                )}
+                                            </div>
                                             <span className="text-sm font-semibold">LKR {Number(item.Price || 0).toFixed(2)}</span>
                                         </div>
+                                        {item.type === 'menu' && Number.isFinite(item.StockQuantity) && (
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                {item.StockQuantity > 0
+                                                    ? `Available today: ${item.StockQuantity}`
+                                                    : 'Out of stock today'}
+                                            </p>
+                                        )}
+                                        {item.type === 'combo' && item.OriginalPrice > item.Price && (
+                                            <p className="mt-1 text-xs text-gray-500">
+                                                Save LKR {(item.OriginalPrice - item.Price).toFixed(2)}
+                                            </p>
+                                        )}
                                     </button>
                                 ))}
                             </div>
@@ -318,15 +573,29 @@ const CashierDashboard = () => {
                                 {currentWalkInOrder.length === 0 ? (
                                     <p className="text-sm text-gray-500">No items selected.</p>
                                 ) : currentWalkInOrder.map((item) => (
-                                    <div key={item.menuItemId} className="flex items-center justify-between">
+                                    <div key={createOrderEntryKey(item)} className="flex items-center justify-between">
                                         <div>
-                                            <p className="font-medium">{item.name}</p>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-medium">{item.name}</p>
+                                                {item.type === 'combo' && (
+                                                    <span className="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700">
+                                                        Combo
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-sm text-gray-500">LKR {item.price.toFixed(2)} each</p>
+                                            {item.type === 'menu' && (() => {
+                                                const catalogItem = posItems.find((catalogEntry) => createPosEntryKey(catalogEntry) === createOrderEntryKey(item));
+                                                const stockLimit = getCatalogStockLimit(catalogItem);
+                                                return stockLimit !== null ? (
+                                                    <p className="text-xs text-gray-500">Available today: {stockLimit}</p>
+                                                ) : null;
+                                            })()}
                                         </div>
                                         <div className="flex items-center gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() => updateWalkInQuantity(item.menuItemId, -1)}
+                                                onClick={() => updateWalkInQuantity(createOrderEntryKey(item), -1)}
                                                 className="w-7 h-7 border rounded"
                                             >
                                                 -
@@ -334,8 +603,13 @@ const CashierDashboard = () => {
                                             <span className="w-7 text-center">{item.quantity}</span>
                                             <button
                                                 type="button"
-                                                onClick={() => updateWalkInQuantity(item.menuItemId, 1)}
-                                                className="w-7 h-7 border rounded"
+                                                onClick={() => updateWalkInQuantity(createOrderEntryKey(item), 1)}
+                                                className="w-7 h-7 border rounded disabled:cursor-not-allowed disabled:opacity-50"
+                                                disabled={(() => {
+                                                    const catalogItem = posItems.find((catalogEntry) => createPosEntryKey(catalogEntry) === createOrderEntryKey(item));
+                                                    const stockLimit = getCatalogStockLimit(catalogItem);
+                                                    return stockLimit !== null && item.quantity >= stockLimit;
+                                                })()}
                                             >
                                                 +
                                             </button>
