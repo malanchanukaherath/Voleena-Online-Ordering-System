@@ -52,14 +52,7 @@ const AppRoutes = () => {
       <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
       {/* Customer Protected Routes */}
-      <Route
-        path="/cart"
-        element={
-          <ProtectedRoute allowedRoles={['Customer']}>
-            <Cart />
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/cart" element={<Cart />} />
       <Route
         path="/checkout"
         element={

@@ -3,7 +3,7 @@
  * Handles cart validation and checkout preparation
  */
 
-const { MenuItem, ComboPack, DailyStock } = require('../models');
+const { MenuItem, ComboPack, ComboPackItem, DailyStock } = require('../models');
 const { validateCartItems } = require('../utils/validationUtils');
 
 /**
@@ -99,7 +99,16 @@ exports.validateCart = async (req, res) => {
 
                 } else if (item.comboId) {
                     // Validate combo pack
-                    const combo = await ComboPack.findByPk(item.comboId);
+                    const combo = await ComboPack.findByPk(item.comboId, {
+                        include: [{
+                            model: ComboPackItem,
+                            as: 'items',
+                            include: [{
+                                model: MenuItem,
+                                as: 'menuItem'
+                            }]
+                        }]
+                    });
                     
                     if (!combo) {
                         errors.push(`Combo pack ${item.comboId} not found`);
@@ -111,7 +120,57 @@ exports.validateCart = async (req, res) => {
                         continue;
                     }
 
-                    // Combos don't have stock tracking, always available
+                    if (!Array.isArray(combo.items) || combo.items.length === 0) {
+                        errors.push(`Combo pack "${combo.Name}" has no items configured`);
+                        continue;
+                    }
+
+                    let isComboAvailable = true;
+                    let availableComboQty = null;
+                    const comboIssues = [];
+
+                    for (const comboItem of combo.items) {
+                        const componentQty = Number(comboItem.Quantity || 0);
+                        const componentRequiredQty = componentQty * Number(item.quantity || 0);
+                        const componentMenuItem = comboItem.menuItem;
+
+                        if (componentQty <= 0) {
+                            isComboAvailable = false;
+                            comboIssues.push(`item ${comboItem.MenuItemID} has invalid combo quantity`);
+                            continue;
+                        }
+
+                        if (!componentMenuItem || !componentMenuItem.IsActive) {
+                            isComboAvailable = false;
+                            comboIssues.push(`item ${comboItem.MenuItemID} is unavailable`);
+                            continue;
+                        }
+
+                        const dailyStock = await DailyStock.findOne({
+                            where: {
+                                MenuItemID: comboItem.MenuItemID,
+                                StockDate: today
+                            }
+                        });
+
+                        let componentAvailableQty = 0;
+                        if (dailyStock) {
+                            componentAvailableQty = dailyStock.OpeningQuantity - dailyStock.SoldQuantity + dailyStock.AdjustedQuantity;
+                        }
+
+                        const possibleCombosFromThisItem = componentQty > 0
+                            ? Math.floor(Math.max(0, componentAvailableQty) / componentQty)
+                            : 0;
+                        availableComboQty = availableComboQty === null
+                            ? possibleCombosFromThisItem
+                            : Math.min(availableComboQty, possibleCombosFromThisItem);
+
+                        if (componentAvailableQty < componentRequiredQty) {
+                            isComboAvailable = false;
+                            comboIssues.push(`"${componentMenuItem.Name}" available: ${componentAvailableQty}, required: ${componentRequiredQty}`);
+                        }
+                    }
+
                     validatedItems.push({
                         id: item.comboId,
                         type: 'combo',
@@ -119,10 +178,14 @@ exports.validateCart = async (req, res) => {
                         price: parseFloat(combo.Price),
                         quantity: item.quantity,
                         availability: {
-                            isAvailable: true,
-                            availableQty: null
+                            isAvailable: isComboAvailable,
+                            availableQty: availableComboQty === null ? 0 : availableComboQty
                         }
                     });
+
+                    if (!isComboAvailable) {
+                        errors.push(`Insufficient stock for combo "${combo.Name}". ${comboIssues.join('; ')}`);
+                    }
                 }
 
             } catch (itemError) {

@@ -1,4 +1,4 @@
-const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, Delivery, DeliveryStaffAvailability, Payment, Address, sequelize } = require('../models');
+const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, ComboPackItem, Delivery, DeliveryStaffAvailability, Payment, Address, sequelize } = require('../models');
 const { Transaction, Op } = require('sequelize');
 const stockService = require('./stockService');
 const { validateDeliveryDistanceWithFallback } = require('./distanceValidation');
@@ -11,6 +11,83 @@ const { sendOrderConfirmationSMS, sendOrderStatusUpdateSMS } = require('./smsSer
  * Implements complete order lifecycle with atomic operations
  */
 class OrderService {
+    async buildStockItemsFromOrderItems(orderItems, transaction) {
+        const requiredByMenuItem = new Map();
+
+        const addRequirement = (menuItemId, quantity) => {
+            if (!Number.isInteger(menuItemId) || !Number.isFinite(quantity) || quantity <= 0) {
+                return;
+            }
+
+            requiredByMenuItem.set(menuItemId, (requiredByMenuItem.get(menuItemId) || 0) + quantity);
+        };
+
+        const normalizedItems = Array.isArray(orderItems) ? orderItems.map((item) => ({
+            menuItemId: Number.parseInt(item.MenuItemID ?? item.menuItemId ?? item.menu_item_id, 10),
+            comboId: Number.parseInt(item.ComboID ?? item.comboId ?? item.combo_id, 10),
+            quantity: Number(item.Quantity ?? item.quantity ?? 0)
+        })) : [];
+
+        for (const item of normalizedItems) {
+            if (Number.isInteger(item.menuItemId)) {
+                addRequirement(item.menuItemId, item.quantity);
+            }
+        }
+
+        const comboLineItems = normalizedItems.filter((item) => Number.isInteger(item.comboId));
+        if (comboLineItems.length > 0) {
+            const comboIds = [...new Set(comboLineItems.map((item) => item.comboId))];
+
+            const comboComponents = await ComboPackItem.findAll({
+                where: {
+                    ComboID: {
+                        [Op.in]: comboIds
+                    }
+                },
+                include: [{
+                    model: MenuItem,
+                    as: 'menuItem',
+                    attributes: ['MenuItemID', 'Name', 'IsActive', 'IsAvailable']
+                }],
+                transaction
+            });
+
+            const componentsByComboId = new Map();
+            for (const component of comboComponents) {
+                if (!componentsByComboId.has(component.ComboID)) {
+                    componentsByComboId.set(component.ComboID, []);
+                }
+                componentsByComboId.get(component.ComboID).push(component);
+            }
+
+            for (const comboLineItem of comboLineItems) {
+                if (!Number.isFinite(comboLineItem.quantity) || comboLineItem.quantity <= 0) {
+                    continue;
+                }
+
+                const components = componentsByComboId.get(comboLineItem.comboId) || [];
+
+                if (components.length === 0) {
+                    throw new Error(`Combo pack ${comboLineItem.comboId} has no configured items`);
+                }
+
+                for (const component of components) {
+                    const componentMenuItem = component.menuItem;
+                    const componentMenuItemName = componentMenuItem?.Name || `menu item ${component.MenuItemID}`;
+
+                    if (!componentMenuItem || !componentMenuItem.IsActive || !componentMenuItem.IsAvailable) {
+                        throw new Error(`Combo pack ${comboLineItem.comboId} contains unavailable item: ${componentMenuItemName}`);
+                    }
+
+                    const requiredQty = Number(component.Quantity || 0) * comboLineItem.quantity;
+                    addRequirement(component.MenuItemID, requiredQty);
+                }
+            }
+        }
+
+        return [...requiredByMenuItem.entries()].map(([MenuItemID, Quantity]) => ({ MenuItemID, Quantity }));
+    }
+
     /**
      * Create order with stock validation (FR01, FR22)
      */
@@ -171,12 +248,7 @@ class OrderService {
 
             // Validate and deduct stock at order creation (auto-confirmation)
             const stockDate = new Date().toISOString().split('T')[0];
-            const stockItems = orderItems
-                .filter(item => item.MenuItemID)
-                .map(item => ({
-                    MenuItemID: item.MenuItemID,
-                    Quantity: item.Quantity
-                }));
+            const stockItems = await this.buildStockItemsFromOrderItems(orderItems, transaction);
 
             if (stockItems.length > 0) {
                 await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
@@ -260,12 +332,7 @@ class OrderService {
 
             // Validate and reserve stock
             const stockDate = new Date().toISOString().split('T')[0];
-            const stockItems = order.items
-                .filter(item => item.MenuItemID)
-                .map(item => ({
-                    MenuItemID: item.MenuItemID,
-                    Quantity: item.Quantity
-                }));
+            const stockItems = await this.buildStockItemsFromOrderItems(order.items, transaction);
 
             if (stockItems.length > 0) {
                 await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
@@ -433,12 +500,7 @@ class OrderService {
             // Step 1: Return stock if order was confirmed (stock was deducted)
             if (order.Status !== 'PENDING' && order.ConfirmedAt) {
                 const stockDate = order.ConfirmedAt.toISOString().split('T')[0];
-                const stockItems = order.items
-                    .filter(item => item.MenuItemID)
-                    .map(item => ({
-                        MenuItemID: item.MenuItemID,
-                        Quantity: item.Quantity
-                    }));
+                const stockItems = await this.buildStockItemsFromOrderItems(order.items, transaction);
 
                 if (stockItems.length > 0) {
                     console.log(`[ORDER_CANCEL] Returning stock - Date: ${stockDate}, Items: ${stockItems.length}`);

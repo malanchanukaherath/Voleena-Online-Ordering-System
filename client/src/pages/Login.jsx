@@ -55,6 +55,12 @@ const Login = () => {
     }
   }, [location.state]);
 
+  useEffect(() => {
+    if (location.state?.notice) {
+      setNotice(location.state.notice);
+    }
+  }, [location.state]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({

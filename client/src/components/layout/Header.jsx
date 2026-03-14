@@ -23,6 +23,8 @@ const Header = () => {
     const { user, isAuthenticated, logout } = useAuth();
     const location = useLocation();
     const [cartCount, setCartCount] = useState(0);
+    const userRole = user?.role || user?.staffRole;
+    const shouldShowCart = !isAuthenticated || userRole === 'Customer';
 
     // Load cart count on mount and listen for updates
     useEffect(() => {
@@ -143,10 +145,11 @@ const Header = () => {
 
                     {/* Right Side Actions */}
                     <div className="flex items-center space-x-4">
-                        {isAuthenticated && user?.role === 'Customer' && (
+                        {shouldShowCart && (
                             <Link
                                 to="/cart"
                                 className="relative text-gray-700 hover:text-primary-600"
+                                title="View cart"
                             >
                                 <FaShoppingCart className="w-6 h-6" />
                                 {cartCount > 0 && (

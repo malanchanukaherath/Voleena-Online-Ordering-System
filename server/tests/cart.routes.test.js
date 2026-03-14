@@ -8,11 +8,18 @@ const mockComboPack = {
   findByPk: jest.fn()
 };
 
+const mockComboPackItem = {};
+
 const mockDailyStock = {
   findOne: jest.fn()
 };
 
-jest.mock('../models', () => ({ MenuItem: mockMenuItem, ComboPack: mockComboPack, DailyStock: mockDailyStock }));
+jest.mock('../models', () => ({
+  MenuItem: mockMenuItem,
+  ComboPack: mockComboPack,
+  ComboPackItem: mockComboPackItem,
+  DailyStock: mockDailyStock
+}));
 jest.mock('../utils/validationUtils', () => ({
   validateCartItems: jest.fn()
 }));
@@ -63,6 +70,41 @@ describe('cart routes', () => {
     expect(response.status).toBe(200);
     expect(response.body.data.isValid).toBe(false);
     expect(response.body.data.errors[0]).toMatch(/Insufficient stock/);
+  });
+
+  test('reports combo item stock shortages during cart validation', async () => {
+    validateCartItems.mockReturnValue({ isValid: true, errors: [] });
+    mockComboPack.findByPk.mockResolvedValue({
+      ComboID: 2,
+      Name: 'Family Combo',
+      Price: 2500,
+      IsActive: true,
+      items: [
+        {
+          MenuItemID: 10,
+          Quantity: 2,
+          menuItem: {
+            MenuItemID: 10,
+            Name: 'Chicken Kottu',
+            IsActive: true
+          }
+        }
+      ]
+    });
+    mockDailyStock.findOne.mockResolvedValue({
+      OpeningQuantity: 3,
+      SoldQuantity: 0,
+      AdjustedQuantity: 0
+    });
+
+    const response = await request(app)
+      .post('/api/v1/cart/validate')
+      .send({ items: [{ comboId: 2, quantity: 2 }] });
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.isValid).toBe(false);
+    expect(response.body.data.errors[0]).toMatch(/Insufficient stock for combo/);
+    expect(response.body.data.items[0].availability.isAvailable).toBe(false);
   });
 
   test('returns a valid cart summary for mixed menu and combo items', async () => {

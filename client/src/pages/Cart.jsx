@@ -3,12 +3,14 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaTrash, FaMinus, FaPlus } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import EmptyState from '../components/ui/EmptyState';
+import { useAuth } from '../contexts/AuthContext';
 import { getCart, updateCartItem, removeCartItem } from '../utils/cartStorage';
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../config/api';
 
 const Cart = () => {
     const navigate = useNavigate();
+    const { isAuthenticated, user } = useAuth();
 
     const [cartItems, setCartItems] = useState([]);
     const [validatingStock, setValidatingStock] = useState(true);
@@ -98,9 +100,20 @@ const Cart = () => {
     const handleCheckout = () => {
         if (hasStockIssues()) {
             removeUnavailableItems();
-        } else {
-            navigate('/checkout');
+            return;
         }
+
+        if (!isAuthenticated) {
+            navigate('/login', {
+                state: {
+                    from: { pathname: '/checkout' },
+                    notice: 'Please sign in to continue to checkout.'
+                }
+            });
+            return;
+        }
+
+        navigate('/checkout');
     };
 
     const hasStockIssues = () => {
@@ -123,6 +136,14 @@ const Cart = () => {
     const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     const deliveryFee = estimatedBaseDeliveryFee;
     const total = subtotal + deliveryFee;
+    const showLoginPrompt = !isAuthenticated;
+    const checkoutButtonLabel = validatingStock
+        ? 'Checking availability...'
+        : hasStockIssues()
+            ? 'Remove Unavailable Items'
+            : showLoginPrompt
+                ? 'Login to Checkout'
+                : 'Proceed to Checkout';
 
     if (cartItems.length === 0) {
         return (
@@ -244,6 +265,11 @@ const Cart = () => {
                 <div className="lg:col-span-1">
                     <div className="bg-white rounded-lg shadow p-6 sticky top-6">
                         <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+                        {showLoginPrompt && (
+                            <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                                Sign in before checkout to place your order.
+                            </div>
+                        )}
                         <div className="space-y-3 mb-6">
                             <div className="flex justify-between text-sm">
                                 <span className="text-gray-600">Subtotal</span>
@@ -271,16 +297,18 @@ const Cart = () => {
                             disabled={validatingStock || cartItems.length === 0}
                             loading={validatingStock}
                         >
-                            {validatingStock
-                                ? 'Checking availability...'
-                                : hasStockIssues()
-                                    ? 'Remove Unavailable Items'
-                                    : 'Proceed to Checkout'}
+                            {checkoutButtonLabel}
                         </Button>
 
                         {hasStockIssues() && !validatingStock && (
                             <p className="text-xs text-red-600 mt-2 text-center">
                                 Click to remove unavailable items
+                            </p>
+                        )}
+
+                        {showLoginPrompt && !hasStockIssues() && !validatingStock && (
+                            <p className="text-xs text-gray-500 mt-2 text-center">
+                                You can add items as a guest, but checkout requires a customer login.
                             </p>
                         )}
                     </div>
