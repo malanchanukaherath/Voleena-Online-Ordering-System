@@ -9,6 +9,8 @@ import {
     FaExclamationCircle,
     FaUsers
 } from 'react-icons/fa';
+import Button from '../components/ui/Button';
+import Modal from '../components/ui/Modal';
 import StatusBadge from '../components/ui/StatusBadge';
 import { cashierService } from '../services/dashboardService';
 
@@ -119,6 +121,30 @@ const getCatalogStockLimit = (item) => {
     return Number.isFinite(item?.StockQuantity) ? item.StockQuantity : null;
 };
 
+const CALCULATOR_KEYPAD_ROWS = [
+    ['7', '8', '9'],
+    ['4', '5', '6'],
+    ['1', '2', '3'],
+    ['0', '00', '.']
+];
+
+const sanitizeNumericInput = (rawValue, allowDecimal = true) => {
+    let sanitized = String(rawValue ?? '').replace(allowDecimal ? /[^0-9.]/g : /[^0-9]/g, '');
+
+    if (allowDecimal) {
+        const decimalIndex = sanitized.indexOf('.');
+        if (decimalIndex !== -1) {
+            sanitized = `${sanitized.slice(0, decimalIndex + 1)}${sanitized.slice(decimalIndex + 1).replace(/\./g, '')}`;
+        }
+
+        if (sanitized.startsWith('.')) {
+            sanitized = `0${sanitized}`;
+        }
+    }
+
+    return sanitized;
+};
+
 const CashierDashboard = () => {
     const [stats, setStats] = useState({
         pendingOrders: 0,
@@ -142,6 +168,8 @@ const CashierDashboard = () => {
 
     const [changeBillTotal, setChangeBillTotal] = useState('');
     const [changePaidAmount, setChangePaidAmount] = useState('');
+    const [activeCalculatorModal, setActiveCalculatorModal] = useState(null);
+    const [activeCalculatorField, setActiveCalculatorField] = useState(null);
 
     const walkInTotal = useMemo(() => {
         return currentWalkInOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -158,6 +186,178 @@ const CashierDashboard = () => {
         const paid = Number.parseFloat(changePaidAmount) || 0;
         return paid - bill;
     }, [changeBillTotal, changePaidAmount]);
+
+    const getCalculatorFieldLabel = useCallback((fieldKey) => {
+        switch (fieldKey) {
+            case 'calcPrice':
+                return 'Item Price';
+            case 'calcQuantity':
+                return 'Quantity';
+            case 'changeBillTotal':
+                return 'Bill Total';
+            case 'changePaidAmount':
+                return 'Customer Paid';
+            default:
+                return 'Calculator';
+        }
+    }, []);
+
+    const getCalculatorFieldValue = useCallback((fieldKey) => {
+        switch (fieldKey) {
+            case 'calcPrice':
+                return calcPrice;
+            case 'calcQuantity':
+                return calcQuantity;
+            case 'changeBillTotal':
+                return changeBillTotal;
+            case 'changePaidAmount':
+                return changePaidAmount;
+            default:
+                return '';
+        }
+    }, [calcPrice, calcQuantity, changeBillTotal, changePaidAmount]);
+
+    const isDecimalCalculatorField = useCallback((fieldKey) => fieldKey !== 'calcQuantity', []);
+
+    const setCalculatorFieldValue = useCallback((fieldKey, nextValue) => {
+        const sanitizedValue = sanitizeNumericInput(nextValue, isDecimalCalculatorField(fieldKey));
+
+        switch (fieldKey) {
+            case 'calcPrice':
+                setCalcPrice(sanitizedValue);
+                break;
+            case 'calcQuantity':
+                setCalcQuantity(sanitizedValue);
+                break;
+            case 'changeBillTotal':
+                setChangeBillTotal(sanitizedValue);
+                break;
+            case 'changePaidAmount':
+                setChangePaidAmount(sanitizedValue);
+                break;
+            default:
+                break;
+        }
+    }, [isDecimalCalculatorField]);
+
+    const openCalculatorModal = useCallback((modalKey) => {
+        setActiveCalculatorModal(modalKey);
+        setActiveCalculatorField(modalKey === 'quickBill' ? 'calcPrice' : 'changeBillTotal');
+    }, []);
+
+    const handleCalculatorInputChange = useCallback((fieldKey) => (event) => {
+        setCalculatorFieldValue(fieldKey, event.target.value);
+    }, [setCalculatorFieldValue]);
+
+    const closeCalculatorModal = useCallback(() => {
+        setActiveCalculatorModal(null);
+        setActiveCalculatorField(null);
+    }, []);
+
+    const handleCalculatorKeyPress = useCallback((key) => {
+        if (!activeCalculatorField) {
+            return;
+        }
+
+        const allowDecimal = isDecimalCalculatorField(activeCalculatorField);
+        const currentValue = getCalculatorFieldValue(activeCalculatorField);
+
+        if (key === '.' && !allowDecimal) {
+            return;
+        }
+
+        if (key === '.') {
+            if (String(currentValue || '').includes('.')) {
+                return;
+            }
+
+            setCalculatorFieldValue(activeCalculatorField, currentValue ? `${currentValue}.` : '0.');
+            return;
+        }
+
+        if (key === '00' && !currentValue) {
+            setCalculatorFieldValue(activeCalculatorField, '0');
+            return;
+        }
+
+        setCalculatorFieldValue(activeCalculatorField, `${currentValue || ''}${key}`);
+    }, [activeCalculatorField, getCalculatorFieldValue, isDecimalCalculatorField, setCalculatorFieldValue]);
+
+    const renderCalculatorFieldInput = useCallback((fieldKey) => {
+        const isActive = activeCalculatorField === fieldKey;
+        const allowDecimal = isDecimalCalculatorField(fieldKey);
+
+        return (
+            <div
+                className={`rounded-lg border px-4 py-3 transition-colors ${isActive
+                    ? 'border-primary-500 bg-primary-50'
+                    : 'border-gray-200 bg-white hover:border-gray-300'} `}
+            >
+                <p className="text-xs font-medium uppercase tracking-wide text-gray-500">{getCalculatorFieldLabel(fieldKey)}</p>
+                <input
+                    type="text"
+                    inputMode={allowDecimal ? 'decimal' : 'numeric'}
+                    value={getCalculatorFieldValue(fieldKey)}
+                    onFocus={() => setActiveCalculatorField(fieldKey)}
+                    onClick={() => setActiveCalculatorField(fieldKey)}
+                    onChange={handleCalculatorInputChange(fieldKey)}
+                    placeholder="0"
+                    className="mt-2 w-full bg-transparent text-2xl font-semibold text-gray-900 outline-none placeholder:text-gray-400"
+                />
+            </div>
+        );
+    }, [activeCalculatorField, getCalculatorFieldLabel, getCalculatorFieldValue, handleCalculatorInputChange, isDecimalCalculatorField]);
+
+    const renderCalculatorKeypad = useCallback(() => {
+        if (!activeCalculatorField) {
+            return null;
+        }
+
+        const allowDecimal = isDecimalCalculatorField(activeCalculatorField);
+        const keypadRows = allowDecimal
+            ? CALCULATOR_KEYPAD_ROWS
+            : CALCULATOR_KEYPAD_ROWS.map((row) => row.filter((key) => key !== '.'));
+
+        return (
+            <div className="space-y-3">
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-right text-3xl font-semibold text-gray-900">
+                    {getCalculatorFieldValue(activeCalculatorField) || '0'}
+                </div>
+                {keypadRows.map((row) => (
+                    <div key={row.join('-')} className="grid grid-cols-3 gap-3">
+                        {row.map((key) => (
+                            <Button
+                                key={key}
+                                type="button"
+                                variant="outline"
+                                size="lg"
+                                className="min-h-[56px] text-lg"
+                                onClick={() => handleCalculatorKeyPress(key)}
+                            >
+                                {key}
+                            </Button>
+                        ))}
+                    </div>
+                ))}
+                <div className="grid grid-cols-3 gap-3">
+                    <Button type="button" variant="secondary" onClick={() => setCalculatorFieldValue(activeCalculatorField, '')}>
+                        Clear
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setCalculatorFieldValue(activeCalculatorField, String(getCalculatorFieldValue(activeCalculatorField) || '').slice(0, -1))}
+                        disabled={!getCalculatorFieldValue(activeCalculatorField)}
+                    >
+                        Backspace
+                    </Button>
+                    <Button type="button" onClick={closeCalculatorModal}>
+                        Done
+                    </Button>
+                </div>
+            </div>
+        );
+    }, [activeCalculatorField, closeCalculatorModal, getCalculatorFieldValue, handleCalculatorKeyPress, isDecimalCalculatorField, setCalculatorFieldValue]);
 
     const reconcileWalkInOrderWithCatalog = useCallback((catalogItems) => {
         const catalogByKey = new Map(catalogItems.map((item) => [createPosEntryKey(item), item]));
@@ -654,82 +854,111 @@ const CashierDashboard = () => {
                         <FaCalculator className="text-primary-600" /> Quick Bill Calculator
                     </h3>
                     <div className="space-y-3">
-                        <div>
-                            <label className="text-sm text-gray-600">Item Price</label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={calcPrice}
-                                onChange={(e) => setCalcPrice(e.target.value)}
-                                className="w-full mt-1 border rounded px-3 py-2"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-sm text-gray-600">Quantity</label>
-                            <input
-                                type="number"
-                                min="0"
-                                value={calcQuantity}
-                                onChange={(e) => setCalcQuantity(e.target.value)}
-                                className="w-full mt-1 border rounded px-3 py-2"
-                            />
+                        <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                                <p>Item Price</p>
+                                <p className="mt-1 text-2xl font-semibold text-gray-900">{calcPrice || '0'}</p>
+                            </div>
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                                <p>Quantity</p>
+                                <p className="mt-1 text-2xl font-semibold text-gray-900">{calcQuantity || '0'}</p>
+                            </div>
                         </div>
                         <p className="text-lg font-bold">Total = LKR {quickCalcTotal.toFixed(2)}</p>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setCalcPrice('');
-                                setCalcQuantity('1');
-                            }}
-                            className="px-4 py-2 border rounded hover:bg-gray-50"
-                        >
-                            Clear Calculation
-                        </button>
+                        <div className="flex gap-3">
+                            <Button type="button" className="flex-1" onClick={() => openCalculatorModal('quickBill')}>
+                                Open Calculator
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setCalcPrice('');
+                                    setCalcQuantity('1');
+                                }}
+                            >
+                                Clear
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
                 <div className="bg-white rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4">Change Calculator</h3>
                     <div className="space-y-3">
-                        <div>
-                            <label className="text-sm text-gray-600">Bill Total</label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={changeBillTotal}
-                                onChange={(e) => setChangeBillTotal(e.target.value)}
-                                className="w-full mt-1 border rounded px-3 py-2"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-sm text-gray-600">Customer Paid</label>
-                            <input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={changePaidAmount}
-                                onChange={(e) => setChangePaidAmount(e.target.value)}
-                                className="w-full mt-1 border rounded px-3 py-2"
-                            />
+                        <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                                <p>Bill Total</p>
+                                <p className="mt-1 text-2xl font-semibold text-gray-900">{changeBillTotal || '0'}</p>
+                            </div>
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                                <p>Customer Paid</p>
+                                <p className="mt-1 text-2xl font-semibold text-gray-900">{changePaidAmount || '0'}</p>
+                            </div>
                         </div>
                         <p className={`text-lg font-bold ${changeAmount < 0 ? 'text-red-600' : 'text-green-700'}`}>
                             Change = LKR {changeAmount.toFixed(2)}
                         </p>
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setChangeBillTotal('');
-                                setChangePaidAmount('');
-                            }}
-                            className="px-4 py-2 border rounded hover:bg-gray-50"
-                        >
-                            Clear
-                        </button>
+                        <div className="flex gap-3">
+                            <Button type="button" className="flex-1" onClick={() => openCalculatorModal('change')}>
+                                Open Calculator
+                            </Button>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setChangeBillTotal('');
+                                    setChangePaidAmount('');
+                                }}
+                            >
+                                Clear
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            <Modal
+                isOpen={activeCalculatorModal === 'quickBill'}
+                onClose={closeCalculatorModal}
+                title="Quick Bill Calculator"
+                size="sm"
+            >
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-500">Use one keypad for both fields. Tap the field you want to edit.</p>
+                    <div className="grid grid-cols-2 gap-3">
+                        {renderCalculatorFieldInput('calcPrice')}
+                        {renderCalculatorFieldInput('calcQuantity')}
+                    </div>
+                    <div className="rounded-lg bg-primary-50 px-4 py-3 text-center">
+                        <p className="text-sm text-gray-600">Calculated Total</p>
+                        <p className="text-3xl font-bold text-primary-700">LKR {quickCalcTotal.toFixed(2)}</p>
+                    </div>
+                    {renderCalculatorKeypad()}
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={activeCalculatorModal === 'change'}
+                onClose={closeCalculatorModal}
+                title="Change Calculator"
+                size="sm"
+            >
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-500">Use one keypad for both fields. Tap the field you want to edit.</p>
+                    <div className="grid grid-cols-2 gap-3">
+                        {renderCalculatorFieldInput('changeBillTotal')}
+                        {renderCalculatorFieldInput('changePaidAmount')}
+                    </div>
+                    <div className={`rounded-lg px-4 py-3 text-center ${changeAmount < 0 ? 'bg-red-50' : 'bg-green-50'}`}>
+                        <p className="text-sm text-gray-600">Change Due</p>
+                        <p className={`text-3xl font-bold ${changeAmount < 0 ? 'text-red-700' : 'text-green-700'}`}>
+                            LKR {changeAmount.toFixed(2)}
+                        </p>
+                    </div>
+                    {renderCalculatorKeypad()}
+                </div>
+            </Modal>
         </div >
     );
 };

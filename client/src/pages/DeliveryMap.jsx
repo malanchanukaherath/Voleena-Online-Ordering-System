@@ -159,20 +159,24 @@ const DeliveryMap = () => {
         return () => clearInterval(locationInterval);
     }, [deliveries, currentLocation]);
 
+    const createDotMarkerSvg = (fillColor, strokeColor = 'white') => {
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2"/></svg>`;
+        return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+    };
+
     const getMarkerColor = (status) => {
         switch (status) {
-            case 'ASSIGNED':
-                return 'http://maps.google.com/mapfiles/ms/icons/yellow-dot.png';
-            case 'PICKED_UP':
-                return 'http://maps.google.com/mapfiles/ms/icons/orange-dot.png';
-            case 'IN_TRANSIT':
-                return 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png';
-            case 'DELIVERED':
-                return 'http://maps.google.com/mapfiles/ms/icons/green-dot.png';
-            default:
-                return 'http://maps.google.com/mapfiles/ms/icons/red-dot.png';
+            case 'ASSIGNED':    return createDotMarkerSvg('#FBBF24'); // yellow-400
+            case 'PICKED_UP':  return createDotMarkerSvg('#FB923C'); // orange-400
+            case 'IN_TRANSIT': return createDotMarkerSvg('#60A5FA'); // blue-400
+            case 'DELIVERED':  return createDotMarkerSvg('#4ADE80'); // green-400
+            default:           return createDotMarkerSvg('#F87171'); // red-400
         }
     };
+
+    const MARKER_RESTAURANT    = createDotMarkerSvg('#F87171');  // red-400
+    const MARKER_CURRENT_LOC  = createDotMarkerSvg('#A78BFA');  // purple-400
+    const MARKER_DRIVER       = createDotMarkerSvg('#A78BFA');  // purple-400
 
     const getStatusColor = (status) => {
         switch (status) {
@@ -326,7 +330,7 @@ const DeliveryMap = () => {
                                     <Marker
                                         position={restaurantLocation}
                                         title={restaurantLocation.name}
-                                        icon="http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                                        icon={MARKER_RESTAURANT}
                                         onClick={() => {
                                             setSelectedDelivery(null);
                                             setShowCurrentLocation(false);
@@ -367,7 +371,7 @@ const DeliveryMap = () => {
                                             <Marker
                                                 position={currentLocation}
                                                 title="Your Current Location (Delivery Guy)"
-                                                icon="http://maps.google.com/mapfiles/ms/icons/purple-dot.png"
+                                                icon={MARKER_CURRENT_LOC}
                                                 onClick={() => setShowCurrentLocation(!showCurrentLocation)}
                                             >
                                                 {showCurrentLocation && (
@@ -396,7 +400,7 @@ const DeliveryMap = () => {
                                                 <Marker
                                                     position={{ lat: delivery.currentLat, lng: delivery.currentLng }}
                                                     title={`Driver Location - ${delivery.customerName}`}
-                                                    icon="http://maps.google.com/mapfiles/ms/icons/purple-dot.png"
+                                                    icon={MARKER_DRIVER}
                                                     onClick={() => handleMarkerClick(delivery)}
                                                 />
                                             )}
