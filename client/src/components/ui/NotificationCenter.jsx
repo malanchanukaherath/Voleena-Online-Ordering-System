@@ -12,8 +12,7 @@ const NotificationCenter = () => {
     markAllAsRead, 
     removeNotification, 
     clearAll,
-    undoClear,
-    seedDemoNotifications
+    undoClear
   } = useNotifications();
   
   const [isOpen, setIsOpen] = useState(false);
@@ -102,7 +101,7 @@ const NotificationCenter = () => {
                   size="sm"
                   variant="danger"
                   onClick={() => {
-                    clearAll && clearAll();
+                    if (clearAll) clearAll();
                     // show undo bar
                     setUndoVisible(true);
                     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
@@ -130,7 +129,7 @@ const NotificationCenter = () => {
                 <div className="p-3 rounded bg-yellow-50 border border-yellow-200 mb-3 flex items-center justify-between">
                   <div className="text-sm text-yellow-800">Notifications cleared</div>
                   <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" onClick={() => { undoClear && undoClear(); setUndoVisible(false); if (undoTimerRef.current) clearTimeout(undoTimerRef.current); }}>Undo</Button>
+                    <Button size="sm" variant="outline" onClick={() => { if (undoClear) undoClear(); setUndoVisible(false); if (undoTimerRef.current) clearTimeout(undoTimerRef.current); }}>Undo</Button>
                   </div>
                 </div>
               )}

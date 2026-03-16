@@ -4,12 +4,14 @@ import { FaClipboardList, FaBoxes, FaClock, FaExclamationTriangle } from 'react-
 import StatusBadge from '../components/ui/StatusBadge';
 import { kitchenService } from '../services/dashboardService';
 
+const DEFAULT_STATS = {
+    activeOrders: 0,
+    preparingOrders: 0,
+    readyOrders: 0,
+};
+
 const KitchenDashboard = () => {
-    const [stats, setStats] = useState({
-        activeOrders: 0,
-        preparingOrders: 0,
-        readyOrders: 0,
-    });
+    const [stats, setStats] = useState(DEFAULT_STATS);
     const [activeOrders, setActiveOrders] = useState([]);
 
     useEffect(() => {
@@ -22,7 +24,7 @@ const KitchenDashboard = () => {
                     kitchenService.getAssignedOrders()
                 ]);
 
-                const statsData = statsResponse.stats || statsResponse.data?.stats || statsResponse.data || stats;
+                const statsData = statsResponse.stats || statsResponse.data?.stats || statsResponse.data || DEFAULT_STATS;
                 const orders = ordersResponse.data || ordersResponse?.data?.data || [];
                 const mappedOrders = orders
                     .map((order) => ({
@@ -44,7 +46,7 @@ const KitchenDashboard = () => {
                     setStats(statsData);
                     setActiveOrders(mappedOrders);
                 }
-            } catch (error) {
+            } catch {
                 if (isMounted) {
                     setActiveOrders([]);
                 }

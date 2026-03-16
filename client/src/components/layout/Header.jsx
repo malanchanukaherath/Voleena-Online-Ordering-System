@@ -14,9 +14,7 @@ import {
     FaUsers,
     FaUserTie,
     FaChartLine,
-    FaCog,
     FaBoxes,
-    FaTags,
 } from 'react-icons/fa';
 
 const Header = () => {

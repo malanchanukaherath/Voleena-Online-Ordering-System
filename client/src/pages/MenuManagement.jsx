@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { FaSearch, FaEdit, FaTrash, FaPlus, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -32,12 +32,7 @@ const MenuManagement = () => {
 
     const [errors, setErrors] = useState({});
 
-    useEffect(() => {
-        fetchMenuItems();
-        fetchCategories();
-    }, [categoryFilter, isActiveFilter, searchTerm]);
-
-    const fetchMenuItems = async () => {
+    const fetchMenuItems = useCallback(async () => {
         try {
             setLoading(true);
             const params = {};
@@ -53,9 +48,9 @@ const MenuManagement = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [categoryFilter, isActiveFilter, searchTerm]);
 
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         try {
             const response = await categoryService.getAll();
             const categoryOptions = [
@@ -69,7 +64,12 @@ const MenuManagement = () => {
         } catch (error) {
             console.error('Error fetching categories:', error);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchMenuItems();
+        fetchCategories();
+    }, [fetchMenuItems, fetchCategories]);
 
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });

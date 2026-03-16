@@ -6,12 +6,14 @@ import Button from '../components/ui/Button';
 import { deliveryService } from '../services/dashboardService';
 import useDelayedStatusUpdate from '../hooks/useDelayedStatusUpdate';
 
+const DEFAULT_STATS = {
+    activeDeliveries: 0,
+    completedToday: 0,
+    pendingPickup: 0,
+};
+
 const DeliveryDashboard = () => {
-    const [stats, setStats] = useState({
-        activeDeliveries: 0,
-        completedToday: 0,
-        pendingPickup: 0,
-    });
+    const [stats, setStats] = useState(DEFAULT_STATS);
     const [activeDeliveries, setActiveDeliveries] = useState([]);
     const [availability, setAvailability] = useState(null);
     const [currentLocation, setCurrentLocation] = useState(null);
@@ -90,7 +92,7 @@ const DeliveryDashboard = () => {
                 ]);
 
                 if (isMounted) {
-                    setStats(statsResponse.stats || statsResponse.data?.stats || statsResponse.data || stats);
+                    setStats(statsResponse.stats || statsResponse.data?.stats || statsResponse.data || DEFAULT_STATS);
                     setAvailability(availabilityResponse.data);
                 }
             } catch (error) {

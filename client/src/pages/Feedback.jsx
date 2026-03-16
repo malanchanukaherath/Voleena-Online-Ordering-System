@@ -16,7 +16,7 @@ const Feedback = () => {
     });
     const [errors, setErrors] = useState({});
     const [hoveredStar, setHoveredStar] = useState(0);
-    const [submitted, setSubmitted] = useState(false);
+    const [submitted] = useState(false);
     const [submitError, setSubmitError] = useState('');
 
     const handleChange = (e) => {

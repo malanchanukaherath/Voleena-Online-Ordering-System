@@ -3,8 +3,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 const DEFAULT_DELAY_MS = 5000;
 
 const removeKey = (obj, key) => {
-  const { [key]: _removed, ...rest } = obj;
-  return rest;
+  const copy = { ...obj };
+  delete copy[key];
+  return copy;
 };
 
 export const useDelayedStatusUpdate = ({

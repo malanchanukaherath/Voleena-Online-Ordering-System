@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FaSyncAlt, FaExclamationTriangle } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'react-toastify';
@@ -26,7 +26,7 @@ const StockManagement = () => {
     const canEditStock = isAdmin || isKitchen;
 
     // Fetch today's stock
-    const fetchStock = async () => {
+    const fetchStock = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -57,14 +57,14 @@ const StockManagement = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [apiBaseUrl]);
 
     useEffect(() => {
         fetchStock();
         // Refresh stock every 30 seconds
         const interval = setInterval(fetchStock, 30000);
         return () => clearInterval(interval);
-    }, []);
+    }, [fetchStock]);
 
     useEffect(() => {
         const loadMenuItems = async () => {

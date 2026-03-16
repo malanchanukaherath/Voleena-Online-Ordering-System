@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaEdit, FaUserPlus, FaClipboardList } from 'react-icons/fa';
+import { FaSearch, FaEdit, FaUserPlus } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Modal from '../components/ui/Modal';

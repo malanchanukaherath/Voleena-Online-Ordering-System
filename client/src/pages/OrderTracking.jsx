@@ -14,7 +14,6 @@ const OrderTracking = () => {
     const CANCELLATION_WINDOW_MINUTES = 10;
 
     const [order, setOrder] = useState(null);
-    const [deliveryLocation, setDeliveryLocation] = useState(null);
 
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showToast, setShowToast] = useState(false);
@@ -310,11 +309,6 @@ const OrderTracking = () => {
                                     <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800">
                                         <p>📍 Your order is on the way to:</p>
                                         <p className="font-medium mt-1">{order.deliveryAddress.line1}, {order.deliveryAddress.city}</p>
-                                        {deliveryLocation && (
-                                            <p className="mt-2 text-xs">
-                                                Last updated: {new Date().toLocaleTimeString()}
-                                            </p>
-                                        )}
                                     </div>
 
                                     <div className="bg-gray-100 rounded-lg p-4 text-center">

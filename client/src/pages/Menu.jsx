@@ -55,7 +55,7 @@ const Menu = () => {
     const [comboPacks, setComboPacks] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
     const [categories, setCategories] = useState([]);
-    const [error, setError] = useState(null);
+    const [, setError] = useState(null);
 
     const resolveImageUrl = (imagePath) => {
         if (!imagePath) {

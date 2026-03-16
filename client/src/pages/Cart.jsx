@@ -10,7 +10,7 @@ import { API_BASE_URL } from '../config/api';
 
 const Cart = () => {
     const navigate = useNavigate();
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated } = useAuth();
 
     const [cartItems, setCartItems] = useState([]);
     const [validatingStock, setValidatingStock] = useState(true);
@@ -164,7 +164,12 @@ const Cart = () => {
             return [item];
         });
 
-        const persistedCartItems = normalizedItems.map(({ isAvailable, stockQuantity, ...persistedItem }) => persistedItem);
+        const persistedCartItems = normalizedItems.map((item) => {
+            const persistedItem = { ...item };
+            delete persistedItem.isAvailable;
+            delete persistedItem.stockQuantity;
+            return persistedItem;
+        });
         setCart(persistedCartItems);
         setCartItems(normalizedItems);
 

@@ -23,7 +23,7 @@ const getStripePromise = () => {
 /**
  * Payment form component that handles Stripe card payment
  */
-const StripePaymentForm = ({ clientSecret, orderId, total, billingDetails, onSuccess, onCancel, onError }) => {
+const StripePaymentForm = ({ clientSecret, total, billingDetails, onSuccess, onCancel, onError }) => {
     const stripe = useStripe();
     const elements = useElements();
     const [isProcessing, setIsProcessing] = useState(false);
@@ -193,7 +193,6 @@ export const StripePaymentModal = ({
                     <Elements stripe={stripeElementsPromise} options={{ clientSecret }}>
                         <StripePaymentForm
                             clientSecret={clientSecret}
-                            orderId={orderId}
                             total={total}
                             billingDetails={billingDetails}
                             onSuccess={onSuccess}

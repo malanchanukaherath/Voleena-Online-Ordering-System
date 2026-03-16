@@ -49,7 +49,7 @@ const AdminDashboard = () => {
                     setStatsData(stats);
                     setRecentOrders(mappedOrders);
                 }
-            } catch (error) {
+            } catch {
                 if (isMounted) {
                     setStatsData(null);
                     setRecentOrders([]);

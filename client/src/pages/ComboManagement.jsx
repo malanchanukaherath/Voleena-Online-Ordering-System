@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaCalendar } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
@@ -35,14 +35,7 @@ const ComboManagement = () => {
 
     const [errors, setErrors] = useState({});
 
-    const resolveImageUrl = (imagePath) => {
-        if (!imagePath) {
-            return null;
-        }
-        return resolveAssetUrl(imagePath);
-    };
-
-    const mapComboFromApi = (combo) => ({
+    const mapComboFromApi = useCallback((combo) => ({
         id: combo.ComboID || combo.ComboPackID,
         name: combo.Name,
         description: combo.Description || '',
@@ -50,7 +43,7 @@ const ComboManagement = () => {
         discount: combo.DiscountPercentage ? Number(combo.DiscountPercentage) : 0,
         startDate: combo.ScheduleStartDate,
         endDate: combo.ScheduleEndDate,
-        image: resolveImageUrl(combo.ImageURL || combo.Image_URL || null),
+        image: resolveAssetUrl(combo.ImageURL || combo.Image_URL || null),
         isActive: !!combo.IsActive,
         items: Array.isArray(combo.items)
             ? combo.items.map((item) => ({
@@ -59,9 +52,9 @@ const ComboManagement = () => {
                 name: item.menuItem?.Name || ''
             }))
             : []
-    });
+    }), []);
 
-    const fetchCombos = async () => {
+    const fetchCombos = useCallback(async () => {
         setIsLoading(true);
         try {
             const response = await comboPackService.getAll();
@@ -76,9 +69,9 @@ const ComboManagement = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [mapComboFromApi]);
 
-    const fetchMenuItems = async () => {
+    const fetchMenuItems = useCallback(async () => {
         try {
             const response = await menuItemService.getAll({ isActive: 'true' });
             if (response.success && Array.isArray(response.data)) {
@@ -94,12 +87,12 @@ const ComboManagement = () => {
             console.error('Error loading menu items:', error);
             setMenuItems([]);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchCombos();
         fetchMenuItems();
-    }, []);
+    }, [fetchCombos, fetchMenuItems]);
 
     const handleOpenCreate = () => {
         setEditingCombo(null);

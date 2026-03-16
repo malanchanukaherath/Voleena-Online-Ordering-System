@@ -6,7 +6,7 @@ import Sidebar from './Sidebar';
 import { useAuth } from '../../contexts/AuthContext';
 
 const MainLayout = ({ children }) => {
-    const { user, isAuthenticated } = useAuth();
+    const { isAuthenticated } = useAuth();
     const location = useLocation();
 
     // Determine if we should show sidebar (for dashboard pages)

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FaSearch, FaEdit, FaTrash, FaUserPlus, FaToggleOn, FaToggleOff } from 'react-icons/fa';
+import { FaSearch, FaUserPlus, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';

@@ -77,7 +77,7 @@ const SalesAnalytics = () => {
                     setTopItems(mappedTopItems);
                     setCategoryData(Array.from(categoryMap.values()));
                 }
-            } catch (error) {
+            } catch {
                 if (isMounted) {
                     setSalesData([]);
                     setTopItems([]);

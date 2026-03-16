@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import authService from '../services/authService';
 
@@ -108,6 +109,18 @@ export const AuthProvider = ({ children }) => {
   const refreshIntervalRef = useRef(null);
   const lastActivityRef = useRef(Date.now());
 
+  // Logout function
+  const logout = useCallback(() => {
+    authService.logout();
+    dispatch({ type: AUTH_ACTIONS.LOGOUT });
+    if (sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current);
+    }
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+    }
+  }, []);
+
   // Reset session timeout
   const resetSessionTimeout = useCallback(() => {
     lastActivityRef.current = Date.now();
@@ -123,7 +136,7 @@ export const AuthProvider = ({ children }) => {
         alert('Your session has expired due to inactivity. Please login again.');
       }, SESSION_TIMEOUT);
     }
-  }, [state.isAuthenticated]);
+  }, [logout, state.isAuthenticated]);
 
   // Refresh token periodically
   const startTokenRefresh = useCallback(() => {
@@ -150,7 +163,7 @@ export const AuthProvider = ({ children }) => {
         }
       }, TOKEN_REFRESH_INTERVAL);
     }
-  }, [state.isAuthenticated]);
+  }, [logout, state.isAuthenticated]);
 
   // Track user activity
   useEffect(() => {
@@ -255,31 +268,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function
-  const logout = useCallback(() => {
-    authService.logout();
-    dispatch({ type: AUTH_ACTIONS.LOGOUT });
-    if (sessionTimeoutRef.current) {
-      clearTimeout(sessionTimeoutRef.current);
-    }
-    if (refreshIntervalRef.current) {
-      clearInterval(refreshIntervalRef.current);
-    }
-  }, []);
-
   // Clear error function
   const clearError = () => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
   };
 
   // Update user in context and localStorage
-  const updateUser = (updates) => {
+  const updateUser = useCallback((updates) => {
     const user = authService.getCurrentUser();
     if (!user) return;
     const merged = { ...user, ...updates };
     localStorage.setItem('user', JSON.stringify(merged));
     dispatch({ type: AUTH_ACTIONS.INIT_AUTH, payload: { user: merged, token: state.token, isAuthenticated: true } });
-  };
+  }, [state.token]);
 
   // Check if user is admin
   const isAdmin = () => {

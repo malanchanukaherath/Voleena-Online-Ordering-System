@@ -469,7 +469,7 @@ const CashierDashboard = () => {
                 if (isMounted) {
                     await loadData();
                 }
-            } catch (error) {
+            } catch {
                 if (isMounted) {
                     setRecentOrders([]);
                     setPosItems([]);

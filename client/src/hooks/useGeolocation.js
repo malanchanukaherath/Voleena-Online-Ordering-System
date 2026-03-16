@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 /**
  * Custom hook for accessing device geolocation
@@ -22,7 +22,7 @@ export const useGeolocation = (options = {}) => {
     const [error, setError] = useState(null);
     const [permission, setPermission] = useState('prompt');
 
-    const requestLocation = () => {
+    const requestLocation = useCallback(() => {
         if (!navigator.geolocation) {
             setPermission('unavailable');
             setError('Geolocation is not supported by your browser.');
@@ -70,7 +70,7 @@ export const useGeolocation = (options = {}) => {
                 maximumAge
             }
         );
-    };
+    }, [enableHighAccuracy, timeout, maximumAge]);
 
     useEffect(() => {
         requestLocation();
@@ -79,7 +79,7 @@ export const useGeolocation = (options = {}) => {
             const interval = setInterval(requestLocation, updateInterval);
             return () => clearInterval(interval);
         }
-    }, [watch, updateInterval]);
+    }, [requestLocation, watch, updateInterval]);
 
     return {
         location,

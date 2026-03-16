@@ -42,7 +42,7 @@ export const validateEmail = (email) => {
 
 // Validate phone number
 export const validatePhone = (phone) => {
-  const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+  const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
   return phoneRegex.test(phone.replace(/\s/g, ''));
 };
 
@@ -77,9 +77,8 @@ export const throttle = (func, limit) => {
   let inThrottle;
   return function() {
     const args = arguments;
-    const context = this;
     if (!inThrottle) {
-      func.apply(context, args);
+      func.apply(this, args);
       inThrottle = true;
       setTimeout(() => inThrottle = false, limit);
     }

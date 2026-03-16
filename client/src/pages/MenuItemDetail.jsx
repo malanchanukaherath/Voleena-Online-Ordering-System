@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
@@ -13,23 +13,16 @@ const MenuItemDetail = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const resolveImageUrl = (imagePath) => {
-        if (!imagePath) {
-            return null;
-        }
-        return resolveAssetUrl(imagePath);
-    };
-
-    const mapMenuItem = (data) => ({
+    const mapMenuItem = useCallback((data) => ({
         id: data.MenuItemID || data.ItemID,
         name: data.Name,
         description: data.Description || 'No description available',
         price: parseFloat(data.Price),
         categoryName: data.category?.Name || 'Other',
-        image: resolveImageUrl(data.ImageURL || data.Image_URL || null),
+        image: resolveAssetUrl(data.ImageURL || data.Image_URL || null),
         stockQuantity: data.StockQuantity ?? null,
         isAvailable: data.IsAvailable !== undefined ? !!data.IsAvailable : !!data.IsActive
-    });
+    }), []);
 
     useEffect(() => {
         let isMounted = true;
@@ -47,7 +40,7 @@ const MenuItemDetail = () => {
                     return;
                 }
                 throw new Error('Menu item not found');
-            } catch (error) {
+            } catch {
                 try {
                     const fallbackResponse = await menuItemService.getAll();
                     const found = fallbackResponse.data?.find(
@@ -79,7 +72,7 @@ const MenuItemDetail = () => {
         return () => {
             isMounted = false;
         };
-    }, [itemId]);
+    }, [itemId, mapMenuItem]);
 
     const handleAddToCart = () => {
         if (!item?.isAvailable) {

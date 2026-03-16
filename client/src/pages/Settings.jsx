@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { FaCog, FaStore, FaBell, FaEnvelope, FaCreditCard, FaTruck, FaSave, FaClock } from 'react-icons/fa';
+import { FaCog, FaStore, FaBell, FaCreditCard, FaTruck, FaSave, FaClock } from 'react-icons/fa';
 
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('general');
@@ -78,7 +78,7 @@ const Settings = () => {
             // TODO: Implement API call to save settings
             await new Promise(resolve => setTimeout(resolve, 1000));
             alert('Settings saved successfully!');
-        } catch (error) {
+        } catch {
             alert('Failed to save settings. Please try again.');
         } finally {
             setIsSaving(false);

@@ -145,7 +145,6 @@ const Profile = () => {
 
             if (updateUser) {
                 updateUser({
-                    ...user,
                     name: mappedProfile.name,
                     email: mappedProfile.email,
                     phone: mappedProfile.phone,
@@ -229,7 +228,6 @@ const Profile = () => {
 
                 if (updateUser) {
                     updateUser({
-                        ...user,
                         name: profile.name,
                         email: profile.email,
                         phone: profile.phone,
@@ -255,7 +253,7 @@ const Profile = () => {
         return () => {
             isMounted = false;
         };
-    }, []);
+    }, [updateUser]);
 
     useEffect(() => {
         let isMounted = true;
@@ -275,7 +273,7 @@ const Profile = () => {
                         memberSince: memberSinceDate ? new Date(memberSinceDate).toLocaleDateString() : '—'
                     });
                 }
-            } catch (error) {
+            } catch {
                 if (isMounted) {
                     setStats((prev) => ({ ...prev }));
                 }
