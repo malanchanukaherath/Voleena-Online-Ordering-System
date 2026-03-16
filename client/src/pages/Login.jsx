@@ -130,17 +130,8 @@ const Login = () => {
 
     if (!validateForm()) return;
 
-    const fromPath = location.state?.from?.pathname || '';
-    const staffRoutePrefixes = ['/admin', '/cashier', '/kitchen', '/delivery'];
-    const inferredUserType = staffRoutePrefixes.some((prefix) => fromPath.startsWith(prefix))
-      ? 'staff'
-      : 'customer';
-
     setLoading(true);
-    const result = await login({
-      ...formData,
-      userType: inferredUserType
-    });
+    const result = await login({ ...formData });
     setLoading(false);
 
     if (result.success) {

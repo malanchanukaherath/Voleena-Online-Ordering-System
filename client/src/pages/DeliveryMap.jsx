@@ -46,6 +46,20 @@ const DeliveryMap = () => {
         ]
     };
 
+    const toFiniteNumber = (value, fallback = null) => {
+        if (value === null || value === undefined || value === '') {
+            return fallback;
+        }
+
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
+    };
+
+    const formatDistanceKm = (distanceKm) => {
+        const normalizedDistance = toFiniteNumber(distanceKm);
+        return normalizedDistance === null ? 'N/A' : normalizedDistance.toFixed(2);
+    };
+
     const requestCurrentLocation = useCallback(() => {
         if (!navigator.geolocation) {
             setLocationPermission('unavailable');
@@ -92,25 +106,29 @@ const DeliveryMap = () => {
                 const response = await deliveryService.getMyDeliveries('IN_TRANSIT');
                 const data = response.data || response?.data?.data || [];
 
-                const formattedDeliveries = data.map((delivery) => ({
-                    id: delivery.DeliveryID,
-                    orderNumber: delivery.order?.OrderNumber || 'N/A',
-                    customerName: delivery.order?.customer?.Name || 'Unknown',
-                    phone: delivery.order?.customer?.Phone || '',
-                    address: delivery.address
-                        ? `${delivery.address.AddressLine1 || ''}, ${delivery.address.City || ''}`
-                        : 'N/A',
-                    status: delivery.Status,
-                    // CRITICAL FIX: Store both current location and destination
-                    currentLat: delivery.CurrentLatitude,
-                    currentLng: delivery.CurrentLongitude,
-                    lastLocationUpdate: delivery.LastLocationUpdate,
-                    // Destination coordinates
-                    lat: delivery.address?.Latitude || 6.8721,
-                    lng: delivery.address?.Longitude || 80.7840,
-                    distance: delivery.DistanceKm || 5,
-                    estimatedTime: Math.ceil((delivery.DistanceKm || 5) * 2) // ~2 min per km
-                }));
+                const formattedDeliveries = data.map((delivery) => {
+                    const distanceKm = toFiniteNumber(delivery.DistanceKm, 5);
+
+                    return {
+                        id: delivery.DeliveryID,
+                        orderNumber: delivery.order?.OrderNumber || 'N/A',
+                        customerName: delivery.order?.customer?.Name || 'Unknown',
+                        phone: delivery.order?.customer?.Phone || '',
+                        address: delivery.address
+                            ? `${delivery.address.AddressLine1 || ''}, ${delivery.address.City || ''}`
+                            : 'N/A',
+                        status: delivery.Status,
+                        // CRITICAL FIX: Store both current location and destination
+                        currentLat: toFiniteNumber(delivery.CurrentLatitude),
+                        currentLng: toFiniteNumber(delivery.CurrentLongitude),
+                        lastLocationUpdate: delivery.LastLocationUpdate,
+                        // Destination coordinates
+                        lat: toFiniteNumber(delivery.address?.Latitude, 6.8721),
+                        lng: toFiniteNumber(delivery.address?.Longitude, 80.7840),
+                        distance: distanceKm,
+                        estimatedTime: Math.ceil(distanceKm * 2) // ~2 min per km
+                    };
+                });
 
                 setDeliveries(formattedDeliveries);
                 setError('');
@@ -396,7 +414,7 @@ const DeliveryMap = () => {
                                     {deliveries.map((delivery) => (
                                         <React.Fragment key={delivery.id}>
                                             {/* Driver's Current Location (if available) */}
-                                            {delivery.currentLat && delivery.currentLng && (
+                                            {delivery.currentLat !== null && delivery.currentLng !== null && (
                                                 <Marker
                                                     position={{ lat: delivery.currentLat, lng: delivery.currentLng }}
                                                     title={`Driver Location - ${delivery.customerName}`}
@@ -421,7 +439,7 @@ const DeliveryMap = () => {
                                                                 <strong>Order:</strong> {delivery.orderNumber}
                                                             </p>
                                                             <p className="text-xs mb-1">
-                                                                <strong>Distance:</strong> {delivery.distance?.toFixed(2) || 'N/A'} km
+                                                                <strong>Distance:</strong> {formatDistanceKm(delivery.distance)} km
                                                             </p>
                                                             <p className="text-xs mb-1">
                                                                 <strong>Est. Time:</strong> {delivery.estimatedTime} mins
@@ -594,7 +612,7 @@ const DeliveryMap = () => {
                                             <strong>Order:</strong> {delivery.orderNumber}
                                         </div>
                                         <div className="text-xs text-gray-600 mb-2">
-                                            <strong>Distance:</strong> {delivery.distance.toFixed(2)} km
+                                            <strong>Distance:</strong> {formatDistanceKm(delivery.distance)} km
                                         </div>
                                         <div className="flex gap-2">
                                             {getGoogleMapsNavigationUrl(delivery) && (

@@ -135,24 +135,14 @@ class AuthService {
       return this.customerLogin(email, password);
     }
 
-    // Check if there's a current user and use their type
-    const currentUser = this.getCurrentUser();
-    if (currentUser) {
-      const role = currentUser.role || currentUser.staffRole;
-      if (role) {
-        // Staff roles (checking various formats for compatibility)
-        const staffRoles = ['Admin', 'Cashier', 'Kitchen', 'Delivery', 'ADMIN', 'CASHIER', 'KITCHEN_STAFF', 'DELIVERY_STAFF', 'Staff'];
-        if (staffRoles.includes(role)) {
-          return this.staffLogin(email, password);
-        } else if (role === 'Customer') {
-          return this.customerLogin(email, password);
-        }
-      }
-    }
-
     // Otherwise, try customer first (default public login), then staff
     const customerResult = await this.customerLogin(email, password);
     if (customerResult.success) {
+      return customerResult;
+    }
+
+    // Preserve customer-specific verification feedback instead of masking it
+    if (customerResult.code === 'EMAIL_NOT_VERIFIED') {
       return customerResult;
     }
 
