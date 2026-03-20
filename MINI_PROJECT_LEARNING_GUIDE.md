@@ -11,7 +11,6 @@ This repository is organized as a full-stack monorepo with separate frontend and
 - `database/`: SQL schema and migration scripts.
 - `docs/` and root `*.md` files: implementation notes, audits, and runbooks.
 - `postman/`: API collections and test assets.
-- `docker-compose.yml`: local containerized stack (MySQL + backend + frontend).
 
 What this means:
 
@@ -45,7 +44,6 @@ What this means:
 
 - Jest + Supertest for backend integration/route tests
 - ESLint
-- Docker and Docker Compose
 
 ## 1.3 Architecture Patterns Observed
 
