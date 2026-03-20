@@ -18,28 +18,28 @@ const roles = [
 const testStaff = [
   {
     Name: 'Admin User',
-    Email: 'admin@voleena.com',
+    Email: 'admin@gmail.com',
     Phone: '0771234567',
     Password: 'Admin@123',
     RoleName: 'Admin'
   },
   {
     Name: 'Cashier User',
-    Email: 'cashier@voleena.com',
+    Email: 'cashier@gmail.com',
     Phone: '0771234568',
     Password: 'Cashier@123',
     RoleName: 'Cashier'
   },
   {
     Name: 'Kitchen User',
-    Email: 'kitchen@voleena.com',
+    Email: 'kitchen@gmail.com',
     Phone: '0771234569',
     Password: 'Kitchen@123',
     RoleName: 'Kitchen'
   },
   {
     Name: 'Delivery User',
-    Email: 'delivery@voleena.com',
+    Email: 'delivery@gmail.com',
     Phone: '0771234570',
     Password: 'Delivery@123',
     RoleName: 'Delivery'

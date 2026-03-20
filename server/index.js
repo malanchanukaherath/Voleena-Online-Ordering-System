@@ -104,6 +104,15 @@ function createApp() {
     });
   });
 
+  // Return 204 for browser/system probes that are irrelevant to API behavior.
+  app.get('/favicon.ico', (req, res) => {
+    res.status(204).end();
+  });
+
+  app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => {
+    res.status(204).end();
+  });
+
   // API version 1 routes
   app.use('/api/v1/auth', require('./routes/authRoutes'));
   app.use('/api/v1/customers', require('./routes/customers'));
