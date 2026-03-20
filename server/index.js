@@ -14,6 +14,28 @@ const automatedJobs = require('./services/automatedJobs'); // Daily stock creati
 
 const PORT = process.env.PORT || 3001;
 
+async function waitForDatabaseConnection() {
+  const maxRetries = Number.parseInt(process.env.DB_CONNECT_RETRIES || '10', 10);
+  const retryDelayMs = Number.parseInt(process.env.DB_CONNECT_RETRY_DELAY_MS || '3000', 10);
+
+  for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
+    try {
+      await sequelize.authenticate();
+      console.log('✅ Database connected');
+      return;
+    } catch (error) {
+      const isLastAttempt = attempt === maxRetries;
+      console.error(`❌ Database connection attempt ${attempt}/${maxRetries} failed: ${error.message}`);
+
+      if (isLastAttempt) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, retryDelayMs));
+    }
+  }
+}
+
 function createApp() {
   const app = express();
 
@@ -243,9 +265,8 @@ const app = createApp();
 
 async function startServer() {
   try {
-    // Test database connection
-    await sequelize.authenticate();
-    console.log('✅ Database connected');
+    // Test database connection with retries for container startup ordering.
+    await waitForDatabaseConnection();
 
     // Sync models only when explicitly enabled
     if (process.env.DB_SYNC === 'true') {

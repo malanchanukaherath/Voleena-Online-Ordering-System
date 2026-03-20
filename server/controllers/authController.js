@@ -3,11 +3,13 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { Customer, Staff, Role, sequelize } = require('../models');
 const { sendEmailVerificationLink } = require('../services/verificationEmailService');
+const {
+  generateAccessToken,
+  generateRefreshToken: generateRefreshJwt,
+  verifyAccessToken,
+  verifyRefreshToken
+} = require('../utils/jwtUtils');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'change-me';
-const JWT_EXPIRES_IN = '30m'; // 30 minutes for session timeout
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || JWT_SECRET;
-const JWT_REFRESH_EXPIRES_IN = process.env.JWT_REFRESH_EXPIRE || '7d';
 const EMAIL_VERIFICATION_TTL_MINUTES = parseInt(process.env.EMAIL_VERIFICATION_TTL_MINUTES || '30', 10);
 const EMAIL_RESEND_COOLDOWN_SECONDS = parseInt(process.env.EMAIL_RESEND_COOLDOWN_SECONDS || '60', 10);
 const VERIFICATION_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
@@ -16,11 +18,11 @@ const VERIFICATION_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
  * Generate JWT Token with 30-minute expiry
  */
 const generateToken = (payload) => {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+  return generateAccessToken(payload);
 };
 
 const generateRefreshToken = (payload) => {
-  return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: JWT_REFRESH_EXPIRES_IN });
+  return generateRefreshJwt(payload);
 };
 
 const hashVerificationToken = (token) => {
@@ -370,7 +372,7 @@ exports.refreshToken = async (req, res) => {
 
     try {
       // Verify refresh token
-      const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET);
+      const decoded = verifyRefreshToken(refreshToken);
 
       // Generate NEW access token with fresh expiry
       const newPayload = {
@@ -482,10 +484,10 @@ exports.verifyToken = async (req, res) => {
       return res.status(401).json({ error: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = verifyAccessToken(token);
     return res.json({ success: true, user: decoded });
   } catch (error) {
-    if (error.name === 'TokenExpiredError') {
+    if (error.message === 'TOKEN_EXPIRED') {
       return res.status(401).json({ error: 'Token expired' });
     }
     return res.status(401).json({ error: 'Invalid token' });

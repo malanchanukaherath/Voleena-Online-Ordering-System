@@ -13,6 +13,8 @@ services:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
+      - ./database/safe_schema_full_completion_v2_4.sql:/docker-entrypoint-initdb.d/01-safe-schema.sql:ro
+      - ./database/docker_schema_patch.sql:/docker-entrypoint-initdb.d/02-schema-patch.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 10s
@@ -31,19 +33,38 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: 3306
+      NODE_ENV: production
+      FRONTEND_URL: http://localhost:5173
+      BACKEND_URL: http://localhost:3001
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3001/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1));"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
     depends_on:
       db:
         condition: service_healthy
 
   frontend:
-    build: ./client
+    build:
+      context: ./client
+      args:
+        VITE_API_BASE_URL: /
     container_name: frontend_app
     restart: always
     ports:
       - "5173:80"
       #Ensures frontend starts after backend
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
 volumes:
   db_data:
