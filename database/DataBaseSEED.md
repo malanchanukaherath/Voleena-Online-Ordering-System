@@ -1,3 +1,5 @@
-Get-Content -Raw database/safe_schema_sync_v2_4.sql | docker exec -i mysql_db mysql -uuser -ppassword voleena_foods_db
+docker compose up -d
 
-docker exec -it backend_app node seed_roles_and_staff.js
+docker compose --profile init up --abort-on-container-exit db_sync backend_seed
+
+docker compose --profile init down

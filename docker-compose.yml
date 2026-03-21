@@ -66,5 +66,46 @@ services:
       retries: 5
       start_period: 20s
 
+  db_sync:
+    image: mysql:8
+    container_name: db_sync_job
+    profiles: ["init"]
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MYSQL_DATABASE: voleena_foods_db
+      MYSQL_USER: voleena_user
+      MYSQL_PASSWORD: voleena
+    volumes:
+      - ./database:/database:ro
+    command: >
+      sh -c "
+      echo 'Applying safe schema sync...';
+      mysql -h db -u$$MYSQL_USER -p$$MYSQL_PASSWORD $$MYSQL_DATABASE < /database/safe_schema_sync_v2_4.sql;
+      echo 'Schema sync completed.'
+      "
+
+  backend_seed:
+    build: ./server
+    container_name: backend_seed_job
+    profiles: ["init"]
+    restart: "no"
+    env_file:
+      - ./server/.env
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      NODE_ENV: production
+      FRONTEND_URL: http://localhost:5173
+      BACKEND_URL: http://localhost:3001
+    command: ["node", "seed_roles_and_staff.js"]
+    depends_on:
+      db_sync:
+        condition: service_completed_successfully
+      backend:
+        condition: service_healthy
+
 volumes:
   db_data:
