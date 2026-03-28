@@ -1,0 +1,21 @@
+$kind: http-request
+name: POST /api/v1/kitchen/stock/daily
+description: |-
+  Auth: Bearer Kitchen/Admin
+  Query: -
+  Body: menuItemId, openingQuantity, stockDate?
+  Success: 200 update result
+  Errors: 400, 401, 403, 500
+url: "{{baseUrl}}/api/v1/kitchen/stock/daily"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "menuItemId": 1,
+      "openingQuantity": 40
+    }
+order: 6000

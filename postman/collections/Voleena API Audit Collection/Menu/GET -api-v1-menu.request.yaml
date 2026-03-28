@@ -1,0 +1,11 @@
+$kind: http-request
+name: GET /api/v1/menu
+description: |-
+  Auth: Public
+  Query: categoryId, isActive, search
+  Body: -
+  Success: 200 { success, data, count }
+  Errors: 500
+url: "{{baseUrl}}/api/v1/menu"
+method: GET
+order: 2000

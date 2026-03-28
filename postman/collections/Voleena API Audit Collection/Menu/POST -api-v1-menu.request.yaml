@@ -1,0 +1,24 @@
+$kind: http-request
+name: POST /api/v1/menu
+description: |-
+  Auth: Bearer Admin/Kitchen
+  Query: -
+  Body: Name, Description?, Price, CategoryID, IsActive?, ImageURL?
+  Success: 201 { success, data }
+  Errors: 400, 404, 500
+url: "{{baseUrl}}/api/v1/menu"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "Name": "Chicken Rice",
+      "Description": "Steamed rice with chicken curry",
+      "Price": 1200,
+      "CategoryID": 1,
+      "IsActive": true
+    }
+order: 1000

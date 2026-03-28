@@ -1,0 +1,27 @@
+$kind: http-request
+name: POST /api/v1/customers
+description: |-
+  Auth: Bearer Cashier/Admin
+  Query: -
+  Body: name, phone, email?, address?, password?, profileImageUrl?
+  Success: 200 duplicate match or 201 customer created
+  Errors: 400, 409, 500
+url: "{{baseUrl}}/api/v1/customers"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Walk-in Customer",
+      "phone": "+94771112233",
+      "email": "walkin@example.com",
+      "address": {
+        "addressLine1": "10 Main Street",
+        "city": "Colombo",
+        "postalCode": "10000"
+      }
+    }
+order: 1000

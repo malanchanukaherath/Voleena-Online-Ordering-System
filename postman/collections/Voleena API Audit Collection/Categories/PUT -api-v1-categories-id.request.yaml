@@ -1,0 +1,21 @@
+$kind: http-request
+name: PUT /api/v1/categories/:id
+description: |-
+  Auth: Bearer Admin
+  Query: -
+  Body: Name?, Description?, DisplayOrder?, IsActive?, ImageURL?
+  Success: 200 { success, data }
+  Errors: 400, 404, 409, 500
+url: "{{baseUrl}}/api/v1/categories/{{id}}"
+method: PUT
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "Name": "Desserts",
+      "ImageURL": "https://cdn.example.com/desserts.png"
+    }
+order: 3000

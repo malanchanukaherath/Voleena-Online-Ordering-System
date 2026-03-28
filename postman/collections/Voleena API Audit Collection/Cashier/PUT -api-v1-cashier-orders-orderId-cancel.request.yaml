@@ -1,0 +1,20 @@
+$kind: http-request
+name: PUT /api/v1/cashier/orders/:orderId/cancel
+description: |-
+  Auth: Bearer Cashier/Admin
+  Query: -
+  Body: reason
+  Success: 200 order cancelled
+  Errors: 400, 401, 403, 404, 500
+url: "{{baseUrl}}/api/v1/cashier/orders/{{orderId}}/cancel"
+method: PUT
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "reason": "Customer changed mind"
+    }
+order: 5000

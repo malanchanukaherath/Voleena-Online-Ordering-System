@@ -1,0 +1,13 @@
+$kind: http-request
+name: POST /api/v1/orders/:id/confirm
+description: |-
+  Auth: Bearer Cashier/Admin
+  Query: -
+  Body: -
+  Success: 200 { success, message, data }
+  Errors: 400, 401, 403
+url: "{{baseUrl}}/api/v1/orders/{{id}}/confirm"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 4000

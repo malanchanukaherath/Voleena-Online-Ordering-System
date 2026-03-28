@@ -1,0 +1,30 @@
+$kind: http-request
+name: POST /api/v1/payments/webhook/payhere
+description: >-
+  Auth: Public (gateway signature)
+
+  Query: -
+
+  Body: merchant_id, order_id, payment_id, status_code, payhere_amount,
+  payhere_currency, md5sig
+
+  Success: 200 { success }
+
+  Errors: 400, 404, 500
+url: "{{baseUrl}}/api/v1/payments/webhook/payhere"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "merchant_id": "{{payHereMerchantId}}",
+      "order_id": "ORD-1001",
+      "payment_id": "PH-12345",
+      "status_code": "2",
+      "payhere_amount": "1500.00",
+      "payhere_currency": "LKR",
+      "md5sig": "valid-signature"
+    }
+order: 2000

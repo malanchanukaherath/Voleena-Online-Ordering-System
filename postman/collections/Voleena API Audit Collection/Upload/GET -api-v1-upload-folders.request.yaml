@@ -1,0 +1,13 @@
+$kind: http-request
+name: GET /api/v1/upload/folders
+description: |-
+  Auth: Bearer token
+  Query: -
+  Body: -
+  Success: 200 upload folder listing
+  Errors: 401, 500
+url: "{{baseUrl}}/api/v1/upload/folders"
+method: GET
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1000

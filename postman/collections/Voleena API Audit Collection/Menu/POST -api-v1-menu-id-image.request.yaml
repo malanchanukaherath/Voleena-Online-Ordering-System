@@ -1,0 +1,13 @@
+$kind: http-request
+name: POST /api/v1/menu/:id/image
+description: |-
+  Auth: Bearer Admin/Kitchen
+  Query: -
+  Body: multipart: image
+  Success: 200 { success, data: { MenuItemID, ImageURL } }
+  Errors: 400, 404, 500
+url: "{{baseUrl}}/api/v1/menu/{{id}}/image"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 6000

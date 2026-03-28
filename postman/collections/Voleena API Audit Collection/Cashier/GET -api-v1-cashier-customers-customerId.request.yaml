@@ -1,0 +1,13 @@
+$kind: http-request
+name: GET /api/v1/cashier/customers/:customerId
+description: |-
+  Auth: Bearer Cashier/Admin
+  Query: -
+  Body: -
+  Success: 200 customer details
+  Errors: 401, 403, 404, 500
+url: "{{baseUrl}}/api/v1/cashier/customers/{{customerId}}"
+method: GET
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 7000

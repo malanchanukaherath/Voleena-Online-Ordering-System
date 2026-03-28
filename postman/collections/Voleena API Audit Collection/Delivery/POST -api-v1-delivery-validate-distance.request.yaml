@@ -1,0 +1,22 @@
+$kind: http-request
+name: POST /api/v1/delivery/validate-distance
+description: |-
+  Auth: Public
+  Query: -
+  Body: latitude?, longitude?, address?
+  Success: 200 { success, data }
+  Errors: 400, 429, 500
+url: "{{baseUrl}}/api/v1/delivery/validate-distance"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "address": {
+        "addressLine1": "25 Flower Road",
+        "city": "Colombo"
+      }
+    }
+order: 1000

@@ -1,0 +1,21 @@
+$kind: http-request
+name: POST /api/v1/auth/refresh
+description: |-
+  Auth: Bearer token + X-Refresh-Token or body.refreshToken
+  Query: -
+  Body: refreshToken?
+  Success: 200 { success, token, refreshToken, user, expiresIn }
+  Errors: 401, 500
+url: "{{baseUrl}}/api/v1/auth/refresh"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  X-Refresh-Token: "{{refreshToken}}"
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "refreshToken": "refresh-token-placeholder"
+    }
+order: 6000

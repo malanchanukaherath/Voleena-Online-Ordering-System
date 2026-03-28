@@ -1,0 +1,13 @@
+$kind: http-request
+name: POST /api/v1/combos/:id/image
+description: |-
+  Auth: Bearer Admin
+  Query: -
+  Body: multipart: image
+  Success: 200 { success, data: { ComboID, ImageURL } }
+  Errors: 400, 404, 500
+url: "{{baseUrl}}/api/v1/combos/{{id}}/image"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 7000

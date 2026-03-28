@@ -1,0 +1,28 @@
+$kind: http-request
+name: POST /api/v1/orders
+description: |-
+  Auth: Bearer Customer
+  Query: -
+  Body: items[], orderType, addressId?, specialInstructions?, promotionCode?
+  Success: 201 { success, message, data }
+  Errors: 400, 401, 403, 500
+url: "{{baseUrl}}/api/v1/orders"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "orderType": "DELIVERY",
+      "addressId": 1,
+      "specialInstructions": "No onions",
+      "items": [
+        {
+          "menuItemId": 1,
+          "quantity": 2
+        }
+      ]
+    }
+order: 1000

@@ -1,0 +1,21 @@
+$kind: http-request
+name: PATCH /api/v1/stock/daily/:id
+description: |-
+  Auth: Bearer Admin/Kitchen
+  Query: -
+  Body: quantityChange, reason
+  Success: 200 adjustment result
+  Errors: 400, 401, 403, 404, 500
+url: "{{baseUrl}}/api/v1/stock/daily/{{id}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "quantityChange": -1,
+      "reason": "Sample usage"
+    }
+order: 8000

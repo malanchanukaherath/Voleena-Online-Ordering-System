@@ -1,0 +1,20 @@
+$kind: http-request
+name: PATCH /api/v1/staff/:id
+description: |-
+  Auth: Bearer Admin
+  Query: -
+  Body: isActive
+  Success: 200 { message, staff }
+  Errors: 404, 500
+url: "{{baseUrl}}/api/v1/staff/{{id}}"
+method: PATCH
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "isActive": false
+    }
+order: 4000

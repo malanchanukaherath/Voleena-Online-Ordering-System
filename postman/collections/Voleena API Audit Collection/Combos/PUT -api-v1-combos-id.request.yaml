@@ -1,0 +1,35 @@
+$kind: http-request
+name: PUT /api/v1/combos/:id
+description: >-
+  Auth: Bearer Admin
+
+  Query: -
+
+  Body: Name?, Description?, Price?, ScheduleStartDate?, ScheduleEndDate?,
+  IsActive?, items?, ImageURL?
+
+  Success: 200 { success, data }
+
+  Errors: 400, 404, 500
+url: "{{baseUrl}}/api/v1/combos/{{id}}"
+method: PUT
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "Price": 3500,
+      "items": [
+        {
+          "MenuItemID": 1,
+          "Quantity": 2
+        },
+        {
+          "MenuItemID": 3,
+          "Quantity": 1
+        }
+      ]
+    }
+order: 5000

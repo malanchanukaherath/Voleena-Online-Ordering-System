@@ -1,0 +1,13 @@
+$kind: http-request
+name: PUT /api/v1/cashier/orders/:orderId/confirm
+description: |-
+  Auth: Bearer Cashier/Admin
+  Query: -
+  Body: -
+  Success: 200 order confirmed
+  Errors: 400, 401, 403, 404, 500
+url: "{{baseUrl}}/api/v1/cashier/orders/{{orderId}}/confirm"
+method: PUT
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 4000

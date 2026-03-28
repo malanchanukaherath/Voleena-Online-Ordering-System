@@ -1,0 +1,13 @@
+$kind: http-request
+name: POST /api/v1/auth/logout
+description: |-
+  Auth: Bearer token
+  Query: -
+  Body: -
+  Success: 200 { success, message }
+  Errors: 401, 400, 500
+url: "{{baseUrl}}/api/v1/auth/logout"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 7000

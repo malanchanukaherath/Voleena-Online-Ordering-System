@@ -1,0 +1,21 @@
+$kind: http-request
+name: PUT /api/v1/customers/:id
+description: |-
+  Auth: Bearer Cashier/Admin
+  Query: -
+  Body: name?, email?, phone?, accountStatus?
+  Success: 200 { message, customer }
+  Errors: 400, 404, 500
+url: "{{baseUrl}}/api/v1/customers/{{id}}"
+method: PUT
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Updated Customer",
+      "accountStatus": "ACTIVE"
+    }
+order: 7000

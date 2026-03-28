@@ -1,0 +1,11 @@
+$kind: http-request
+name: GET /api/v1/delivery/fee-config
+description: |-
+  Auth: Public
+  Query: -
+  Body: -
+  Success: 200 { success, data }
+  Errors: 429, 500
+url: "{{baseUrl}}/api/v1/delivery/fee-config"
+method: GET
+order: 2000

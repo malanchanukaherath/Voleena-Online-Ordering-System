@@ -1,0 +1,24 @@
+$kind: http-request
+name: POST /api/v1/admin/staff
+description: |-
+  Auth: Bearer Admin
+  Query: -
+  Body: name, email, phone, password, roleId
+  Success: 201/200 staff create result
+  Errors: 400, 409, 500
+url: "{{baseUrl}}/api/v1/admin/staff"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Cashier User",
+      "email": "cashier@example.com",
+      "phone": "+94771113344",
+      "password": "Secret123",
+      "roleId": 2
+    }
+order: 5000

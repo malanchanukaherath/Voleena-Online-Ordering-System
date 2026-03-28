@@ -1,0 +1,13 @@
+$kind: http-request
+name: GET /api/v1/categories
+description: |-
+  Auth: Bearer token
+  Query: isActive, includeInactive
+  Body: -
+  Success: 200 { success, data }
+  Errors: 401, 500
+url: "{{baseUrl}}/api/v1/categories"
+method: GET
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 1000

@@ -1,0 +1,29 @@
+$kind: http-request
+name: POST /api/v1/kitchen/stock/daily/bulk
+description: |-
+  Auth: Bearer Kitchen/Admin
+  Query: -
+  Body: items[]
+  Success: 200 bulk update result
+  Errors: 400, 401, 403, 500
+url: "{{baseUrl}}/api/v1/kitchen/stock/daily/bulk"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "items": [
+        {
+          "menuItemId": 1,
+          "openingQuantity": 40
+        },
+        {
+          "menuItemId": 2,
+          "openingQuantity": 15
+        }
+      ]
+    }
+order: 7000

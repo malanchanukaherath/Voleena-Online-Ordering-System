@@ -1,0 +1,27 @@
+$kind: http-request
+name: POST /api/v1/customers/me/addresses
+description: >-
+  Auth: Bearer Customer
+
+  Query: -
+
+  Body: addressLine1, city, addressLine2?, postalCode?, district?, latitude?,
+  longitude?
+
+  Success: 201 { success, addressId, address }
+
+  Errors: 400, 500
+url: "{{baseUrl}}/api/v1/customers/me/addresses"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "addressLine1": "15 Test Road",
+      "city": "Colombo",
+      "postalCode": "10000"
+    }
+order: 5000

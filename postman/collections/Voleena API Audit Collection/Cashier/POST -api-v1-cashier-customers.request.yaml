@@ -1,0 +1,22 @@
+$kind: http-request
+name: POST /api/v1/cashier/customers
+description: |-
+  Auth: Bearer Cashier/Admin
+  Query: -
+  Body: name, phone, email?, address?, password?
+  Success: 201 customer creation result
+  Errors: 400, 409, 500
+url: "{{baseUrl}}/api/v1/cashier/customers"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "name": "Cashier Added",
+      "phone": "+94770001122",
+      "email": "cashier-added@example.com"
+    }
+order: 8000

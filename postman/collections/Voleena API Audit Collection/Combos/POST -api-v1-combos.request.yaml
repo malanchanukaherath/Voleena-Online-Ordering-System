@@ -1,0 +1,38 @@
+$kind: http-request
+name: POST /api/v1/combos
+description: >-
+  Auth: Bearer Admin
+
+  Query: -
+
+  Body: Name, Description?, Price, ScheduleStartDate, ScheduleEndDate,
+  IsActive?, items[], ImageURL?
+
+  Success: 201 { success, data }
+
+  Errors: 400, 404, 500
+url: "{{baseUrl}}/api/v1/combos"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "Name": "Family Combo",
+      "Price": 3200,
+      "ScheduleStartDate": "2026-03-01",
+      "ScheduleEndDate": "2026-03-31",
+      "items": [
+        {
+          "MenuItemID": 1,
+          "Quantity": 2
+        },
+        {
+          "MenuItemID": 2,
+          "Quantity": 1
+        }
+      ]
+    }
+order: 1000

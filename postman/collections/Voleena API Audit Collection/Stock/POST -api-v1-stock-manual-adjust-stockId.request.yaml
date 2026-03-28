@@ -1,0 +1,21 @@
+$kind: http-request
+name: POST /api/v1/stock/manual-adjust/:stockId
+description: |-
+  Auth: Bearer Admin/Kitchen
+  Query: -
+  Body: adjustmentQuantity, reason
+  Success: 200 adjustment result
+  Errors: 400, 401, 403, 404, 500
+url: "{{baseUrl}}/api/v1/stock/manual-adjust/{{stockId}}"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "adjustmentQuantity": -2,
+      "reason": "Spoilage"
+    }
+order: 2000

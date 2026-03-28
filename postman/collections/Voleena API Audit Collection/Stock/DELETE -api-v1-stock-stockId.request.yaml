@@ -1,0 +1,13 @@
+$kind: http-request
+name: DELETE /api/v1/stock/:stockId
+description: |-
+  Auth: Bearer Admin/Kitchen
+  Query: -
+  Body: -
+  Success: 200 delete/deactivate result
+  Errors: 401, 403, 404, 500
+url: "{{baseUrl}}/api/v1/stock/{{stockId}}"
+method: DELETE
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 5000

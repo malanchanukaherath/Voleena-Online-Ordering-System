@@ -1,0 +1,13 @@
+$kind: http-request
+name: GET /api/v1/staff
+description: |-
+  Auth: Bearer Admin
+  Query: -
+  Body: -
+  Success: 200 { staff }
+  Errors: 500
+url: "{{baseUrl}}/api/v1/staff"
+method: GET
+headers:
+  Authorization: Bearer {{accessToken}}
+order: 3000

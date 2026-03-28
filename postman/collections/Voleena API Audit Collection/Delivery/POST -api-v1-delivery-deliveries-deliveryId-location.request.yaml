@@ -1,0 +1,21 @@
+$kind: http-request
+name: POST /api/v1/delivery/deliveries/:deliveryId/location
+description: |-
+  Auth: Bearer Delivery/Admin
+  Query: -
+  Body: lat, lng
+  Success: 200 { success, message, data }
+  Errors: 400, 401, 403, 404, 503, 500
+url: "{{baseUrl}}/api/v1/delivery/deliveries/{{deliveryId}}/location"
+method: POST
+headers:
+  Authorization: Bearer {{accessToken}}
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+      "lat": 6.9123,
+      "lng": 79.8567
+    }
+order: 10000
