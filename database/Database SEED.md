@@ -1,3 +1,5 @@
+Use this to seed data to database
+
 docker compose up -d
 
 docker compose --profile init up --abort-on-container-exit db_sync backend_seed
