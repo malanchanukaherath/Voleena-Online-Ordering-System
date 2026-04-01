@@ -93,7 +93,8 @@ exports.getAllOrders = async (req, res) => {
                 sequelize.literal("CASE WHEN `Order`.Status = 'PENDING' THEN 0 WHEN `Order`.Status = 'CONFIRMED' THEN 1 WHEN `Order`.Status = 'PREPARING' THEN 2 WHEN `Order`.Status = 'READY' THEN 3 ELSE 4 END"),
                 // Then show newest orders first
                 ['created_at', 'DESC']
-            ]
+            ],
+            limit: 50 // Performance Bug Fix: Prevent server crash by limiting items to 50 at a time
         });
 
         res.json({
