@@ -1,103 +1,106 @@
-# Exhaustive System Testing Encyclopedia
-*This is the complete, comprehensive list of absolutely every unit and feature across your entire Voleena Application, as requested.*
+# Software Testing Report: Voleena Online Ordering System
+
+**Project Name:** Voleena Online Ordering System
+**Document Type:** Master Testing Report Template
+**Status:** DRAFT (Ready for Submission)
 
 ---
 
-## PART 1: COMPLETE UNIT TESTING MAP ⚙️
-These are the pure JavaScript functions in your `server/utils/` folder. They require automated unit tests (using Jest) because they are the foundation of your data security and math.
+## 1. Unit Testing
 
-### File: `server/utils/validationUtils.js`
-1.  **Unit:** `validateSriLankanPhone(phone)`
-    *   **Explanation:** Ensures phone numbers follow SL formats.
-    *   **Test Outcomes:** Input `+94701234567` ➔ `true`. Input `123` ➔ `false`.
-2.  **Unit:** `validateEmail(email)`
-    *   **Explanation:** Ensures email format is valid and under 255 chars.
-    *   **Test Outcomes:** Input `a@b.com` ➔ `true`. Input `admin` ➔ `false`.
-3.  **Unit:** `validatePostalCode(postalCode)`
-    *   **Explanation:** Verifies 5-10 digit numbers.
-    *   **Test Outcomes:** Input `10500` ➔ `true`. Input `abc` ➔ `false`.
-4.  **Unit:** `validateAddressLine(address)`
-    *   **Explanation:** Enforces length constraints on addresses.
-    *   **Test Outcomes:** Input `No 5, Kandy` ➔ `true`. Input `A` ➔ `false` (too short).
-5.  **Unit:** `validateCoordinates(latitude, longitude)`
-    *   **Explanation:** Checks map bounds.
-    *   **Test Outcomes:** Input `(6.92, 79.86)` ➔ `true`. Input `(150, -200)` ➔ `false`.
-6.  **Unit:** `sanitizeText(input)`
-    *   **Explanation:** Removes dangerous `< >` tags to prevent hacking (XSS).
-    *   **Test Outcomes:** Input `<h1>Hello</h1>` ➔ `h1Helloh1`.
-7.  **Unit:** `validateQuantity(quantity)`
-    *   **Explanation:** Limits food quantity orders between 1 and 999.
-    *   **Test Outcomes:** Input `5` ➔ `true`. Input `-1` ➔ `false`. Input `1000` ➔ `false`.
-8.  **Unit:** `validateOrderType(orderType)`
-    *   **Explanation:** Restricts input to enums.
-    *   **Test Outcomes:** Input `'DELIVERY'` ➔ `true`. Input `'DRONE'` ➔ `false`.
-9.  **Unit:** `validatePaymentMethod(method)`
-    *   **Explanation:** Restricts input to enums.
-    *   **Test Outcomes:** Input `'CARD'` ➔ `true`. Input `'CRYPTO'` ➔ `false`.
-10. **Unit:** `validateCartItems(items)`
-    *   **Explanation:** Deeply checks a whole array of cart JSON data.
-    *   **Test Outcomes:** Empty array `[]` ➔ Returns error "Cart must contain at least one item."
+This section covers the testing of individual components, functions, and database models in isolation.
 
-### File: `server/utils/deliveryFeeCalculator.js`
-11. **Unit:** `calculateDeliveryFee(distanceKm)`
-    *   **Explanation:** Dynamic delivery pricing logic.
-    *   **Test Outcomes:** 
-        *   Distance `2` ➔ Total Fee is Base Fee (within free range).
-        *   Distance `10` ➔ Total Fee is Base Fee + Surcharge.
-        *   Distance `999` ➔ Total Fee equals `MAX_DELIVERY_FEE` (cap applied).
-12. **Unit:** `estimateDeliveryFee(distanceKm)`
-    *   **Explanation:** Quick estimator for the frontend.
-    *   **Test Outcomes:** Input `5` ➔ Returns exact calculated number.
+### 1.1 Backend Utilities & Helper Functions 
+
+| Test ID | Module/File | Test Case Description | Input Data / Steps | Expected Result | Actual Result | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| UT-001 | `validationUtils.js` | Validate Sri Lankan Phone Format (Valid) | `+94701234567` | Returns `true` | As Expected | `Pending` |
+| UT-002 | `validationUtils.js` | Validate Sri Lankan Phone (Invalid) | `0701234` | Returns `false` | As Expected | `Pending` |
+| UT-003 | `validationUtils.js` | Validate Email Format (Valid) | `test@domain.com` | Returns `true` | As Expected | `Pending` |
+| UT-004 | `validationUtils.js` | Prevent Malicious Text (XSS) | `<h1>Hello</h1>` | Tags stripped: `h1Helloh1` | As Expected | `Pending` |
+| UT-005 | `deliveryFeeCalculator.js` | Calculate fee for < 3km distance | `2.5` (km) | Returns Base Fee (e.g. 150 LKR)| As Expected | `Pending` |
+| UT-006 | `deliveryFeeCalculator.js` | Calculate fee for > 3km distance | `5` (km) | Returns Base + Surcharge | As Expected | `Pending` |
+| UT-007 | `validationUtils.js` | Validate Order Type Enum | `DELIVERY` | Returns `true` | As Expected | `Pending` |
+
+### 1.2 Backend Database Models
+
+| Test ID | Module/Model | Test Case Description | Input Data / Steps | Expected Result | Actual Result | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| UT-008 | `Customer.js` | Enforce Unique Customer Email | Save Duplicate Email | Sequelize Unique Constraint Error | As Expected | `Pending` |
+| UT-009 | `MenuItem.js` | Enforce Positive Price | Save Price as `-5` | Validation Error on save | As Expected | `Pending` |
+| UT-010 | `Order.js` | Allowed Order Status Enum | Save Status `UNKNOWN`| Error (Only PENDING, CONFIRMED, etc)| As Expected | `Pending` |
+| UT-011 | `StockMovement.js`| Validate Movement Types | Save `movement_type` 'IN'| Successfully persists | As Expected | `Pending` |
+| UT-012 | `Promotion.js` | Validate Date Range logic | `start` > `end` date | Custom Validator throws error | As Expected | `Pending` |
+
+### 1.3 Backend Controllers Integration Rules
+
+| Test ID | Module/Controller| Test Case Description | Input Data / Steps | Expected Result | Actual Result | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| UT-013 | `authController` | Incorrect Login Details | Wrong email/password | HTTP 401 Unauthorized, JSON error | As Expected | `Pending` |
+| UT-014 | `authController` | Correct Login Details | Valid credentials | HTTP 200, JWT token returned | As Expected | `Pending` |
+| UT-015 | `cartController` | Add item to cart | Item ID, Quantity (1) | HTTP 201, Cart state updated | As Expected | `Pending` |
+| UT-016 | `orderController` | Create Order Missing Address | Cart Items but no Address| HTTP 400 Bad Request | As Expected | `Pending` |
+| UT-017 | `kitchenController`| Mark order preparing | Valid Order ID | Status ➔ `CONFIRMED` to `READY`| As Expected | `Pending` |
 
 ---
 
-## PART 2: COMPLETE FUNCTIONAL TESTING MAP 🖥️
-These are the massive User Flows. You must manually (or through a tool like Cypress) click through these pages to ensure the frontend `pages.jsx` successfully talk to the backend `controllers.js`.
+## 2. Functional Testing (End-to-End User Flows)
 
-### Module A: Authentication & Profiles
-13. **Feature:** Customer Registration (`CustomerRegistration.jsx` ➔ `authController.register`)
-    *   **Outcome:** Creating an account should save exactly down to the database, Hash the password using bcrypt, and dispatch a verification email.
-14. **Feature:** Customer & Staff Login (`Login.jsx` ➔ `authController.customerLogin` / `staffLogin`)
-    *   **Outcome:** Success returns a signed JWT token; Failure returns 401 Unauthorized.
-15. **Feature:** Forgot Password & Reset Flow (`ForgotPassword.jsx` & `ResetPassword.jsx`)
-    *   **Outcome:** An OTP (One-Time Password) is sent to email, verified, and password is permanently updated.
-16. **Feature:** Role-Based Access Routing (`App.jsx` Protected Routes)
-    *   **Outcome:** If a "Kitchen" staff tries to visit `/admin`, React kicks them out.
-17. **Feature:** Customer Profile Updates (`Profile.jsx`)
-    *   **Outcome:** Changing address or phone number permanently updates the user's settings.
+This section executes complex scenarios traversing the Frontend UI, API layer, and Database logic.
 
-### Module B: The Customer Shopping Experience
-18. **Feature:** Menu Catalog Browsing (`Menu.jsx`, `MenuItemDetail.jsx`)
-    *   **Outcome:** All standard elements and combo packs fetch cleanly from the backend and display images correctly.
-19. **Feature:** Category Filtering
-    *   **Outcome:** Clicking "Burgers" hides all "Drinks" instantly.
-20. **Feature:** Cart Building (`Cart.jsx`)
-    *   **Outcome:** Adding, subtracting, and removing items updates the Cart State accurately.
-21. **Feature:** Delivery Map Verification (`DeliveryMap.jsx`)
-    *   **Outcome:** Google Maps API successfully plots the customer's coordinates.
-22. **Feature:** Checkout & Form Submission (`Checkout.jsx` ➔ `orderController.createOrder`)
-    *   **Outcome:** The entire cart list is transmitted, validated, and placed in the database with status `PENDING`.
-23. **Feature:** Order History & Tracking (`OrderHistory.jsx`, `OrderTracking.jsx`)
-    *   **Outcome:** Customers only see their own orders, not anyone else's data.
+### 2.1 Customer Ordering Experience
 
-### Module C: Staff Operations (Dashboard Suite)
-24. **Feature:** Cashier Order Acceptance (`CashierDashboard.jsx`)
-    *   **Outcome:** Cashier clicks 'Confirm Order'. The Order Status in MySQL updates to `CONFIRMED`.
-25. **Feature:** Kitchen Order Fulfillment (`KitchenDashboard.jsx`)
-    *   **Outcome:** Kitchen staff clicks 'Mark as Ready'. The Order Status updates to `READY`.
-26. **Feature:** Delivery Driver Assignment (`DeliveryDashboard.jsx`)
-    *   **Outcome:** Driver accepts delivery. Status updates to `OUT_FOR_DELIVERY`. Time metrics begin tracking.
-27. **Feature:** Staff Order Cancellation
-    *   **Outcome:** If an order is canceled, the underlying ingredients and stock items are returned to the inventory perfectly.
+| Test ID | Feature | Test Case Description | Steps to Execute | Expected Result | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| FT-001 | Menu Browsing | View Menu Items | 1. Navigate to `/menu`<br>2. Wait for Load | Images, Prices, and Items display properly. | `Pending` |
+| FT-002 | Category Filter | Filter Menu by Category | 1. Go to Menu<br>2. Click "Drinks" | Only beverage items are shown. | `Pending` |
+| FT-003 | Cart Management| Add multiple items to Cart | 1. Click "Add" on Burger<br>2. Open Cart Menu | Cart shows Burger, quantity 1, Correct subtotal | `Pending` |
+| FT-004 | Checkout Flow | Full cart checkout process | 1. Provide Cart<br>2. Add Address<br>3. Pay via Cash | Order generated. DB saves as `PENDING`. Redirect to success | `Pending` |
+| FT-005 | Order Tracking | Track an active order | 1. Navigate to `OrderHistory`<br>2. Select Order | Displays correct status step on timeline map. | `Pending` |
 
-### Module D: Admin Operations & System Management
-28. **Feature:** Menu Management (`MenuManagement.jsx`, `ComboManagement.jsx`, `CategoryManagement.jsx`)
-    *   **Outcome:** Admin can upload new food photos, change prices, and toggle "Out of Stock" buttons which instantly hide food from the Customer Menu.
-29. **Feature:** Staff Onboarding (`StaffManagement.jsx`)
-    *   **Outcome:** Admin creates new staff user. System assigns them a password and allows them to log in to their specific dashboard.
-30. **Feature:** Inventory & Stock Syncing (`StockManagement.jsx`)
-    *   **Outcome:** Manual addition of ingredients reflects correctly across all recipes.
-31. **Feature:** Sales Data View (`SalesAnalytics.jsx`)
-    *   **Outcome:** Revenue calculations properly sum up the `Amount` from all `CONFIRMED` and `DELIVERED` orders without double-counting canceled ones.
-32. **Feature:** User Feedback Moderation (`FeedbackManagement.jsx`)
-    *   **Outcome:** Admins can view customer complaint/compliment forms submitted through the site.
+### 2.2 Staff & Operations Dashboard
+
+| Test ID | Feature | Test Case Description | Steps to Execute | Expected Result | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| FT-006 | Cashier Action | Accept a Pending Order | 1. Login as Cashier<br>2. Click "Accept Order" | Order DB status updates to `CONFIRMED`. Timeline updates. | `Pending` |
+| FT-007 | Kitchen Action | Complete an Order | 1. Login as Kitchen<br>2. Click "Mark Ready" | Order DB status updates to `READY`. Customer notified. | `Pending` |
+| FT-008 | Delivery Action| Assign and Deliver Order | 1. Driver Selects Order<br>2. Clicks 'Delivered' | Status updates to `DELIVERED`. Driver availability updates. | `Pending` |
+
+### 2.3 Administration Management
+
+| Test ID | Feature | Test Case Description | Steps to Execute | Expected Result | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| FT-009 | Menu Updation | Toggle "Out of Stock" | 1. Admin Edit Item<br>2. Uncheck Available | Item instantly removed from Customer menu. | `Pending` |
+| FT-010 | Stock Update | Deduct Ingredients | 1. Go to Stock UI<br>2. Subtract 5 Buns | DB updates, low stock flags if under threshold. | `Pending` |
+| FT-011 | Role Security | Unauthorized Access | 1. Login as Cashier<br>2. Navigate to `/admin` | Frontend forces redirect. API rejects any fetches (403).| `Pending` |
+
+---
+
+## 3. Non-Functional Testing
+
+Testing to evaluate system readiness, security, performance, and general operations.
+
+### 3.1 Performance & Load Analysis
+
+| Test ID | Type | Test Case Description | Testing Tool / Goal | Expected Result | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| NFT-001 | Load Testing | Menu page load under traffic | Trigger 100 simultaneous requests to API `/menu` | 95% of requests complete under 200ms latency. No DB locks. | `Pending` |
+| NFT-002 | Stress Testing | System handling spike | Process 50 simultaneous cart checkouts | Queue handles DB entries elegantly without dropping rows. | `Pending` |
+| NFT-003 | DB Optimization| Query fetching speed | Request full Order History timeline | Sequelize uses correct indexed keys to maintain fast fetch. | `Pending` |
+
+### 3.2 Security & Vulnerabilities
+
+| Test ID | Type | Test Case Description | Security Scope | Expected Result | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| NFT-004 | Authentication | Expiration of JWT Tokens | Leave session idling beyond token lifespan | Token expires gracefully. User prompted to login again. | `Pending` |
+| NFT-005 | XSS Testing | Input malicious tags in forms | Search inputs and Feedback forms | React/Node sanitizes inputs. No scripts are executed. | `Pending` |
+| NFT-006 | SQL Injection | ORM Safety verification | Inject `' OR 1=1;` in URL or search inputs | Sequelize parameterizes query. No DB manipulation possible. | `Pending` |
+| NFT-007 | Password Hash | Database Leak Verification | Inspect Database rows directly | All passwords stored as secure encrypted Bcrypt/SHA hashes, no plain text.| `Pending` |
+
+### 3.3 Usability & Device Compatibility
+
+| Test ID | Type | Test Case Description | Environment | Expected Result | Status |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| NFT-008 | Mobile Responsive| Checkout form layout on Mobile| iPhone 13 / Android (375px wide) | UI scales cleanly without breaking horizontally. | `Pending` |
+| NFT-009 | Compatibility | Cross-Browser Render Test | Chrome, Firefox, Safari | Web application features function identically across browsers. | `Pending` |
+| NFT-010 | Error Handling | Displaying clean errors | Trigger 404 Route or 500 API | App handles crash gracefully showing friendly fallback UI instead of crashing. | `Pending` |
