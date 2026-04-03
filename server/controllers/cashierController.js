@@ -3,6 +3,18 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const orderService = require('../services/orderService');
 
+const isAddressTableMissingError = (error) => {
+  const mysqlCode = error?.original?.code || error?.parent?.code;
+  const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return mysqlCode === 'ER_NO_SUCH_TABLE' && message.includes('address')
+    || (message.includes('no such table') && message.includes('address'))
+    || (message.includes("doesn't exist") && message.includes('address'));
+};
+
 const DEFAULT_GUEST_NAME = 'Walk-in Customer';
 const DEFAULT_GUEST_PHONE = process.env.WALKIN_GUEST_PHONE || '7000000000';
 
@@ -437,6 +449,11 @@ exports.registerCustomer = async (req, res) => {
     });
   } catch (error) {
     console.error('Register customer error:', error);
+
+    if (isAddressTableMissingError(error)) {
+      return res.status(503).json({ error: 'Address features are temporarily unavailable. Please contact support.' });
+    }
+
     return res.status(500).json({ error: 'Failed to register customer' });
   }
 };
@@ -495,6 +512,11 @@ exports.updateCustomer = async (req, res) => {
     });
   } catch (error) {
     console.error('Update customer error:', error);
+
+    if (isAddressTableMissingError(error)) {
+      return res.status(503).json({ error: 'Address features are temporarily unavailable. Please contact support.' });
+    }
+
     return res.status(500).json({ error: 'Failed to update customer' });
   }
 };
@@ -534,6 +556,11 @@ exports.getAllCustomers = async (req, res) => {
     });
   } catch (error) {
     console.error('Get all customers error:', error);
+
+    if (isAddressTableMissingError(error)) {
+      return res.status(503).json({ error: 'Address features are temporarily unavailable. Please contact support.' });
+    }
+
     return res.status(500).json({ error: 'Failed to fetch customers' });
   }
 };
@@ -570,6 +597,11 @@ exports.getCustomerById = async (req, res) => {
     });
   } catch (error) {
     console.error('Get customer by ID error:', error);
+
+    if (isAddressTableMissingError(error)) {
+      return res.status(503).json({ error: 'Address features are temporarily unavailable. Please contact support.' });
+    }
+
     return res.status(500).json({ error: 'Failed to fetch customer' });
   }
 };

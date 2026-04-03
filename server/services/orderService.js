@@ -6,6 +6,26 @@ const { calculateDeliveryFee } = require('../utils/deliveryFeeCalculator');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('./emailService');
 const { sendOrderConfirmationSMS, sendOrderStatusUpdateSMS } = require('./smsService');
 
+const isAddressTableMissingError = (error) => {
+    const mysqlCode = error?.original?.code || error?.parent?.code;
+    const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+    return mysqlCode === 'ER_NO_SUCH_TABLE' && message.includes('address')
+        || (message.includes('no such table') && message.includes('address'))
+        || (message.includes("doesn't exist") && message.includes('address'));
+};
+
+const markAddressUnavailableError = (error) => {
+    if (isAddressTableMissingError(error)) {
+        error.code = 'ADDRESS_TABLE_UNAVAILABLE';
+    }
+
+    return error;
+};
+
 /**
  * Order Management Service
  * Implements complete order lifecycle with atomic operations
@@ -110,7 +130,12 @@ class OrderService {
                 }
 
                 const { Address } = require('../models');
-                const address = await Address.findByPk(addressId);
+                let address;
+                try {
+                    address = await Address.findByPk(addressId);
+                } catch (error) {
+                    throw markAddressUnavailableError(error);
+                }
 
                 if (!address || !address.Latitude || !address.Longitude) {
                     throw new Error('Address coordinates are required for delivery validation');
@@ -231,7 +256,12 @@ class OrderService {
             // Create delivery record if delivery order
             if (orderType === 'DELIVERY') {
                 const { Address } = require('../models');
-                const address = await Address.findByPk(addressId);
+                let address;
+                try {
+                    address = await Address.findByPk(addressId);
+                } catch (error) {
+                    throw markAddressUnavailableError(error);
+                }
 
                 const distanceValidation = await validateDeliveryDistanceWithFallback(
                     address.Latitude,

@@ -23,6 +23,28 @@ const isValidProfileEmail = (email) => email === null || /^[^\s@]+@[^\s@]+\.[^\s
 const isValidProfilePhone = (phone) => /^[+]?[0-9]{9,15}$/.test(phone);
 const isValidNotificationPreference = (value) => ['EMAIL', 'SMS', 'BOTH'].includes(value);
 
+const isAddressTableMissingError = (error) => {
+    const mysqlCode = error?.original?.code || error?.parent?.code;
+    const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+    return mysqlCode === 'ER_NO_SUCH_TABLE' && message.includes('address')
+        || (message.includes('no such table') && message.includes('address'))
+        || (message.includes("doesn't exist") && message.includes('address'));
+};
+
+const handleAddressTableMissing = (res, error) => {
+    if (!isAddressTableMissingError(error)) {
+        return false;
+    }
+
+    return res.status(503).json({
+        error: 'Address features are temporarily unavailable. Please contact support.'
+    });
+};
+
 /**
  * POST /api/customers
  * Admin/Cashier: Manually register a new customer
@@ -152,6 +174,10 @@ router.post('/', requireCashier, async (req, res) => {
     } catch (error) {
         console.error('Customer registration error:', error);
 
+        if (handleAddressTableMissing(res, error)) {
+            return;
+        }
+
         if (error.name === 'SequelizeValidationError') {
             return res.status(400).json({
                 error: error.errors.map(e => e.message).join(', ')
@@ -231,6 +257,11 @@ router.get('/me', requireCustomer, async (req, res) => {
         return res.json({ success: true, data: customer });
     } catch (error) {
         console.error('Get customer profile error:', error);
+
+        if (handleAddressTableMissing(res, error)) {
+            return;
+        }
+
         return res.status(500).json({ error: 'Failed to retrieve customer profile' });
     }
 });
@@ -374,6 +405,11 @@ router.get('/me/addresses', requireCustomer, async (req, res) => {
         return res.json({ success: true, data: addresses });
     } catch (error) {
         console.error('Get customer addresses error:', error);
+
+        if (handleAddressTableMissing(res, error)) {
+            return;
+        }
+
         return res.status(500).json({ error: 'Failed to retrieve addresses' });
     }
 });
@@ -434,6 +470,11 @@ router.post('/me/addresses', requireCustomer, async (req, res) => {
         });
     } catch (error) {
         console.error('Create address error:', error);
+
+        if (handleAddressTableMissing(res, error)) {
+            return;
+        }
+
         return res.status(500).json({ error: 'Failed to create address' });
     }
 });
@@ -461,6 +502,11 @@ router.get('/:id', requireCashier, async (req, res) => {
         return res.json({ customer });
     } catch (error) {
         console.error('Get customer error:', error);
+
+        if (handleAddressTableMissing(res, error)) {
+            return;
+        }
+
         return res.status(500).json({ error: 'Failed to retrieve customer' });
     }
 });

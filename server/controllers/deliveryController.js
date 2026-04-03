@@ -3,6 +3,18 @@ const { validateDeliveryDistanceWithFallback, geocodeAddress } = require('../uti
 const { validateAddressLine, validateCoordinates } = require('../utils/validationUtils');
 const { calculateDeliveryFee, getDeliveryFeeConfig, estimateDeliveryFee } = require('../utils/deliveryFeeCalculator');
 
+const isAddressTableMissingError = (error) => {
+  const mysqlCode = error?.original?.code || error?.parent?.code;
+  const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return mysqlCode === 'ER_NO_SUCH_TABLE' && message.includes('address')
+    || (message.includes('no such table') && message.includes('address'))
+    || (message.includes("doesn't exist") && message.includes('address'));
+};
+
 const isAdminRequest = (req) => req.user?.type === 'Staff' && req.user?.role === 'Admin';
 
 /**
@@ -131,6 +143,11 @@ exports.getMyDeliveries = async (req, res) => {
     });
   } catch (error) {
     console.error('Get my deliveries error:', error);
+
+    if (isAddressTableMissingError(error)) {
+      return res.status(503).json({ error: 'Address features are temporarily unavailable. Please contact support.' });
+    }
+
     return res.status(500).json({ error: 'Failed to fetch deliveries' });
   }
 };
@@ -318,6 +335,11 @@ exports.getDeliveryHistory = async (req, res) => {
     });
   } catch (error) {
     console.error('Get delivery history error:', error);
+
+    if (isAddressTableMissingError(error)) {
+      return res.status(503).json({ error: 'Address features are temporarily unavailable. Please contact support.' });
+    }
+
     return res.status(500).json({ error: 'Failed to fetch delivery history' });
   }
 };
@@ -440,6 +462,11 @@ exports.getDeliveryById = async (req, res) => {
     });
   } catch (error) {
     console.error('Get delivery by ID error:', error);
+
+    if (isAddressTableMissingError(error)) {
+      return res.status(503).json({ error: 'Address features are temporarily unavailable. Please contact support.' });
+    }
+
     return res.status(500).json({ error: 'Failed to fetch delivery' });
   }
 };

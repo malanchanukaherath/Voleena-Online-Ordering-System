@@ -1,6 +1,19 @@
 const { Order, OrderItem, MenuItem, ComboPack, Customer, Delivery, Address, sequelize } = require('../models');
 const orderService = require('../services/orderService');
 
+const isAddressTableMissingError = (error) => {
+    const mysqlCode = error?.original?.code || error?.parent?.code;
+    const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+
+    return error?.code === 'ADDRESS_TABLE_UNAVAILABLE'
+        || (mysqlCode === 'ER_NO_SUCH_TABLE' && message.includes('address'))
+        || (message.includes('no such table') && message.includes('address'))
+        || (message.includes("doesn't exist") && message.includes('address'));
+};
+
 // Create new order
 exports.createOrder = async (req, res) => {
     try {
@@ -47,6 +60,14 @@ exports.createOrder = async (req, res) => {
 
     } catch (error) {
         console.error('Create order error:', error);
+
+        if (isAddressTableMissingError(error)) {
+            return res.status(503).json({
+                success: false,
+                message: 'Address features are temporarily unavailable. Please contact support.'
+            });
+        }
+
         res.status(500).json({
             success: false,
             message: error.message || 'Failed to create order'
@@ -178,6 +199,14 @@ exports.getOrderById = async (req, res) => {
 
     } catch (error) {
         console.error('Get order error:', error);
+
+        if (isAddressTableMissingError(error)) {
+            return res.status(503).json({
+                success: false,
+                message: 'Address features are temporarily unavailable. Please contact support.'
+            });
+        }
+
         res.status(500).json({
             success: false,
             message: 'Failed to fetch order'
