@@ -1,4 +1,5 @@
 const request = require('supertest');
+const crypto = require('crypto');
 
 const mockOrder = {
   findByPk: jest.fn(),
@@ -105,5 +106,81 @@ describe('payment routes', () => {
 
     expect(response.status).toBe(501);
     expect(response.body.error).toMatch(/not configured/i);
+  });
+
+  test('accepts PayHere webhook when signature is valid', async () => {
+    process.env.PAYHERE_MERCHANT_SECRET = 'merchant-secret';
+
+    const order = {
+      OrderID: 501,
+      OrderNumber: 'ORD-501',
+      FinalAmount: 1500,
+      Status: 'CONFIRMED'
+    };
+    const payment = {
+      PaymentID: 9001,
+      Status: 'PENDING',
+      update: jest.fn().mockResolvedValue(true)
+    };
+
+    mockOrder.findOne.mockResolvedValue(order);
+    mockPayment.findOne
+      .mockResolvedValueOnce(payment)
+      .mockResolvedValueOnce(null);
+
+    const payload = {
+      merchant_id: 'MID123',
+      order_id: 'ORD-501',
+      payment_id: 'PH-TXN-1',
+      status_code: '2',
+      payhere_amount: '1500.00',
+      payhere_currency: 'LKR'
+    };
+
+    const hashedSecret = crypto
+      .createHash('md5')
+      .update(process.env.PAYHERE_MERCHANT_SECRET)
+      .digest('hex')
+      .toUpperCase();
+
+    payload.md5sig = crypto
+      .createHash('md5')
+      .update(
+        `${payload.merchant_id}${payload.order_id}${payload.payhere_amount}${payload.payhere_currency}${payload.status_code}${hashedSecret}`
+      )
+      .digest('hex')
+      .toUpperCase();
+
+    const response = await request(app)
+      .post('/api/v1/payments/webhook/payhere')
+      .send(payload);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(payment.update).toHaveBeenCalledWith(expect.objectContaining({
+      Status: 'PAID',
+      TransactionID: 'PH-TXN-1',
+      GatewayStatus: 'SUCCESS'
+    }));
+  });
+
+  test('rejects PayHere webhook when signature is invalid', async () => {
+    process.env.PAYHERE_MERCHANT_SECRET = 'merchant-secret';
+
+    const response = await request(app)
+      .post('/api/v1/payments/webhook/payhere')
+      .send({
+        merchant_id: 'MID123',
+        order_id: 'ORD-502',
+        payment_id: 'PH-TXN-2',
+        status_code: '2',
+        payhere_amount: '1200.00',
+        payhere_currency: 'LKR',
+        md5sig: 'INVALID_SIGNATURE'
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/invalid payhere signature/i);
+    expect(mockOrder.findOne).not.toHaveBeenCalled();
   });
 });

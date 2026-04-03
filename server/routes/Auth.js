@@ -12,6 +12,13 @@ const isValidPassword = (password) => {
   return password && password.length >= 8;
 };
 
+const getJwtSecret = () => {
+  if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET is not configured');
+  }
+  return process.env.JWT_SECRET;
+};
+
 /**
  * POST /auth/login
  * Authenticate user (Customer or Staff) and return JWT token
@@ -54,11 +61,9 @@ router.post('/login', async (req, res) => {
 
       const token = jwt.sign(
         payload,
-        process.env.JWT_SECRET || 'change-me',
+        getJwtSecret(),
         { expiresIn: '24h' }
       );
-
-      console.log('Customer Token Created:', token); // SHOW TOKEN IN LOGS
 
       return res.json({ token, user: payload });
     }
@@ -98,11 +103,9 @@ router.post('/login', async (req, res) => {
 
     const token = jwt.sign(
       payload,
-      process.env.JWT_SECRET || 'change-me',
+      getJwtSecret(),
       { expiresIn: '24h' }
     );
-
-    console.log('Staff Token Created:', token); // SHOW TOKEN IN LOGS
 
     return res.json({ token, user: payload });
   } catch (error) {
@@ -169,11 +172,9 @@ router.post('/register', async (req, res) => {
 
     const token = jwt.sign(
       payload,
-      process.env.JWT_SECRET || 'change-me',
+      getJwtSecret(),
       { expiresIn: '24h' }
     );
-
-    console.log('Registration Token Created:', token); // SHOW TOKEN IN LOGS
 
     return res.status(201).json({ token, user: payload });
   } catch (error) {
@@ -206,7 +207,7 @@ router.get('/me', async (req, res) => {
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'change-me');
+    const decoded = jwt.verify(token, getJwtSecret());
     return res.json({ user: decoded });
   } catch (error) {
     if (error.name === 'TokenExpiredError') {

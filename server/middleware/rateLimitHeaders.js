@@ -11,11 +11,18 @@ function rateLimitHeadersMiddleware(req, res, next) {
     function addHeaders(data) {
         // Add rate limit info if available (from rate limiter)
         if (req.rateLimit) {
+            const resetTimeMs = req.rateLimit.resetTime
+                ? new Date(req.rateLimit.resetTime).getTime()
+                : Date.now();
+            const remaining = Number.isFinite(req.rateLimit.remaining)
+                ? req.rateLimit.remaining
+                : Math.max((req.rateLimit.limit || 0) - (req.rateLimit.current || 0), 0);
+
             res.setHeader('RateLimit-Limit', req.rateLimit.limit);
-            res.setHeader('RateLimit-Remaining', req.rateLimit.current);
-            res.setHeader('RateLimit-Reset', new Date(req.rateLimit.resetTime).toUTCString());
+            res.setHeader('RateLimit-Remaining', remaining);
+            res.setHeader('RateLimit-Reset', new Date(resetTimeMs).toUTCString());
             // Alternative Unix timestamp format
-            res.setHeader('X-RateLimit-Reset', Math.ceil(req.rateLimit.resetTime / 1000));
+            res.setHeader('X-RateLimit-Reset', Math.ceil(resetTimeMs / 1000));
         }
         return data;
     }

@@ -247,9 +247,12 @@ function createApp() {
 
     // Default error
     const statusCode = err.statusCode || 500;
+    const isServerError = statusCode >= 500;
+    const errorMessage = isServerError ? 'Internal server error' : (err.message || 'Request failed');
+
     res.status(statusCode).json({
       success: false,
-      error: err.message || 'Internal server error',
+      error: errorMessage,
       ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
     });
   });

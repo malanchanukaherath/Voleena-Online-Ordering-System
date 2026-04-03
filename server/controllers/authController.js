@@ -10,6 +10,9 @@ const {
   verifyRefreshToken
 } = require('../utils/jwtUtils');
 
+const accessTokenFallbackSecret = process.env.JWT_SECRET;
+const refreshTokenFallbackSecret = process.env.JWT_REFRESH_SECRET;
+
 const EMAIL_VERIFICATION_TTL_MINUTES = parseInt(process.env.EMAIL_VERIFICATION_TTL_MINUTES || '30', 10);
 const EMAIL_RESEND_COOLDOWN_SECONDS = parseInt(process.env.EMAIL_RESEND_COOLDOWN_SECONDS || '60', 10);
 const VERIFICATION_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
@@ -18,11 +21,21 @@ const VERIFICATION_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
  * Generate JWT Token with 30-minute expiry
  */
 const generateToken = (payload) => {
-  return generateAccessToken(payload);
+  if (typeof generateAccessToken === 'function') {
+    return generateAccessToken(payload);
+  }
+  return jwt.sign(payload, accessTokenFallbackSecret, {
+    expiresIn: process.env.JWT_EXPIRE || '30m'
+  });
 };
 
 const generateRefreshToken = (payload) => {
-  return generateRefreshJwt(payload);
+  if (typeof generateRefreshJwt === 'function') {
+    return generateRefreshJwt(payload);
+  }
+  return jwt.sign(payload, refreshTokenFallbackSecret, {
+    expiresIn: process.env.JWT_REFRESH_EXPIRE || '7d'
+  });
 };
 
 const hashVerificationToken = (token) => {
@@ -705,7 +718,9 @@ exports.requestPasswordReset = async (req, res) => {
     );
 
     // TODO: Send OTP via email
-    console.log(`Password Reset OTP for ${email}: ${otpCode}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`Password Reset OTP for ${email}: ${otpCode}`);
+    }
 
     return res.json({
       success: true,

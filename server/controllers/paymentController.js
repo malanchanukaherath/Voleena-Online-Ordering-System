@@ -64,7 +64,15 @@ function verifyPayHereSignature(payload) {
     .digest('hex')
     .toUpperCase();
 
-  return localSig === payload.md5sig;
+  const remoteSig = String(payload.md5sig || '').toUpperCase();
+  const localBuffer = Buffer.from(localSig, 'utf8');
+  const remoteBuffer = Buffer.from(remoteSig, 'utf8');
+
+  if (localBuffer.length !== remoteBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(localBuffer, remoteBuffer);
 }
 
 exports.initiatePayment = async (req, res) => {

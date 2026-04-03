@@ -3,11 +3,13 @@ const jwt = require('jsonwebtoken');
 
 const mockCustomer = {
   findOne: jest.fn(),
-  create: jest.fn()
+  create: jest.fn(),
+  update: jest.fn()
 };
 
 const mockStaff = {
-  findOne: jest.fn()
+  findOne: jest.fn(),
+  update: jest.fn()
 };
 
 const mockRole = {};
@@ -35,7 +37,8 @@ jest.mock('../models', () => ({
 }));
 
 jest.mock('bcryptjs', () => ({
-  compare: jest.fn()
+  compare: jest.fn(),
+  hash: jest.fn()
 }));
 
 jest.mock('../services/verificationEmailService', () => ({
@@ -54,6 +57,7 @@ jest.mock('../middleware/rateLimiter', () => {
 
 jest.mock('../utils/jwtUtils', () => ({
   verifyAccessToken: jest.fn((token) => require('jsonwebtoken').verify(token, process.env.JWT_SECRET)),
+  verifyRefreshToken: jest.fn((token) => require('jsonwebtoken').verify(token, process.env.JWT_REFRESH_SECRET)),
   isTokenBlacklisted: jest.fn().mockResolvedValue(false),
   hashToken: jest.fn((token) => `hash:${token}`)
 }));
@@ -139,6 +143,34 @@ describe('auth routes', () => {
     expect(response.body.user.type).toBe('Customer');
   });
 
+  test('uses jwt fallback signing when token utilities are unavailable', async () => {
+    mockCustomer.findOne.mockResolvedValue({
+      CustomerID: 17,
+      Name: 'Fallback User',
+      Email: 'fallback@example.com',
+      Phone: '+94772222222',
+      Password: 'stored-hash',
+      IsEmailVerified: true
+    });
+    bcrypt.compare.mockResolvedValue(true);
+
+    const response = await request(app)
+      .post('/api/v1/auth/customer/login')
+      .send({ email: 'fallback@example.com', password: 'Secret123' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.token).toBeTruthy();
+    expect(response.body.refreshToken).toBeTruthy();
+
+    const decodedAccess = jwt.verify(response.body.token, process.env.JWT_SECRET);
+    const decodedRefresh = jwt.verify(response.body.refreshToken, process.env.JWT_REFRESH_SECRET);
+
+    expect(decodedAccess.email).toBe('fallback@example.com');
+    expect(decodedRefresh.email).toBe('fallback@example.com');
+    expect(decodedAccess.type).toBe('Customer');
+    expect(decodedRefresh.type).toBe('Customer');
+  });
+
   test('requires both access and refresh tokens when refreshing a session', async () => {
     const response = await request(app)
       .post('/api/v1/auth/refresh')
@@ -146,6 +178,35 @@ describe('auth routes', () => {
 
     expect(response.status).toBe(401);
     expect(response.body.error).toMatch(/required/i);
+  });
+
+  test('refreshes session tokens when valid refresh token is provided', async () => {
+    const expiredSoonAccessToken = jwt.sign(
+      { id: 21, email: 'refresh@example.com', role: 'Customer', type: 'Customer' },
+      process.env.JWT_SECRET,
+      { expiresIn: '1m' }
+    );
+    const validRefreshToken = jwt.sign(
+      { id: 21, email: 'refresh@example.com', role: 'Customer', type: 'Customer' },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    const response = await request(app)
+      .post('/api/v1/auth/refresh')
+      .set('Authorization', `Bearer ${expiredSoonAccessToken}`)
+      .send({ refreshToken: validRefreshToken });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.token).toBeTruthy();
+    expect(response.body.refreshToken).toBeTruthy();
+
+    const decodedAccess = jwt.verify(response.body.token, process.env.JWT_SECRET);
+    const decodedRefresh = jwt.verify(response.body.refreshToken, process.env.JWT_REFRESH_SECRET);
+
+    expect(decodedAccess.email).toBe('refresh@example.com');
+    expect(decodedRefresh.email).toBe('refresh@example.com');
   });
 
   test('rejects logout without a bearer token', async () => {
@@ -197,5 +258,71 @@ describe('auth routes', () => {
 
     expect(response.status).toBe(400);
     expect(response.body.code).toBe('INVALID_VERIFICATION_TOKEN');
+  });
+
+  test('handles password reset request for existing customer account', async () => {
+    mockCustomer.findOne.mockResolvedValue({
+      CustomerID: 31,
+      Email: 'reset@example.com',
+      Name: 'Reset User'
+    });
+    mockSequelize.query.mockResolvedValueOnce([{}, 1]);
+
+    const response = await request(app)
+      .post('/api/v1/auth/password-reset/request')
+      .send({ email: 'reset@example.com', userType: 'Customer' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toMatch(/OTP sent/i);
+    expect(response.body._dev_otp).toBeUndefined();
+  });
+
+  test('verifies reset OTP and returns reset token payload', async () => {
+    mockCustomer.findOne.mockResolvedValue({
+      CustomerID: 41,
+      Email: 'otp@example.com'
+    });
+    mockSequelize.query.mockResolvedValueOnce([
+      { OTPID: 77, UserType: 'CUSTOMER', UserID: 41, OTPCode: '123456' }
+    ]);
+
+    const response = await request(app)
+      .post('/api/v1/auth/password-reset/verify-otp')
+      .send({ email: 'otp@example.com', otp: '123456', userType: 'Customer' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.otpId).toBe(77);
+    expect(response.body.resetToken).toMatch(/^[a-f0-9]{64}$/i);
+  });
+
+  test('resets customer password with valid OTP', async () => {
+    mockCustomer.findOne.mockResolvedValue({
+      CustomerID: 52,
+      Email: 'update@example.com'
+    });
+    mockSequelize.query
+      .mockResolvedValueOnce([{ OTPID: 88 }])
+      .mockResolvedValueOnce([{}, 1]);
+    bcrypt.hash.mockResolvedValue('hashed-password-value');
+    mockCustomer.update.mockResolvedValue([1]);
+
+    const response = await request(app)
+      .post('/api/v1/auth/password-reset/reset')
+      .send({
+        email: 'update@example.com',
+        otp: '654321',
+        newPassword: 'NewSecret123',
+        userType: 'Customer'
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.message).toMatch(/Password reset successfully/i);
+    expect(mockCustomer.update).toHaveBeenCalledWith(
+      { Password: 'hashed-password-value' },
+      { where: { CustomerID: 52 }, individualHooks: false }
+    );
   });
 });
