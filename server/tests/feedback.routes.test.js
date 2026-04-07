@@ -48,14 +48,14 @@ describe('feedback routes', () => {
   test('allows customer to submit feedback for own order', async () => {
     setAuthUser({ id: 2, type: 'Customer', role: 'Customer' });
 
-    mockOrder.findOne.mockResolvedValue({ OrderID: 11, CustomerID: 2 });
+    mockOrder.findOne.mockResolvedValue({ OrderID: 11, CustomerID: 2, Status: 'DELIVERED' });
     mockFeedback.findOne.mockResolvedValue(null);
     mockFeedback.create.mockResolvedValue({
       FeedbackID: 91,
       CustomerID: 2,
       OrderID: 11,
       Rating: 4,
-      Comment: 'Very good order',
+      Comment: '{"comment":"Very good order","positiveTags":["Good taste"],"issueTags":[]}',
       FeedbackType: 'ORDER'
     });
 
@@ -64,8 +64,8 @@ describe('feedback routes', () => {
       .send({
         orderId: 11,
         rating: 4,
-        feedbackType: 'ORDER',
-        comment: 'Very good order'
+        comment: 'Very good order',
+        positiveTags: ['Good taste']
       });
 
     expect(response.status).toBe(201);
@@ -79,6 +79,23 @@ describe('feedback routes', () => {
     }));
   });
 
+  test('rejects feedback submission when order is not delivered', async () => {
+    setAuthUser({ id: 2, type: 'Customer', role: 'Customer' });
+
+    mockOrder.findOne.mockResolvedValue({ OrderID: 11, CustomerID: 2, Status: 'READY' });
+
+    const response = await request(app)
+      .post('/api/v1/feedback')
+      .send({
+        orderId: 11,
+        rating: 4,
+        comment: 'Tasty food'
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toMatch(/only be submitted after delivery/i);
+  });
+
   test('rejects feedback submission when order does not belong to customer', async () => {
     setAuthUser({ id: 2, type: 'Customer', role: 'Customer' });
     mockOrder.findOne.mockResolvedValue(null);
@@ -86,9 +103,8 @@ describe('feedback routes', () => {
     const response = await request(app)
       .post('/api/v1/feedback')
       .send({
-        orderNumber: 'VF2604050001',
+        orderId: 11,
         rating: 4,
-        feedbackType: 'ORDER',
         comment: 'Nice'
       });
 
@@ -99,7 +115,7 @@ describe('feedback routes', () => {
   test('rejects duplicate feedback for same customer, order and type', async () => {
     setAuthUser({ id: 2, type: 'Customer', role: 'Customer' });
 
-    mockOrder.findOne.mockResolvedValue({ OrderID: 11, CustomerID: 2 });
+    mockOrder.findOne.mockResolvedValue({ OrderID: 11, CustomerID: 2, Status: 'DELIVERED' });
     mockFeedback.findOne.mockResolvedValue({ FeedbackID: 10 });
 
     const response = await request(app)
@@ -107,12 +123,37 @@ describe('feedback routes', () => {
       .send({
         orderId: 11,
         rating: 5,
-        feedbackType: 'ORDER',
         comment: 'Excellent'
       });
 
     expect(response.status).toBe(409);
     expect(response.body.message).toMatch(/already submitted/i);
+  });
+
+  test('allows optional comment when rating and delivered order are provided', async () => {
+    setAuthUser({ id: 2, type: 'Customer', role: 'Customer' });
+
+    mockOrder.findOne.mockResolvedValue({ OrderID: 11, CustomerID: 2, Status: 'DELIVERED' });
+    mockFeedback.findOne.mockResolvedValue(null);
+    mockFeedback.create.mockResolvedValue({
+      FeedbackID: 99,
+      CustomerID: 2,
+      OrderID: 11,
+      Rating: 5,
+      Comment: '{"comment":"","positiveTags":[],"issueTags":["Late delivery"]}',
+      FeedbackType: 'ORDER'
+    });
+
+    const response = await request(app)
+      .post('/api/v1/feedback')
+      .send({
+        orderId: 11,
+        rating: 5,
+        issueTags: ['Late delivery']
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
   });
 
   test('returns customer feedback list for the authenticated customer only', async () => {
@@ -132,16 +173,16 @@ describe('feedback routes', () => {
     }));
   });
 
-  test('allows admin to list feedback with type filter', async () => {
+  test('allows admin to list order-linked feedback for admins', async () => {
     setAuthUser({ id: 1, type: 'Staff', role: 'Admin' });
-    mockFeedback.findAll.mockResolvedValue([{ FeedbackID: 77, FeedbackType: 'DELIVERY' }]);
+    mockFeedback.findAll.mockResolvedValue([{ FeedbackID: 77, FeedbackType: 'ORDER' }]);
 
-    const response = await request(app).get('/api/v1/feedback/admin?type=DELIVERY');
+    const response = await request(app).get('/api/v1/feedback/admin');
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
     expect(mockFeedback.findAll).toHaveBeenCalledWith(expect.objectContaining({
-      where: { FeedbackType: 'DELIVERY' }
+      where: { FeedbackType: 'ORDER' }
     }));
   });
 

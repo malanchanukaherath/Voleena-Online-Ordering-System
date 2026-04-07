@@ -1,15 +1,66 @@
 const { Feedback, Order, Customer, Staff } = require('../models');
 
-const normalizeFeedbackType = (value) => {
-    const type = String(value || 'ORDER').trim().toUpperCase();
-    if (['ORDER', 'DELIVERY', 'GENERAL'].includes(type)) {
-        return type;
-    }
-    return 'ORDER';
-};
-
 const getFeedbackErrorMessage = (error, fallback) => {
     return error?.message || error?.original?.sqlMessage || fallback;
+};
+
+const ALLOWED_POSITIVE_TAGS = ['Good taste', 'Fast delivery'];
+const ALLOWED_ISSUE_TAGS = ['Late delivery', 'Wrong item', 'Poor packaging'];
+
+const sanitizeTagArray = (value, allowed) => {
+    if (!Array.isArray(value)) {
+        return [];
+    }
+
+    const unique = [...new Set(value.map((tag) => String(tag || '').trim()))];
+    return unique.filter((tag) => allowed.includes(tag));
+};
+
+const encodeFeedbackPayload = ({ comment, positiveTags, issueTags }) => {
+    return JSON.stringify({
+        comment: String(comment || '').trim(),
+        positiveTags: sanitizeTagArray(positiveTags, ALLOWED_POSITIVE_TAGS),
+        issueTags: sanitizeTagArray(issueTags, ALLOWED_ISSUE_TAGS)
+    });
+};
+
+const decodeFeedbackPayload = (rawComment) => {
+    const fallback = {
+        comment: rawComment || '',
+        positiveTags: [],
+        issueTags: []
+    };
+
+    if (!rawComment || typeof rawComment !== 'string') {
+        return fallback;
+    }
+
+    try {
+        const parsed = JSON.parse(rawComment);
+        if (!parsed || typeof parsed !== 'object') {
+            return fallback;
+        }
+
+        return {
+            comment: String(parsed.comment || ''),
+            positiveTags: sanitizeTagArray(parsed.positiveTags, ALLOWED_POSITIVE_TAGS),
+            issueTags: sanitizeTagArray(parsed.issueTags, ALLOWED_ISSUE_TAGS)
+        };
+    } catch {
+        return fallback;
+    }
+};
+
+const toResponseFeedback = (record) => {
+    const plain = record?.get ? record.get({ plain: true }) : record;
+    const decoded = decodeFeedbackPayload(plain.Comment);
+
+    return {
+        ...plain,
+        Comment: decoded.comment,
+        PositiveTags: decoded.positiveTags,
+        IssueTags: decoded.issueTags
+    };
 };
 
 exports.submitFeedback = async (req, res) => {
@@ -17,9 +68,10 @@ exports.submitFeedback = async (req, res) => {
         const customerId = req.user.id;
         const rating = Number.parseInt(req.body.rating, 10);
         const comment = String(req.body.comment || '').trim();
-        const feedbackType = normalizeFeedbackType(req.body.feedbackType || req.body.feedback_type);
         const providedOrderId = req.body.orderId || req.body.order_id;
-        const providedOrderNumber = String(req.body.orderNumber || req.body.order_number || '').trim();
+        const positiveTags = sanitizeTagArray(req.body.positiveTags, ALLOWED_POSITIVE_TAGS);
+        const issueTags = sanitizeTagArray(req.body.issueTags, ALLOWED_ISSUE_TAGS);
+        const feedbackType = 'ORDER';
 
         if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
             return res.status(400).json({
@@ -28,60 +80,53 @@ exports.submitFeedback = async (req, res) => {
             });
         }
 
-        if (!comment) {
+        const orderId = Number.parseInt(providedOrderId, 10);
+        if (!Number.isInteger(orderId) || orderId < 1) {
             return res.status(400).json({
                 success: false,
-                message: 'Feedback comment is required'
+                message: 'Order ID is required'
             });
         }
 
-        let order = null;
-        const requireOrderLink = feedbackType === 'ORDER' || feedbackType === 'DELIVERY';
-
-        if (providedOrderId || providedOrderNumber || requireOrderLink) {
-            const orderWhere = {
+        const order = await Order.findOne({
+            where: {
+                OrderID: orderId,
                 CustomerID: customerId
-            };
-
-            if (providedOrderId) {
-                orderWhere.OrderID = Number.parseInt(providedOrderId, 10);
-            } else if (providedOrderNumber) {
-                orderWhere.OrderNumber = providedOrderNumber;
-            } else {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Order ID or order number is required for order or delivery feedback'
-                });
             }
+        });
 
-            order = await Order.findOne({ where: orderWhere });
-
-            if (!order) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Order not found for this customer'
-                });
-            }
-
-            const existing = await Feedback.findOne({
-                where: {
-                    CustomerID: customerId,
-                    OrderID: order.OrderID,
-                    FeedbackType: feedbackType
-                }
+        if (!order) {
+            return res.status(403).json({
+                success: false,
+                message: 'Order not found for this customer'
             });
+        }
 
-            if (existing) {
-                return res.status(409).json({
-                    success: false,
-                    message: 'Feedback already submitted for this order and type'
-                });
+        if (order.Status !== 'DELIVERED') {
+            return res.status(400).json({
+                success: false,
+                message: 'Feedback can only be submitted after delivery'
+            });
+        }
+
+        const existing = await Feedback.findOne({
+            where: {
+                CustomerID: customerId,
+                OrderID: order.OrderID,
+                FeedbackType: feedbackType
             }
+        });
+
+        if (existing) {
+            return res.status(409).json({
+                success: false,
+                message: 'Feedback already submitted for this order'
+            });
         }
 
         const feedback = await Feedback.create({
             Rating: rating,
-            Comment: comment,
+            Comment: encodeFeedbackPayload({ comment, positiveTags, issueTags }),
             CustomerID: customerId,
             OrderID: order?.OrderID || null,
             FeedbackType: feedbackType
@@ -90,7 +135,7 @@ exports.submitFeedback = async (req, res) => {
         return res.status(201).json({
             success: true,
             message: 'Feedback submitted successfully',
-            data: feedback
+            data: toResponseFeedback(feedback)
         });
     } catch (error) {
         console.error('Submit feedback error:', error);
@@ -124,7 +169,7 @@ exports.getMyFeedback = async (req, res) => {
 
         return res.json({
             success: true,
-            data: feedbackList
+            data: feedbackList.map(toResponseFeedback)
         });
     } catch (error) {
         console.error('Get my feedback error:', error);
@@ -137,11 +182,8 @@ exports.getMyFeedback = async (req, res) => {
 
 exports.getAdminFeedback = async (req, res) => {
     try {
-        const feedbackType = req.query.type ? normalizeFeedbackType(req.query.type) : null;
-        const where = feedbackType ? { FeedbackType: feedbackType } : {};
-
         const feedbackList = await Feedback.findAll({
-            where,
+            where: { FeedbackType: 'ORDER' },
             include: [
                 {
                     model: Customer,
@@ -164,7 +206,7 @@ exports.getAdminFeedback = async (req, res) => {
 
         return res.json({
             success: true,
-            data: feedbackList
+            data: feedbackList.map(toResponseFeedback)
         });
     } catch (error) {
         console.error('Get admin feedback error:', error);
@@ -219,7 +261,7 @@ exports.respondToFeedback = async (req, res) => {
         return res.json({
             success: true,
             message: 'Feedback response saved successfully',
-            data: refreshed
+            data: toResponseFeedback(refreshed)
         });
     } catch (error) {
         console.error('Respond to feedback error:', error);

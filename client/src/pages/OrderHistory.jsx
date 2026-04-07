@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FaEye, FaRedo } from 'react-icons/fa';
+import { FaEye, FaRedo, FaComments } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
 import Select from '../components/ui/Select';
 import EmptyState from '../components/ui/EmptyState';
@@ -150,13 +150,21 @@ const OrderHistory = () => {
                                         </Button>
                                     </Link>
                                     {order.status === 'DELIVERED' && (
-                                        <Button
-                                            size="sm"
-                                            onClick={() => handleReorder(order.id)}
-                                        >
-                                            <FaRedo className="inline mr-2" />
-                                            Reorder
-                                        </Button>
+                                        <>
+                                            <Link to={`/feedback?orderId=${order.id}`}>
+                                                <Button size="sm" variant="outline">
+                                                    <FaComments className="inline mr-2" />
+                                                    Leave Feedback
+                                                </Button>
+                                            </Link>
+                                            <Button
+                                                size="sm"
+                                                onClick={() => handleReorder(order.id)}
+                                            >
+                                                <FaRedo className="inline mr-2" />
+                                                Reorder
+                                            </Button>
+                                        </>
                                     )}
                                 </div>
                             </div>

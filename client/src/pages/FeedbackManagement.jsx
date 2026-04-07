@@ -1,13 +1,10 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { FaStar, FaReply } from 'react-icons/fa';
-import Select from '../components/ui/Select';
-import FilterResetButton from '../components/ui/FilterResetButton';
 import Textarea from '../components/ui/Textarea';
 import Button from '../components/ui/Button';
 import { getAdminFeedback, respondToFeedback } from '../services/feedbackService';
 
 const FeedbackManagement = () => {
-    const [typeFilter, setTypeFilter] = useState('');
     const [feedbacks, setFeedbacks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [errorMessage, setErrorMessage] = useState('');
@@ -15,11 +12,11 @@ const FeedbackManagement = () => {
     const [responseDraft, setResponseDraft] = useState('');
     const [isSubmittingResponse, setIsSubmittingResponse] = useState(false);
 
-    const loadFeedback = async (type = '') => {
+    const loadFeedback = async () => {
         try {
             setIsLoading(true);
             setErrorMessage('');
-            const response = await getAdminFeedback(type ? { type } : {});
+            const response = await getAdminFeedback();
             setFeedbacks(Array.isArray(response.data?.data) ? response.data.data : []);
         } catch (error) {
             const message = error?.response?.data?.message || error?.response?.data?.error || 'Failed to load feedback records';
@@ -30,18 +27,12 @@ const FeedbackManagement = () => {
     };
 
     useEffect(() => {
-        loadFeedback(typeFilter);
-    }, [typeFilter]);
+        loadFeedback();
+    }, []);
 
     const filteredFeedback = useMemo(() => {
         return feedbacks;
     }, [feedbacks]);
-    const hasActiveFilters = Boolean(typeFilter);
-
-    const clearFilters = () => {
-        setTypeFilter('');
-    };
-
     const renderStars = (rating) => {
         return [...Array(5)].map((_, i) => (
             <FaStar key={i} className={`inline w-4 h-4 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`} />
@@ -70,7 +61,7 @@ const FeedbackManagement = () => {
             await respondToFeedback(feedbackId, responseDraft.trim());
             setExpandedResponseId(null);
             setResponseDraft('');
-            await loadFeedback(typeFilter);
+            await loadFeedback();
         } catch (error) {
             const message = error?.response?.data?.message || error?.response?.data?.error || 'Failed to save response';
             setErrorMessage(message);
@@ -83,26 +74,7 @@ const FeedbackManagement = () => {
         <div className="p-6">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold mb-2">Feedback Management</h1>
-                <p className="text-gray-600">View and respond to customer feedback</p>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-4 mb-6">
-                <div className="flex flex-col gap-4 md:flex-row md:items-end">
-                    <div className="w-full md:max-w-xs">
-                        <Select
-                            label="Filter by Type"
-                            value={typeFilter}
-                            onChange={(e) => setTypeFilter(e.target.value)}
-                            options={[
-                                { value: '', label: 'All Feedback' },
-                                { value: 'ORDER', label: 'Order Experience' },
-                                { value: 'DELIVERY', label: 'Delivery Service' },
-                                { value: 'GENERAL', label: 'General Feedback' },
-                            ]}
-                        />
-                    </div>
-                    <FilterResetButton onClick={clearFilters} disabled={!hasActiveFilters} />
-                </div>
+                <p className="text-gray-600">View and respond to delivered order feedback</p>
             </div>
 
             {errorMessage && (
@@ -120,10 +92,7 @@ const FeedbackManagement = () => {
 
                 {filteredFeedback.length === 0 ? (
                     <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500">
-                        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                            <span>{hasActiveFilters ? 'No feedback matches the selected filter.' : 'No feedback records available yet.'}</span>
-                            {hasActiveFilters && <FilterResetButton onClick={clearFilters} />}
-                        </div>
+                        No feedback records available yet.
                     </div>
                 ) : !isLoading && filteredFeedback.map(feedback => (
                     <div key={feedback.FeedbackID} className={`bg-white rounded-lg shadow p-6 ${!feedback.AdminResponse ? 'border-l-4 border-yellow-400' : ''}`}>
@@ -159,6 +128,31 @@ const FeedbackManagement = () => {
                             </div>
                         </div>
                         <p className="text-gray-700">{feedback.Comment || 'No comment provided.'}</p>
+
+                        {(feedback.PositiveTags?.length > 0 || feedback.IssueTags?.length > 0) && (
+                            <div className="mt-3 space-y-2">
+                                {feedback.PositiveTags?.length > 0 && (
+                                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                                        <span className="font-medium text-green-700">Likes:</span>
+                                        {feedback.PositiveTags.map((tag) => (
+                                            <span key={`${feedback.FeedbackID}-pos-${tag}`} className="rounded-full bg-green-100 px-2 py-1 text-green-700">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                                {feedback.IssueTags?.length > 0 && (
+                                    <div className="flex flex-wrap items-center gap-2 text-xs">
+                                        <span className="font-medium text-red-700">Issues:</span>
+                                        {feedback.IssueTags.map((tag) => (
+                                            <span key={`${feedback.FeedbackID}-issue-${tag}`} className="rounded-full bg-red-100 px-2 py-1 text-red-700">
+                                                {tag}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {expandedResponseId === feedback.FeedbackID && !feedback.AdminResponse && (
                             <div className="mt-4">

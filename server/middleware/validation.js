@@ -291,28 +291,35 @@ const validatePasswordReset = [
  * Validation rules for feedback submission
  */
 const validateFeedbackSubmission = [
+    body('orderId')
+        .notEmpty().withMessage('Order ID is required')
+        .isInt({ min: 1 }).withMessage('Invalid order ID'),
+
     body('rating')
         .notEmpty().withMessage('Rating is required')
         .isInt({ min: 1, max: 5 }).withMessage('Rating must be between 1 and 5'),
 
     body('comment')
-        .notEmpty().withMessage('Comment is required')
+        .optional()
         .trim()
         .isLength({ max: 1000 }).withMessage('Comment must not exceed 1000 characters')
         .matches(/^[a-zA-Z0-9\s.,!?'"-]*$/).withMessage('Comment contains invalid characters'),
 
-    body('orderId')
+    body('positiveTags')
         .optional()
-        .isInt({ min: 1 }).withMessage('Invalid order ID'),
+        .isArray({ max: 10 }).withMessage('Positive tags must be an array'),
 
-    body('orderNumber')
+    body('positiveTags.*')
         .optional()
-        .trim()
-        .isLength({ min: 4, max: 25 }).withMessage('Order number must be between 4 and 25 characters'),
+        .isIn(['Good taste', 'Fast delivery']).withMessage('Invalid positive tag'),
 
-    body('feedbackType')
+    body('issueTags')
         .optional()
-        .isIn(['ORDER', 'DELIVERY', 'GENERAL']).withMessage('Invalid feedback type'),
+        .isArray({ max: 10 }).withMessage('Issue tags must be an array'),
+
+    body('issueTags.*')
+        .optional()
+        .isIn(['Late delivery', 'Wrong item', 'Poor packaging']).withMessage('Invalid issue tag'),
 
     handleValidationErrors
 ];
