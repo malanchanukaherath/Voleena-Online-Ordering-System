@@ -65,6 +65,9 @@ export const getOrderById = async (orderId) => {
 };
 
 export const cancelOrder = async (orderId, reason) => {
-  return backendApi.delete(`/api/v1/orders/${orderId}`, { data: { reason } });
+  return backendApi.delete(`/api/v1/orders/${orderId}`, {
+    data: { reason },
+    timeout: 30000
+  });
 };
 

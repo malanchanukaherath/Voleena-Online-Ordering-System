@@ -16,6 +16,41 @@ const OrderTracking = () => {
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
+    const [isCancelling, setIsCancelling] = useState(false);
+
+    const mapOrderData = (data = {}) => ({
+        id: data.OrderID,
+        orderNumber: data.OrderNumber,
+        status: data.Status,
+        orderType: data.OrderType,
+        paymentMethod: data.payment?.Method || 'CASH',
+        paymentStatus: data.payment?.Status || null,
+        customer: {
+            name: data.customer?.Name || 'Customer',
+            phone: data.customer?.Phone || ''
+        },
+        deliveryAddress: data.delivery?.address ? {
+            line1: data.delivery.address.AddressLine1,
+            city: data.delivery.address.City,
+            district: data.delivery.address.District || '',
+            latitude: data.delivery.address.latitude,
+            longitude: data.delivery.address.longitude
+        } : null,
+        deliveryPerson: data.delivery?.staff ? {
+            name: data.delivery.staff.Name,
+            phone: data.delivery.staff.Phone
+        } : null,
+        placedAt: data.CreatedAt,
+        completedAt: data.CompletedAt || data.completedAt,
+        deliveredAt: data.delivery?.DeliveredAt || data.delivery?.deliveredAt,
+        cancelledAt: data.CancelledAt || data.cancelledAt || null,
+        items: (data.items || []).map((item) => ({
+            name: item.menuItem?.Name || item.combo?.Name || 'Item',
+            quantity: item.Quantity,
+            price: parseFloat(item.UnitPrice || 0)
+        })),
+        total: parseFloat(data.FinalAmount || data.TotalAmount || 0)
+    });
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -23,39 +58,7 @@ const OrderTracking = () => {
                 const response = await getOrderById(orderId);
                 const data = response.data?.data;
                 if (!data) return;
-
-                setOrder({
-                    id: data.OrderID,
-                    orderNumber: data.OrderNumber,
-                    status: data.Status,
-                    orderType: data.OrderType,
-                    paymentMethod: data.payment?.Method || 'CASH',
-                    paymentStatus: data.payment?.Status || null,
-                    customer: {
-                        name: data.customer?.Name || 'Customer',
-                        phone: data.customer?.Phone || ''
-                    },
-                    deliveryAddress: data.delivery?.address ? {
-                        line1: data.delivery.address.AddressLine1,
-                        city: data.delivery.address.City,
-                        district: data.delivery.address.District || '',
-                        latitude: data.delivery.address.latitude,
-                        longitude: data.delivery.address.longitude
-                    } : null,
-                    deliveryPerson: data.delivery?.staff ? {
-                        name: data.delivery.staff.Name,
-                        phone: data.delivery.staff.Phone
-                    } : null,
-                    placedAt: data.CreatedAt,
-                    completedAt: data.CompletedAt || data.completedAt,
-                    deliveredAt: data.delivery?.DeliveredAt || data.delivery?.deliveredAt,
-                    items: (data.items || []).map((item) => ({
-                        name: item.menuItem?.Name || item.combo?.Name || 'Item',
-                        quantity: item.Quantity,
-                        price: parseFloat(item.UnitPrice || 0)
-                    })),
-                    total: parseFloat(data.FinalAmount || data.TotalAmount || 0)
-                });
+                setOrder(mapOrderData(data));
             } catch (error) {
                 console.error('Failed to load order:', error);
             }
@@ -89,9 +92,23 @@ const OrderTracking = () => {
     };
 
     const handleCancelOrder = async () => {
+        setIsCancelling(true);
         try {
             await cancelOrder(order.id, 'Cancelled by customer');
-            setOrder((prev) => ({ ...prev, status: 'CANCELLED', cancelledAt: new Date().toISOString() }));
+
+            // Force immediate refresh so customer sees server-confirmed status without waiting for poll.
+            try {
+                const refreshed = await getOrderById(order.id);
+                const refreshedData = refreshed.data?.data;
+                if (refreshedData) {
+                    setOrder(mapOrderData(refreshedData));
+                } else {
+                    setOrder((prev) => ({ ...prev, status: 'CANCELLED', cancelledAt: new Date().toISOString() }));
+                }
+            } catch {
+                setOrder((prev) => ({ ...prev, status: 'CANCELLED', cancelledAt: new Date().toISOString() }));
+            }
+
             const isCashOnDelivery = order.paymentMethod === 'CASH';
             setToastMessage(
                 isCashOnDelivery
@@ -101,10 +118,16 @@ const OrderTracking = () => {
             setToastType('success');
             setShowToast(true);
         } catch (error) {
-            setToastMessage(error.message || 'Failed to cancel order');
-            setToastType('error');
+            if (error?.code === 'ECONNABORTED') {
+                setToastMessage('Cancellation is taking longer than expected. Please wait a moment; status will refresh automatically.');
+                setToastType('warning');
+            } else {
+                setToastMessage(error?.response?.data?.message || error.message || 'Failed to cancel order');
+                setToastType('error');
+            }
             setShowToast(true);
         } finally {
+            setIsCancelling(false);
             setShowCancelModal(false);
         }
     };
@@ -230,34 +253,25 @@ const OrderTracking = () => {
                     </div>
 
                     {/* Cancellation Section */}
-                    {order.status !== 'CANCELLED' && (
+                    {canCancelOrder() && (
                         <div className="bg-white rounded-lg shadow p-6">
                             <h3 className="text-lg font-semibold mb-4">Order Cancellation</h3>
 
-                            {canCancelOrder() ? (
-                                <div className="space-y-4">
-                                    <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-                                        <p className="text-sm text-yellow-800">
-                                            You can cancel this order before preparation starts.
-                                        </p>
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setShowCancelModal(true)}
-                                        className="text-red-600 border-red-600 hover:bg-red-50 w-full"
-                                    >
-                                        <FaBan className="inline mr-2" />
-                                        Cancel Order
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="bg-gray-50 border border-gray-200 rounded p-4">
-                                    <p className="text-sm text-gray-700">
-                                        <FaBan className="inline mr-2 text-gray-500" />
-                                        {getCancellationReason()}
+                            <div className="space-y-4">
+                                <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                                    <p className="text-sm text-yellow-800">
+                                        You can cancel this order before preparation starts.
                                     </p>
                                 </div>
-                            )}
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setShowCancelModal(true)}
+                                    className="text-red-600 border-red-600 hover:bg-red-50 w-full"
+                                >
+                                    <FaBan className="inline mr-2" />
+                                    Cancel Order
+                                </Button>
+                            </div>
                         </div>
                     )}
 
@@ -445,8 +459,10 @@ const OrderTracking = () => {
                             <Button
                                 onClick={handleCancelOrder}
                                 className="flex-1 bg-red-600 hover:bg-red-700"
+                                loading={isCancelling}
+                                disabled={isCancelling}
                             >
-                                Yes, Cancel Order
+                                {isCancelling ? 'Cancelling...' : 'Yes, Cancel Order'}
                             </Button>
                             <Button
                                 variant="outline"

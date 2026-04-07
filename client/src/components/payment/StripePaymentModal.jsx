@@ -120,6 +120,16 @@ const StripePaymentForm = ({ clientSecret, total, billingDetails, onSuccess, onC
                 </div>
             )}
 
+            {/* Test Card Info */}
+            {import.meta.env.DEV && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
+                    <p className="font-semibold mb-1">Test Card (Sandbox):</p>
+                    <p className="font-mono text-xs mb-1">Card: 4242 4242 4242 4242</p>
+                    <p className="font-mono text-xs mb-1">Expiry: 12/25 (any future date)</p>
+                    <p className="font-mono text-xs">CVC: 123 (any 3 digits)</p>
+                </div>
+            )}
+
             {/* Buttons */}
             <div className="flex gap-3">
                 <button

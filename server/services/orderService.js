@@ -124,6 +124,7 @@ class OrderService {
 
             // Validate delivery distance if delivery order (FR09)
             let deliveryDistance = 0;
+            let validatedAddressId = null;
             if (orderType === 'DELIVERY') {
                 if (!addressId) {
                     throw new Error('Address is required for delivery orders');
@@ -132,18 +133,29 @@ class OrderService {
                 const { Address } = require('../models');
                 let address;
                 try {
-                    address = await Address.findByPk(addressId);
+                    address = await Address.findOne({
+                        where: {
+                            AddressID: addressId,
+                            CustomerID: customerId
+                        },
+                        transaction,
+                        lock: transaction.LOCK.UPDATE
+                    });
                 } catch (error) {
                     throw markAddressUnavailableError(error);
                 }
 
-                if (!address || !address.Latitude || !address.Longitude) {
+                if (!address) {
+                    throw new Error('Delivery address not found for this customer');
+                }
+
+                if (!Number.isFinite(Number(address.Latitude)) || !Number.isFinite(Number(address.Longitude))) {
                     throw new Error('Address coordinates are required for delivery validation');
                 }
 
                 const distanceValidation = await validateDeliveryDistanceWithFallback(
-                    address.Latitude,
-                    address.Longitude
+                    Number(address.Latitude),
+                    Number(address.Longitude)
                 );
 
                 if (!distanceValidation.isValid) {
@@ -154,6 +166,7 @@ class OrderService {
 
                 // Store the validated distance for fee calculation
                 deliveryDistance = distanceValidation.distance;
+                validatedAddressId = address.AddressID;
             }
 
             // Calculate order totals
@@ -255,24 +268,11 @@ class OrderService {
 
             // Create delivery record if delivery order
             if (orderType === 'DELIVERY') {
-                const { Address } = require('../models');
-                let address;
-                try {
-                    address = await Address.findByPk(addressId);
-                } catch (error) {
-                    throw markAddressUnavailableError(error);
-                }
-
-                const distanceValidation = await validateDeliveryDistanceWithFallback(
-                    address.Latitude,
-                    address.Longitude
-                );
-
                 await Delivery.create({
                     OrderID: order.OrderID,
-                    AddressID: addressId,
+                    AddressID: validatedAddressId,
                     Status: 'PENDING',
-                    DistanceKm: distanceValidation.distance
+                    DistanceKm: deliveryDistance
                 }, { transaction });
             }
 
