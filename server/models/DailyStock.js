@@ -77,8 +77,8 @@ module.exports = (sequelize) => {
         indexes: [
             {
                 unique: true,
-                fields: ['MenuItemID', 'StockDate'],
-                name: 'unique_item_day'
+                fields: ['menu_item_id', 'stock_date'],
+                name: 'uk_item_date'
             }
         ]
     });

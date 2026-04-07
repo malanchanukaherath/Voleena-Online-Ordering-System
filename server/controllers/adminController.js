@@ -16,6 +16,41 @@ const {
 const bcrypt = require('bcryptjs');
 const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 
+const parseAnalyticsDateRange = (query) => {
+  const hasCustomRange = Boolean(query.startDate || query.endDate);
+
+  if (hasCustomRange) {
+    if (!query.startDate || !query.endDate) {
+      return { error: 'Both startDate and endDate are required for custom range' };
+    }
+
+    const startDate = new Date(query.startDate);
+    const endDate = new Date(query.endDate);
+
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+      return { error: 'Invalid startDate or endDate format' };
+    }
+
+    if (endDate < startDate) {
+      return { error: 'endDate must be greater than or equal to startDate' };
+    }
+
+    return { startDate, endDate };
+  }
+
+  const year = parseInt(query.year, 10);
+  const month = parseInt(query.month, 10);
+
+  if (!year || !month || Number.isNaN(year) || Number.isNaN(month) || month < 1 || month > 12 || year < 2000 || year > 2100) {
+    return { error: 'Valid year and month (1-12) are required when custom range is not provided' };
+  }
+
+  return {
+    startDate: new Date(year, month - 1, 1, 0, 0, 0, 0),
+    endDate: new Date(year, month, 0, 23, 59, 59, 999)
+  };
+};
+
 /**
  * Get dashboard statistics
  */
@@ -115,15 +150,11 @@ exports.getDashboardStats = async (req, res) => {
  */
 exports.getMonthlySalesReport = async (req, res) => {
   try {
-    const year = parseInt(req.query.year, 10);
-    const month = parseInt(req.query.month, 10);
-
-    if (!year || !month || isNaN(year) || isNaN(month) || month < 1 || month > 12 || year < 2000 || year > 2100) {
-      return res.status(400).json({ error: 'Valid year and month (1-12) are required' });
+    const range = parseAnalyticsDateRange(req.query);
+    if (range.error) {
+      return res.status(400).json({ error: range.error });
     }
-
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 0, 23, 59, 59);
+    const { startDate, endDate } = range;
 
     const salesData = await sequelize.query(`
       SELECT 
@@ -158,6 +189,25 @@ exports.getBestSellingItems = async (req, res) => {
     const { limit = 10, startDate, endDate } = req.query;
     const limitNum = Math.min(parseInt(limit) || 10, 100); // Safety limit
 
+    if ((startDate && !endDate) || (!startDate && endDate)) {
+      return res.status(400).json({ error: 'Both startDate and endDate are required when filtering by range' });
+    }
+
+    let normalizedStartDate = null;
+    let normalizedEndDate = null;
+    if (startDate && endDate) {
+      normalizedStartDate = new Date(startDate);
+      normalizedEndDate = new Date(endDate);
+
+      if (Number.isNaN(normalizedStartDate.getTime()) || Number.isNaN(normalizedEndDate.getTime())) {
+        return res.status(400).json({ error: 'Invalid startDate or endDate format' });
+      }
+
+      if (normalizedEndDate < normalizedStartDate) {
+        return res.status(400).json({ error: 'endDate must be greater than or equal to startDate' });
+      }
+    }
+
     let query = `
       SELECT 
         m.menu_item_id AS MenuItemID,
@@ -166,17 +216,18 @@ exports.getBestSellingItems = async (req, res) => {
         COUNT(oi.order_item_id) as totalSold,
         COALESCE(SUM(oi.quantity), 0) as totalQuantity,
         COALESCE(SUM(oi.subtotal), 0) as totalRevenue
-      FROM \`menu_item\` m
+      FROM \`order_item\` oi
+      INNER JOIN \`order\` o ON oi.order_id = o.order_id
+      INNER JOIN \`menu_item\` m ON m.menu_item_id = oi.menu_item_id
       LEFT JOIN \`category\` c ON m.category_id = c.category_id
-      LEFT JOIN \`order_item\` oi ON m.menu_item_id = oi.menu_item_id
-      LEFT JOIN \`order\` o ON oi.order_id = o.order_id
+      WHERE o.status != 'CANCELLED'
     `;
 
     const replacements = [];
 
-    if (startDate && endDate) {
-      query += 'WHERE o.created_at BETWEEN ? AND ? ';
-      replacements.push(startDate, endDate);
+    if (normalizedStartDate && normalizedEndDate) {
+      query += ' AND o.created_at BETWEEN ? AND ? ';
+      replacements.push(normalizedStartDate, normalizedEndDate);
     }
 
     query += `
@@ -198,6 +249,59 @@ exports.getBestSellingItems = async (req, res) => {
   } catch (error) {
     console.error('Best selling items error:', error);
     return res.status(500).json({ error: 'Failed to fetch best-selling items' });
+  }
+};
+
+/**
+ * Get customer retention report for selected date range
+ */
+exports.getCustomerRetentionReport = async (req, res) => {
+  try {
+    const range = parseAnalyticsDateRange(req.query);
+    if (range.error) {
+      return res.status(400).json({ error: range.error });
+    }
+
+    const { startDate, endDate } = range;
+
+    const [result] = await sequelize.query(`
+      SELECT
+        COUNT(*) AS totalCustomers,
+        SUM(CASE WHEN customerOrders.orderCount >= 2 THEN 1 ELSE 0 END) AS retainedCustomers
+      FROM (
+        SELECT
+          o.customer_id AS customerId,
+          COUNT(*) AS orderCount
+        FROM \`order\` o
+        WHERE o.customer_id IS NOT NULL
+          AND o.status = 'DELIVERED'
+          AND o.created_at BETWEEN ? AND ?
+        GROUP BY o.customer_id
+      ) AS customerOrders
+    `, {
+      replacements: [startDate, endDate],
+      type: sequelize.QueryTypes.SELECT
+    });
+
+    const totalCustomers = Number(result?.totalCustomers || 0);
+    const retainedCustomers = Number(result?.retainedCustomers || 0);
+    const retentionRate = totalCustomers > 0
+      ? Number(((retainedCustomers / totalCustomers) * 100).toFixed(2))
+      : 0;
+
+    return res.json({
+      success: true,
+      data: {
+        totalCustomers,
+        retainedCustomers,
+        retentionRate,
+        startDate,
+        endDate
+      }
+    });
+  } catch (error) {
+    console.error('Customer retention report error:', error);
+    return res.status(500).json({ error: 'Failed to fetch customer retention report' });
   }
 };
 

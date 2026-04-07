@@ -38,20 +38,52 @@ class AdminService {
     return handleResponse(response);
   }
 
-  async getMonthlySalesReport(year, month) {
+  async getSalesReport(params = {}) {
+    const query = new URLSearchParams();
+
+    if (params.startDate && params.endDate) {
+      query.set('startDate', params.startDate);
+      query.set('endDate', params.endDate);
+    } else {
+      query.set('year', String(params.year));
+      query.set('month', String(params.month));
+    }
+
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/admin/reports/monthly-sales?year=${year}&month=${month}`,
+      `${API_BASE_URL}/api/v1/admin/reports/monthly-sales?${query.toString()}`,
       { headers: getAuthHeaders() }
     );
     return handleResponse(response);
   }
 
+  async getMonthlySalesReport(year, month) {
+    return this.getSalesReport({ year, month });
+  }
+
   async getBestSellingItems(limit = 10, startDate, endDate) {
-    let url = `${API_BASE_URL}/api/v1/admin/reports/best-selling?limit=${limit}`;
+    let url = `${API_BASE_URL}/api/v1/admin/reports/best-selling?limit=${encodeURIComponent(limit)}`;
     if (startDate && endDate) {
-      url += `&startDate=${startDate}&endDate=${endDate}`;
+      url += `&startDate=${encodeURIComponent(startDate)}&endDate=${encodeURIComponent(endDate)}`;
     }
     const response = await fetch(url, { headers: getAuthHeaders() });
+    return handleResponse(response);
+  }
+
+  async getCustomerRetention(params = {}) {
+    const query = new URLSearchParams();
+
+    if (params.startDate && params.endDate) {
+      query.set('startDate', params.startDate);
+      query.set('endDate', params.endDate);
+    } else {
+      query.set('year', String(params.year));
+      query.set('month', String(params.month));
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/admin/reports/customer-retention?${query.toString()}`,
+      { headers: getAuthHeaders() }
+    );
     return handleResponse(response);
   }
 

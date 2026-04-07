@@ -13,6 +13,7 @@ router.use(requireAdmin);
 router.get('/dashboard/stats', adminController.getDashboardStats);
 router.get('/reports/monthly-sales', adminController.getMonthlySalesReport);
 router.get('/reports/best-selling', adminController.getBestSellingItems);
+router.get('/reports/customer-retention', adminController.getCustomerRetentionReport);
 
 /**
  * Staff Management
