@@ -12,6 +12,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
         addressLine1: '',
         addressLine2: '',
         city: '',
+        district: '',
         postalCode: '',
     });
     const [errors, setErrors] = useState({});
@@ -42,6 +43,18 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
             newErrors.email = 'Invalid email format';
         }
 
+        const hasAddressLine1 = !!formData.addressLine1.trim();
+        const hasCity = !!formData.city.trim();
+
+        if (hasAddressLine1 !== hasCity) {
+            if (!hasAddressLine1) {
+                newErrors.addressLine1 = 'Address line 1 is required when city is provided';
+            }
+            if (!hasCity) {
+                newErrors.city = 'City is required when address line 1 is provided';
+            }
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -68,6 +81,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                     addressLine1: formData.addressLine1,
                     addressLine2: formData.addressLine2 || null,
                     city: formData.city,
+                    district: formData.district || null,
                     postalCode: formData.postalCode || null,
                 };
             }
@@ -83,6 +97,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                 addressLine1: '',
                 addressLine2: '',
                 city: '',
+                district: '',
                 postalCode: '',
             });
             setErrors({});
@@ -215,6 +230,20 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                                 <Input
                                     name="city"
                                     value={formData.city}
+                                    onChange={handleChange}
+                                    placeholder="Colombo"
+                                    error={errors.city}
+                                    disabled={loading}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    District
+                                </label>
+                                <Input
+                                    name="district"
+                                    value={formData.district}
                                     onChange={handleChange}
                                     placeholder="Colombo"
                                     disabled={loading}

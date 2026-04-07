@@ -10,7 +10,8 @@ import {
     updateCustomerProfile,
     changeCustomerPassword,
     getCustomerAddresses,
-    createCustomerAddress
+    createCustomerAddress,
+    deleteCustomerAddress
 } from '../services/profileService';
 
 const NOTIFICATION_OPTIONS = ['EMAIL', 'SMS', 'BOTH'];
@@ -226,6 +227,25 @@ const Profile = () => {
             setShowToast(true);
         } finally {
             setIsAddressSaving(false);
+        }
+    };
+
+    const handleDeleteAddress = async (addressId) => {
+        if (!addressId) return;
+
+        const confirmed = window.confirm('Are you sure you want to delete this address?');
+        if (!confirmed) return;
+
+        try {
+            await deleteCustomerAddress(addressId);
+            setAddresses((prev) => prev.filter((address) => address.id !== addressId));
+            setToastMessage('Address deleted successfully');
+            setToastType('success');
+            setShowToast(true);
+        } catch (error) {
+            setToastMessage(getApiErrorMessage(error, 'Failed to delete address. Please try again.'));
+            setToastType('error');
+            setShowToast(true);
         }
     };
 
@@ -559,6 +579,18 @@ const Profile = () => {
                                 <p className="text-sm text-gray-600">
                                     {[address.city, address.district, address.postalCode].filter(Boolean).join(', ')}
                                 </p>
+                                {!!address.id && (
+                                    <div className="mt-3">
+                                        <Button
+                                            type="button"
+                                            variant="danger"
+                                            size="sm"
+                                            onClick={() => handleDeleteAddress(address.id)}
+                                        >
+                                            Delete Address
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         ))}
                     </div>

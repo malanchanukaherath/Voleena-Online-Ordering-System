@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Toast from '../components/ui/Toast';
-import { realApi } from '../services/backendApi';
+import { customerApi } from '../services/staffCustomerApi';
 
 const CustomerRegistration = () => {
     const navigate = useNavigate();
@@ -11,7 +11,12 @@ const CustomerRegistration = () => {
         name: '',
         email: '',
         phone: '',
-        password: ''
+        password: '',
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        district: '',
+        postalCode: ''
     });
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
@@ -55,6 +60,17 @@ const CustomerRegistration = () => {
             newErrors.password = 'Password must be at least 8 characters';
         }
 
+        const hasAddressLine1 = !!formData.addressLine1.trim();
+        const hasCity = !!formData.city.trim();
+        if (hasAddressLine1 !== hasCity) {
+            if (!hasAddressLine1) {
+                newErrors.addressLine1 = 'Address line 1 is required when city is provided';
+            }
+            if (!hasCity) {
+                newErrors.city = 'City is required when address line 1 is provided';
+            }
+        }
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -69,19 +85,49 @@ const CustomerRegistration = () => {
         setLoading(true);
 
         try {
-            await realApi.register({
+            const payload = {
                 name: formData.name.trim(),
                 email: formData.email.trim(),
                 phone: formData.phone.trim(),
                 password: formData.password
-            });
+            };
+
+            if (formData.addressLine1.trim() && formData.city.trim()) {
+                payload.address = {
+                    addressLine1: formData.addressLine1.trim(),
+                    addressLine2: formData.addressLine2.trim() || null,
+                    city: formData.city.trim(),
+                    district: formData.district.trim() || null,
+                    postalCode: formData.postalCode.trim() || null
+                };
+            }
+
+            const result = await customerApi.create(payload);
+
+            if (result?.exists) {
+                const existing = result.customer;
+                setToastMessage(`Customer already exists: ${existing?.name || 'Unknown'} (${existing?.phone || 'N/A'})`);
+                setToastType('warning');
+                setShowToast(true);
+                return;
+            }
 
             setToastMessage('Customer registered successfully!');
             setToastType('success');
             setShowToast(true);
 
             // Reset form
-            setFormData({ name: '', email: '', phone: '', password: '' });
+            setFormData({
+                name: '',
+                email: '',
+                phone: '',
+                password: '',
+                addressLine1: '',
+                addressLine2: '',
+                city: '',
+                district: '',
+                postalCode: ''
+            });
 
             // Navigate back to cashier dashboard after 2 seconds
             setTimeout(() => {
@@ -140,6 +186,47 @@ const CustomerRegistration = () => {
                         helperText="Minimum 8 characters"
                         required
                     />
+
+                    <div className="border-t pt-4 mt-2">
+                        <h2 className="text-lg font-semibold mb-3">Address (Optional)</h2>
+                        <div className="space-y-3">
+                            <Input
+                                label="Address Line 1"
+                                name="addressLine1"
+                                value={formData.addressLine1}
+                                onChange={handleChange}
+                                error={errors.addressLine1}
+                            />
+                            <Input
+                                label="Address Line 2"
+                                name="addressLine2"
+                                value={formData.addressLine2}
+                                onChange={handleChange}
+                            />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <Input
+                                    label="City"
+                                    name="city"
+                                    value={formData.city}
+                                    onChange={handleChange}
+                                    error={errors.city}
+                                />
+                                <Input
+                                    label="District"
+                                    name="district"
+                                    value={formData.district}
+                                    onChange={handleChange}
+                                />
+                                <Input
+                                    label="Postal Code"
+                                    name="postalCode"
+                                    value={formData.postalCode}
+                                    onChange={handleChange}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="flex gap-3">
                         <Button
                             type="submit"

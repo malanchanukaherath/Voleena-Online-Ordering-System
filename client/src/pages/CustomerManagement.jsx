@@ -9,8 +9,21 @@ import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import FilterResetButton from '../components/ui/FilterResetButton';
 import AddCustomerModal from '../components/AddCustomerModal';
 import { customerApi } from '../services/staffCustomerApi';
+import { useAuth } from '../contexts/AuthContext';
+
+const mapAddress = (address = {}) => ({
+    AddressID: address.AddressID ?? address.address_id ?? address.id,
+    AddressLine1: address.AddressLine1 ?? address.addressLine1 ?? '',
+    AddressLine2: address.AddressLine2 ?? address.addressLine2 ?? '',
+    City: address.City ?? address.city ?? '',
+    District: address.District ?? address.district ?? '',
+    PostalCode: address.PostalCode ?? address.postalCode ?? ''
+});
 
 const CustomerManagement = () => {
+    const { isAdmin } = useAuth();
+    const canAdminManageAddress = isAdmin();
+
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [customers, setCustomers] = useState([]);
@@ -21,6 +34,17 @@ const CustomerManagement = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
     const [error, setError] = useState(null);
+    const [addressActionLoadingId, setAddressActionLoadingId] = useState(null);
+    const [isAddressCreating, setIsAddressCreating] = useState(false);
+    const [customerAddresses, setCustomerAddresses] = useState([]);
+    const [addressFormErrors, setAddressFormErrors] = useState({});
+    const [newAddressData, setNewAddressData] = useState({
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        district: '',
+        postalCode: ''
+    });
 
     const [editFormData, setEditFormData] = useState({
         name: '',
@@ -82,8 +106,31 @@ const CustomerManagement = () => {
             phone: customer.Phone,
             isActive: customer.AccountStatus === 'ACTIVE'
         });
+        setCustomerAddresses([]);
+        setAddressFormErrors({});
+        setNewAddressData({
+            addressLine1: '',
+            addressLine2: '',
+            city: '',
+            district: '',
+            postalCode: ''
+        });
         setEditErrors({});
         setShowEditModal(true);
+
+        customerApi.getById(customer.CustomerID)
+            .then((data) => {
+                const fullCustomer = data.customer || customer;
+                const addresses = (fullCustomer.addresses || []).map(mapAddress);
+                setSelectedCustomer(fullCustomer);
+                setCustomerAddresses(addresses);
+            })
+            .catch((err) => {
+                const message = err?.response?.data?.error || 'Failed to load customer addresses';
+                setToastMessage(message);
+                setToastType('error');
+                setShowToast(true);
+            });
     };
 
     const handleEditChange = (e) => {
@@ -135,6 +182,134 @@ const CustomerManagement = () => {
             setSelectedCustomer(null);
         } catch (err) {
             setEditErrors({ submit: err.response?.data?.error || 'Failed to update customer' });
+        }
+    };
+
+    const handleAddressInputChange = (e) => {
+        const { name, value } = e.target;
+        setNewAddressData((prev) => ({ ...prev, [name]: value }));
+        if (addressFormErrors[name]) {
+            setAddressFormErrors((prev) => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const validateAddressPayload = (payload) => {
+        const errs = {};
+        if (!payload.addressLine1 || !payload.addressLine1.trim()) {
+            errs.addressLine1 = 'Address line 1 is required';
+        }
+        if (!payload.city || !payload.city.trim()) {
+            errs.city = 'City is required';
+        }
+        return errs;
+    };
+
+    const handleCreateAddress = async () => {
+        if (!selectedCustomer?.CustomerID) return;
+
+        const validation = validateAddressPayload(newAddressData);
+        if (Object.keys(validation).length > 0) {
+            setAddressFormErrors(validation);
+            return;
+        }
+
+        try {
+            setIsAddressCreating(true);
+            const payload = {
+                addressLine1: newAddressData.addressLine1.trim(),
+                addressLine2: newAddressData.addressLine2.trim() || null,
+                city: newAddressData.city.trim(),
+                district: newAddressData.district.trim() || null,
+                postalCode: newAddressData.postalCode.trim() || null
+            };
+
+            const response = await customerApi.addAddress(selectedCustomer.CustomerID, payload);
+            const created = mapAddress(response.address || {
+                AddressID: response.addressId,
+                ...payload
+            });
+
+            setCustomerAddresses((prev) => [created, ...prev]);
+            setNewAddressData({
+                addressLine1: '',
+                addressLine2: '',
+                city: '',
+                district: '',
+                postalCode: ''
+            });
+            setAddressFormErrors({});
+            setToastMessage('Address added successfully');
+            setToastType('success');
+            setShowToast(true);
+        } catch (err) {
+            setToastMessage(err.response?.data?.error || 'Failed to add address');
+            setToastType('error');
+            setShowToast(true);
+        } finally {
+            setIsAddressCreating(false);
+        }
+    };
+
+    const handleExistingAddressChange = (addressId, field, value) => {
+        setCustomerAddresses((prev) => prev.map((addr) => {
+            if (addr.AddressID !== addressId) return addr;
+            return { ...addr, [field]: value };
+        }));
+    };
+
+    const handleUpdateAddress = async (address) => {
+        if (!canAdminManageAddress || !selectedCustomer?.CustomerID || !address?.AddressID) return;
+
+        const payload = {
+            addressLine1: address.AddressLine1,
+            addressLine2: address.AddressLine2 || null,
+            city: address.City,
+            district: address.District || null,
+            postalCode: address.PostalCode || null
+        };
+
+        const validation = validateAddressPayload(payload);
+        if (Object.keys(validation).length > 0) {
+            setToastMessage('Address line 1 and city are required');
+            setToastType('error');
+            setShowToast(true);
+            return;
+        }
+
+        try {
+            setAddressActionLoadingId(`update-${address.AddressID}`);
+            await customerApi.updateAddress(selectedCustomer.CustomerID, address.AddressID, payload);
+            setToastMessage('Address updated successfully');
+            setToastType('success');
+            setShowToast(true);
+        } catch (err) {
+            setToastMessage(err.response?.data?.error || 'Failed to update address');
+            setToastType('error');
+            setShowToast(true);
+        } finally {
+            setAddressActionLoadingId(null);
+        }
+    };
+
+    const handleDeleteAddress = async (addressId) => {
+        if (!canAdminManageAddress || !selectedCustomer?.CustomerID || !addressId) return;
+
+        const confirmed = window.confirm('Delete this customer address?');
+        if (!confirmed) return;
+
+        try {
+            setAddressActionLoadingId(`delete-${addressId}`);
+            await customerApi.deleteAddress(selectedCustomer.CustomerID, addressId);
+            setCustomerAddresses((prev) => prev.filter((addr) => addr.AddressID !== addressId));
+            setToastMessage('Address deleted successfully');
+            setToastType('success');
+            setShowToast(true);
+        } catch (err) {
+            setToastMessage(err.response?.data?.error || 'Failed to delete address');
+            setToastType('error');
+            setShowToast(true);
+        } finally {
+            setAddressActionLoadingId(null);
         }
     };
 
@@ -372,6 +547,127 @@ const CustomerManagement = () => {
                             <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
                                 Active Customer
                             </label>
+                        </div>
+
+                        <div className="border-t pt-4">
+                            <h3 className="text-base font-semibold mb-3">Customer Addresses</h3>
+
+                            <div className="space-y-3 mb-4">
+                                {customerAddresses.length === 0 ? (
+                                    <p className="text-sm text-gray-500">No saved addresses for this customer.</p>
+                                ) : customerAddresses.map((address) => (
+                                    <div key={address.AddressID} className="border rounded-md p-3 space-y-2">
+                                        <Input
+                                            label="Address Line 1"
+                                            value={address.AddressLine1}
+                                            onChange={(e) => handleExistingAddressChange(address.AddressID, 'AddressLine1', e.target.value)}
+                                            disabled={!canAdminManageAddress || !!addressActionLoadingId}
+                                        />
+                                        <Input
+                                            label="Address Line 2"
+                                            value={address.AddressLine2 || ''}
+                                            onChange={(e) => handleExistingAddressChange(address.AddressID, 'AddressLine2', e.target.value)}
+                                            disabled={!canAdminManageAddress || !!addressActionLoadingId}
+                                        />
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                            <Input
+                                                label="City"
+                                                value={address.City}
+                                                onChange={(e) => handleExistingAddressChange(address.AddressID, 'City', e.target.value)}
+                                                disabled={!canAdminManageAddress || !!addressActionLoadingId}
+                                            />
+                                            <Input
+                                                label="District"
+                                                value={address.District || ''}
+                                                onChange={(e) => handleExistingAddressChange(address.AddressID, 'District', e.target.value)}
+                                                disabled={!canAdminManageAddress || !!addressActionLoadingId}
+                                            />
+                                            <Input
+                                                label="Postal Code"
+                                                value={address.PostalCode || ''}
+                                                onChange={(e) => handleExistingAddressChange(address.AddressID, 'PostalCode', e.target.value)}
+                                                disabled={!canAdminManageAddress || !!addressActionLoadingId}
+                                            />
+                                        </div>
+
+                                        {canAdminManageAddress && (
+                                            <div className="flex gap-2">
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    onClick={() => handleUpdateAddress(address)}
+                                                    loading={addressActionLoadingId === `update-${address.AddressID}`}
+                                                    disabled={!!addressActionLoadingId}
+                                                >
+                                                    Save Address
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="danger"
+                                                    size="sm"
+                                                    onClick={() => handleDeleteAddress(address.AddressID)}
+                                                    loading={addressActionLoadingId === `delete-${address.AddressID}`}
+                                                    disabled={!!addressActionLoadingId}
+                                                >
+                                                    Delete
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="border rounded-md p-3 space-y-2">
+                                <h4 className="font-medium">Add New Address</h4>
+                                <Input
+                                    label="Address Line 1"
+                                    name="addressLine1"
+                                    value={newAddressData.addressLine1}
+                                    onChange={handleAddressInputChange}
+                                    error={addressFormErrors.addressLine1}
+                                />
+                                <Input
+                                    label="Address Line 2"
+                                    name="addressLine2"
+                                    value={newAddressData.addressLine2}
+                                    onChange={handleAddressInputChange}
+                                />
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                    <Input
+                                        label="City"
+                                        name="city"
+                                        value={newAddressData.city}
+                                        onChange={handleAddressInputChange}
+                                        error={addressFormErrors.city}
+                                    />
+                                    <Input
+                                        label="District"
+                                        name="district"
+                                        value={newAddressData.district}
+                                        onChange={handleAddressInputChange}
+                                    />
+                                    <Input
+                                        label="Postal Code"
+                                        name="postalCode"
+                                        value={newAddressData.postalCode}
+                                        onChange={handleAddressInputChange}
+                                    />
+                                </div>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    onClick={handleCreateAddress}
+                                    loading={isAddressCreating}
+                                    disabled={isAddressCreating}
+                                >
+                                    Add Address
+                                </Button>
+                                {!canAdminManageAddress && (
+                                    <p className="text-xs text-gray-500">
+                                        Cashier can add address but cannot update or delete customer addresses.
+                                    </p>
+                                )}
+                            </div>
                         </div>
 
                         {editErrors.submit && (

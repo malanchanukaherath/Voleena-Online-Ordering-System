@@ -75,6 +75,24 @@ export const customerApi = {
         const response = await api.put(`/api/customers/${customerId}`, customerData);
         return response.data;
     },
+
+    // Add address for customer (Admin/Cashier)
+    addAddress: async (customerId, addressData) => {
+        const response = await api.post(`/api/customers/${customerId}/addresses`, addressData);
+        return response.data;
+    },
+
+    // Update customer address (Admin only)
+    updateAddress: async (customerId, addressId, addressData) => {
+        const response = await api.put(`/api/customers/${customerId}/addresses/${addressId}`, addressData);
+        return response.data;
+    },
+
+    // Delete customer address (Admin only)
+    deleteAddress: async (customerId, addressId) => {
+        const response = await api.delete(`/api/customers/${customerId}/addresses/${addressId}`);
+        return response.data;
+    },
 };
 
 export default api;

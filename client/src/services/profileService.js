@@ -19,3 +19,7 @@ export const getCustomerAddresses = async () => {
 export const createCustomerAddress = async (payload) => {
   return backendApi.post('/api/v1/customers/me/addresses', payload);
 };
+
+export const deleteCustomerAddress = async (addressId) => {
+  return backendApi.delete(`/api/v1/customers/me/addresses/${addressId}`);
+};
