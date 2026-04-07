@@ -3,9 +3,15 @@ import { useAuth } from '../contexts/AuthContext';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import Toast from '../components/ui/Toast';
-import { FaUser, FaEnvelope, FaPhone, FaLock, FaClipboardList } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaPhone, FaLock, FaClipboardList, FaMapMarkedAlt } from 'react-icons/fa';
 import { getOrders } from '../services/orderApi';
-import { getCustomerProfile, updateCustomerProfile, changeCustomerPassword } from '../services/profileService';
+import {
+    getCustomerProfile,
+    updateCustomerProfile,
+    changeCustomerPassword,
+    getCustomerAddresses,
+    createCustomerAddress
+} from '../services/profileService';
 
 const NOTIFICATION_OPTIONS = ['EMAIL', 'SMS', 'BOTH'];
 
@@ -31,6 +37,17 @@ const getApiErrorMessage = (error, fallback) => {
     return error?.response?.data?.error || fallback;
 };
 
+const mapAddress = (address = {}) => ({
+    id: address.AddressID ?? address.address_id ?? address.id,
+    addressLine1: address.AddressLine1 ?? address.addressLine1 ?? '',
+    addressLine2: address.AddressLine2 ?? address.addressLine2 ?? '',
+    city: address.City ?? address.city ?? '',
+    postalCode: address.PostalCode ?? address.postal_code ?? address.postalCode ?? '',
+    district: address.District ?? address.district ?? '',
+    latitude: address.Latitude ?? address.latitude ?? null,
+    longitude: address.Longitude ?? address.longitude ?? null
+});
+
 const Profile = () => {
     const { user, updateUser } = useAuth();
 
@@ -47,13 +64,24 @@ const Profile = () => {
         confirmPassword: '',
     });
 
+    const [addressForm, setAddressForm] = useState({
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        postalCode: '',
+        district: ''
+    });
+
     const [errors, setErrors] = useState({});
     const [isProfileLoading, setIsProfileLoading] = useState(true);
     const [isProfileSaving, setIsProfileSaving] = useState(false);
     const [isPasswordSaving, setIsPasswordSaving] = useState(false);
+    const [isAddressLoading, setIsAddressLoading] = useState(false);
+    const [isAddressSaving, setIsAddressSaving] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
+    const [addresses, setAddresses] = useState([]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -66,6 +94,14 @@ const Profile = () => {
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
         setPasswordData(prev => ({ ...prev, [name]: value }));
+        if (errors[name]) {
+            setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const handleAddressChange = (e) => {
+        const { name, value } = e.target;
+        setAddressForm((prev) => ({ ...prev, [name]: value }));
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
@@ -116,6 +152,81 @@ const Profile = () => {
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
+    };
+
+    const validateAddressForm = () => {
+        const newErrors = {};
+
+        if (!addressForm.addressLine1.trim()) {
+            newErrors.addressLine1 = 'Address line 1 is required';
+        } else if (addressForm.addressLine1.trim().length < 5) {
+            newErrors.addressLine1 = 'Address line 1 must be at least 5 characters';
+        }
+
+        if (!addressForm.city.trim()) {
+            newErrors.city = 'City is required';
+        }
+
+        setErrors((prev) => ({ ...prev, ...newErrors }));
+        return Object.keys(newErrors).length === 0;
+    };
+
+    const loadAddresses = async () => {
+        setIsAddressLoading(true);
+
+        try {
+            const response = await getCustomerAddresses();
+            const rows = response.data?.data || [];
+            setAddresses(rows.map(mapAddress));
+        } catch (error) {
+            const message = getApiErrorMessage(error, 'Failed to load addresses');
+            if (message.toLowerCase().includes('address features are temporarily unavailable')) {
+                setAddresses([]);
+            } else {
+                setToastMessage(message);
+                setToastType('error');
+                setShowToast(true);
+            }
+        } finally {
+            setIsAddressLoading(false);
+        }
+    };
+
+    const handleAddressSubmit = async (e) => {
+        e.preventDefault();
+        if (!validateAddressForm()) return;
+
+        setIsAddressSaving(true);
+
+        try {
+            await createCustomerAddress({
+                addressLine1: addressForm.addressLine1.trim(),
+                addressLine2: addressForm.addressLine2.trim() || null,
+                city: addressForm.city.trim(),
+                postalCode: addressForm.postalCode.trim() || null,
+                district: addressForm.district.trim() || null
+            });
+
+            setAddressForm({
+                addressLine1: '',
+                addressLine2: '',
+                city: '',
+                postalCode: '',
+                district: ''
+            });
+
+            setToastMessage('Address added successfully');
+            setToastType('success');
+            setShowToast(true);
+
+            await loadAddresses();
+        } catch (error) {
+            setToastMessage(getApiErrorMessage(error, 'Failed to add address. Please try again.'));
+            setToastType('error');
+            setShowToast(true);
+        } finally {
+            setIsAddressSaving(false);
+        }
     };
 
     const handleProfileSubmit = async (e) => {
@@ -254,6 +365,10 @@ const Profile = () => {
             isMounted = false;
         };
     }, [updateUser]);
+
+    useEffect(() => {
+        loadAddresses();
+    }, []);
 
     useEffect(() => {
         let isMounted = true;
@@ -421,6 +536,88 @@ const Profile = () => {
                         </Button>
                     </form>
                 </div>
+            </div>
+
+            <div className="mt-8 bg-white rounded-lg shadow p-6">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                        <FaMapMarkedAlt className="text-primary-600" />
+                        Saved Addresses
+                    </h2>
+                </div>
+
+                {isAddressLoading ? (
+                    <p className="text-sm text-gray-500 mb-4">Loading addresses...</p>
+                ) : addresses.length === 0 ? (
+                    <p className="text-sm text-gray-500 mb-4">No saved addresses yet.</p>
+                ) : (
+                    <div className="space-y-3 mb-6">
+                        {addresses.map((address) => (
+                            <div key={address.id || `${address.addressLine1}-${address.city}`} className="border border-gray-200 rounded-md p-4">
+                                <p className="font-medium text-gray-800">{address.addressLine1}</p>
+                                {address.addressLine2 && <p className="text-sm text-gray-600">{address.addressLine2}</p>}
+                                <p className="text-sm text-gray-600">
+                                    {[address.city, address.district, address.postalCode].filter(Boolean).join(', ')}
+                                </p>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                <h3 className="text-lg font-semibold mb-4">Add New Address</h3>
+                <form onSubmit={handleAddressSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                        <Input
+                            label="Address Line 1"
+                            name="addressLine1"
+                            value={addressForm.addressLine1}
+                            onChange={handleAddressChange}
+                            error={errors.addressLine1}
+                            required
+                        />
+                    </div>
+                    <div className="md:col-span-2">
+                        <Input
+                            label="Address Line 2 (Optional)"
+                            name="addressLine2"
+                            value={addressForm.addressLine2}
+                            onChange={handleAddressChange}
+                            error={errors.addressLine2}
+                        />
+                    </div>
+                    <Input
+                        label="City"
+                        name="city"
+                        value={addressForm.city}
+                        onChange={handleAddressChange}
+                        error={errors.city}
+                        required
+                    />
+                    <Input
+                        label="District (Optional)"
+                        name="district"
+                        value={addressForm.district}
+                        onChange={handleAddressChange}
+                        error={errors.district}
+                    />
+                    <Input
+                        label="Postal Code (Optional)"
+                        name="postalCode"
+                        value={addressForm.postalCode}
+                        onChange={handleAddressChange}
+                        error={errors.postalCode}
+                    />
+                    <div className="md:col-span-2">
+                        <Button
+                            type="submit"
+                            className="w-full md:w-auto"
+                            loading={isAddressSaving}
+                            disabled={isAddressSaving || isAddressLoading}
+                        >
+                            Save Address
+                        </Button>
+                    </div>
+                </form>
             </div>
 
             {showToast && (

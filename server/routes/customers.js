@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const { Op } = require('sequelize');
 const { Customer, Address } = require('../models');
-const { requireCashier, requireCustomer } = require('../middleware/auth');
+const { requireAdmin, requireCashier, requireCustomer } = require('../middleware/auth');
 const { logCustomerCreation } = require('../utils/auditLogger');
 
 const normalizeOptionalEmail = (email) => {
@@ -75,6 +75,43 @@ const findCustomerWithOptionalAddresses = async (customerId, attributes) => {
 
         return { customer: payload, addressUnavailable: true };
     }
+};
+
+const createAddressForCustomer = async (customerId, payload = {}) => {
+    const { addressLine1, addressLine2, city, postalCode, district, latitude, longitude } = payload;
+
+    if (!addressLine1 || !city) {
+        return { error: 'Address line 1 and city are required', status: 400 };
+    }
+
+    let finalLat = latitude;
+    let finalLng = longitude;
+
+    if (!finalLat || !finalLng) {
+        try {
+            const { geocodeAddress } = require('../services/distanceValidation');
+            const addressText = `${addressLine1.trim()}${city ? ', ' + city.trim() : ''}${postalCode ? ', ' + postalCode.trim() : ''}`;
+            const geocoded = await geocodeAddress(addressText, city);
+            finalLat = geocoded.lat;
+            finalLng = geocoded.lng;
+            console.log(`Geocoded address: ${addressText} -> (${finalLat}, ${finalLng})`);
+        } catch (geocodeError) {
+            console.warn('Failed to geocode address, saving without coordinates:', geocodeError.message);
+        }
+    }
+
+    const address = await Address.create({
+        CustomerID: customerId,
+        AddressLine1: addressLine1.trim(),
+        AddressLine2: addressLine2 ? addressLine2.trim() : null,
+        City: city.trim(),
+        PostalCode: postalCode ? postalCode.trim() : null,
+        District: district ? district.trim() : null,
+        Latitude: finalLat || null,
+        Longitude: finalLng || null
+    });
+
+    return { address };
 };
 
 /**
@@ -453,41 +490,12 @@ router.get('/me/addresses', requireCustomer, async (req, res) => {
  */
 router.post('/me/addresses', requireCustomer, async (req, res) => {
     try {
-        const { addressLine1, addressLine2, city, postalCode, district, latitude, longitude } = req.body;
-
-        if (!addressLine1 || !city) {
-            return res.status(400).json({ error: 'Address line 1 and city are required' });
+        const result = await createAddressForCustomer(req.user.id, req.body);
+        if (result.error) {
+            return res.status(result.status).json({ error: result.error });
         }
 
-        let finalLat = latitude;
-        let finalLng = longitude;
-
-        // If coordinates not provided, try to geocode the address
-        if (!finalLat || !finalLng) {
-            try {
-                const { geocodeAddress } = require('../services/distanceValidation');
-                const addressText = `${addressLine1.trim()}${city ? ', ' + city.trim() : ''}${postalCode ? ', ' + postalCode.trim() : ''}`;
-                // Pass city parameter for fallback geocoding (when API key not configured)
-                const geocoded = await geocodeAddress(addressText, city);
-                finalLat = geocoded.lat;
-                finalLng = geocoded.lng;
-                console.log(`Geocoded address: ${addressText} -> (${finalLat}, ${finalLng})`);
-            } catch (geocodeError) {
-                console.warn('Failed to geocode address, saving without coordinates:', geocodeError.message);
-                // Continue without coordinates - validation will happen at order time
-            }
-        }
-
-        const address = await Address.create({
-            CustomerID: req.user.id,
-            AddressLine1: addressLine1.trim(),
-            AddressLine2: addressLine2 ? addressLine2.trim() : null,
-            City: city.trim(),
-            PostalCode: postalCode ? postalCode.trim() : null,
-            District: district ? district.trim() : null,
-            Latitude: finalLat || null,
-            Longitude: finalLng || null
-        });
+        const { address } = result;
 
         return res.status(201).json({
             success: true,
@@ -509,6 +517,38 @@ router.post('/me/addresses', requireCustomer, async (req, res) => {
         }
 
         return res.status(500).json({ error: 'Failed to create address' });
+    }
+});
+
+/**
+ * DELETE /api/customers/me/addresses/:addressId
+ * Customer: Delete own address
+ */
+router.delete('/me/addresses/:addressId', requireCustomer, async (req, res) => {
+    try {
+        const { addressId } = req.params;
+
+        const address = await Address.findOne({
+            where: {
+                AddressID: addressId,
+                CustomerID: req.user.id
+            }
+        });
+
+        if (!address) {
+            return res.status(404).json({ error: 'Address not found' });
+        }
+
+        await address.destroy();
+        return res.json({ success: true, message: 'Address deleted successfully' });
+    } catch (error) {
+        console.error('Delete customer address error:', error);
+
+        if (handleAddressTableMissing(res, error)) {
+            return;
+        }
+
+        return res.status(500).json({ error: 'Failed to delete address' });
     }
 });
 
@@ -541,6 +581,141 @@ router.get('/:id', requireCashier, async (req, res) => {
         }
 
         return res.status(500).json({ error: 'Failed to retrieve customer' });
+    }
+});
+
+/**
+ * POST /api/customers/:id/addresses
+ * Admin/Cashier: Add address for a customer
+ */
+router.post('/:id/addresses', requireCashier, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const customer = await Customer.findByPk(id);
+
+        if (!customer) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        const result = await createAddressForCustomer(customer.CustomerID, req.body);
+        if (result.error) {
+            return res.status(result.status).json({ error: result.error });
+        }
+
+        const { address } = result;
+
+        return res.status(201).json({
+            success: true,
+            message: 'Address added successfully',
+            addressId: address.AddressID,
+            address
+        });
+    } catch (error) {
+        console.error('Create customer address by staff error:', error);
+
+        if (handleAddressTableMissing(res, error)) {
+            return;
+        }
+
+        return res.status(500).json({ error: 'Failed to create customer address' });
+    }
+});
+
+/**
+ * PUT /api/customers/:id/addresses/:addressId
+ * Admin: Update customer address
+ */
+router.put('/:id/addresses/:addressId', requireAdmin, async (req, res) => {
+    try {
+        const { id, addressId } = req.params;
+        const { addressLine1, addressLine2, city, postalCode, district, latitude, longitude } = req.body;
+
+        const customer = await Customer.findByPk(id);
+        if (!customer) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        const address = await Address.findOne({
+            where: {
+                AddressID: addressId,
+                CustomerID: customer.CustomerID
+            }
+        });
+
+        if (!address) {
+            return res.status(404).json({ error: 'Address not found for this customer' });
+        }
+
+        if (addressLine1 !== undefined) {
+            const normalized = String(addressLine1).trim();
+            if (!normalized) {
+                return res.status(400).json({ error: 'Address line 1 cannot be empty' });
+            }
+            address.AddressLine1 = normalized;
+        }
+
+        if (city !== undefined) {
+            const normalized = String(city).trim();
+            if (!normalized) {
+                return res.status(400).json({ error: 'City cannot be empty' });
+            }
+            address.City = normalized;
+        }
+
+        if (addressLine2 !== undefined) address.AddressLine2 = addressLine2 ? String(addressLine2).trim() : null;
+        if (postalCode !== undefined) address.PostalCode = postalCode ? String(postalCode).trim() : null;
+        if (district !== undefined) address.District = district ? String(district).trim() : null;
+        if (latitude !== undefined) address.Latitude = latitude || null;
+        if (longitude !== undefined) address.Longitude = longitude || null;
+
+        await address.save();
+
+        return res.json({ success: true, message: 'Address updated successfully', address });
+    } catch (error) {
+        console.error('Update customer address by admin error:', error);
+
+        if (handleAddressTableMissing(res, error)) {
+            return;
+        }
+
+        return res.status(500).json({ error: 'Failed to update customer address' });
+    }
+});
+
+/**
+ * DELETE /api/customers/:id/addresses/:addressId
+ * Admin: Delete customer address
+ */
+router.delete('/:id/addresses/:addressId', requireAdmin, async (req, res) => {
+    try {
+        const { id, addressId } = req.params;
+        const customer = await Customer.findByPk(id);
+
+        if (!customer) {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        const address = await Address.findOne({
+            where: {
+                AddressID: addressId,
+                CustomerID: customer.CustomerID
+            }
+        });
+
+        if (!address) {
+            return res.status(404).json({ error: 'Address not found for this customer' });
+        }
+
+        await address.destroy();
+        return res.json({ success: true, message: 'Address deleted successfully' });
+    } catch (error) {
+        console.error('Delete customer address by admin error:', error);
+
+        if (handleAddressTableMissing(res, error)) {
+            return;
+        }
+
+        return res.status(500).json({ error: 'Failed to delete customer address' });
     }
 });
 
