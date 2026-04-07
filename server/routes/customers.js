@@ -45,6 +45,38 @@ const handleAddressTableMissing = (res, error) => {
     });
 };
 
+const findCustomerWithOptionalAddresses = async (customerId, attributes) => {
+    try {
+        const customer = await Customer.findByPk(customerId, {
+            attributes,
+            include: [{
+                model: Address,
+                as: 'addresses'
+            }]
+        });
+
+        if (!customer) {
+            return { customer: null, addressUnavailable: false };
+        }
+
+        return { customer, addressUnavailable: false };
+    } catch (error) {
+        if (!isAddressTableMissingError(error)) {
+            throw error;
+        }
+
+        const customer = await Customer.findByPk(customerId, { attributes });
+        if (!customer) {
+            return { customer: null, addressUnavailable: true };
+        }
+
+        const payload = customer.toJSON();
+        payload.addresses = [];
+
+        return { customer: payload, addressUnavailable: true };
+    }
+};
+
 /**
  * POST /api/customers
  * Admin/Cashier: Manually register a new customer
@@ -242,19 +274,20 @@ router.get('/', requireCashier, async (req, res) => {
  */
 router.get('/me', requireCustomer, async (req, res) => {
     try {
-        const customer = await Customer.findByPk(req.user.id, {
-            attributes: { exclude: ['Password'] },
-            include: [{
-                model: Address,
-                as: 'addresses'
-            }]
-        });
+        const { customer, addressUnavailable } = await findCustomerWithOptionalAddresses(
+            req.user.id,
+            { exclude: ['Password'] }
+        );
 
         if (!customer) {
             return res.status(404).json({ error: 'Customer not found' });
         }
 
-        return res.json({ success: true, data: customer });
+        return res.json({
+            success: true,
+            data: customer,
+            ...(addressUnavailable ? { warning: 'Address features are temporarily unavailable.' } : {})
+        });
     } catch (error) {
         console.error('Get customer profile error:', error);
 
@@ -487,19 +520,19 @@ router.get('/:id', requireCashier, async (req, res) => {
     try {
         const { id } = req.params;
 
-        const customer = await Customer.findByPk(id, {
-            attributes: { exclude: ['Password'] },
-            include: [{
-                model: Address,
-                as: 'addresses'
-            }]
-        });
+        const { customer, addressUnavailable } = await findCustomerWithOptionalAddresses(
+            id,
+            { exclude: ['Password'] }
+        );
 
         if (!customer) {
             return res.status(404).json({ error: 'Customer not found' });
         }
 
-        return res.json({ customer });
+        return res.json({
+            customer,
+            ...(addressUnavailable ? { warning: 'Address features are temporarily unavailable.' } : {})
+        });
     } catch (error) {
         console.error('Get customer error:', error);
 
