@@ -3,10 +3,10 @@ const { DataTypes } = require('sequelize');
 module.exports = (sequelize) => {
     const Feedback = sequelize.define('Feedback', {
         FeedbackID: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.INTEGER.UNSIGNED,
             primaryKey: true,
             autoIncrement: true,
-            field: 'FeedbackID'
+            field: 'feedback_id'
         },
         Rating: {
             type: DataTypes.INTEGER,
@@ -15,59 +15,59 @@ module.exports = (sequelize) => {
                 min: 1,
                 max: 5
             },
-            field: 'Rating'
+            field: 'rating'
         },
         Comment: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'Comment'
+            field: 'comment'
         },
         CustomerID: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-            references: {
-                model: 'Customer',
-                key: 'CustomerID'
-            },
-            field: 'CustomerID'
-        },
-        OrderID: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.INTEGER.UNSIGNED,
             allowNull: true,
             references: {
-                model: 'Order',
-                key: 'OrderID'
+                model: 'customer',
+                key: 'customer_id'
             },
-            field: 'OrderID'
+            field: 'customer_id'
+        },
+        OrderID: {
+            type: DataTypes.INTEGER.UNSIGNED,
+            allowNull: true,
+            references: {
+                model: 'order',
+                key: 'order_id'
+            },
+            field: 'order_id'
         },
         FeedbackType: {
             type: DataTypes.ENUM('ORDER', 'DELIVERY', 'GENERAL'),
             defaultValue: 'ORDER',
-            field: 'FeedbackType'
+            field: 'feedback_type'
         },
         AdminResponse: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'AdminResponse'
+            field: 'admin_response'
         },
         RespondedAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'RespondedAt'
+            field: 'responded_at'
         },
         RespondedBy: {
-            type: DataTypes.INTEGER,
+            type: DataTypes.INTEGER.UNSIGNED,
             allowNull: true,
             references: {
-                model: 'Staff',
-                key: 'StaffID'
+                model: 'staff',
+                key: 'staff_id'
             },
-            field: 'RespondedBy'
+            field: 'responded_by'
         }
     }, {
-        tableName: 'Feedback',
+        tableName: 'feedback',
         timestamps: true,
-        createdAt: 'CreatedAt',
+        createdAt: 'created_at',
         updatedAt: false
     });
 

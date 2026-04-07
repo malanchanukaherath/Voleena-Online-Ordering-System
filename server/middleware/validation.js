@@ -296,10 +296,23 @@ const validateFeedbackSubmission = [
         .isInt({ min: 1, max: 5 }).withMessage('Rating must be between 1 and 5'),
 
     body('comment')
-        .optional()
+        .notEmpty().withMessage('Comment is required')
         .trim()
         .isLength({ max: 1000 }).withMessage('Comment must not exceed 1000 characters')
         .matches(/^[a-zA-Z0-9\s.,!?'"-]*$/).withMessage('Comment contains invalid characters'),
+
+    body('orderId')
+        .optional()
+        .isInt({ min: 1 }).withMessage('Invalid order ID'),
+
+    body('orderNumber')
+        .optional()
+        .trim()
+        .isLength({ min: 4, max: 25 }).withMessage('Order number must be between 4 and 25 characters'),
+
+    body('feedbackType')
+        .optional()
+        .isIn(['ORDER', 'DELIVERY', 'GENERAL']).withMessage('Invalid feedback type'),
 
     handleValidationErrors
 ];
@@ -427,20 +440,6 @@ const validateDeliveryAssignment = [
             }
             return true;
         }),
-
-    handleValidationErrors
-];
-
-/**
-        .isLength({ max: 1000 }).withMessage('Comment must not exceed 1000 characters'),
-
-    body('order_id')
-        .optional()
-        .isInt({ min: 1 }).withMessage('Invalid order ID'),
-
-    body('feedback_type')
-        .optional()
-        .isIn(['ORDER', 'DELIVERY', 'GENERAL']).withMessage('Invalid feedback type'),
 
     handleValidationErrors
 ];

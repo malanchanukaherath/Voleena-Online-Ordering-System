@@ -7,11 +7,45 @@ import Toast from '../components/ui/Toast';
 import { FaMapMarkerAlt, FaPhone, FaBox, FaTruck, FaCheckCircle, FaClock, FaBan, FaMoneyBillWave, FaMapMarkedAlt } from 'react-icons/fa';
 import { cancelOrder, getOrderById } from '../services/orderApi';
 
+const formatTimeLabel = (value) => {
+    if (!value) {
+        return '';
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+};
+
+const formatEtaCountdown = (value) => {
+    if (!value) {
+        return null;
+    }
+
+    const eta = new Date(value);
+    if (Number.isNaN(eta.getTime())) {
+        return null;
+    }
+
+    const minutesRemaining = Math.max(0, Math.round((eta.getTime() - Date.now()) / 60000));
+    if (minutesRemaining <= 0) {
+        return 'Any moment now';
+    }
+
+    if (minutesRemaining === 1) {
+        return 'About 1 minute';
+    }
+
+    return `About ${minutesRemaining} minutes`;
+};
+
 const OrderTracking = () => {
     const { orderId } = useParams();
 
     const [order, setOrder] = useState(null);
-
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
@@ -40,6 +74,12 @@ const OrderTracking = () => {
             name: data.delivery.staff.Name,
             phone: data.delivery.staff.Phone
         } : null,
+        confirmedAt: data.ConfirmedAt || data.confirmedAt || null,
+        preparingAt: data.PreparingAt || data.preparingAt || null,
+        readyAt: data.ReadyAt || data.readyAt || null,
+        deliveryAssignedAt: data.delivery?.AssignedAt || data.delivery?.assignedAt || null,
+        pickedUpAt: data.delivery?.PickedUpAt || data.delivery?.pickedUpAt || null,
+        estimatedDeliveryTime: data.delivery?.EstimatedDeliveryTime || data.delivery?.estimatedDeliveryTime || null,
         placedAt: data.CreatedAt,
         completedAt: data.CompletedAt || data.completedAt,
         deliveredAt: data.delivery?.DeliveredAt || data.delivery?.deliveredAt,
@@ -57,7 +97,9 @@ const OrderTracking = () => {
             try {
                 const response = await getOrderById(orderId);
                 const data = response.data?.data;
-                if (!data) return;
+                if (!data) {
+                    return;
+                }
                 setOrder(mapOrderData(data));
             } catch (error) {
                 console.error('Failed to load order:', error);
@@ -66,21 +108,16 @@ const OrderTracking = () => {
 
         fetchOrder();
 
-        // Poll for updates every 30 seconds when order is active
         const interval = setInterval(fetchOrder, 30000);
         return () => clearInterval(interval);
     }, [orderId]);
 
-    // Check if order can be cancelled
     const canCancelOrder = () => {
         const cancellableStatuses = ['PENDING', 'CONFIRMED'];
         const isNotCancelled = order.status !== 'CANCELLED';
-
-        return cancellableStatuses.includes(order.status) &&
-            isNotCancelled;
+        return cancellableStatuses.includes(order.status) && isNotCancelled;
     };
 
-    // Get cancellation prevention reason
     const getCancellationReason = () => {
         if (order.status === 'CANCELLED') {
             return 'Order has already been cancelled';
@@ -91,12 +128,62 @@ const OrderTracking = () => {
         return '';
     };
 
+    const getDeliveryEtaText = () => {
+        if (!order || order.orderType !== 'DELIVERY' || order.status === 'CANCELLED' || order.status === 'DELIVERED') {
+            return null;
+        }
+
+        const countdown = formatEtaCountdown(order.estimatedDeliveryTime);
+
+        if (order.status === 'OUT_FOR_DELIVERY') {
+            return countdown ? `Arriving ${countdown.toLowerCase()}` : 'Your order is on the way';
+        }
+
+        if (order.status === 'READY') {
+            return countdown ? `Ready for dispatch, ${countdown.toLowerCase()} to delivery` : 'Ready for dispatch';
+        }
+
+        if (order.status === 'PREPARING') {
+            return countdown ? `Preparing now, ${countdown.toLowerCase()} to delivery` : 'Preparing your order';
+        }
+
+        if (order.status === 'CONFIRMED') {
+            return countdown ? `Estimated delivery ${countdown.toLowerCase()}` : 'Estimated delivery updating';
+        }
+
+        return countdown ? `Estimated delivery ${countdown.toLowerCase()}` : 'Estimated delivery updating';
+    };
+
+    const getTimelineTime = (status) => {
+        if (!order) {
+            return '';
+        }
+
+        switch (status) {
+            case 'PENDING':
+                return formatTimeLabel(order.placedAt);
+            case 'CONFIRMED':
+                return formatTimeLabel(order.confirmedAt || order.placedAt);
+            case 'PREPARING':
+                return formatTimeLabel(order.preparingAt);
+            case 'READY':
+                return formatTimeLabel(order.readyAt || order.deliveryAssignedAt);
+            case 'OUT_FOR_DELIVERY':
+                return formatTimeLabel(order.deliveryAssignedAt || order.pickedUpAt);
+            case 'DELIVERED':
+                return formatTimeLabel(order.deliveredAt);
+            case 'CANCELLED':
+                return formatTimeLabel(order.cancelledAt);
+            default:
+                return '';
+        }
+    };
+
     const handleCancelOrder = async () => {
         setIsCancelling(true);
         try {
             await cancelOrder(order.id, 'Cancelled by customer');
 
-            // Force immediate refresh so customer sees server-confirmed status without waiting for poll.
             try {
                 const refreshed = await getOrderById(order.id);
                 const refreshedData = refreshed.data?.data;
@@ -132,19 +219,18 @@ const OrderTracking = () => {
         }
     };
 
-    // FR27: Different tracking steps for DELIVERY vs TAKEAWAY orders
     const trackingSteps = [
         {
             status: 'PENDING',
             label: 'Order Placed',
-            time: order?.placedAt ? new Date(order.placedAt).toLocaleTimeString() : '',
+            time: getTimelineTime('PENDING'),
             completed: true,
             icon: FaBox,
         },
         {
             status: 'CONFIRMED',
             label: 'Order Confirmed',
-            time: order?.placedAt ? new Date(new Date(order.placedAt).getTime() + 5 * 60000).toLocaleTimeString() : '',
+            time: getTimelineTime('CONFIRMED'),
             completed: ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'READY'].includes(order?.status),
             icon: FaCheckCircle,
             current: order?.status === 'CONFIRMED'
@@ -152,19 +238,18 @@ const OrderTracking = () => {
         {
             status: 'PREPARING',
             label: 'Preparing',
-            time: order?.placedAt ? new Date(new Date(order.placedAt).getTime() + 15 * 60000).toLocaleTimeString() : '',
+            time: getTimelineTime('PREPARING'),
             completed: ['PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'READY'].includes(order?.status),
             icon: FaClock,
             current: order?.status === 'PREPARING'
         }
     ];
 
-    // FR27: For DELIVERY orders, show delivery steps. For TAKEAWAY, show pickup step
     if (order?.orderType === 'DELIVERY') {
         trackingSteps.push({
             status: 'OUT_FOR_DELIVERY',
             label: 'Out for Delivery',
-            time: order?.placedAt ? new Date(new Date(order.placedAt).getTime() + 30 * 60000).toLocaleTimeString() : '',
+            time: getTimelineTime('OUT_FOR_DELIVERY'),
             completed: ['OUT_FOR_DELIVERY', 'DELIVERED'].includes(order?.status),
             icon: FaTruck,
             current: order?.status === 'OUT_FOR_DELIVERY'
@@ -172,29 +257,27 @@ const OrderTracking = () => {
         trackingSteps.push({
             status: 'DELIVERED',
             label: 'Delivered',
-            time: '',
+            time: getTimelineTime('DELIVERED'),
             completed: order?.status === 'DELIVERED',
             icon: FaCheckCircle,
             current: order?.status === 'DELIVERED'
         });
     } else if (order?.orderType === 'TAKEAWAY') {
-        // For takeaway, show Ready for Pickup as the final step
         trackingSteps.push({
             status: 'READY',
             label: 'Ready for Pickup',
-            time: '',
+            time: getTimelineTime('READY'),
             completed: ['READY', 'DELIVERED'].includes(order?.status),
             icon: FaCheckCircle,
             current: order?.status === 'READY'
         });
     }
 
-    // Add cancelled step if order is cancelled
     if (order?.status === 'CANCELLED') {
         trackingSteps.push({
             status: 'CANCELLED',
             label: 'Order Cancelled',
-            time: order?.cancelledAt ? new Date(order.cancelledAt).toLocaleTimeString() : '',
+            time: getTimelineTime('CANCELLED'),
             completed: true,
             icon: FaBan,
             current: true
@@ -220,9 +303,7 @@ const OrderTracking = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Main Tracking Section */}
                 <div className="lg:col-span-2 space-y-6">
-                    {/* Current Status Card */}
                     <div className={`${order.status === 'CANCELLED' ? 'bg-red-50 border-red-500' : 'bg-primary-50 border-primary-500'} border-2 rounded-lg p-6`}>
                         <div className="flex items-center justify-between mb-4">
                             <div>
@@ -247,12 +328,11 @@ const OrderTracking = () => {
                         )}
                         {order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && order.orderType === 'DELIVERY' && (
                             <div className="text-sm text-primary-800">
-                                <p>Estimated delivery: <span className="font-semibold">Pending</span></p>
+                                <p>{getDeliveryEtaText() || 'Estimated delivery updating'}</p>
                             </div>
                         )}
                     </div>
 
-                    {/* Cancellation Section */}
                     {canCancelOrder() && (
                         <div className="bg-white rounded-lg shadow p-6">
                             <h3 className="text-lg font-semibold mb-4">Order Cancellation</h3>
@@ -275,7 +355,6 @@ const OrderTracking = () => {
                         </div>
                     )}
 
-                    {/* Refund Information */}
                     {order.status === 'CANCELLED' && (
                         <div className="bg-green-50 border-2 border-green-500 rounded-lg p-6">
                             <div className="flex items-start gap-3">
@@ -294,7 +373,6 @@ const OrderTracking = () => {
                         </div>
                     )}
 
-                    {/* Real-time Delivery Tracking Map */}
                     {order.orderType === 'DELIVERY' && order.status === 'OUT_FOR_DELIVERY' && order.deliveryAddress && (
                         <div className="bg-white rounded-lg shadow p-6">
                             <h3 className="text-lg font-semibold mb-4 flex items-center">
@@ -332,7 +410,6 @@ const OrderTracking = () => {
                         </div>
                     )}
 
-                    {/* Tracking Timeline */}
                     <div className="bg-white rounded-lg shadow p-6">
                         <h3 className="text-lg font-semibold mb-6">Order Progress</h3>
                         <div className="space-y-6">
@@ -340,7 +417,6 @@ const OrderTracking = () => {
                                 const Icon = step.icon;
                                 return (
                                     <div key={index} className="relative flex items-start">
-                                        {/* Connector Line */}
                                         {index < trackingSteps.length - 1 && (
                                             <div
                                                 className={`absolute left-5 top-12 bottom-0 w-0.5 ${step.completed ? 'bg-primary-500' : 'bg-gray-300'}`}
@@ -348,7 +424,6 @@ const OrderTracking = () => {
                                             />
                                         )}
 
-                                        {/* Icon */}
                                         <div
                                             className={`relative z-10 flex items-center justify-center w-10 h-10 rounded-full ${step.completed
                                                 ? step.status === 'CANCELLED' ? 'bg-red-500 text-white' : 'bg-primary-500 text-white'
@@ -358,7 +433,6 @@ const OrderTracking = () => {
                                             <Icon className="w-5 h-5" />
                                         </div>
 
-                                        {/* Content */}
                                         <div className="ml-4 flex-1">
                                             <h4 className={`font-semibold ${step.current ? 'text-primary-600' : step.completed ? 'text-gray-900' : 'text-gray-500'}`}>
                                                 {step.label}
@@ -374,9 +448,7 @@ const OrderTracking = () => {
                     </div>
                 </div>
 
-                {/* Sidebar */}
                 <div className="space-y-6">
-                    {/* Order Details */}
                     <div className="bg-white rounded-lg shadow p-6">
                         <h3 className="font-semibold mb-4">Order Details</h3>
                         <div className="space-y-3 text-sm">
@@ -402,7 +474,6 @@ const OrderTracking = () => {
                         </div>
                     </div>
 
-                    {/* Delivery Info */}
                     {order.orderType === 'DELIVERY' && order.status !== 'CANCELLED' && order.deliveryAddress && (
                         <div className="bg-white rounded-lg shadow p-6">
                             <h3 className="font-semibold mb-4">Delivery Information</h3>
@@ -433,7 +504,6 @@ const OrderTracking = () => {
                 </div>
             </div>
 
-            {/* Cancel Confirmation Modal */}
             {showCancelModal && (
                 <Modal
                     isOpen={showCancelModal}
@@ -456,19 +526,10 @@ const OrderTracking = () => {
                         )}
 
                         <div className="flex gap-3 pt-4">
-                            <Button
-                                onClick={handleCancelOrder}
-                                className="flex-1 bg-red-600 hover:bg-red-700"
-                                loading={isCancelling}
-                                disabled={isCancelling}
-                            >
+                            <Button onClick={handleCancelOrder} variant="danger" disabled={isCancelling}>
                                 {isCancelling ? 'Cancelling...' : 'Yes, Cancel Order'}
                             </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => setShowCancelModal(false)}
-                                className="flex-1"
-                            >
+                            <Button onClick={() => setShowCancelModal(false)} variant="outline">
                                 Keep Order
                             </Button>
                         </div>
@@ -476,14 +537,12 @@ const OrderTracking = () => {
                 </Modal>
             )}
 
-            {/* Toast Notification */}
-            {showToast && (
-                <Toast
-                    message={toastMessage}
-                    type={toastType}
-                    onClose={() => setShowToast(false)}
-                />
-            )}
+            <Toast
+                message={toastMessage}
+                type={toastType}
+                isVisible={showToast}
+                onClose={() => setShowToast(false)}
+            />
         </div>
     );
 };

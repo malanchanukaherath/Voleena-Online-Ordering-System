@@ -8,6 +8,7 @@ import {
     FaShoppingCart,
     FaClipboardList,
     FaUser,
+    FaComments,
     FaBell,
     FaSignOutAlt,
     FaTachometerAlt,
@@ -66,6 +67,7 @@ const Header = () => {
                     { path: '/', label: 'Home', icon: FaHome },
                     { path: '/menu', label: 'Menu', icon: FaUtensils },
                     { path: '/orders', label: 'My Orders', icon: FaClipboardList },
+                    { path: '/feedback', label: 'Feedback', icon: FaComments },
                     { path: '/profile', label: 'Profile', icon: FaUser },
                 ];
 

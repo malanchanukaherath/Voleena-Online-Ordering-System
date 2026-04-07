@@ -274,7 +274,7 @@ function toRadians(degrees) {
  * 
  * @param {number} customerLat - Customer address latitude
  * @param {number} customerLng - Customer address longitude
- * @returns {Promise<{isValid: boolean, distance: number, maxDistance: number, method: string}>}
+ * @returns {Promise<{isValid: boolean, distance: number, duration?: number, maxDistance: number, method: string}>}
  */
 async function validateDeliveryDistanceWithFallback(customerLat, customerLng) {
     try {
@@ -298,6 +298,7 @@ async function validateDeliveryDistanceWithFallback(customerLat, customerLng) {
         return {
             isValid: approximateRoadDistance <= MAX_DISTANCE_KM,
             distance: approximateRoadDistance,
+            duration: Math.ceil(approximateRoadDistance * 3 * 60),
             maxDistance: MAX_DISTANCE_KM,
             method: 'straight_line_approximation'
         };

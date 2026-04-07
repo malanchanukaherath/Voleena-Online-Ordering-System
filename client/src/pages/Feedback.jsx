@@ -5,6 +5,7 @@ import Textarea from '../components/ui/Textarea';
 import Select from '../components/ui/Select';
 import Button from '../components/ui/Button';
 import { FaStar } from 'react-icons/fa';
+import { submitFeedback } from '../services/feedbackService';
 
 const Feedback = () => {
     const navigate = useNavigate();
@@ -16,8 +17,9 @@ const Feedback = () => {
     });
     const [errors, setErrors] = useState({});
     const [hoveredStar, setHoveredStar] = useState(0);
-    const [submitted] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
     const [submitError, setSubmitError] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -42,11 +44,32 @@ const Feedback = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm()) return;
 
-        setSubmitError('Feedback submission is not available yet. Please try again later.');
+        setSubmitError('');
+        setIsSubmitting(true);
+
+        try {
+            const payload = {
+                rating: formData.rating,
+                feedbackType: formData.feedbackType,
+                comment: formData.comment.trim()
+            };
+
+            if (formData.orderNumber.trim()) {
+                payload.orderNumber = formData.orderNumber.trim();
+            }
+
+            await submitFeedback(payload);
+            setSubmitted(true);
+        } catch (error) {
+            const message = error?.response?.data?.message || error?.response?.data?.error || 'Failed to submit feedback';
+            setSubmitError(message);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     if (submitted) {
@@ -151,8 +174,8 @@ const Feedback = () => {
 
                 {/* Submit Button */}
                 <div className="flex gap-4">
-                    <Button type="submit" className="flex-1">
-                        Submit Feedback
+                    <Button type="submit" className="flex-1" disabled={isSubmitting}>
+                        {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
                     </Button>
                     <Button
                         type="button"

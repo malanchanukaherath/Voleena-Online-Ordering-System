@@ -1,5 +1,6 @@
 const { Delivery, Order, OrderItem, MenuItem, Address, Customer, Staff, DeliveryStaffAvailability, OrderStatusHistory, sequelize } = require('../models');
 const { validateDeliveryDistanceWithFallback, geocodeAddress } = require('../utils/distanceValidator');
+const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 const { validateAddressLine, validateCoordinates } = require('../utils/validationUtils');
 const { calculateDeliveryFee, getDeliveryFeeConfig, estimateDeliveryFee } = require('../utils/deliveryFeeCalculator');
 
@@ -202,8 +203,17 @@ exports.updateDeliveryStatus = async (req, res) => {
       if (proof) {
         updateData.DeliveryProof = proof;
       }
+      updateData.EstimatedDeliveryTime = new Date();
     } else if (status === 'FAILED') {
       updateData.FailureReason = notes || 'Delivery failed';
+    }
+
+    if (status === 'PICKED_UP' || status === 'IN_TRANSIT') {
+      updateData.EstimatedDeliveryTime = calculateEstimatedDeliveryTime({
+        stage: status,
+        distanceKm: Number(delivery.DistanceKm) || 0,
+        baseTime: new Date()
+      });
     }
 
     if (notes) {

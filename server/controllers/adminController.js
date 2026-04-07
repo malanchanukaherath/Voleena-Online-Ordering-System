@@ -14,6 +14,7 @@ const {
   sequelize
 } = require('../models');
 const bcrypt = require('bcryptjs');
+const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 
 /**
  * Get dashboard statistics
@@ -518,7 +519,12 @@ exports.assignDeliveryStaff = async (req, res) => {
     await delivery.update({
       DeliveryStaffID: normalizedStaffId,
       Status: 'ASSIGNED',
-      AssignedAt: new Date()
+      AssignedAt: new Date(),
+      EstimatedDeliveryTime: calculateEstimatedDeliveryTime({
+        stage: 'ASSIGNED',
+        distanceKm: Number(delivery.DistanceKm) || 0,
+        baseTime: new Date()
+      })
     }, {
       transaction
     });

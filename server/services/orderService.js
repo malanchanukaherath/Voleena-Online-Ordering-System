@@ -3,6 +3,7 @@ const { Transaction, Op } = require('sequelize');
 const stockService = require('./stockService');
 const { validateDeliveryDistanceWithFallback } = require('./distanceValidation');
 const { calculateDeliveryFee } = require('../utils/deliveryFeeCalculator');
+const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('./emailService');
 const { sendOrderConfirmationSMS, sendOrderStatusUpdateSMS } = require('./smsService');
 
@@ -124,6 +125,7 @@ class OrderService {
 
             // Validate delivery distance if delivery order (FR09)
             let deliveryDistance = 0;
+            let deliveryDurationSeconds = null;
             let validatedAddressId = null;
             if (orderType === 'DELIVERY') {
                 if (!addressId) {
@@ -166,6 +168,7 @@ class OrderService {
 
                 // Store the validated distance for fee calculation
                 deliveryDistance = distanceValidation.distance;
+                deliveryDurationSeconds = distanceValidation.duration || null;
                 validatedAddressId = address.AddressID;
             }
 
@@ -272,7 +275,13 @@ class OrderService {
                     OrderID: order.OrderID,
                     AddressID: validatedAddressId,
                     Status: 'PENDING',
-                    DistanceKm: deliveryDistance
+                    DistanceKm: deliveryDistance,
+                    EstimatedDeliveryTime: calculateEstimatedDeliveryTime({
+                        stage: 'CONFIRMED',
+                        durationSeconds: deliveryDurationSeconds,
+                        distanceKm: deliveryDistance,
+                        baseTime: new Date()
+                    })
                 }, { transaction });
             }
 
@@ -446,6 +455,23 @@ class OrderService {
                 case 'CANCELLED':
                     order.CancelledAt = new Date();
                     break;
+            }
+
+            if (order.OrderType === 'DELIVERY' && ['PREPARING', 'READY'].includes(newStatus)) {
+                const delivery = await Delivery.findOne({
+                    where: { OrderID: orderId },
+                    transaction
+                });
+
+                if (delivery) {
+                    await delivery.update({
+                        EstimatedDeliveryTime: calculateEstimatedDeliveryTime({
+                            stage: newStatus,
+                            distanceKm: Number(delivery.DistanceKm) || 0,
+                            baseTime: new Date()
+                        })
+                    }, { transaction });
+                }
             }
 
             order.UpdatedBy = staffId;
