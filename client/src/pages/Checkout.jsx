@@ -493,8 +493,9 @@ const Checkout = () => {
         if (!formData.name.trim()) newErrors.name = 'Name is required';
         else if (formData.name.trim().length < 2) newErrors.name = 'Name must be at least 2 characters';
 
-        if (!formData.email.trim()) newErrors.email = 'Email is required';
-        else if (!EMAIL_REGEX.test(normalizedEmail)) newErrors.email = 'Enter a valid email address';
+        if (normalizedEmail && !EMAIL_REGEX.test(normalizedEmail)) {
+            newErrors.email = 'Enter a valid email address';
+        }
 
         if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
         else if (phoneDigits.length < 9 || phoneDigits.length > 15) newErrors.phone = 'Enter a valid phone number';
@@ -758,7 +759,7 @@ const Checkout = () => {
                                         value={formData.email}
                                         onChange={handleChange}
                                         error={errors.email}
-                                        required
+                                        helperText="Optional"
                                     />
                                     <Input
                                         label="Phone"

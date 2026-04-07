@@ -519,6 +519,16 @@ class OrderService {
                 throw new Error('Order not found');
             }
 
+            if (cancelledByType === 'CUSTOMER') {
+                if (order.CustomerID !== cancelledBy) {
+                    throw new Error('Access denied. You can only cancel your own orders');
+                }
+
+                if (!['PENDING', 'CONFIRMED'].includes(order.Status)) {
+                    throw new Error('Customer cancellation is allowed only before order preparation starts');
+                }
+            }
+
             // Validate order can be cancelled
             if (['DELIVERED', 'CANCELLED'].includes(order.Status)) {
                 throw new Error(`Order cannot be cancelled. Current status: ${order.Status}`);

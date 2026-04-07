@@ -10,16 +10,12 @@ import { cancelOrder, getOrderById } from '../services/orderApi';
 const OrderTracking = () => {
     const { orderId } = useParams();
 
-    // Configurable cancellation window (in minutes)
-    const CANCELLATION_WINDOW_MINUTES = 10;
-
     const [order, setOrder] = useState(null);
 
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [showToast, setShowToast] = useState(false);
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
-    const [timeRemaining, setTimeRemaining] = useState(0);
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -72,30 +68,12 @@ const OrderTracking = () => {
         return () => clearInterval(interval);
     }, [orderId]);
 
-    // Calculate time remaining for cancellation
-    useEffect(() => {
-        if (!order?.placedAt) return;
-        const calculateTimeRemaining = () => {
-            const orderTime = new Date(order.placedAt);
-            const now = new Date();
-            const minutesElapsed = (now - orderTime) / 60000;
-            const remaining = Math.max(0, CANCELLATION_WINDOW_MINUTES - minutesElapsed);
-            setTimeRemaining(remaining);
-        };
-
-        calculateTimeRemaining();
-        const interval = setInterval(calculateTimeRemaining, 1000);
-        return () => clearInterval(interval);
-    }, [order?.placedAt]);
-
     // Check if order can be cancelled
     const canCancelOrder = () => {
         const cancellableStatuses = ['PENDING', 'CONFIRMED'];
-        const isWithinTimeWindow = timeRemaining > 0;
         const isNotCancelled = order.status !== 'CANCELLED';
 
         return cancellableStatuses.includes(order.status) &&
-            isWithinTimeWindow &&
             isNotCancelled;
     };
 
@@ -103,9 +81,6 @@ const OrderTracking = () => {
     const getCancellationReason = () => {
         if (order.status === 'CANCELLED') {
             return 'Order has already been cancelled';
-        }
-        if (timeRemaining <= 0) {
-            return `Cancellation window expired (${CANCELLATION_WINDOW_MINUTES} minutes from order placement)`;
         }
         if (!['PENDING', 'CONFIRMED'].includes(order.status)) {
             return 'Cannot cancel - order is already being prepared or delivered';
@@ -117,7 +92,12 @@ const OrderTracking = () => {
         try {
             await cancelOrder(order.id, 'Cancelled by customer');
             setOrder((prev) => ({ ...prev, status: 'CANCELLED', cancelledAt: new Date().toISOString() }));
-            setToastMessage('Order cancelled successfully.');
+            const isCashOnDelivery = order.paymentMethod === 'CASH';
+            setToastMessage(
+                isCashOnDelivery
+                    ? 'Order cancelled successfully.'
+                    : 'Order cancelled successfully. Your refund will be processed automatically via Stripe.'
+            );
             setToastType('success');
             setShowToast(true);
         } catch (error) {
@@ -258,7 +238,7 @@ const OrderTracking = () => {
                                 <div className="space-y-4">
                                     <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
                                         <p className="text-sm text-yellow-800">
-                                            ⏱️ You can cancel this order within <strong>{Math.floor(timeRemaining)} minutes {Math.floor((timeRemaining % 1) * 60)} seconds</strong>
+                                            You can cancel this order before preparation starts.
                                         </p>
                                     </div>
                                     <Button
@@ -289,7 +269,11 @@ const OrderTracking = () => {
                                 <div className="flex-1">
                                     <h3 className="text-lg font-semibold text-green-900 mb-2">Refund Status</h3>
                                     <div className="space-y-2 text-sm text-green-800">
-                                        <p>Refund processing is handled by support if payment was prepaid.</p>
+                                        {order.paymentMethod === 'CASH' ? (
+                                            <p>Order cancelled successfully.</p>
+                                        ) : (
+                                            <p>Order cancelled successfully. Your refund will be processed automatically via Stripe.</p>
+                                        )}
                                     </div>
                                 </div>
                             </div>
