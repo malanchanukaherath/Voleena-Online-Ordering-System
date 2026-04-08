@@ -1,56 +1,113 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FaCog, FaStore, FaBell, FaCreditCard, FaTruck, FaSave, FaClock } from 'react-icons/fa';
+import { adminService } from '../services/dashboardService';
+
+const DEFAULT_SETTINGS = {
+    // General Settings
+    restaurantName: 'Voleena Foods',
+    email: 'contact@voleenafoods.com',
+    phone: '+94 11 234 5678',
+    address: '123 Main Street, Colombo, Sri Lanka',
+    timezone: 'Asia/Colombo',
+    currency: 'LKR',
+
+    // Business Hours
+    businessHours: {
+        monday: { open: '09:00', close: '22:00', closed: false },
+        tuesday: { open: '09:00', close: '22:00', closed: false },
+        wednesday: { open: '09:00', close: '22:00', closed: false },
+        thursday: { open: '09:00', close: '22:00', closed: false },
+        friday: { open: '09:00', close: '22:00', closed: false },
+        saturday: { open: '09:00', close: '23:00', closed: false },
+        sunday: { open: '10:00', close: '22:00', closed: false },
+    },
+
+    // Order Settings
+    orderPrefix: 'ORD',
+    minOrderAmount: 500,
+    maxOrderAmount: 50000,
+    orderTimeout: 30,
+    autoConfirmOrders: false,
+
+    // Delivery Settings
+    deliveryFee: 150,
+    freeDeliveryThreshold: 2500,
+    maxDeliveryDistance: 15,
+    estimatedDeliveryTime: 45,
+
+    // Notification Settings
+    emailNotifications: true,
+    smsNotifications: true,
+    orderConfirmation: true,
+    orderStatusUpdates: true,
+    promotionalEmails: false,
+
+    // Payment Settings
+    cashOnDelivery: true,
+    onlinePayment: true,
+    cardPayment: true,
+    minimumCashChange: 100,
+};
+
+const mergeSettings = (incoming = {}) => {
+    const incomingBusinessHours = incoming.businessHours || {};
+    const businessHours = Object.keys(DEFAULT_SETTINGS.businessHours).reduce((acc, day) => {
+        acc[day] = {
+            ...DEFAULT_SETTINGS.businessHours[day],
+            ...(incomingBusinessHours[day] || {})
+        };
+        return acc;
+    }, {});
+
+    return {
+        ...DEFAULT_SETTINGS,
+        ...incoming,
+        businessHours
+    };
+};
 
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('general');
-    const [settings, setSettings] = useState({
-        // General Settings
-        restaurantName: 'Voleena Foods',
-        email: 'contact@voleenafoods.com',
-        phone: '+94 11 234 5678',
-        address: '123 Main Street, Colombo, Sri Lanka',
-        timezone: 'Asia/Colombo',
-        currency: 'LKR',
+    const [settings, setSettings] = useState(DEFAULT_SETTINGS);
 
-        // Business Hours
-        businessHours: {
-            monday: { open: '09:00', close: '22:00', closed: false },
-            tuesday: { open: '09:00', close: '22:00', closed: false },
-            wednesday: { open: '09:00', close: '22:00', closed: false },
-            thursday: { open: '09:00', close: '22:00', closed: false },
-            friday: { open: '09:00', close: '22:00', closed: false },
-            saturday: { open: '09:00', close: '23:00', closed: false },
-            sunday: { open: '10:00', close: '22:00', closed: false },
-        },
-
-        // Order Settings
-        orderPrefix: 'ORD',
-        minOrderAmount: 500,
-        maxOrderAmount: 50000,
-        orderTimeout: 30,
-        autoConfirmOrders: false,
-
-        // Delivery Settings
-        deliveryFee: 150,
-        freeDeliveryThreshold: 2500,
-        maxDeliveryDistance: 15,
-        estimatedDeliveryTime: 45,
-
-        // Notification Settings
-        emailNotifications: true,
-        smsNotifications: true,
-        orderConfirmation: true,
-        orderStatusUpdates: true,
-        promotionalEmails: false,
-
-        // Payment Settings
-        cashOnDelivery: true,
-        onlinePayment: true,
-        cardPayment: true,
-        minimumCashChange: 100,
-    });
-
+    const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [loadError, setLoadError] = useState('');
+    const [saveError, setSaveError] = useState('');
+    const [saveSuccess, setSaveSuccess] = useState('');
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const loadSettings = async () => {
+            setIsLoading(true);
+            setLoadError('');
+
+            try {
+                const response = await adminService.getSettings();
+                const serverSettings = response?.data || {};
+
+                if (isMounted) {
+                    setSettings(mergeSettings(serverSettings));
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setLoadError(error.message || 'Failed to load settings. Showing defaults.');
+                    setSettings(DEFAULT_SETTINGS);
+                }
+            } finally {
+                if (isMounted) {
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        loadSettings();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []);
 
     const handleInputChange = (field, value) => {
         setSettings(prev => ({
@@ -74,12 +131,16 @@ const Settings = () => {
 
     const handleSave = async () => {
         setIsSaving(true);
+        setSaveError('');
+        setSaveSuccess('');
+
         try {
-            // TODO: Implement API call to save settings
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            alert('Settings saved successfully!');
-        } catch {
-            alert('Failed to save settings. Please try again.');
+            const response = await adminService.updateSettings(settings);
+            const savedSettings = response?.data || settings;
+            setSettings(mergeSettings(savedSettings));
+            setSaveSuccess('Settings saved successfully.');
+        } catch (error) {
+            setSaveError(error.message || 'Failed to save settings. Please try again.');
         } finally {
             setIsSaving(false);
         }
@@ -104,7 +165,31 @@ const Settings = () => {
                 <p className="text-gray-600 mt-2">Configure your restaurant system settings</p>
             </div>
 
+            {loadError && (
+                <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                    {loadError}
+                </div>
+            )}
+
+            {saveError && (
+                <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {saveError}
+                </div>
+            )}
+
+            {saveSuccess && (
+                <div className="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-700">
+                    {saveSuccess}
+                </div>
+            )}
+
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                {isLoading && (
+                    <div className="border-b border-blue-200 bg-blue-50 px-6 py-3 text-sm text-blue-700">
+                        Loading settings...
+                    </div>
+                )}
+
                 {/* Tabs */}
                 <div className="border-b border-gray-200">
                     <div className="flex overflow-x-auto">
@@ -513,7 +598,7 @@ const Settings = () => {
                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
                     <button
                         onClick={handleSave}
-                        disabled={isSaving}
+                        disabled={isSaving || isLoading}
                         className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
                     >
                         <FaSave />
