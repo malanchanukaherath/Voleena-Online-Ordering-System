@@ -16,6 +16,12 @@ router.get('/reports/best-selling', adminController.getBestSellingItems);
 router.get('/reports/customer-retention', adminController.getCustomerRetentionReport);
 
 /**
+ * System Settings
+ */
+router.get('/settings', adminController.getSystemSettings);
+router.put('/settings', adminController.updateSystemSettings);
+
+/**
  * Staff Management
  */
 router.get('/staff', adminController.getAllStaff);

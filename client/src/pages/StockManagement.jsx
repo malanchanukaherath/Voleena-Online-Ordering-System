@@ -331,130 +331,132 @@ const StockManagement = () => {
                 </div>
             ) : (
                 <div className="bg-white rounded-lg shadow overflow-hidden">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item Name</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Opening</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Sold</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Adjusted</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Closing</th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                {canEditStock && (
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-                                )}
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200">
-                            {stock.map(item => (
-                                <tr key={item.StockID} className={item.IsLowStock ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-gray-50'}>
-                                    <td className="px-6 py-4 font-medium">{item.menuItem?.Name || 'Unknown Item'}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        {canEditStock ? (
-                                            <Input
-                                                type="number"
-                                                defaultValue={item.OpeningQuantity}
-                                                onBlur={(e) => handleUpdateOpening(item.StockID, e.target.value)}
-                                                disabled={updatingId === item.StockID}
-                                                className="w-20 text-center"
-                                            />
-                                        ) : (
-                                            item.OpeningQuantity
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 text-center text-red-600 font-semibold">-{item.SoldQuantity}</td>
-                                    <td className="px-6 py-4 text-center text-orange-600">{item.AdjustedQuantity >= 0 ? '+' : ''}{item.AdjustedQuantity}</td>
-                                    <td className="px-6 py-4 text-center">
-                                        <span className={item.IsLowStock ? 'text-red-700 font-bold text-lg' : 'font-semibold'}>
-                                            {item.ClosingQuantity}
-                                        </span>
-                                    </td>
-                                    <td className="px-6 py-4">
-                                        {item.IsLowStock ? (
-                                            <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700">
-                                                <FaExclamationTriangle /> Low Stock
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
-                                                ✓ In Stock
-                                            </span>
-                                        )}
-                                    </td>
+                    <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item Name</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Opening</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Sold</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Adjusted</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Closing</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                     {canEditStock && (
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col gap-2">
-                                                <div className="flex items-center gap-2">
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Adj"
-                                                        className="w-20 text-center"
-                                                        value={adjustments[item.StockID]?.adjustment ?? 0}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value;
-                                                            setAdjustments((prev) => ({
-                                                                ...prev,
-                                                                [item.StockID]: {
-                                                                    adjustment: value,
-                                                                    reason: prev[item.StockID]?.reason ?? ''
-                                                                }
-                                                            }));
-                                                        }}
-                                                        disabled={updatingId === item.StockID}
-                                                    />
-                                                    <Input
-                                                        type="text"
-                                                        placeholder="Reason"
-                                                        className="min-w-[160px]"
-                                                        value={adjustments[item.StockID]?.reason ?? ''}
-                                                        onChange={(e) => {
-                                                            const value = e.target.value;
-                                                            setAdjustments((prev) => ({
-                                                                ...prev,
-                                                                [item.StockID]: {
-                                                                    adjustment: prev[item.StockID]?.adjustment ?? 0,
-                                                                    reason: value
-                                                                }
-                                                            }));
-                                                        }}
-                                                        disabled={updatingId === item.StockID}
-                                                    />
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={() => handleUpdateOpening(item.StockID, item.OpeningQuantity)}
-                                                        disabled={updatingId === item.StockID}
-                                                    >
-                                                        Save Opening
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={() => {
-                                                            const adjustment = adjustments[item.StockID]?.adjustment ?? 0;
-                                                            const reason = adjustments[item.StockID]?.reason ?? '';
-                                                            handleManualAdjust(item.StockID, adjustment, reason);
-                                                        }}
-                                                        disabled={updatingId === item.StockID}
-                                                    >
-                                                        Adjust
-                                                    </Button>
-                                                    <Button
-                                                        variant="danger"
-                                                        size="sm"
-                                                        onClick={() => handleRemoveStockItem(item.StockID)}
-                                                        disabled={updatingId === item.StockID}
-                                                    >
-                                                        Remove
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </td>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
                                     )}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200">
+                                {stock.map(item => (
+                                    <tr key={item.StockID} className={item.IsLowStock ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-gray-50'}>
+                                        <td className="px-6 py-4 font-medium">{item.menuItem?.Name || 'Unknown Item'}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            {canEditStock ? (
+                                                <Input
+                                                    type="number"
+                                                    defaultValue={item.OpeningQuantity}
+                                                    onBlur={(e) => handleUpdateOpening(item.StockID, e.target.value)}
+                                                    disabled={updatingId === item.StockID}
+                                                    className="w-20 text-center"
+                                                />
+                                            ) : (
+                                                item.OpeningQuantity
+                                            )}
+                                        </td>
+                                        <td className="px-6 py-4 text-center text-red-600 font-semibold">-{item.SoldQuantity}</td>
+                                        <td className="px-6 py-4 text-center text-orange-600">{item.AdjustedQuantity >= 0 ? '+' : ''}{item.AdjustedQuantity}</td>
+                                        <td className="px-6 py-4 text-center">
+                                            <span className={item.IsLowStock ? 'text-red-700 font-bold text-lg' : 'font-semibold'}>
+                                                {item.ClosingQuantity}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {item.IsLowStock ? (
+                                                <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-700">
+                                                    <FaExclamationTriangle /> Low Stock
+                                                </span>
+                                            ) : (
+                                                <span className="inline-flex px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
+                                                    ✓ In Stock
+                                                </span>
+                                            )}
+                                        </td>
+                                        {canEditStock && (
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col gap-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Adj"
+                                                            className="w-20 text-center"
+                                                            value={adjustments[item.StockID]?.adjustment ?? 0}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                setAdjustments((prev) => ({
+                                                                    ...prev,
+                                                                    [item.StockID]: {
+                                                                        adjustment: value,
+                                                                        reason: prev[item.StockID]?.reason ?? ''
+                                                                    }
+                                                                }));
+                                                            }}
+                                                            disabled={updatingId === item.StockID}
+                                                        />
+                                                        <Input
+                                                            type="text"
+                                                            placeholder="Reason"
+                                                            className="min-w-[160px]"
+                                                            value={adjustments[item.StockID]?.reason ?? ''}
+                                                            onChange={(e) => {
+                                                                const value = e.target.value;
+                                                                setAdjustments((prev) => ({
+                                                                    ...prev,
+                                                                    [item.StockID]: {
+                                                                        adjustment: prev[item.StockID]?.adjustment ?? 0,
+                                                                        reason: value
+                                                                    }
+                                                                }));
+                                                            }}
+                                                            disabled={updatingId === item.StockID}
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleUpdateOpening(item.StockID, item.OpeningQuantity)}
+                                                            disabled={updatingId === item.StockID}
+                                                        >
+                                                            Save Opening
+                                                        </Button>
+                                                        <Button
+                                                            size="sm"
+                                                            onClick={() => {
+                                                                const adjustment = adjustments[item.StockID]?.adjustment ?? 0;
+                                                                const reason = adjustments[item.StockID]?.reason ?? '';
+                                                                handleManualAdjust(item.StockID, adjustment, reason);
+                                                            }}
+                                                            disabled={updatingId === item.StockID}
+                                                        >
+                                                            Adjust
+                                                        </Button>
+                                                        <Button
+                                                            variant="danger"
+                                                            size="sm"
+                                                            onClick={() => handleRemoveStockItem(item.StockID)}
+                                                            disabled={updatingId === item.StockID}
+                                                        >
+                                                            Remove
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        )}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             )}
         </div>

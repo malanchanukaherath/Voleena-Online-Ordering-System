@@ -15,6 +15,7 @@ const {
 } = require('../models');
 const bcrypt = require('bcryptjs');
 const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
+const systemSettingsService = require('../services/systemSettingsService');
 
 const parseAnalyticsDateRange = (query) => {
   const hasCustomRange = Boolean(query.startDate || query.endDate);
@@ -652,6 +653,49 @@ exports.assignDeliveryStaff = async (req, res) => {
     await transaction.rollback();
     console.error('Assign delivery staff error:', error);
     return res.status(500).json({ error: 'Failed to assign delivery staff' });
+  }
+};
+
+/**
+ * Get admin system settings
+ */
+exports.getSystemSettings = async (req, res) => {
+  try {
+    const settings = await systemSettingsService.getAdminSettings();
+
+    return res.json({
+      success: true,
+      data: settings
+    });
+  } catch (error) {
+    console.error('Get system settings error:', error);
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      success: false,
+      error: error.message || 'Failed to fetch settings'
+    });
+  }
+};
+
+/**
+ * Update admin system settings
+ */
+exports.updateSystemSettings = async (req, res) => {
+  try {
+    const updatedSettings = await systemSettingsService.updateAdminSettings(req.body, req.user?.id || null);
+
+    return res.json({
+      success: true,
+      message: 'Settings updated successfully',
+      data: updatedSettings
+    });
+  } catch (error) {
+    console.error('Update system settings error:', error);
+    const statusCode = error.statusCode || 500;
+    return res.status(statusCode).json({
+      success: false,
+      error: error.message || 'Failed to update settings'
+    });
   }
 };
 

@@ -60,7 +60,7 @@ const Toast = ({
   if (!show) return null;
 
   return (
-    <div className={`fixed top-4 right-4 z-50 max-w-sm w-full bg-white border rounded-lg shadow-lg transform transition-all duration-300 ease-in-out ${typeClasses[type]}`}>
+    <div className={`fixed top-4 right-4 z-40 max-w-sm w-full bg-white border rounded-lg shadow-lg transform transition-all duration-300 ease-in-out ${typeClasses[type]}`}>
       <div className="flex items-start p-4">
         <div className={`flex-shrink-0 ${iconClasses[type]}`}>
           {icons[type]}

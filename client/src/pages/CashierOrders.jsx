@@ -54,34 +54,36 @@ const CashierOrders = () => {
                 </p>
             </div>
             <div className="bg-white rounded-lg shadow">
-                <table className="min-w-full">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                        {orders.length === 0 ? (
+                <div className="overflow-x-auto">
+                    <table className="min-w-full">
+                        <thead className="bg-gray-50">
                             <tr>
-                                <td className="px-6 py-4 text-sm text-gray-500" colSpan={5}>
-                                    {error || 'No orders available.'}
-                                </td>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                             </tr>
-                        ) : orders.map(order => (
-                            <tr key={order.id} className="hover:bg-gray-50">
-                                <td className="px-6 py-4 font-medium">{order.orderNumber}</td>
-                                <td className="px-6 py-4">{order.customer}</td>
-                                <td className="px-6 py-4">{order.orderType}</td>
-                                <td className="px-6 py-4">LKR {order.total.toFixed(2)}</td>
-                                <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y">
+                            {orders.length === 0 ? (
+                                <tr>
+                                    <td className="px-6 py-4 text-sm text-gray-500" colSpan={5}>
+                                        {error || 'No orders available.'}
+                                    </td>
+                                </tr>
+                            ) : orders.map(order => (
+                                <tr key={order.id} className="hover:bg-gray-50">
+                                    <td className="px-6 py-4 font-medium">{order.orderNumber}</td>
+                                    <td className="px-6 py-4">{order.customer}</td>
+                                    <td className="px-6 py-4">{order.orderType}</td>
+                                    <td className="px-6 py-4">LKR {order.total.toFixed(2)}</td>
+                                    <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

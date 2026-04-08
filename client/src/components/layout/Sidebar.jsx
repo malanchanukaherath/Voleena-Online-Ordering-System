@@ -74,7 +74,7 @@ const Sidebar = () => {
     }
 
     return (
-        <aside className="w-64 bg-white shadow-lg min-h-screen sticky top-16">
+        <aside className="hidden lg:block w-64 bg-white shadow-lg min-h-[calc(100vh-4rem)] sticky top-16 self-start">
             <nav className="p-4 space-y-1">
                 {menuItems.map((item) => {
                     const Icon = item.icon;

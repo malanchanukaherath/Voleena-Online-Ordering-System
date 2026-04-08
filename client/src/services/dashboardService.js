@@ -87,6 +87,22 @@ class AdminService {
     return handleResponse(response);
   }
 
+  async getSettings() {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/settings`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  }
+
+  async updateSettings(settings) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/settings`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(settings)
+    });
+    return handleResponse(response);
+  }
+
   async getAllStaff() {
     const response = await fetch(`${API_BASE_URL}/api/v1/admin/staff`, {
       headers: getAuthHeaders()

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
@@ -177,12 +177,25 @@ export const StripePaymentModal = ({
     onCancel,
     onError
 }) => {
+    useEffect(() => {
+        if (!isOpen) {
+            return undefined;
+        }
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isOpen]);
+
     if (!isOpen) return null;
 
     const stripeElementsPromise = clientSecret ? getStripePromise() : null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
             <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
                 <h2 className="text-2xl font-bold mb-2">Complete Payment</h2>
                 <p className="text-gray-600 text-sm mb-6">
