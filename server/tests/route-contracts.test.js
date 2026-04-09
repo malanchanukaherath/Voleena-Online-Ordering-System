@@ -14,12 +14,19 @@ jest.mock('../controllers/adminController', () => ({
   getMonthlySalesReport: mockOkHandler,
   getBestSellingItems: mockOkHandler,
   getCustomerRetentionReport: mockOkHandler,
+  getSystemSettings: mockOkHandler,
+  updateSystemSettings: mockOkHandler,
   getAllStaff: mockOkHandler,
   createStaff: mockOkHandler,
   updateStaff: mockOkHandler,
   deleteStaff: mockOkHandler,
   getAllRoles: mockOkHandler,
   assignDeliveryStaff: mockOkHandler
+}));
+
+jest.mock('../controllers/feedbackController', () => ({
+  getAdminFeedback: mockOkHandler,
+  respondToFeedback: mockOkHandler
 }));
 
 jest.mock('../controllers/kitchenController', () => ({
