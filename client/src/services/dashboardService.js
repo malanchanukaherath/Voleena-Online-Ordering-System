@@ -219,8 +219,13 @@ class CashierService {
   }
 
   async getAllCustomers(search = '', limit = 50) {
+    const query = new URLSearchParams({
+      search,
+      limit: String(limit)
+    });
+
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/cashier/customers?search=${search}&limit=${limit}`,
+      `${API_BASE_URL}/api/v1/cashier/customers?${query.toString()}`,
       { headers: getAuthHeaders() }
     );
     return handleResponse(response);

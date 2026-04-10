@@ -97,6 +97,25 @@ const normalizeComboPacksForPos = (comboResponse) => {
         .filter((combo) => combo.IsActive);
 };
 
+const DEFAULT_GUEST_CUSTOMER_NAME = 'Walk-in Customer';
+const getCustomerId = (customer) => Number.parseInt(customer?.CustomerID ?? customer?.customerId, 10);
+const normalizeCustomersForLookup = (customerResponse) => {
+    const customers = parseApiArray(customerResponse);
+
+    return customers
+        .map((customer) => ({
+            ...customer,
+            CustomerID: getCustomerId(customer),
+            Name: customer?.Name ?? customer?.name ?? 'Unknown Customer',
+            Email: customer?.Email ?? customer?.email ?? '',
+            Phone: customer?.Phone ?? customer?.phone ?? '',
+            AccountStatus: customer?.AccountStatus ?? customer?.accountStatus ?? 'ACTIVE',
+            IsActive: customer?.IsActive ?? customer?.isActive ?? true
+        }))
+        .filter((customer) => Number.isInteger(customer.CustomerID))
+        .filter((customer) => customer.Name !== DEFAULT_GUEST_CUSTOMER_NAME);
+};
+
 const createPosEntryKey = (item) => {
     if (item.type === 'combo') {
         return `combo:${item.ComboID}`;
@@ -162,6 +181,11 @@ const CashierDashboard = () => {
     const [walkInSubmitting, setWalkInSubmitting] = useState(false);
     const [walkInError, setWalkInError] = useState('');
     const [walkInSuccess, setWalkInSuccess] = useState('');
+    const [customerSearchTerm, setCustomerSearchTerm] = useState('');
+    const [customerSearchResults, setCustomerSearchResults] = useState([]);
+    const [customerSearchLoading, setCustomerSearchLoading] = useState(false);
+    const [customerSearchError, setCustomerSearchError] = useState('');
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
 
     const [calcPrice, setCalcPrice] = useState('');
     const [calcQuantity, setCalcQuantity] = useState('1');
@@ -513,6 +537,55 @@ const CashierDashboard = () => {
         };
     }, [isWalkInOpen, loadPosCatalog]);
 
+    useEffect(() => {
+        if (!isWalkInOpen) {
+            return undefined;
+        }
+
+        const searchValue = customerSearchTerm.trim();
+
+        if (!searchValue) {
+            setCustomerSearchResults([]);
+            setCustomerSearchError('');
+            setCustomerSearchLoading(false);
+            return undefined;
+        }
+
+        let isActive = true;
+
+        const searchTimer = setTimeout(async () => {
+            setCustomerSearchLoading(true);
+            setCustomerSearchError('');
+
+            try {
+                const response = await cashierService.getAllCustomers(searchValue, 8);
+
+                if (!isActive) {
+                    return;
+                }
+
+                const nextResults = normalizeCustomersForLookup(response)
+                    .filter((customer) => customer.CustomerID !== selectedCustomer?.CustomerID);
+
+                setCustomerSearchResults(nextResults);
+            } catch (error) {
+                if (isActive) {
+                    setCustomerSearchResults([]);
+                    setCustomerSearchError(error.message || 'Failed to search customers');
+                }
+            } finally {
+                if (isActive) {
+                    setCustomerSearchLoading(false);
+                }
+            }
+        }, 250);
+
+        return () => {
+            isActive = false;
+            clearTimeout(searchTimer);
+        };
+    }, [customerSearchTerm, isWalkInOpen, selectedCustomer?.CustomerID]);
+
     const addToWalkInOrder = (catalogItem) => {
         setWalkInError('');
         setWalkInSuccess('');
@@ -581,6 +654,22 @@ const CashierDashboard = () => {
         setWalkInSuccess('');
     };
 
+    const selectCustomerForWalkInOrder = (customer) => {
+        setSelectedCustomer(customer);
+        setCustomerSearchTerm('');
+        setCustomerSearchResults([]);
+        setCustomerSearchError('');
+        setWalkInError('');
+        setWalkInSuccess('');
+    };
+
+    const resetWalkInCustomer = () => {
+        setSelectedCustomer(null);
+        setCustomerSearchTerm('');
+        setCustomerSearchResults([]);
+        setCustomerSearchError('');
+    };
+
     const sendWalkInOrder = async () => {
         if (currentWalkInOrder.length === 0) {
             setWalkInError('Add at least one item before sending to kitchen.');
@@ -598,14 +687,20 @@ const CashierDashboard = () => {
                     ...(item.comboId ? { combo_id: item.comboId } : {}),
                     quantity: item.quantity
                 })),
-                payment_method: walkInPaymentMethod
+                payment_method: walkInPaymentMethod,
+                ...(selectedCustomer?.CustomerID ? { customer_id: selectedCustomer.CustomerID } : {})
             };
 
             const response = await cashierService.createWalkInOrder(payload);
             const orderNumber = response?.data?.OrderNumber || response?.data?.data?.OrderNumber || 'N/A';
 
-            setWalkInSuccess(`Walk-in order ${orderNumber} sent to kitchen.`);
+            setWalkInSuccess(
+                selectedCustomer
+                    ? `Walk-in order ${orderNumber} sent to kitchen for ${selectedCustomer.Name}.`
+                    : `Walk-in order ${orderNumber} sent to kitchen.`
+            );
             setCurrentWalkInOrder([]);
+            resetWalkInCustomer();
             await loadData();
         } catch (error) {
             setWalkInError(error.message || 'Failed to create walk-in order');
@@ -724,6 +819,106 @@ const CashierDashboard = () => {
                                 <option value="WALLET">WALLET</option>
                             </select>
                         </div>
+                    </div>
+
+                    <div className="mb-6 rounded-lg border border-gray-200 p-4">
+                        <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                            <div>
+                                <h4 className="font-semibold text-gray-900">Customer Record</h4>
+                                <p className="text-sm text-gray-600">
+                                    Search by name, email, or phone to attach this walk-in order to a registered customer.
+                                </p>
+                            </div>
+                            {selectedCustomer ? (
+                                <button
+                                    type="button"
+                                    onClick={resetWalkInCustomer}
+                                    className="self-start rounded border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
+                                >
+                                    Use Walk-In Guest
+                                </button>
+                            ) : (
+                                <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">
+                                    Using default walk-in guest
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="mt-4">
+                            <input
+                                type="text"
+                                value={customerSearchTerm}
+                                onChange={(event) => setCustomerSearchTerm(event.target.value)}
+                                placeholder="Search registered customer by name, email, or phone"
+                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm focus:border-primary-500 focus:outline-none"
+                            />
+                        </div>
+
+                        {selectedCustomer ? (
+                            <div className="mt-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
+                                <p className="font-semibold">{selectedCustomer.Name}</p>
+                                <p className="mt-1 text-green-800">
+                                    {selectedCustomer.Phone}
+                                    {selectedCustomer.Email ? ` • ${selectedCustomer.Email}` : ''}
+                                </p>
+                                <p className="mt-1 text-xs text-green-700">
+                                    This order will be stored under the selected customer account.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                                Orders without a selected customer will continue to use the default walk-in guest profile.
+                            </div>
+                        )}
+
+                        {customerSearchError && (
+                            <p className="mt-3 text-sm text-red-600">{customerSearchError}</p>
+                        )}
+
+                        {(customerSearchLoading || customerSearchResults.length > 0 || customerSearchTerm.trim()) && (
+                            <div className="mt-3 max-h-60 overflow-y-auto rounded-lg border border-gray-200 divide-y">
+                                {customerSearchLoading ? (
+                                    <div className="p-3 text-sm text-gray-500">Searching customers...</div>
+                                ) : customerSearchResults.length === 0 ? (
+                                    <div className="p-3 text-sm text-gray-500">
+                                        No registered customers matched "{customerSearchTerm.trim()}".
+                                    </div>
+                                ) : customerSearchResults.map((customer) => {
+                                    const isSelectable = customer.AccountStatus === 'ACTIVE' && customer.IsActive !== false;
+
+                                    return (
+                                        <button
+                                            key={customer.CustomerID}
+                                            type="button"
+                                            onClick={() => selectCustomerForWalkInOrder(customer)}
+                                            disabled={!isSelectable}
+                                            className="w-full p-3 text-left hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400"
+                                        >
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p className="font-medium">{customer.Name}</p>
+                                                    <p className="mt-1 text-xs text-gray-500">
+                                                        {customer.Phone}
+                                                        {customer.Email ? ` • ${customer.Email}` : ''}
+                                                    </p>
+                                                </div>
+                                                <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${isSelectable
+                                                    ? 'bg-green-100 text-green-700'
+                                                    : 'bg-red-100 text-red-700'}`}
+                                                >
+                                                    {customer.AccountStatus}
+                                                </span>
+                                            </div>
+                                            {!isSelectable && (
+                                                <p className="mt-1 text-xs text-red-600">
+                                                    Inactive or blocked customers cannot be attached to new orders.
+                                                </p>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

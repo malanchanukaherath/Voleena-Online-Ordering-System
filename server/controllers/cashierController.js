@@ -44,6 +44,32 @@ async function findOrCreateGuestCustomer() {
   });
 }
 
+async function resolveWalkInCustomer(rawCustomerId) {
+  const customerId = Number.parseInt(rawCustomerId, 10);
+
+  if (!Number.isInteger(customerId) || customerId <= 0) {
+    const error = new Error('Invalid customer id');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const customer = await Customer.findByPk(customerId);
+
+  if (!customer) {
+    const error = new Error('Customer not found');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (customer.AccountStatus !== 'ACTIVE' || customer.IsActive === false) {
+    const error = new Error('Selected customer is not active');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return customer;
+}
+
 /**
  * Get cashier dashboard statistics
  */
@@ -132,7 +158,13 @@ exports.getDashboardStats = async (req, res) => {
  */
 exports.createWalkInOrder = async (req, res) => {
   try {
-    const { items, payment_method: paymentMethod, special_instructions: specialInstructions } = req.body;
+    const {
+      items,
+      payment_method: paymentMethod,
+      special_instructions: specialInstructions,
+      customer_id: customerIdFromSnakeCase,
+      customerId: customerIdFromCamelCase
+    } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Order must contain at least one item' });
@@ -167,9 +199,12 @@ exports.createWalkInOrder = async (req, res) => {
       });
     }
 
-    const guestCustomer = await findOrCreateGuestCustomer();
+    const requestedCustomerId = customerIdFromSnakeCase ?? customerIdFromCamelCase;
+    const orderCustomer = requestedCustomerId != null
+      ? await resolveWalkInCustomer(requestedCustomerId)
+      : await findOrCreateGuestCustomer();
 
-    const order = await orderService.createOrder(guestCustomer.CustomerID, {
+    const order = await orderService.createOrder(orderCustomer.CustomerID, {
       orderType: 'WALK_IN',
       specialInstructions: specialInstructions || null,
       items: normalizedItems
@@ -219,9 +254,12 @@ exports.createWalkInOrder = async (req, res) => {
   } catch (error) {
     console.error('Create walk-in order error:', error);
     const errorMessage = error.message || 'Failed to create walk-in order';
-    const statusCode = /required|invalid|available|stock|outside|at least one item/i.test(errorMessage)
-      ? 400
-      : 500;
+    const statusCode = error.statusCode
+      || (/required|invalid|available|stock|outside|at least one item|not active/i.test(errorMessage)
+        ? 400
+        : /not found/i.test(errorMessage)
+          ? 404
+          : 500);
 
     return res.status(statusCode).json({ error: errorMessage });
   }
