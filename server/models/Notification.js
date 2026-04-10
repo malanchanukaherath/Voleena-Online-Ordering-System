@@ -6,62 +6,62 @@ module.exports = (sequelize) => {
             type: DataTypes.INTEGER,
             primaryKey: true,
             autoIncrement: true,
-            field: 'NotificationID'
+            field: 'notification_id'
         },
         RecipientType: {
             type: DataTypes.ENUM('CUSTOMER', 'STAFF'),
             allowNull: false,
-            field: 'RecipientType'
+            field: 'recipient_type'
         },
         RecipientID: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            field: 'RecipientID'
+            field: 'recipient_id'
         },
         NotificationType: {
             type: DataTypes.ENUM('EMAIL', 'SMS', 'PUSH'),
             allowNull: false,
-            field: 'NotificationType'
+            field: 'notification_type'
         },
         Subject: {
             type: DataTypes.STRING(255),
             allowNull: true,
-            field: 'Subject'
+            field: 'subject'
         },
         Message: {
             type: DataTypes.TEXT,
             allowNull: false,
-            field: 'Message'
+            field: 'message'
         },
         Status: {
             type: DataTypes.ENUM('PENDING', 'SENT', 'FAILED'),
             allowNull: false,
             defaultValue: 'PENDING',
-            field: 'Status'
+            field: 'status'
         },
         SentAt: {
             type: DataTypes.DATE,
             allowNull: true,
-            field: 'SentAt'
+            field: 'sent_at'
         },
         ErrorMessage: {
             type: DataTypes.TEXT,
             allowNull: true,
-            field: 'ErrorMessage'
+            field: 'error_message'
         },
         RelatedOrderID: {
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-                model: 'Order',
-                key: 'OrderID'
+                model: 'order',
+                key: 'order_id'
             },
-            field: 'RelatedOrderID'
+            field: 'related_order_id'
         }
     }, {
-        tableName: 'Notification',
+        tableName: 'notification',
         timestamps: true,
-        createdAt: 'CreatedAt',
+        createdAt: 'created_at',
         updatedAt: false
     });
 
