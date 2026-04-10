@@ -16,3 +16,6 @@ docker-compose.yml
 .DS_Store
 
 npm-debug.log
+
+# AWS Keys
+*.pem

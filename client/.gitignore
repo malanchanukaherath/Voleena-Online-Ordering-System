@@ -62,3 +62,6 @@ yarn-error.log*
 
 # TypeScript
 *.tsbuildinfo
+
+# AWS Keys
+*.pem

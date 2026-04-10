@@ -38,3 +38,6 @@ client/.env.local
 .env.example
 .env.local
 .env
+
+# AWS Keys
+*.pem
