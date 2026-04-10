@@ -87,6 +87,24 @@ class AdminService {
     return handleResponse(response);
   }
 
+  async getBusinessSummaryReport(params = {}) {
+    const query = new URLSearchParams();
+
+    if (params.startDate && params.endDate) {
+      query.set('startDate', params.startDate);
+      query.set('endDate', params.endDate);
+    } else {
+      query.set('year', String(params.year));
+      query.set('month', String(params.month));
+    }
+
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/admin/reports/business-summary?${query.toString()}`,
+      { headers: getAuthHeaders() }
+    );
+    return handleResponse(response);
+  }
+
   async getSettings() {
     const response = await fetch(`${API_BASE_URL}/api/v1/admin/settings`, {
       headers: getAuthHeaders()

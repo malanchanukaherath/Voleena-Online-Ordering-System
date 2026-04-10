@@ -52,6 +52,58 @@ const parseAnalyticsDateRange = (query) => {
   };
 };
 
+const decodeFeedbackPayload = (rawComment) => {
+  if (!rawComment || typeof rawComment !== 'string') {
+    return {
+      comment: '',
+      positiveTags: [],
+      issueTags: []
+    };
+  }
+
+  try {
+    const parsed = JSON.parse(rawComment);
+    return {
+      comment: String(parsed?.comment || ''),
+      positiveTags: Array.isArray(parsed?.positiveTags) ? parsed.positiveTags.map((tag) => String(tag || '').trim()).filter(Boolean) : [],
+      issueTags: Array.isArray(parsed?.issueTags) ? parsed.issueTags.map((tag) => String(tag || '').trim()).filter(Boolean) : []
+    };
+  } catch {
+    return {
+      comment: rawComment,
+      positiveTags: [],
+      issueTags: []
+    };
+  }
+};
+
+const incrementCounter = (map, key) => {
+  if (!key) {
+    return;
+  }
+
+  map.set(key, (map.get(key) || 0) + 1);
+};
+
+const safeNumber = (value, digits = 2) => {
+  const parsed = Number(value || 0);
+  if (!Number.isFinite(parsed)) {
+    return 0;
+  }
+
+  return Number(parsed.toFixed(digits));
+};
+
+const getRangeLabel = (startDate, endDate) => {
+  const sameDay = startDate.toDateString() === endDate.toDateString();
+
+  if (sameDay) {
+    return startDate.toLocaleDateString();
+  }
+
+  return `${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`;
+};
+
 /**
  * Get dashboard statistics
  */
@@ -303,6 +355,388 @@ exports.getCustomerRetentionReport = async (req, res) => {
   } catch (error) {
     console.error('Customer retention report error:', error);
     return res.status(500).json({ error: 'Failed to fetch customer retention report' });
+  }
+};
+
+/**
+ * Get consolidated business report for admin analytics, printing, and exports
+ */
+exports.getBusinessSummaryReport = async (req, res) => {
+  try {
+    const range = parseAnalyticsDateRange(req.query);
+    if (range.error) {
+      return res.status(400).json({ error: range.error });
+    }
+
+    const { startDate, endDate } = range;
+    const replacements = [startDate, endDate];
+
+    const [
+      [summaryResult],
+      revenueTrend,
+      orderTypeBreakdown,
+      orderStatusBreakdown,
+      paymentBreakdown,
+      topItems,
+      categoryBreakdown,
+      [retentionResult],
+      [deliveryResult],
+      stockMovementBreakdown,
+      [feedbackAggregate],
+      feedbackRecords,
+      [newCustomersResult],
+      [uniqueCustomersResult]
+    ] = await Promise.all([
+      sequelize.query(`
+        SELECT
+          COUNT(*) AS totalOrders,
+          COALESCE(SUM(CASE WHEN status != 'CANCELLED' THEN final_amount ELSE 0 END), 0) AS totalRevenue,
+          COALESCE(AVG(CASE WHEN status != 'CANCELLED' THEN final_amount END), 0) AS avgOrderValue,
+          SUM(CASE WHEN status = 'DELIVERED' THEN 1 ELSE 0 END) AS deliveredOrders,
+          SUM(CASE WHEN status = 'CANCELLED' THEN 1 ELSE 0 END) AS cancelledOrders,
+          SUM(CASE WHEN order_type = 'WALK_IN' THEN 1 ELSE 0 END) AS walkInOrders,
+          SUM(CASE WHEN order_type = 'ONLINE' THEN 1 ELSE 0 END) AS onlineOrders,
+          SUM(CASE WHEN order_type = 'DELIVERY' THEN 1 ELSE 0 END) AS deliveryOrders,
+          SUM(CASE WHEN order_type = 'TAKEAWAY' THEN 1 ELSE 0 END) AS takeawayOrders
+        FROM \`order\`
+        WHERE created_at BETWEEN ? AND ?
+      `, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
+      }),
+      sequelize.query(`
+        SELECT 
+          DATE(created_at) AS date,
+          COUNT(*) AS orderCount,
+          COALESCE(SUM(CASE WHEN status != 'CANCELLED' THEN final_amount ELSE 0 END), 0) AS revenue
+        FROM \`order\`
+        WHERE created_at BETWEEN ? AND ?
+        GROUP BY DATE(created_at)
+        ORDER BY date ASC
+      `, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
+      }),
+      sequelize.query(`
+        SELECT
+          order_type AS orderType,
+          COUNT(*) AS orderCount,
+          COALESCE(SUM(CASE WHEN status != 'CANCELLED' THEN final_amount ELSE 0 END), 0) AS revenue
+        FROM \`order\`
+        WHERE created_at BETWEEN ? AND ?
+        GROUP BY order_type
+        ORDER BY orderCount DESC, revenue DESC
+      `, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
+      }),
+      sequelize.query(`
+        SELECT
+          status,
+          COUNT(*) AS orderCount
+        FROM \`order\`
+        WHERE created_at BETWEEN ? AND ?
+        GROUP BY status
+        ORDER BY orderCount DESC
+      `, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
+      }),
+      sequelize.query(`
+        SELECT
+          p.method AS method,
+          p.status AS status,
+          COUNT(*) AS transactionCount,
+          COALESCE(SUM(p.amount), 0) AS totalAmount
+        FROM payment p
+        INNER JOIN \`order\` o ON o.order_id = p.order_id
+        WHERE o.created_at BETWEEN ? AND ?
+        GROUP BY p.method, p.status
+        ORDER BY totalAmount DESC, transactionCount DESC
+      `, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
+      }),
+      sequelize.query(`
+        SELECT *
+        FROM (
+          SELECT
+            'MENU_ITEM' AS itemKind,
+            m.name AS itemName,
+            COALESCE(c.name, 'Uncategorized') AS categoryName,
+            COALESCE(SUM(oi.quantity), 0) AS totalQuantity,
+            COALESCE(SUM(oi.subtotal), 0) AS totalRevenue
+          FROM order_item oi
+          INNER JOIN \`order\` o ON o.order_id = oi.order_id
+          INNER JOIN menu_item m ON m.menu_item_id = oi.menu_item_id
+          LEFT JOIN category c ON c.category_id = m.category_id
+          WHERE o.created_at BETWEEN ? AND ?
+            AND o.status != 'CANCELLED'
+            AND oi.menu_item_id IS NOT NULL
+          GROUP BY m.menu_item_id, m.name, c.name
+
+          UNION ALL
+
+          SELECT
+            'COMBO_PACK' AS itemKind,
+            cp.name AS itemName,
+            'Combo Packs' AS categoryName,
+            COALESCE(SUM(oi.quantity), 0) AS totalQuantity,
+            COALESCE(SUM(oi.subtotal), 0) AS totalRevenue
+          FROM order_item oi
+          INNER JOIN \`order\` o ON o.order_id = oi.order_id
+          INNER JOIN combo_pack cp ON cp.combo_id = oi.combo_id
+          WHERE o.created_at BETWEEN ? AND ?
+            AND o.status != 'CANCELLED'
+            AND oi.combo_id IS NOT NULL
+          GROUP BY cp.combo_id, cp.name
+        ) AS rankedItems
+        ORDER BY totalQuantity DESC, totalRevenue DESC
+        LIMIT 10
+      `, {
+        replacements: [startDate, endDate, startDate, endDate],
+        type: sequelize.QueryTypes.SELECT
+      }),
+      sequelize.query(`
+        SELECT *
+        FROM (
+          SELECT
+            COALESCE(c.name, 'Uncategorized') AS categoryName,
+            COALESCE(SUM(oi.subtotal), 0) AS revenue,
+            COALESCE(SUM(oi.quantity), 0) AS totalQuantity
+          FROM order_item oi
+          INNER JOIN \`order\` o ON o.order_id = oi.order_id
+          INNER JOIN menu_item m ON m.menu_item_id = oi.menu_item_id
+          LEFT JOIN category c ON c.category_id = m.category_id
+          WHERE o.created_at BETWEEN ? AND ?
+            AND o.status != 'CANCELLED'
+            AND oi.menu_item_id IS NOT NULL
+          GROUP BY c.name
+
+          UNION ALL
+
+          SELECT
+            'Combo Packs' AS categoryName,
+            COALESCE(SUM(oi.subtotal), 0) AS revenue,
+            COALESCE(SUM(oi.quantity), 0) AS totalQuantity
+          FROM order_item oi
+          INNER JOIN \`order\` o ON o.order_id = oi.order_id
+          WHERE o.created_at BETWEEN ? AND ?
+            AND o.status != 'CANCELLED'
+            AND oi.combo_id IS NOT NULL
+        ) AS categoryTotals
+        WHERE revenue > 0 OR totalQuantity > 0
+        ORDER BY revenue DESC, totalQuantity DESC
+      `, {
+        replacements: [startDate, endDate, startDate, endDate],
+        type: sequelize.QueryTypes.SELECT
+      }),
+      sequelize.query(`
+        SELECT
+          COUNT(*) AS totalCustomers,
+          SUM(CASE WHEN customerOrders.orderCount >= 2 THEN 1 ELSE 0 END) AS retainedCustomers
+        FROM (
+          SELECT
+            o.customer_id AS customerId,
+            COUNT(*) AS orderCount
+          FROM \`order\` o
+          WHERE o.customer_id IS NOT NULL
+            AND o.status = 'DELIVERED'
+            AND o.created_at BETWEEN ? AND ?
+          GROUP BY o.customer_id
+        ) AS customerOrders
+      `, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
+      }),
+      sequelize.query(`
+        SELECT
+          COUNT(*) AS totalDeliveries,
+          SUM(CASE WHEN d.status = 'ASSIGNED' THEN 1 ELSE 0 END) AS assignedCount,
+          SUM(CASE WHEN d.status IN ('PICKED_UP', 'IN_TRANSIT') THEN 1 ELSE 0 END) AS activeCount,
+          SUM(CASE WHEN d.status = 'DELIVERED' THEN 1 ELSE 0 END) AS deliveredCount,
+          SUM(CASE WHEN d.status = 'FAILED' THEN 1 ELSE 0 END) AS failedCount,
+          AVG(CASE WHEN d.assigned_at IS NOT NULL AND d.delivered_at IS NOT NULL THEN TIMESTAMPDIFF(MINUTE, d.assigned_at, d.delivered_at) END) AS avgDeliveryMinutes,
+          SUM(CASE WHEN d.delivered_at IS NOT NULL AND d.estimated_delivery_time IS NOT NULL AND d.delivered_at <= d.estimated_delivery_time THEN 1 ELSE 0 END) AS onTimeDeliveries
+        FROM delivery d
+        INNER JOIN \`order\` o ON o.order_id = d.order_id
+        WHERE o.created_at BETWEEN ? AND ?
+      `, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
+      }),
+      sequelize.query(`
+        SELECT
+          change_type AS changeType,
+          COUNT(*) AS movementCount,
+          COALESCE(SUM(quantity_change), 0) AS quantityChange
+        FROM stock_movement
+        WHERE created_at BETWEEN ? AND ?
+        GROUP BY change_type
+        ORDER BY movementCount DESC, quantityChange DESC
+      `, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
+      }),
+      sequelize.query(`
+        SELECT
+          COUNT(*) AS totalFeedback,
+          COALESCE(AVG(rating), 0) AS averageRating,
+          SUM(CASE WHEN admin_response IS NOT NULL AND TRIM(admin_response) != '' THEN 1 ELSE 0 END) AS respondedCount
+        FROM feedback
+        WHERE created_at BETWEEN ? AND ?
+      `, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
+      }),
+      Feedback.findAll({
+        where: {
+          created_at: {
+            [sequelize.Sequelize.Op.between]: [startDate, endDate]
+          }
+        },
+        attributes: ['FeedbackID', 'Rating', 'Comment', 'AdminResponse', 'created_at'],
+        raw: true
+      }),
+      Customer.count({
+        where: {
+          created_at: {
+            [sequelize.Sequelize.Op.between]: [startDate, endDate]
+          }
+        }
+      }).then((count) => [{ newCustomers: count }]),
+      sequelize.query(`
+        SELECT
+          COUNT(DISTINCT customer_id) AS uniqueCustomers
+        FROM \`order\`
+        WHERE created_at BETWEEN ? AND ?
+          AND customer_id IS NOT NULL
+      `, {
+        replacements,
+        type: sequelize.QueryTypes.SELECT
+      })
+    ]);
+
+    const totalOrders = Number(summaryResult?.totalOrders || 0);
+    const totalRevenue = safeNumber(summaryResult?.totalRevenue || 0);
+    const deliveredOrders = Number(summaryResult?.deliveredOrders || 0);
+    const cancelledOrders = Number(summaryResult?.cancelledOrders || 0);
+    const respondedCount = Number(feedbackAggregate?.respondedCount || 0);
+    const totalFeedback = Number(feedbackAggregate?.totalFeedback || 0);
+    const pendingFeedbackReplies = Math.max(totalFeedback - respondedCount, 0);
+
+    const positiveTagCounts = new Map();
+    const issueTagCounts = new Map();
+
+    feedbackRecords.forEach((record) => {
+      const decoded = decodeFeedbackPayload(record.Comment);
+      decoded.positiveTags.forEach((tag) => incrementCounter(positiveTagCounts, tag));
+      decoded.issueTags.forEach((tag) => incrementCounter(issueTagCounts, tag));
+    });
+
+    const retainedCustomers = Number(retentionResult?.retainedCustomers || 0);
+    const retentionTotalCustomers = Number(retentionResult?.totalCustomers || 0);
+    const deliveredCount = Number(deliveryResult?.deliveredCount || 0);
+    const onTimeDeliveries = Number(deliveryResult?.onTimeDeliveries || 0);
+
+    return res.json({
+      success: true,
+      data: {
+        generatedAt: new Date().toISOString(),
+        range: {
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
+          label: getRangeLabel(startDate, endDate)
+        },
+        summary: {
+          totalOrders,
+          totalRevenue,
+          avgOrderValue: safeNumber(summaryResult?.avgOrderValue || 0),
+          deliveredOrders,
+          cancelledOrders,
+          walkInOrders: Number(summaryResult?.walkInOrders || 0),
+          onlineOrders: Number(summaryResult?.onlineOrders || 0),
+          deliveryOrders: Number(summaryResult?.deliveryOrders || 0),
+          takeawayOrders: Number(summaryResult?.takeawayOrders || 0),
+          uniqueCustomers: Number(uniqueCustomersResult?.uniqueCustomers || 0),
+          newCustomers: Number(newCustomersResult?.newCustomers || 0),
+          cancellationRate: totalOrders > 0
+            ? safeNumber((cancelledOrders / totalOrders) * 100)
+            : 0
+        },
+        revenueTrend: revenueTrend.map((row) => ({
+          date: row.date,
+          revenue: safeNumber(row.revenue || 0),
+          orders: Number(row.orderCount || 0)
+        })),
+        orderTypeBreakdown: orderTypeBreakdown.map((row) => ({
+          orderType: row.orderType,
+          orderCount: Number(row.orderCount || 0),
+          revenue: safeNumber(row.revenue || 0)
+        })),
+        orderStatusBreakdown: orderStatusBreakdown.map((row) => ({
+          status: row.status,
+          orderCount: Number(row.orderCount || 0)
+        })),
+        paymentBreakdown: paymentBreakdown.map((row) => ({
+          method: row.method,
+          status: row.status,
+          transactionCount: Number(row.transactionCount || 0),
+          totalAmount: safeNumber(row.totalAmount || 0)
+        })),
+        topItems: topItems.map((row) => ({
+          itemKind: row.itemKind,
+          itemName: row.itemName,
+          categoryName: row.categoryName,
+          totalQuantity: Number(row.totalQuantity || 0),
+          totalRevenue: safeNumber(row.totalRevenue || 0)
+        })),
+        categoryBreakdown: categoryBreakdown.map((row) => ({
+          categoryName: row.categoryName,
+          totalQuantity: Number(row.totalQuantity || 0),
+          revenue: safeNumber(row.revenue || 0)
+        })),
+        customerRetention: {
+          totalCustomers: retentionTotalCustomers,
+          retainedCustomers,
+          retentionRate: retentionTotalCustomers > 0
+            ? safeNumber((retainedCustomers / retentionTotalCustomers) * 100)
+            : 0
+        },
+        deliveryPerformance: {
+          totalDeliveries: Number(deliveryResult?.totalDeliveries || 0),
+          assignedCount: Number(deliveryResult?.assignedCount || 0),
+          activeCount: Number(deliveryResult?.activeCount || 0),
+          deliveredCount,
+          failedCount: Number(deliveryResult?.failedCount || 0),
+          avgDeliveryMinutes: safeNumber(deliveryResult?.avgDeliveryMinutes || 0),
+          onTimeDeliveries,
+          onTimeRate: deliveredCount > 0
+            ? safeNumber((onTimeDeliveries / deliveredCount) * 100)
+            : 0
+        },
+        stockMovementBreakdown: stockMovementBreakdown.map((row) => ({
+          changeType: row.changeType,
+          movementCount: Number(row.movementCount || 0),
+          quantityChange: Number(row.quantityChange || 0)
+        })),
+        feedbackSummary: {
+          totalFeedback,
+          averageRating: safeNumber(feedbackAggregate?.averageRating || 0),
+          respondedCount,
+          pendingReplies: pendingFeedbackReplies,
+          positiveTagBreakdown: [...positiveTagCounts.entries()]
+            .map(([tag, count]) => ({ tag, count }))
+            .sort((a, b) => b.count - a.count),
+          issueTagBreakdown: [...issueTagCounts.entries()]
+            .map(([tag, count]) => ({ tag, count }))
+            .sort((a, b) => b.count - a.count)
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Business summary report error:', error);
+    return res.status(500).json({ error: 'Failed to fetch business summary report' });
   }
 };
 

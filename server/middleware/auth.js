@@ -33,6 +33,7 @@ async function authenticateToken(req, res, next) {
       id: decoded.id,
       type: decoded.type, // 'Customer' or 'Staff'
       role: decoded.role, // For staff: 'Admin', 'Cashier', 'Kitchen', 'Delivery'
+      roleId: decoded.roleId || null,
       email: decoded.email
     };
 
