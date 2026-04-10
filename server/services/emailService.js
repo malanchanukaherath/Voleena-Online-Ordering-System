@@ -1,6 +1,17 @@
 const nodemailer = require('nodemailer');
 const { Notification } = require('../models');
 
+let hasLoggedEmailNotConfiguredWarning = false;
+
+const warnEmailNotConfiguredOnce = () => {
+  if (hasLoggedEmailNotConfiguredWarning) {
+    return;
+  }
+
+  console.warn('⚠️  Email SMTP is not configured. Legacy email notifications will be skipped.');
+  hasLoggedEmailNotConfiguredWarning = true;
+};
+
 // Check if email service is properly configured
 const isEmailConfigured = () => {
   return !!(
@@ -32,8 +43,6 @@ if (isEmailConfigured()) {
       console.log('✅ Email service ready');
     }
   });
-} else {
-  console.warn('⚠️  Email service not configured. Email notifications will be skipped.');
 }
 
 /**
@@ -42,6 +51,7 @@ if (isEmailConfigured()) {
 async function sendEmail(to, subject, html, relatedOrderId = null) {
   // Skip if email service not configured
   if (!transporter || !isEmailConfigured()) {
+    warnEmailNotConfiguredOnce();
     console.log(`📧 Email skipped (not configured): ${subject} to ${to}`);
     return {
       success: false,

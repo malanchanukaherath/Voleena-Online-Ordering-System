@@ -13,6 +13,7 @@ class NotificationService {
     constructor() {
         this.emailTransporter = this.createEmailTransporter();
         this.smsProvider = process.env.SMS_PROVIDER || 'console'; // 'twilio', 'console'
+        this.hasLoggedEmailFallbackWarning = false;
     }
 
     /**
@@ -21,13 +22,12 @@ class NotificationService {
     createEmailTransporter() {
         // Check if email credentials are configured
         if (!process.env.SMTP_HOST || !process.env.SMTP_USER) {
-            console.warn('⚠️  Email SMTP not configured - emails will be logged to console');
             return null;
         }
 
-        return nodemailer.createTransporter({
+        return nodemailer.createTransport({
             host: process.env.SMTP_HOST,
-            port: process.env.SMTP_PORT || 587,
+            port: parseInt(process.env.SMTP_PORT || '587', 10),
             secure: process.env.SMTP_SECURE === 'true',
             auth: {
                 user: process.env.SMTP_USER,
@@ -54,6 +54,11 @@ class NotificationService {
             });
 
             if (!this.emailTransporter) {
+                if (!this.hasLoggedEmailFallbackWarning) {
+                    console.warn('⚠️  Email SMTP is not configured. Notification emails will be logged to console.');
+                    this.hasLoggedEmailFallbackWarning = true;
+                }
+
                 // Fallback: Log to console in development
                 console.log('\n📧 ===== EMAIL NOTIFICATION =====');
                 console.log(`To: ${to}`);

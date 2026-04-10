@@ -3,6 +3,7 @@ const { Notification } = require('../models');
 
 // Initialize Twilio client
 let twilioClient = null;
+let hasLoggedSmsFallbackWarning = false;
 
 if (process.env.SMS_PROVIDER === 'twilio' && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
     twilioClient = twilio(
@@ -10,8 +11,6 @@ if (process.env.SMS_PROVIDER === 'twilio' && process.env.TWILIO_ACCOUNT_SID && p
         process.env.TWILIO_AUTH_TOKEN
     );
     console.log('✅ SMS service (Twilio) ready');
-} else {
-    console.warn('⚠️  SMS service not configured - using console logging');
 }
 
 /**
@@ -46,6 +45,11 @@ async function sendSMS(to, message, relatedOrderId = null) {
                 messageId: result.sid
             };
         } else {
+            if (!hasLoggedSmsFallbackWarning) {
+                console.warn('⚠️  SMS service is not configured. SMS will be logged to console.');
+                hasLoggedSmsFallbackWarning = true;
+            }
+
             // Console logging for development
             console.log('📱 SMS (Console):', to, message);
 
