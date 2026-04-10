@@ -118,16 +118,6 @@ const OrderTracking = () => {
         return cancellableStatuses.includes(order.status) && isNotCancelled;
     };
 
-    const getCancellationReason = () => {
-        if (order.status === 'CANCELLED') {
-            return 'Order has already been cancelled';
-        }
-        if (!['PENDING', 'CONFIRMED'].includes(order.status)) {
-            return 'Cannot cancel - order is already being prepared or delivered';
-        }
-        return '';
-    };
-
     const getDeliveryEtaText = () => {
         if (!order || order.orderType !== 'DELIVERY' || order.status === 'CANCELLED' || order.status === 'DELIVERED') {
             return null;

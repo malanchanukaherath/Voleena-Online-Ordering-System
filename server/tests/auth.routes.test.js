@@ -276,6 +276,12 @@ describe('auth routes', () => {
     expect(response.body.success).toBe(true);
     expect(response.body.message).toMatch(/OTP sent/i);
     expect(response.body._dev_otp).toBeUndefined();
+
+    const [insertSql, insertOptions] = mockSequelize.query.mock.calls[0];
+    expect(insertSql).toContain('otp_hash');
+    expect(insertSql).toContain('user_type');
+    expect(insertSql).not.toContain('OTPCode');
+    expect(insertOptions.replacements[2]).toMatch(/^[a-f0-9]{64}$/);
   });
 
   test('verifies reset OTP and returns reset token payload', async () => {
@@ -284,7 +290,7 @@ describe('auth routes', () => {
       Email: 'otp@example.com'
     });
     mockSequelize.query.mockResolvedValueOnce([
-      { OTPID: 77, UserType: 'CUSTOMER', UserID: 41, OTPCode: '123456' }
+      { otp_id: 77 }
     ]);
 
     const response = await request(app)
@@ -295,6 +301,13 @@ describe('auth routes', () => {
     expect(response.body.success).toBe(true);
     expect(response.body.otpId).toBe(77);
     expect(response.body.resetToken).toMatch(/^[a-f0-9]{64}$/i);
+
+    const [selectSql, selectOptions] = mockSequelize.query.mock.calls[0];
+    expect(selectSql).toContain('otp_id');
+    expect(selectSql).toContain('otp_hash');
+    expect(selectSql).toContain('is_used');
+    expect(selectSql).not.toContain('OTPCode');
+    expect(selectOptions.replacements[2]).toMatch(/^[a-f0-9]{64}$/);
   });
 
   test('resets customer password with valid OTP', async () => {
@@ -303,7 +316,7 @@ describe('auth routes', () => {
       Email: 'update@example.com'
     });
     mockSequelize.query
-      .mockResolvedValueOnce([{ OTPID: 88 }])
+      .mockResolvedValueOnce([{ otp_id: 88 }])
       .mockResolvedValueOnce([{}, 1]);
     bcrypt.hash.mockResolvedValue('hashed-password-value');
     mockCustomer.update.mockResolvedValue([1]);
@@ -324,5 +337,15 @@ describe('auth routes', () => {
       { Password: 'hashed-password-value' },
       { where: { CustomerID: 52 }, individualHooks: false }
     );
+
+    const [selectSql, selectOptions] = mockSequelize.query.mock.calls[0];
+    const [updateSql, updateOptions] = mockSequelize.query.mock.calls[1];
+    expect(selectSql).toContain('otp_hash');
+    expect(selectSql).not.toContain('OTPCode');
+    expect(selectOptions.replacements[2]).toMatch(/^[a-f0-9]{64}$/);
+    expect(updateSql).toContain('is_used');
+    expect(updateSql).toContain('used_at');
+    expect(updateSql).toContain('otp_id');
+    expect(updateOptions.replacements).toEqual([88]);
   });
 });

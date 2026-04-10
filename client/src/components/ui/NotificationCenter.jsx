@@ -3,6 +3,7 @@ import { useNotifications } from '../../contexts/NotificationContext';
 import Button from './Button';
 import Card from './Card';
 import Modal from './Modal';
+import { FaBell } from 'react-icons/fa';
 
 const NotificationCenter = () => {
   const { 
@@ -60,13 +61,12 @@ const NotificationCenter = () => {
       {/* Notification Bell */}
       <button
         onClick={() => setIsOpen(true)}
-        className="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md"
+        className="relative text-gray-700 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md"
+        title="Notifications"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6z" />
-        </svg>
+        <FaBell className="w-6 h-6" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}

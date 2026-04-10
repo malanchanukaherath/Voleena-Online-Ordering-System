@@ -42,6 +42,10 @@ const hashVerificationToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex');
 };
 
+const hashOtpCode = (otpCode) => {
+  return crypto.createHash('sha256').update(String(otpCode).trim()).digest('hex');
+};
+
 const generateEmailVerificationToken = () => {
   return crypto.randomBytes(32).toString('hex');
 };
@@ -705,14 +709,15 @@ exports.requestPasswordReset = async (req, res) => {
 
     // Generate 6-digit OTP
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = hashOtpCode(otpCode);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
     // Store OTP in database
     await sequelize.query(
-      `INSERT INTO otp_verification (UserType, UserID, OTPCode, Purpose, ExpiresAt) 
+      `INSERT INTO otp_verification (user_type, user_id, otp_hash, purpose, expires_at)
        VALUES (?, ?, ?, 'PASSWORD_RESET', ?)`,
       {
-        replacements: [userType.toUpperCase(), userId, otpCode, expiresAt],
+        replacements: [userType.toUpperCase(), userId, otpHash, expiresAt],
         type: sequelize.QueryTypes.INSERT
       }
     );
@@ -746,6 +751,7 @@ exports.verifyResetOTP = async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    const otpHash = hashOtpCode(otp);
 
     // Find user
     let user;
@@ -765,13 +771,13 @@ exports.verifyResetOTP = async (req, res) => {
 
     // Verify OTP
     const [otpRecord] = await sequelize.query(
-      `SELECT * FROM otp_verification 
-       WHERE UserType = ? AND UserID = ? AND OTPCode = ? 
-       AND Purpose = 'PASSWORD_RESET' AND IsUsed = 0 
-       AND ExpiresAt > NOW() 
-       ORDER BY CreatedAt DESC LIMIT 1`,
+      `SELECT otp_id FROM otp_verification
+       WHERE user_type = ? AND user_id = ? AND otp_hash = ?
+       AND purpose = 'PASSWORD_RESET' AND is_used = 0
+       AND expires_at > NOW()
+       ORDER BY created_at DESC LIMIT 1`,
       {
-        replacements: [userType.toUpperCase(), userId, otp],
+        replacements: [userType.toUpperCase(), userId, otpHash],
         type: sequelize.QueryTypes.SELECT
       }
     );
@@ -786,7 +792,7 @@ exports.verifyResetOTP = async (req, res) => {
     return res.json({
       success: true,
       resetToken,
-      otpId: otpRecord.OTPID,
+      otpId: otpRecord.otp_id,
       message: 'OTP verified successfully'
     });
   } catch (error) {
@@ -811,6 +817,7 @@ exports.resetPassword = async (req, res) => {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    const otpHash = hashOtpCode(otp);
 
     // Find user
     let user;
@@ -830,13 +837,13 @@ exports.resetPassword = async (req, res) => {
 
     // Verify OTP
     const [otpRecord] = await sequelize.query(
-      `SELECT OTPID FROM otp_verification 
-       WHERE UserType = ? AND UserID = ? AND OTPCode = ? 
-       AND Purpose = 'PASSWORD_RESET' AND IsUsed = 0 
-       AND ExpiresAt > NOW() 
-       ORDER BY CreatedAt DESC LIMIT 1`,
+      `SELECT otp_id FROM otp_verification
+       WHERE user_type = ? AND user_id = ? AND otp_hash = ?
+       AND purpose = 'PASSWORD_RESET' AND is_used = 0
+       AND expires_at > NOW()
+       ORDER BY created_at DESC LIMIT 1`,
       {
-        replacements: [userType.toUpperCase(), userId, otp],
+        replacements: [userType.toUpperCase(), userId, otpHash],
         type: sequelize.QueryTypes.SELECT
       }
     );
@@ -863,9 +870,9 @@ exports.resetPassword = async (req, res) => {
 
     // Mark OTP as used
     await sequelize.query(
-      `UPDATE otp_verification SET IsUsed = 1, UsedAt = NOW() WHERE OTPID = ?`,
+      `UPDATE otp_verification SET is_used = 1, used_at = NOW() WHERE otp_id = ?`,
       {
-        replacements: [otpRecord.OTPID],
+        replacements: [otpRecord.otp_id],
         type: sequelize.QueryTypes.UPDATE
       }
     );

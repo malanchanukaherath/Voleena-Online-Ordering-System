@@ -822,7 +822,7 @@ class OrderService {
             try {
                 await sequelize.query(
                     `INSERT INTO delivery_assignment_log 
-                    (OrderID, AssignedStaffID, Reason, ActiveDeliveries, CompletionTime) 
+                    (order_id, assigned_staff_id, reason, active_deliveries, completion_time)
                     VALUES (?, ?, ?, ?, ?)`,
                     {
                         replacements: [

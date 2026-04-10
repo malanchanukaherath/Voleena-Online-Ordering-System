@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     FaChartLine,
     FaClipboardList,
@@ -294,7 +294,7 @@ const SalesAnalytics = () => {
         { value: 'custom', label: 'Custom Range' },
     ];
 
-    const resolveDateRange = () => {
+    const resolveDateRange = useCallback(() => {
         const now = new Date();
 
         if (dateRange === 'custom') {
@@ -332,7 +332,7 @@ const SalesAnalytics = () => {
             startDate: startDate.toISOString(),
             endDate: endDate.toISOString()
         };
-    };
+    }, [customEnd, customStart, dateRange]);
 
     useEffect(() => {
         const now = new Date();
@@ -415,7 +415,7 @@ const SalesAnalytics = () => {
         return () => {
             isMounted = false;
         };
-    }, [dateRange, customStart, customEnd]);
+    }, [resolveDateRange]);
 
     const categoryData = reportData.categoryBreakdown.map((item) => ({
         name: item.categoryName,

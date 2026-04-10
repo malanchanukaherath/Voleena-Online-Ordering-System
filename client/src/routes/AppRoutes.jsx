@@ -35,6 +35,7 @@ import KitchenOrders from '../pages/KitchenOrders';
 import DeliveryDashboard from '../pages/DeliveryDashboard';
 import ActiveDeliveries from '../pages/ActiveDeliveries';
 import DeliveryMap from '../pages/DeliveryMap';
+import StaticPage from '../pages/StaticPage';
 
 const AppRoutes = () => {
   return (
@@ -43,6 +44,10 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/menu" element={<Menu />} />
       <Route path="/menu/:itemId" element={<MenuItemDetail />} />
+      <Route path="/about" element={<StaticPage page="about" />} />
+      <Route path="/contact" element={<StaticPage page="contact" />} />
+      <Route path="/privacy" element={<StaticPage page="privacy" />} />
+      <Route path="/terms" element={<StaticPage page="terms" />} />
 
       {/* Auth Routes - redirect if already logged in */}
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />

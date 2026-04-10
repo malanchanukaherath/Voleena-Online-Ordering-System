@@ -23,6 +23,10 @@ class OTPService {
         return crypto.randomInt(100000, 999999).toString();
     }
 
+    hashOTP(otpCode) {
+        return crypto.createHash('sha256').update(String(otpCode).trim()).digest('hex');
+    }
+
     /**
      * Create and send OTP for email/phone verification or password reset
      * @param {string} userType - 'CUSTOMER' or 'STAFF'
@@ -45,7 +49,7 @@ class OTPService {
             const otp = await OTPVerification.create({
                 UserType: userType,
                 UserID: userID,
-                OTPCode: otpCode,
+                OTPHash: this.hashOTP(otpCode),
                 Purpose: purpose,
                 ExpiresAt: expiresAt,
                 IsUsed: false
@@ -84,11 +88,11 @@ class OTPService {
                 where: {
                     UserType: userType,
                     UserID: userID,
-                    OTPCode: otpCode,
+                    OTPHash: this.hashOTP(otpCode),
                     Purpose: purpose,
                     IsUsed: false
                 },
-                order: [['CreatedAt', 'DESC']]
+                order: [['created_at', 'DESC']]
             });
 
             if (!otp) {

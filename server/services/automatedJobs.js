@@ -276,11 +276,15 @@ class AutomatedJobsService {
         const { ActivityLog } = require('../models');
         try {
             await ActivityLog.create({
-                action: 'DAILY_STOCK_JOB_FAILED',
-                description: `Daily stock creation failed after ${maxRetries} retries: ${lastError.message}`,
-                severity: 'CRITICAL',
-                affected_entity: 'DailyStock',
-                created_by: null // System-generated
+                UserType: 'SYSTEM',
+                UserID: null,
+                Action: 'DAILY_STOCK_JOB_FAILED',
+                EntityType: 'DailyStock',
+                EntityID: null,
+                Details: {
+                    message: `Daily stock creation failed after ${maxRetries} retries: ${lastError.message}`,
+                    severity: 'CRITICAL'
+                }
             }).catch(err => console.error('Failed to log activity:', err));
         } catch (logError) {
             console.error('Failed to create activity log:', logError.message);

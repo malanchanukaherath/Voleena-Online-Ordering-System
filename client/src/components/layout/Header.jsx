@@ -9,7 +9,6 @@ import {
     FaClipboardList,
     FaUser,
     FaComments,
-    FaBell,
     FaSignOutAlt,
     FaTachometerAlt,
     FaUsers,
@@ -17,6 +16,7 @@ import {
     FaChartLine,
     FaBoxes,
 } from 'react-icons/fa';
+import NotificationCenter from '../ui/NotificationCenter';
 
 const Header = () => {
     const { user, isAuthenticated, logout } = useAuth();
@@ -162,16 +162,7 @@ const Header = () => {
 
                         {isAuthenticated && (
                             <>
-                                <button
-                                    onClick={() => alert('Notifications feature coming soon!')}
-                                    className="relative text-gray-700 hover:text-primary-600"
-                                    title="Notifications"
-                                >
-                                    <FaBell className="w-6 h-6" />
-                                    <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                                        0
-                                    </span>
-                                </button>
+                                <NotificationCenter />
 
                                 <div className="flex items-center space-x-3">
                                     <div className="hidden sm:block text-right">

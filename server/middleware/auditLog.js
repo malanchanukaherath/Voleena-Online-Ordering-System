@@ -62,20 +62,24 @@ async function logActivity(req, res) {
 
     // Create audit log entry
     if (ActivityLog) {
+      const normalizedUserType = req.user.type === 'Customer'
+        ? 'CUSTOMER'
+        : req.user.type === 'Staff' ? 'STAFF' : 'SYSTEM';
+
       await ActivityLog.create({
-        user_type: req.user.type,
-        user_id: req.user.id,
-        action: action,
-        entity_type: entityType,
-        entity_id: entityId,
-        details: JSON.stringify({
+        UserType: normalizedUserType,
+        UserID: req.user.id,
+        Action: action,
+        EntityType: entityType,
+        EntityID: entityId,
+        Details: {
           method: req.method,
           path: req.path,
           statusCode: res.statusCode,
           timestamp: new Date().toISOString()
-        }),
-        ip_address: req.ip || req.connection.remoteAddress,
-        user_agent: req.get('user-agent')
+        },
+        IPAddress: req.ip || req.connection.remoteAddress,
+        UserAgent: req.get('user-agent')
       });
     }
   } catch (error) {
