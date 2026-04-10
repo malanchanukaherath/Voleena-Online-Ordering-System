@@ -138,13 +138,13 @@ const Home = () => {
     return (
         <div>
             {/* Hero Section */}
-            <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-20">
+            <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16 sm:py-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
-                        <h1 className="text-4xl md:text-6xl font-bold mb-6">
+                        <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6 break-words max-w-[18rem] sm:max-w-none mx-auto">
                             Welcome to Voleena Foods
                         </h1>
-                        <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+                        <p className="text-lg sm:text-xl md:text-2xl mb-8 max-w-[20rem] sm:max-w-3xl mx-auto leading-relaxed">
                             Authentic Sri Lankan cuisine delivered fresh to your doorstep.
                             Enjoy our special Sunday combo offers and daily specials!
                         </p>
@@ -170,7 +170,7 @@ const Home = () => {
             {(isLoadingCombos || comboSpecials.length > 0) && (
                 <section className="py-12 bg-gradient-to-r from-orange-50 to-yellow-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between items-center mb-8">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-8">
                             <div>
                                 <h2 className="text-3xl font-bold text-gray-900">🔥 Combo Specials</h2>
                                 <p className="text-gray-600 mt-1">Limited-time bundles at unbeatable prices</p>

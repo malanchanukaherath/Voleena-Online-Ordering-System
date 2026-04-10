@@ -148,8 +148,8 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
+      <div className="mx-auto w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
         <div className="flex justify-center">
           <div className="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">V</span>
@@ -169,8 +169,8 @@ const Login = () => {
         </p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <Card className="py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      <div className="mt-8 mx-auto w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
+        <Card className="w-full max-w-full py-8 px-4 shadow sm:rounded-lg sm:px-10">
           {notice && (
             <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
               {notice}

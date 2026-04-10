@@ -144,7 +144,7 @@ const Header = () => {
                     </nav>
 
                     {/* Right Side Actions */}
-                    <div className="flex items-center space-x-4">
+                    <div className="flex items-center gap-2 sm:gap-4 min-w-0">
                         {shouldShowCart && (
                             <Link
                                 to="/cart"
@@ -181,16 +181,16 @@ const Header = () => {
                         )}
 
                         {!isAuthenticated && (
-                            <div className="flex items-center space-x-2">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                                 <Link
                                     to="/login"
-                                    className="text-sm font-medium text-gray-700 hover:text-primary-600"
+                                    className="text-xs sm:text-sm font-medium text-gray-700 hover:text-primary-600 whitespace-nowrap"
                                 >
                                     Sign In
                                 </Link>
                                 <Link
                                     to="/register"
-                                    className="bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-700"
+                                    className="hidden sm:inline-flex bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-700 whitespace-nowrap"
                                 >
                                     Sign Up
                                 </Link>

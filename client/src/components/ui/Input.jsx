@@ -37,10 +37,10 @@ const Input = ({
         />
       </div>
       {error && (
-        <p className="mt-1 text-sm text-red-600">{error}</p>
+        <p className="mt-1 text-sm text-red-600 break-words">{error}</p>
       )}
       {helperText && !error && (
-        <p className="mt-1 text-sm text-gray-500">{helperText}</p>
+        <p className="mt-1 text-sm text-gray-500 break-words">{helperText}</p>
       )}
     </div>
   );
