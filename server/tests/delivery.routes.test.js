@@ -147,7 +147,7 @@ describe('delivery routes', () => {
       LastLocationUpdate: new Date().toISOString(),
       Status: 'IN_TRANSIT',
       DeliveryStaffID: 12,
-      order: { CustomerID: 55 }
+      order: { CustomerID: 55, OrderType: 'DELIVERY' }
     });
 
     const response = await request(app)
@@ -167,13 +167,32 @@ describe('delivery routes', () => {
       LastLocationUpdate: new Date().toISOString(),
       Status: 'IN_TRANSIT',
       DeliveryStaffID: 12,
-      order: { CustomerID: 55 }
+      order: { CustomerID: 55, OrderType: 'DELIVERY' }
     });
 
     const response = await request(app)
       .get('/api/v1/delivery/deliveries/7/location');
 
     expect(response.status).toBe(403);
+  });
+
+  test('returns conflict when customer delivery person is not assigned yet', async () => {
+    setAuthUser({ id: 55, type: 'Customer', role: 'Customer' });
+    mockDelivery.findOne.mockResolvedValue({
+      DeliveryID: 9,
+      CurrentLatitude: null,
+      CurrentLongitude: null,
+      LastLocationUpdate: null,
+      Status: 'PENDING',
+      DeliveryStaffID: null,
+      order: { CustomerID: 55, OrderType: 'DELIVERY' }
+    });
+
+    const response = await request(app)
+      .get('/api/v1/delivery/deliveries/9/location');
+
+    expect(response.status).toBe(409);
+    expect(response.body.message).toMatch(/not been assigned/i);
   });
 
   test('protects delivery dashboard routes', async () => {

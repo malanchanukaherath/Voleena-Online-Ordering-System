@@ -37,9 +37,19 @@ const DeliveryDashboard = () => {
         delayMs: 5000,
         onCommit: async (update) => {
             await deliveryService.updateDeliveryStatus(update.itemId, { status: update.toStatus });
-            setActiveDeliveries((prev) => prev.map((delivery) => (
-                delivery.id === update.itemId ? { ...delivery, status: update.toStatus } : delivery
-            )));
+            setActiveDeliveries((prev) => {
+                const next = prev.map((delivery) => (
+                    delivery.id === update.itemId ? { ...delivery, status: update.toStatus } : delivery
+                ));
+
+                setStats((current) => ({
+                    ...current,
+                    activeDeliveries: next.length,
+                    pendingPickup: next.filter((delivery) => delivery.status === 'ASSIGNED').length
+                }));
+
+                return next;
+            });
         },
         onError: (err) => {
             console.error('Failed to update delivery status:', err);
@@ -73,11 +83,21 @@ const DeliveryDashboard = () => {
                         }))
                         .sort((a, b) => getDeliveryTimestamp(b.assignedAt) - getDeliveryTimestamp(a.assignedAt));
                     setActiveDeliveries(mapped);
+                    setStats((current) => ({
+                        ...current,
+                        activeDeliveries: mapped.length,
+                        pendingPickup: mapped.filter((delivery) => delivery.status === 'ASSIGNED').length
+                    }));
                     setLoadingError(null);
                 }
             } catch (error) {
                 if (isMounted) {
                     setActiveDeliveries([]);
+                    setStats((current) => ({
+                        ...current,
+                        activeDeliveries: 0,
+                        pendingPickup: 0
+                    }));
                     setLoadingError(error.message);
                     console.error('[Delivery Dashboard] Error loading deliveries:', error);
                 }

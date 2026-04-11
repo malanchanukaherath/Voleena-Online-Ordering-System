@@ -68,6 +68,10 @@ export const getOrderById = async (orderId) => {
   return backendApi.get(`/api/v1/orders/${orderId}`);
 };
 
+export const getDeliveryLocation = async (deliveryId) => {
+  return backendApi.get(`/api/v1/delivery/deliveries/${deliveryId}/location`);
+};
+
 export const cancelOrder = async (orderId, reason) => {
   return backendApi.delete(`/api/v1/orders/${orderId}`, {
     data: { reason },

@@ -692,7 +692,7 @@ exports.getDeliveryLocation = async (req, res) => {
       include: [{
         model: Order,
         as: 'order',
-        attributes: ['CustomerID']
+        attributes: ['CustomerID', 'OrderType']
       }]
     });
 
@@ -713,6 +713,22 @@ exports.getDeliveryLocation = async (req, res) => {
         success: false,
         message: 'You do not have permission to view this delivery location'
       });
+    }
+
+    if (isCustomer) {
+      if (delivery.order?.OrderType !== 'DELIVERY') {
+        return res.status(400).json({
+          success: false,
+          message: 'Live location is only available for delivery orders'
+        });
+      }
+
+      if (!delivery.DeliveryStaffID) {
+        return res.status(409).json({
+          success: false,
+          message: 'Delivery person has not been assigned yet'
+        });
+      }
     }
 
     res.json({

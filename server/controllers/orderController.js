@@ -1,4 +1,4 @@
-const { Order, OrderItem, MenuItem, ComboPack, Customer, Delivery, Address, sequelize } = require('../models');
+const { Order, OrderItem, MenuItem, ComboPack, Customer, Delivery, Address, Staff, sequelize } = require('../models');
 const orderService = require('../services/orderService');
 
 const ALLOWED_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
@@ -173,10 +173,17 @@ exports.getOrderById = async (req, res) => {
                         'created_at',
                         'updated_at'
                     ],
-                    include: [{
-                        model: Address,
-                        as: 'address'
-                    }]
+                    include: [
+                        {
+                            model: Address,
+                            as: 'address'
+                        },
+                        {
+                            model: Staff,
+                            as: 'deliveryStaff',
+                            attributes: ['StaffID', 'Name', 'Phone']
+                        }
+                    ]
                 },
                 {
                     model: OrderItem,

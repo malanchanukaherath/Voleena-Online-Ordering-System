@@ -103,7 +103,7 @@ const DeliveryMap = () => {
         const fetchDeliveries = async () => {
             try {
                 setLoading(true);
-                const response = await deliveryService.getMyDeliveries('IN_TRANSIT');
+                const response = await deliveryService.getMyDeliveries();
                 const data = response.data || response?.data?.data || [];
 
                 const formattedDeliveries = data.map((delivery) => {
@@ -584,15 +584,28 @@ const DeliveryMap = () => {
                         </h3>
 
                         <div className="mb-3 text-xs text-gray-600">
-                            {locationPermission === 'granted'
-                                ? '✓ Live location enabled. Tap Navigate to open in Google Maps.'
-                                : 'Enable location access to send live updates to admin.'}
+                            {deliveries.length > 0
+                                ? (
+                                    locationPermission === 'granted'
+                                        ? 'Live location enabled. Use Navigate on a delivery card to open the route.'
+                                        : 'Enable location access to send live updates while delivering.'
+                                )
+                                : (
+                                    locationPermission === 'granted'
+                                        ? 'Location is ready. Waiting for new delivery assignments.'
+                                        : 'Enable location now so tracking is ready when a delivery is assigned.'
+                                )}
                         </div>
 
                         {deliveries.length === 0 ? (
                             <div className="text-center py-6 text-gray-500">
                                 <FaMapMarkerAlt className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                                <p className="text-sm">No active deliveries</p>
+                                <p className="text-sm font-medium">No active deliveries right now</p>
+                                <p className="text-xs mt-1">
+                                    {locationPermission === 'granted'
+                                        ? 'Stay available. New assignments will appear here automatically.'
+                                        : 'Enable location access and stay available to receive trackable deliveries.'}
+                                </p>
                             </div>
                         ) : (
                             <div className="space-y-3 max-h-96 overflow-y-auto">

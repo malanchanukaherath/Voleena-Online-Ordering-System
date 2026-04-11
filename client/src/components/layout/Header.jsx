@@ -15,6 +15,7 @@ import {
     FaUserTie,
     FaChartLine,
     FaBoxes,
+    FaMapMarkedAlt,
 } from 'react-icons/fa';
 import NotificationCenter from '../ui/NotificationCenter';
 
@@ -79,6 +80,7 @@ const Header = () => {
                     { path: '/admin/staff', label: 'Staff', icon: FaUserTie },
                     { path: '/admin/menu', label: 'Menu', icon: FaUtensils },
                     { path: '/admin/analytics', label: 'Analytics', icon: FaChartLine },
+                    { path: '/delivery/map', label: 'Live Delivery Map', icon: FaMapMarkedAlt },
                 ];
 
             case 'Cashier':
