@@ -672,6 +672,8 @@ const Checkout = () => {
                     form.submit();
                     return;
                 }
+
+                throw new Error('Failed to initialize online payment');
             }
 
             clearCart();
@@ -1055,12 +1057,17 @@ const Checkout = () => {
                                 options={[
                                     { value: 'CASH', label: 'Cash on Delivery' },
                                     { value: 'CARD', label: 'Card Payment (Stripe)' },
-                                    { value: 'ONLINE', label: 'Online Payment (Coming Soon)', disabled: true },
+                                    { value: 'ONLINE', label: 'Online Payment (PayHere)' },
                                 ]}
                             />
                             {formData.paymentMethod === 'CARD' && (
                                 <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
                                     💳 Secure card payments powered by Stripe. Your card details are never stored on our servers.
+                                </div>
+                            )}
+                            {formData.paymentMethod === 'ONLINE' && (
+                                <div className="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded text-sm text-indigo-700">
+                                    🌐 You will be redirected to PayHere to complete payment securely.
                                 </div>
                             )}
                             {errors.paymentMethod && (
