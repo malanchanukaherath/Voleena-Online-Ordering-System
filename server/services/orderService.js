@@ -442,9 +442,10 @@ class OrderService {
      */
     async updateOrderStatus(orderId, newStatus, staffId, notes = null) {
         const transaction = await sequelize.transaction();
+        let order;
 
         try {
-            const order = await Order.findByPk(orderId, {
+            order = await Order.findByPk(orderId, {
                 include: [{ model: Customer, as: 'customer' }],
                 transaction
             });
@@ -509,29 +510,35 @@ class OrderService {
             }, { transaction });
 
             await transaction.commit();
-
-            // Auto-assign delivery staff when order becomes READY (FR26)
-            if (newStatus === 'READY' && order.OrderType === 'DELIVERY') {
-                await this.autoAssignDeliveryStaff(orderId);
-            }
-
-            // Send notifications (FR15)
-            try {
-                if (order.OrderType !== 'WALK_IN' && order.customer.Email) {
-                    await sendOrderStatusUpdateEmail(order, order.customer, newStatus);
-                }
-                if (order.OrderType !== 'WALK_IN' && order.customer.Phone) {
-                    await sendOrderStatusUpdateSMS(order.customer.Phone, order.OrderNumber, newStatus);
-                }
-            } catch (notifError) {
-                console.error('Notification error:', notifError);
-            }
-
-            return order;
         } catch (error) {
-            await transaction.rollback();
+            if (!transaction.finished) {
+                await transaction.rollback();
+            }
             throw error;
         }
+
+        // Auto-assign delivery staff when order becomes READY (FR26)
+        if (newStatus === 'READY' && order.OrderType === 'DELIVERY') {
+            try {
+                await this.autoAssignDeliveryStaff(orderId);
+            } catch (assignmentError) {
+                console.error('Auto-assignment error after order status commit:', assignmentError);
+            }
+        }
+
+        // Send notifications (FR15)
+        try {
+            if (order.OrderType !== 'WALK_IN' && order.customer.Email) {
+                await sendOrderStatusUpdateEmail(order, order.customer, newStatus);
+            }
+            if (order.OrderType !== 'WALK_IN' && order.customer.Phone) {
+                await sendOrderStatusUpdateSMS(order.customer.Phone, order.OrderNumber, newStatus);
+            }
+        } catch (notifError) {
+            console.error('Notification error:', notifError);
+        }
+
+        return order;
     }
 
     /**

@@ -47,16 +47,27 @@ const apiLimiter = rateLimit({
 
 /**
  * Strict rate limiter for authentication endpoints
- * Production: 10 attempts per 15 minutes; Development: 100 attempts
+ * Defaults: production=10 attempts per 15 minutes, non-production=100.
+ * Can be tuned via AUTH_RATE_LIMIT_MAX or disabled via DISABLE_AUTH_RATE_LIMIT=true.
  */
+const disableAuthRateLimit = String(process.env.DISABLE_AUTH_RATE_LIMIT || '').toLowerCase() === 'true';
+const authRateLimitMax = Number.parseInt(
+    process.env.AUTH_RATE_LIMIT_MAX || (process.env.NODE_ENV === 'production' ? '10' : '100'),
+    10
+);
+
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: process.env.NODE_ENV === 'production' ? 10 : 100,
+    max: Number.isFinite(authRateLimitMax) && authRateLimitMax > 0
+        ? authRateLimitMax
+        : (process.env.NODE_ENV === 'production' ? 10 : 100),
     message: {
         success: false,
         error: 'Too many login attempts, please try again after 15 minutes'
     },
     skipSuccessfulRequests: true,
+    // Safe override for development environments (e.g., EC2 dev boxes).
+    skip: () => disableAuthRateLimit,
     store: makeRedisStore('rl:auth:')
 });
 
