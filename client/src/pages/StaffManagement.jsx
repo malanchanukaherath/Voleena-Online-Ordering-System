@@ -111,7 +111,9 @@ const StaffManagement = () => {
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
-        return new Date(dateString).toLocaleDateString('en-US', {
+        const parsedDate = new Date(dateString);
+        if (Number.isNaN(parsedDate.getTime())) return 'N/A';
+        return parsedDate.toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
             day: 'numeric'
@@ -246,7 +248,7 @@ const StaffManagement = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-500">{formatDate(member.createdAt || member.CreatedAt)}</div>
+                                            <div className="text-sm text-gray-500">{formatDate(member.createdAt || member.CreatedAt || member.created_at)}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {member.IsActive ? (
