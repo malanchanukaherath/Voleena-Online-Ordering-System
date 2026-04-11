@@ -5,6 +5,7 @@
 
 const { MenuItem, ComboPack, ComboPackItem, DailyStock } = require('../models');
 const { validateCartItems } = require('../utils/validationUtils');
+const systemSettingsService = require('../services/systemSettingsService');
 
 /**
  * Validate cart items against current stock
@@ -225,6 +226,7 @@ exports.validateCart = async (req, res) => {
 exports.getCartSummary = async (req, res) => {
     try {
         const { items, orderType } = req.body;
+        const runtimeSettings = await systemSettingsService.getRuntimeSettings();
 
         if (!Array.isArray(items) || items.length === 0) {
             return res.status(400).json({
@@ -266,8 +268,10 @@ exports.getCartSummary = async (req, res) => {
 
         // Calculate fees (business decision: delivery fee only)
         // Note: Delivery fee shown here is base fee only. Actual fee calculated at checkout based on distance.
-        const BASE_DELIVERY_FEE = parseFloat(process.env.BASE_DELIVERY_FEE) || 100;
-        const deliveryFee = orderType === 'DELIVERY' ? BASE_DELIVERY_FEE : 0;
+        const configuredBaseDeliveryFee = Number(runtimeSettings.deliveryFee || 0);
+        const freeDeliveryThreshold = Number(runtimeSettings.freeDeliveryThreshold || 0);
+        const isFreeByOrderValue = freeDeliveryThreshold > 0 && subtotal >= freeDeliveryThreshold;
+        const deliveryFee = orderType === 'DELIVERY' ? (isFreeByOrderValue ? 0 : configuredBaseDeliveryFee) : 0;
         const total = subtotal + deliveryFee;
 
         res.json({
@@ -276,7 +280,11 @@ exports.getCartSummary = async (req, res) => {
                 itemDetails,
                 subtotal: parseFloat(subtotal.toFixed(2)),
                 deliveryFee: parseFloat(deliveryFee.toFixed(2)),
-                deliveryFeeNote: orderType === 'DELIVERY' ? 'Base fee only. Actual fee calculated based on delivery distance.' : null,
+                deliveryFeeNote: orderType === 'DELIVERY'
+                    ? (isFreeByOrderValue
+                        ? `Free delivery applied for orders above LKR ${freeDeliveryThreshold}. Final fee may still vary by distance constraints.`
+                        : 'Base fee only. Actual fee calculated based on delivery distance.')
+                    : null,
                 total: parseFloat(total.toFixed(2)),
                 orderType
             }

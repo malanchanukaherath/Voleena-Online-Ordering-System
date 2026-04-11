@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const { ComboPack, DailyStock, MenuItem, Order, TokenBlacklist, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const stockService = require('../services/stockService');
+const systemSettingsService = require('../services/systemSettingsService');
 
 /**
  * Automated Jobs Service
@@ -21,8 +22,10 @@ class AutomatedJobsService {
      * - Sets opening quantity = previous day's closing quantity
      * - Uses SERIALIZABLE transactions to prevent race conditions
      */
-    start() {
+    async start() {
         console.log('🤖 Starting automated jobs...');
+        const runtimeSettings = await systemSettingsService.getRuntimeSettings();
+        const configuredTimezone = runtimeSettings.timezone || process.env.TZ || 'Asia/Colombo';
 
         // Job 1: Daily stock creation at 12:00 AM (PART 1)
         // Runs at the start of each day to prepare stock records
@@ -31,7 +34,7 @@ class AutomatedJobsService {
                 await this.createDailyStockRecords();
             }, {
                 name: 'Daily Stock Creation',
-                timezone: process.env.TZ || 'Asia/Colombo'
+                timezone: configuredTimezone
             })
         );
 
@@ -64,7 +67,7 @@ class AutomatedJobsService {
         );
 
         console.log('✅ Automated jobs started');
-        console.log('   - Daily stock creation: 12:00 AM (Asia/Colombo)');
+        console.log(`   - Daily stock creation: 12:00 AM (${configuredTimezone})`);
         console.log('   - Combo pack schedules: 12:00 AM');
         console.log('   - Out-of-stock check: Every 15 minutes');
         console.log('   - Order timeout: Every 10 minutes');
@@ -147,7 +150,10 @@ class AutomatedJobsService {
      */
     async autoCancelUnconfirmedOrders() {
         try {
-            const timeoutMinutes = parseInt(process.env.ORDER_AUTO_CANCEL_MINUTES) || 30;
+            const runtimeSettings = await systemSettingsService.getRuntimeSettings();
+            const timeoutMinutes = Number(runtimeSettings.orderTimeout)
+                || parseInt(process.env.ORDER_AUTO_CANCEL_MINUTES)
+                || 30;
             const cutoffTime = new Date(Date.now() - timeoutMinutes * 60 * 1000);
 
             const ordersToCancel = await Order.findAll({

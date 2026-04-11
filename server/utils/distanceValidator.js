@@ -5,11 +5,26 @@
  */
 
 const axios = require('axios');
+const systemSettingsService = require('../services/systemSettingsService');
 
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
 const RESTAURANT_LAT = parseFloat(process.env.RESTAURANT_LATITUDE || '7.120035696626918');
 const RESTAURANT_LNG = parseFloat(process.env.RESTAURANT_LONGITUDE || '80.05250172082567');
-const MAX_DISTANCE_KM = parseFloat(process.env.MAX_DELIVERY_DISTANCE_KM || '15');
+const DEFAULT_MAX_DISTANCE_KM = parseFloat(process.env.MAX_DELIVERY_DISTANCE_KM || '15');
+
+async function getConfiguredMaxDistanceKm() {
+    try {
+        const settings = await systemSettingsService.getRuntimeSettings();
+        const configured = Number(settings.maxDeliveryDistance);
+        if (Number.isFinite(configured) && configured > 0) {
+            return configured;
+        }
+    } catch (error) {
+        console.warn('Failed to read runtime max delivery distance, using fallback:', error.message);
+    }
+
+    return DEFAULT_MAX_DISTANCE_KM;
+}
 
 /**
  * Common Sri Lankan city coordinates (fallback for geocoding without API key)
@@ -108,6 +123,8 @@ async function validateDeliveryDistance(customerLat, customerLng) {
         throw new Error('Invalid coordinates provided');
     }
 
+    const maxDistanceKm = await getConfiguredMaxDistanceKm();
+
     try {
         const response = await axios.get(
             'https://maps.googleapis.com/maps/api/distancematrix/json',
@@ -139,10 +156,10 @@ async function validateDeliveryDistance(customerLat, customerLng) {
         const durationInSeconds = element.duration.value;
 
         return {
-            isValid: distanceInKm <= MAX_DISTANCE_KM,
+            isValid: distanceInKm <= maxDistanceKm,
             distance: parseFloat(distanceInKm.toFixed(2)),
             duration: durationInSeconds,
-            maxDistance: MAX_DISTANCE_KM,
+            maxDistance: maxDistanceKm,
             method: 'google_maps'
         };
     } catch (error) {
@@ -277,6 +294,8 @@ function toRadians(degrees) {
  * @returns {Promise<{isValid: boolean, distance: number, duration?: number, maxDistance: number, method: string}>}
  */
 async function validateDeliveryDistanceWithFallback(customerLat, customerLng) {
+    const maxDistanceKm = await getConfiguredMaxDistanceKm();
+
     try {
         // Try Google Maps API first
         const result = await validateDeliveryDistance(customerLat, customerLng);
@@ -296,10 +315,10 @@ async function validateDeliveryDistanceWithFallback(customerLat, customerLng) {
         const approximateRoadDistance = parseFloat((distance * 1.2).toFixed(2));
 
         return {
-            isValid: approximateRoadDistance <= MAX_DISTANCE_KM,
+            isValid: approximateRoadDistance <= maxDistanceKm,
             distance: approximateRoadDistance,
             duration: Math.ceil(approximateRoadDistance * 3 * 60),
-            maxDistance: MAX_DISTANCE_KM,
+            maxDistance: maxDistanceKm,
             method: 'straight_line_approximation'
         };
     }
@@ -312,5 +331,5 @@ module.exports = {
     calculateStraightLineDistance,
     RESTAURANT_LAT,
     RESTAURANT_LNG,
-    MAX_DISTANCE_KM
+    MAX_DISTANCE_KM: DEFAULT_MAX_DISTANCE_KM
 };

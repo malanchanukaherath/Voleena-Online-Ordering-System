@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
 import { LoadScript, GoogleMap, Marker, Autocomplete } from '@react-google-maps/api';
@@ -9,6 +9,7 @@ import Textarea from '../components/ui/Textarea';
 import { StripePaymentModal } from '../components/payment/StripePaymentModal';
 import { getCart, clearCart } from '../utils/cartStorage';
 import { calculateDeliveryFeeByDistance, confirmCardPayment, createAddress, createOrder, initiatePayment, updateCheckoutContactProfile, validateDeliveryDistance } from '../services/orderApi';
+import { usePublicSettings } from '../hooks/usePublicSettings';
 
 const RESTAURANT_LOCATION = {
     lat: 7.120035696626918,
@@ -50,11 +51,48 @@ const Checkout = () => {
     const [mapSearchValue, setMapSearchValue] = useState('');
     const [deliveryAddressMethod, setDeliveryAddressMethod] = useState('');
     const cartItems = useMemo(() => getCart(), []);
+    const { settings: publicSettings } = usePublicSettings();
     const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
     const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY?.trim();
     const isStripeClientConfigured = Boolean(
         stripePublishableKey && stripePublishableKey.startsWith('pk_') && !stripePublishableKey.includes('your_')
     );
+    const paymentMethodSettings = publicSettings.paymentMethods || {};
+    const availablePaymentOptions = useMemo(() => {
+        const options = [];
+
+        if (paymentMethodSettings.cashOnDelivery !== false) {
+            options.push({ value: 'CASH', label: 'Cash on Delivery' });
+        }
+
+        if (paymentMethodSettings.cardPayment !== false) {
+            options.push({ value: 'CARD', label: 'Card Payment (Stripe)' });
+        }
+
+        if (paymentMethodSettings.onlinePayment !== false) {
+            options.push({ value: 'ONLINE', label: 'Online Payment (PayHere)' });
+        }
+
+        if (options.length === 0) {
+            options.push({ value: 'CASH', label: 'Cash on Delivery' });
+        }
+
+        return options;
+    }, [paymentMethodSettings.cashOnDelivery, paymentMethodSettings.cardPayment, paymentMethodSettings.onlinePayment]);
+
+    useEffect(() => {
+        const baseDeliveryFee = Number(publicSettings.delivery?.baseFee);
+        if (Number.isFinite(baseDeliveryFee) && formData.orderType === 'DELIVERY' && !distanceInfo) {
+            setDeliveryFee(baseDeliveryFee);
+        }
+
+        if (!availablePaymentOptions.some((opt) => opt.value === formData.paymentMethod)) {
+            setFormData((prev) => ({
+                ...prev,
+                paymentMethod: availablePaymentOptions[0]?.value || 'CASH'
+            }));
+        }
+    }, [publicSettings.delivery?.baseFee, formData.orderType, formData.paymentMethod, distanceInfo, availablePaymentOptions]);
 
     const fetchDeliveryFeeByDistance = async (distanceKm) => {
         const numericDistance = Number(distanceKm);
@@ -237,7 +275,7 @@ const Checkout = () => {
         });
 
         setDistanceInfo(null);
-        setDeliveryFee(100);
+        setDeliveryFee(Number(publicSettings.delivery?.baseFee) || 100);
         setDeliveryFeeBreakdown('');
         setLocationError('');
 
@@ -489,6 +527,9 @@ const Checkout = () => {
         const newErrors = {};
         const normalizedEmail = formData.email.trim();
         const phoneDigits = formData.phone.replace(/\D/g, '');
+        const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        const minOrderAmount = Number(publicSettings.order?.minOrderAmount || 0);
+        const maxOrderAmount = Number(publicSettings.order?.maxOrderAmount || 0);
 
         if (!formData.name.trim()) newErrors.name = 'Name is required';
         else if (formData.name.trim().length < 2) newErrors.name = 'Name must be at least 2 characters';
@@ -516,6 +557,18 @@ const Checkout = () => {
 
         if (formData.paymentMethod === 'CARD' && !isStripeClientConfigured) {
             newErrors.paymentMethod = 'Card payments are temporarily unavailable. Please use cash on delivery.';
+        }
+
+        if (!availablePaymentOptions.some((opt) => opt.value === formData.paymentMethod)) {
+            newErrors.paymentMethod = `${formData.paymentMethod} payments are currently disabled by system settings.`;
+        }
+
+        if (minOrderAmount > 0 && subtotal < minOrderAmount) {
+            newErrors.cart = `Minimum order amount is LKR ${minOrderAmount.toFixed(2)}.`;
+        }
+
+        if (maxOrderAmount > 0 && subtotal > maxOrderAmount) {
+            newErrors.cart = `Maximum order amount is LKR ${maxOrderAmount.toFixed(2)}.`;
         }
 
         setErrors(newErrors);
@@ -559,6 +612,10 @@ const Checkout = () => {
 
             if (formData.paymentMethod === 'CARD' && !isStripeClientConfigured) {
                 throw new Error('Card payments are not configured for this environment');
+            }
+
+            if (!availablePaymentOptions.some((opt) => opt.value === formData.paymentMethod)) {
+                throw new Error(`${formData.paymentMethod} payments are currently disabled by system settings`);
             }
 
             let addressId = null;
@@ -705,9 +762,14 @@ const Checkout = () => {
     };
 
     // Cart summary (business decision: show only delivery fee)
+    const freeDeliveryThreshold = Number(publicSettings.delivery?.freeDeliveryThreshold || 0);
+    const hasFreeDeliveryByOrderValue = freeDeliveryThreshold > 0
+        && formData.orderType === 'DELIVERY'
+        && cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0) >= freeDeliveryThreshold;
+
     const cartSummary = {
         subtotal: cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-        deliveryFee: formData.orderType === 'DELIVERY' ? deliveryFee : 0,
+        deliveryFee: formData.orderType === 'DELIVERY' ? (hasFreeDeliveryByOrderValue ? 0 : deliveryFee) : 0,
     };
     cartSummary.total = cartSummary.subtotal + cartSummary.deliveryFee;
 
@@ -1064,11 +1126,7 @@ const Checkout = () => {
                                 name="paymentMethod"
                                 value={formData.paymentMethod}
                                 onChange={handleChange}
-                                options={[
-                                    { value: 'CASH', label: 'Cash on Delivery' },
-                                    { value: 'CARD', label: 'Card Payment (Stripe)' },
-                                    { value: 'ONLINE', label: 'Online Payment (PayHere)' },
-                                ]}
+                                options={availablePaymentOptions}
                             />
                             {formData.paymentMethod === 'CARD' && (
                                 <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-700">
@@ -1114,6 +1172,11 @@ const Checkout = () => {
                                             <span className="text-gray-600">Delivery Fee</span>
                                             <span>LKR {cartSummary.deliveryFee.toFixed(2)}</span>
                                         </div>
+                                        {hasFreeDeliveryByOrderValue && (
+                                            <div className="text-xs text-green-600 mt-1">
+                                                Free delivery applied (orders above LKR {freeDeliveryThreshold.toFixed(2)}).
+                                            </div>
+                                        )}
                                         {distanceInfo && deliveryFeeBreakdown && (
                                             <div className="text-xs text-gray-500 mt-1">
                                                 {distanceInfo.distance.toFixed(2)}km - {deliveryFeeBreakdown}
@@ -1131,6 +1194,9 @@ const Checkout = () => {
 
                             {errors.submit && (
                                 <p className="text-sm text-red-600 mb-3">{errors.submit}</p>
+                            )}
+                            {errors.cart && (
+                                <p className="text-sm text-red-600 mb-3">{errors.cart}</p>
                             )}
                             <Button
                                 type="submit"

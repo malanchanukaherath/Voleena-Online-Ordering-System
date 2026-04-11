@@ -20,6 +20,7 @@ import {
     FaMapMarkedAlt,
 } from 'react-icons/fa';
 import NotificationCenter from '../ui/NotificationCenter';
+import { usePublicSettings } from '../../hooks/usePublicSettings';
 
 const Header = ({
     showSidebarToggle = false,
@@ -29,6 +30,7 @@ const Header = ({
     onToggleMobileSidebar = () => { }
 }) => {
     const { user, isAuthenticated, logout } = useAuth();
+    const { settings: publicSettings } = usePublicSettings();
     const location = useLocation();
     const [cartCount, setCartCount] = useState(0);
     const userRole = user?.role || user?.staffRole;
@@ -151,10 +153,10 @@ const Header = ({
 
                         <Link to="/" className="flex items-center space-x-2">
                             <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                                <span className="text-white font-bold text-xl">V</span>
+                                <span className="text-white font-bold text-xl">{(publicSettings.restaurantName || 'V').charAt(0).toUpperCase()}</span>
                             </div>
                             <span className="text-xl font-bold text-gray-900 hidden sm:block">
-                                Voleena Foods
+                                {publicSettings.restaurantName}
                             </span>
                         </Link>
                     </div>

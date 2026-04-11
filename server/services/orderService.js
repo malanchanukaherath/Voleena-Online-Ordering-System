@@ -6,6 +6,7 @@ const { calculateDeliveryFee } = require('../utils/deliveryFeeCalculator');
 const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('./emailService');
 const { sendOrderConfirmationSMS, sendOrderStatusUpdateSMS } = require('./smsService');
+const systemSettingsService = require('./systemSettingsService');
 
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
@@ -127,9 +128,22 @@ class OrderService {
             const normalizedPaymentMethod = typeof (orderData.paymentMethod || orderData.payment_method) === 'string'
                 ? String(orderData.paymentMethod || orderData.payment_method).trim().toUpperCase()
                 : 'CASH';
+            const runtimeSettings = await systemSettingsService.getRuntimeSettings();
 
             if (orderType !== 'WALK_IN' && !CUSTOMER_PAYMENT_METHODS.has(normalizedPaymentMethod)) {
                 throw new Error('Unsupported payment method for order creation');
+            }
+
+            if (orderType !== 'WALK_IN') {
+                const isMethodEnabled = (
+                    (normalizedPaymentMethod === 'CASH' && runtimeSettings.cashOnDelivery)
+                    || (normalizedPaymentMethod === 'CARD' && runtimeSettings.cardPayment)
+                    || (normalizedPaymentMethod === 'ONLINE' && runtimeSettings.onlinePayment)
+                );
+
+                if (!isMethodEnabled) {
+                    throw new Error(`${normalizedPaymentMethod} payment is currently disabled by system settings`);
+                }
             }
 
             // Validate delivery distance if delivery order (FR09)
@@ -244,18 +258,36 @@ class OrderService {
                 }
             }
 
+            if (totalAmount < Number(runtimeSettings.minOrderAmount || 0)) {
+                throw new Error(`Minimum order amount is LKR ${runtimeSettings.minOrderAmount}`);
+            }
+
+            if (Number(runtimeSettings.maxOrderAmount || 0) > 0 && totalAmount > Number(runtimeSettings.maxOrderAmount)) {
+                throw new Error(`Maximum order amount is LKR ${runtimeSettings.maxOrderAmount}`);
+            }
+
             // Calculate delivery fee based on distance (dynamic pricing)
             let deliveryFee = 0;
             if (orderType === 'DELIVERY' && deliveryDistance > 0) {
-                const feeCalculation = calculateDeliveryFee(deliveryDistance);
-                deliveryFee = feeCalculation.totalFee;
-                console.log(`[Delivery Fee] Distance: ${deliveryDistance.toFixed(2)}km, Fee: LKR ${deliveryFee}, Breakdown: ${feeCalculation.breakdown}`);
+                const freeDeliveryThreshold = Number(runtimeSettings.freeDeliveryThreshold || 0);
+                const isFreeByOrderValue = freeDeliveryThreshold > 0 && totalAmount >= freeDeliveryThreshold;
+
+                if (isFreeByOrderValue) {
+                    deliveryFee = 0;
+                } else {
+                    const feeCalculation = calculateDeliveryFee(deliveryDistance, {
+                        baseFee: Number(runtimeSettings.deliveryFee || 0)
+                    });
+                    deliveryFee = feeCalculation.totalFee;
+                    console.log(`[Delivery Fee] Distance: ${deliveryDistance.toFixed(2)}km, Fee: LKR ${deliveryFee}, Breakdown: ${feeCalculation.breakdown}`);
+                }
             }
 
             // Generate order number
             const orderNumber = await this.generateOrderNumber();
+            const shouldAutoConfirm = Boolean(runtimeSettings.autoConfirmOrders);
 
-            // Create order with CONFIRMED status (auto-confirmation to avoid cashier bottleneck)
+            // Create order status based on admin-configured confirmation mode.
             const order = await Order.create({
                 OrderNumber: orderNumber,
                 CustomerID: customerId,
@@ -263,11 +295,11 @@ class OrderService {
                 PromotionID: promotionId || null,
                 DiscountAmount: discountAmount,
                 DeliveryFee: deliveryFee,
-                Status: 'CONFIRMED',
+                Status: shouldAutoConfirm ? 'CONFIRMED' : 'PENDING',
                 OrderType: orderType,
                 SpecialInstructions: specialInstructions,
-                ConfirmedAt: new Date(),
-                ConfirmedBy: null // Auto-confirmed by system
+                ConfirmedAt: shouldAutoConfirm ? new Date() : null,
+                ConfirmedBy: null
             }, { transaction });
 
             // Create order items
@@ -297,7 +329,7 @@ class OrderService {
                     Status: 'PENDING',
                     DistanceKm: deliveryDistance,
                     EstimatedDeliveryTime: calculateEstimatedDeliveryTime({
-                        stage: 'CONFIRMED',
+                        stage: shouldAutoConfirm ? 'CONFIRMED' : 'PENDING',
                         durationSeconds: deliveryDurationSeconds,
                         distanceKm: deliveryDistance,
                         baseTime: new Date()
@@ -305,42 +337,47 @@ class OrderService {
                 }, { transaction });
             }
 
-            // Validate and deduct stock at order creation (auto-confirmation)
-            const stockDate = new Date().toISOString().split('T')[0];
-            const stockItems = await this.buildStockItemsFromOrderItems(orderItems, transaction);
+            if (shouldAutoConfirm) {
+                const stockDate = new Date().toISOString().split('T')[0];
+                const stockItems = await this.buildStockItemsFromOrderItems(orderItems, transaction);
 
-            if (stockItems.length > 0) {
-                await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
-                await stockService.deductStock(order.OrderID, stockItems, stockDate, null, transaction);
+                if (stockItems.length > 0) {
+                    await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
+                    await stockService.deductStock(order.OrderID, stockItems, stockDate, null, transaction);
+                }
             }
 
-            // Log status history - auto-confirmed
+            // Log initial status history.
             await OrderStatusHistory.create({
                 OrderID: order.OrderID,
                 OldStatus: null,
-                NewStatus: 'CONFIRMED',
+                NewStatus: shouldAutoConfirm ? 'CONFIRMED' : 'PENDING',
                 ChangedBy: null,
                 ChangedByType: 'SYSTEM',
-                Notes: 'Order created and auto-confirmed',
+                Notes: shouldAutoConfirm
+                    ? 'Order created and auto-confirmed'
+                    : 'Order created and pending staff confirmation',
                 CreatedAt: new Date()
             }, { transaction });
 
             await transaction.commit();
 
-            // Send confirmation notifications (FR15) - after successful commit
-            try {
-                const customer = await Customer.findByPk(customerId);
-                if (customer && orderType !== 'WALK_IN') {
-                    if (customer.Email) {
-                        await sendOrderConfirmationEmail(order, customer);
+            // Send confirmation notifications only when order was auto-confirmed.
+            if (shouldAutoConfirm) {
+                try {
+                    const customer = await Customer.findByPk(customerId);
+                    if (customer && orderType !== 'WALK_IN') {
+                        if (runtimeSettings.emailNotifications && runtimeSettings.orderConfirmation && customer.Email) {
+                            await sendOrderConfirmationEmail(order, customer);
+                        }
+                        if (runtimeSettings.smsNotifications && runtimeSettings.orderConfirmation && customer.Phone) {
+                            await sendOrderConfirmationSMS(customer.Phone, orderNumber);
+                        }
                     }
-                    if (customer.Phone) {
-                        await sendOrderConfirmationSMS(customer.Phone, orderNumber);
-                    }
+                } catch (notifError) {
+                    console.error('Notification error after order creation:', notifError);
+                    // Don't fail the order if notification fails
                 }
-            } catch (notifError) {
-                console.error('Notification error after order creation:', notifError);
-                // Don't fail the order if notification fails
             }
 
             return order;
@@ -419,10 +456,12 @@ class OrderService {
 
             // Send notifications (FR15)
             try {
-                if (order.customer.Email) {
+                const runtimeSettings = await systemSettingsService.getRuntimeSettings();
+
+                if (runtimeSettings.emailNotifications && runtimeSettings.orderConfirmation && order.customer.Email) {
                     await sendOrderConfirmationEmail(order, order.customer);
                 }
-                if (order.customer.Phone) {
+                if (runtimeSettings.smsNotifications && runtimeSettings.orderConfirmation && order.customer.Phone) {
                     await sendOrderConfirmationSMS(order.customer.Phone, order.OrderNumber);
                 }
             } catch (notifError) {
@@ -528,10 +567,12 @@ class OrderService {
 
         // Send notifications (FR15)
         try {
-            if (order.OrderType !== 'WALK_IN' && order.customer.Email) {
+            const runtimeSettings = await systemSettingsService.getRuntimeSettings();
+
+            if (runtimeSettings.orderStatusUpdates && runtimeSettings.emailNotifications && order.OrderType !== 'WALK_IN' && order.customer.Email) {
                 await sendOrderStatusUpdateEmail(order, order.customer, newStatus);
             }
-            if (order.OrderType !== 'WALK_IN' && order.customer.Phone) {
+            if (runtimeSettings.orderStatusUpdates && runtimeSettings.smsNotifications && order.OrderType !== 'WALK_IN' && order.customer.Phone) {
                 await sendOrderStatusUpdateSMS(order.customer.Phone, order.OrderNumber, newStatus);
             }
         } catch (notifError) {
@@ -686,6 +727,13 @@ class OrderService {
      * Generate unique order number
      */
     async generateOrderNumber() {
+        const runtimeSettings = await systemSettingsService.getRuntimeSettings();
+        const normalizedPrefix = String(runtimeSettings.orderPrefix || 'VF')
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, '')
+            .slice(0, 6);
+        const prefix = normalizedPrefix.length >= 2 ? normalizedPrefix : 'VF';
+
         const date = new Date();
         const year = date.getFullYear().toString().slice(-2);
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -705,7 +753,7 @@ class OrderService {
 
         const sequence = (count + 1).toString().padStart(4, '0');
 
-        return `VF${year}${month}${day}${sequence}`;
+        return `${prefix}${year}${month}${day}${sequence}`;
     }
 
     /**

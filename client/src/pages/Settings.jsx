@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FaCog, FaStore, FaBell, FaCreditCard, FaTruck, FaSave, FaClock } from 'react-icons/fa';
 import { adminService } from '../services/dashboardService';
+import { invalidatePublicSettingsCache } from '../services/publicSettingsApi';
 
 const DEFAULT_SETTINGS = {
     // General Settings
@@ -27,11 +28,11 @@ const DEFAULT_SETTINGS = {
     minOrderAmount: 500,
     maxOrderAmount: 50000,
     orderTimeout: 30,
-    autoConfirmOrders: false,
+    autoConfirmOrders: true,
 
     // Delivery Settings
     deliveryFee: 150,
-    freeDeliveryThreshold: 2500,
+    freeDeliveryThreshold: 0,
     maxDeliveryDistance: 15,
     estimatedDeliveryTime: 45,
 
@@ -138,6 +139,8 @@ const Settings = () => {
             const response = await adminService.updateSettings(settings);
             const savedSettings = response?.data || settings;
             setSettings(mergeSettings(savedSettings));
+            invalidatePublicSettingsCache();
+            window.dispatchEvent(new CustomEvent('publicSettingsUpdated'));
             setSaveSuccess('Settings saved successfully.');
         } catch (error) {
             setSaveError(error.message || 'Failed to save settings. Please try again.');

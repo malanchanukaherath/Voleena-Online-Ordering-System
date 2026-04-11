@@ -3,6 +3,7 @@ const { validateDeliveryDistanceWithFallback, geocodeAddress } = require('../uti
 const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 const { validateAddressLine, validateCoordinates } = require('../utils/validationUtils');
 const { calculateDeliveryFee, getDeliveryFeeConfig, estimateDeliveryFee } = require('../utils/deliveryFeeCalculator');
+const systemSettingsService = require('../services/systemSettingsService');
 
 const isAddressTableMissingError = (error) => {
   const mysqlCode = error?.original?.code || error?.parent?.code;
@@ -768,7 +769,10 @@ exports.getDeliveryLocation = async (req, res) => {
  */
 exports.getDeliveryFeeConfig = async (req, res) => {
   try {
-    const config = getDeliveryFeeConfig();
+    const runtimeSettings = await systemSettingsService.getRuntimeSettings();
+    const config = getDeliveryFeeConfig({
+      baseFee: runtimeSettings.deliveryFee
+    });
 
     res.json({
       success: true,
@@ -777,7 +781,8 @@ exports.getDeliveryFeeConfig = async (req, res) => {
         freeDeliveryDistance: config.freeDeliveryDistance,
         feePerKm: config.feePerKm,
         maxFee: config.maxFee,
-        description: `Base fee of LKR ${config.baseFee} applies. Free delivery within ${config.freeDeliveryDistance}km. Additional LKR ${config.feePerKm} per km beyond that, capped at LKR ${config.maxFee}.`
+        freeDeliveryThreshold: runtimeSettings.freeDeliveryThreshold,
+        description: `Base fee of LKR ${config.baseFee} applies. Free delivery within ${config.freeDeliveryDistance}km. Additional LKR ${config.feePerKm} per km beyond that, capped at LKR ${config.maxFee}. Orders above LKR ${runtimeSettings.freeDeliveryThreshold} get free delivery.`
       }
     });
 
@@ -810,7 +815,10 @@ exports.calculateDeliveryFee = async (req, res) => {
       });
     }
 
-    const feeCalculation = calculateDeliveryFee(parsedDistanceKm);
+    const runtimeSettings = await systemSettingsService.getRuntimeSettings();
+    const feeCalculation = calculateDeliveryFee(parsedDistanceKm, {
+      baseFee: runtimeSettings.deliveryFee
+    });
 
     res.json({
       success: true,

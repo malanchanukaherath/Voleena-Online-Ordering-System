@@ -147,6 +147,7 @@ function createApp() {
   app.use('/api/v1/stock', require('./routes/stock'));
   app.use('/api/v1/payments', require('./routes/payments'));
   app.use('/api/v1/feedback', require('./routes/feedback'));
+  app.use('/api/v1/settings', require('./routes/settings'));
   app.use('/api/v1/delivery', require('./routes/deliveryRoutes'));
   app.use('/api/v1/admin', require('./routes/adminRoutes'));
   app.use('/api/v1/kitchen', require('./routes/kitchenRoutes'));
@@ -169,6 +170,7 @@ function createApp() {
   app.use('/api/stock', deprecationMiddleware('/stock'), require('./routes/stock'));
   app.use('/api/payments', deprecationMiddleware('/payments'), require('./routes/payments'));
   app.use('/api/feedback', deprecationMiddleware('/feedback'), require('./routes/feedback'));
+  app.use('/api/settings', deprecationMiddleware('/settings'), require('./routes/settings'));
   app.use('/api/delivery', deprecationMiddleware('/delivery'), require('./routes/deliveryRoutes'));
   app.use('/api/admin', deprecationMiddleware('/admin'), require('./routes/adminRoutes'));
   app.use('/api/kitchen', deprecationMiddleware('/kitchen'), require('./routes/kitchenRoutes'));
@@ -280,7 +282,7 @@ async function startServer() {
     }
 
     // Start automated jobs (Daily stock creation @ 12:00 AM, etc.)
-    automatedJobs.start();
+    await automatedJobs.start();
 
     // Start server
     const server = app.listen(PORT, () => {

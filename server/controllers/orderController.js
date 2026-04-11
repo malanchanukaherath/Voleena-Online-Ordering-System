@@ -80,7 +80,12 @@ exports.createOrder = async (req, res) => {
             });
         }
 
-        res.status(500).json({
+        const statusCode = error.statusCode
+            || (/unsupported payment|disabled by system settings|minimum order amount|maximum order amount|required|outside our delivery|not available|invalid/i.test(error.message)
+                ? 400
+                : 500);
+
+        res.status(statusCode).json({
             success: false,
             message: error.message || 'Failed to create order'
         });

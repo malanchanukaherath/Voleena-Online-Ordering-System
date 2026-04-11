@@ -1,7 +1,9 @@
-const { SystemSetting } = require('../models');
-
 const ADMIN_SETTINGS_KEY = 'admin_settings_payload_v1';
 const ADMIN_SETTINGS_DESCRIPTION = 'Admin system settings payload (JSON)';
+const SETTINGS_CACHE_TTL_MS = Number.parseInt(process.env.ADMIN_SETTINGS_CACHE_TTL_MS || '30000', 10);
+
+let cachedAdminSettings = null;
+let cachedAt = 0;
 
 const DEFAULT_SETTINGS = Object.freeze({
     restaurantName: 'Voleena Foods',
@@ -23,9 +25,9 @@ const DEFAULT_SETTINGS = Object.freeze({
     minOrderAmount: 500,
     maxOrderAmount: 50000,
     orderTimeout: 30,
-    autoConfirmOrders: false,
-    deliveryFee: 150,
-    freeDeliveryThreshold: 2500,
+    autoConfirmOrders: true,
+    deliveryFee: Number.parseFloat(process.env.DELIVERY_FEE || process.env.BASE_DELIVERY_FEE || '150'),
+    freeDeliveryThreshold: 0,
     maxDeliveryDistance: 15,
     estimatedDeliveryTime: 45,
     emailNotifications: true,
@@ -52,6 +54,19 @@ function normalizeString(value, fallback) {
 
     const trimmed = value.trim();
     return trimmed || fallback;
+}
+
+function normalizeOrderPrefix(value, fallback) {
+    const normalized = normalizeString(value, fallback)
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .slice(0, 6);
+
+    if (normalized.length < 2) {
+        return fallback;
+    }
+
+    return normalized;
 }
 
 function normalizeNumber(value, fallback, { min = Number.NEGATIVE_INFINITY, max = Number.POSITIVE_INFINITY, isInteger = false } = {}) {
@@ -115,7 +130,7 @@ function normalizeSettings(rawSettings) {
         timezone: normalizeString(source.timezone, defaults.timezone),
         currency: normalizeString(source.currency, defaults.currency),
         businessHours: normalizeBusinessHours(source.businessHours),
-        orderPrefix: normalizeString(source.orderPrefix, defaults.orderPrefix),
+        orderPrefix: normalizeOrderPrefix(source.orderPrefix, defaults.orderPrefix),
         minOrderAmount: normalizeNumber(source.minOrderAmount, defaults.minOrderAmount, { min: 0 }),
         maxOrderAmount: normalizeNumber(source.maxOrderAmount, defaults.maxOrderAmount, { min: 0 }),
         orderTimeout: normalizeNumber(source.orderTimeout, defaults.orderTimeout, { min: 1, max: 240, isInteger: true }),
@@ -134,6 +149,63 @@ function normalizeSettings(rawSettings) {
         cardPayment: normalizeBoolean(source.cardPayment, defaults.cardPayment),
         minimumCashChange: normalizeNumber(source.minimumCashChange, defaults.minimumCashChange, { min: 0 })
     };
+}
+
+function normalizeCacheTtl() {
+    if (!Number.isFinite(SETTINGS_CACHE_TTL_MS) || SETTINGS_CACHE_TTL_MS < 0) {
+        return 30000;
+    }
+    return SETTINGS_CACHE_TTL_MS;
+}
+
+function invalidateSettingsCache() {
+    cachedAdminSettings = null;
+    cachedAt = 0;
+}
+
+function getPublicSettingsFromAdminSettings(settings) {
+    return {
+        restaurantName: settings.restaurantName,
+        email: settings.email,
+        phone: settings.phone,
+        address: settings.address,
+        timezone: settings.timezone,
+        currency: settings.currency,
+        businessHours: settings.businessHours,
+        order: {
+            prefix: settings.orderPrefix,
+            minOrderAmount: settings.minOrderAmount,
+            maxOrderAmount: settings.maxOrderAmount,
+            autoConfirmOrders: settings.autoConfirmOrders,
+            timeoutMinutes: settings.orderTimeout
+        },
+        delivery: {
+            baseFee: settings.deliveryFee,
+            freeDeliveryThreshold: settings.freeDeliveryThreshold,
+            maxDistanceKm: settings.maxDeliveryDistance,
+            estimatedDeliveryTimeMinutes: settings.estimatedDeliveryTime
+        },
+        paymentMethods: {
+            cashOnDelivery: settings.cashOnDelivery,
+            cardPayment: settings.cardPayment,
+            onlinePayment: settings.onlinePayment
+        }
+    };
+}
+
+function getSystemSettingModel() {
+    try {
+        const models = require('../models');
+        const model = models?.SystemSetting;
+
+        if (!model || typeof model.findOne !== 'function') {
+            return null;
+        }
+
+        return model;
+    } catch {
+        return null;
+    }
 }
 
 function isSystemSettingsTableMissingError(error) {
@@ -164,16 +236,44 @@ function parseStoredSettings(settingValue) {
 }
 
 async function getAdminSettings() {
+    const ttlMs = normalizeCacheTtl();
+    if (cachedAdminSettings && Date.now() - cachedAt < ttlMs) {
+        return JSON.parse(JSON.stringify(cachedAdminSettings));
+    }
+
+    const SystemSetting = getSystemSettingModel();
+    if (!SystemSetting) {
+        const defaults = cloneDefaultSettings();
+        cachedAdminSettings = defaults;
+        cachedAt = Date.now();
+        return JSON.parse(JSON.stringify(defaults));
+    }
+
     try {
         const setting = await SystemSetting.findOne({ where: { SettingKey: ADMIN_SETTINGS_KEY } });
         const parsed = parseStoredSettings(setting?.SettingValue);
-        return normalizeSettings(parsed);
+        const normalized = normalizeSettings(parsed);
+        cachedAdminSettings = normalized;
+        cachedAt = Date.now();
+        return JSON.parse(JSON.stringify(normalized));
     } catch (error) {
         if (isSystemSettingsTableMissingError(error)) {
-            return cloneDefaultSettings();
+            const defaults = cloneDefaultSettings();
+            cachedAdminSettings = defaults;
+            cachedAt = Date.now();
+            return JSON.parse(JSON.stringify(defaults));
         }
         throw error;
     }
+}
+
+async function getRuntimeSettings() {
+    return getAdminSettings();
+}
+
+async function getPublicSettings() {
+    const settings = await getAdminSettings();
+    return getPublicSettingsFromAdminSettings(settings);
 }
 
 async function updateAdminSettings(rawSettings, updatedBy = null) {
@@ -184,6 +284,13 @@ async function updateAdminSettings(rawSettings, updatedBy = null) {
     }
 
     const normalized = normalizeSettings(rawSettings);
+    const SystemSetting = getSystemSettingModel();
+
+    if (!SystemSetting) {
+        const tableError = new Error('System settings storage is not available. Apply the latest database schema and try again.');
+        tableError.statusCode = 503;
+        throw tableError;
+    }
 
     try {
         const existing = await SystemSetting.findOne({ where: { SettingKey: ADMIN_SETTINGS_KEY } });
@@ -205,6 +312,8 @@ async function updateAdminSettings(rawSettings, updatedBy = null) {
             });
         }
 
+        invalidateSettingsCache();
+
         return normalized;
     } catch (error) {
         if (isSystemSettingsTableMissingError(error)) {
@@ -219,7 +328,10 @@ async function updateAdminSettings(rawSettings, updatedBy = null) {
 
 module.exports = {
     getAdminSettings,
+    getRuntimeSettings,
+    getPublicSettings,
     updateAdminSettings,
+    invalidateSettingsCache,
     normalizeSettings,
     DEFAULT_SETTINGS
 };
