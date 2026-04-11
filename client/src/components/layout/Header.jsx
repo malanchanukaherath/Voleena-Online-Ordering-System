@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getCart } from '../../utils/cartStorage';
 import {
     FaHome,
+    FaBars,
+    FaTimes,
     FaUtensils,
     FaShoppingCart,
     FaClipboardList,
@@ -19,7 +21,13 @@ import {
 } from 'react-icons/fa';
 import NotificationCenter from '../ui/NotificationCenter';
 
-const Header = () => {
+const Header = ({
+    showSidebarToggle = false,
+    isSidebarVisible = true,
+    isMobileSidebarOpen = false,
+    onToggleSidebar = () => { },
+    onToggleMobileSidebar = () => { }
+}) => {
     const { user, isAuthenticated, logout } = useAuth();
     const location = useLocation();
     const [cartCount, setCartCount] = useState(0);
@@ -115,15 +123,41 @@ const Header = () => {
         <header className="bg-white shadow-sm sticky top-0 z-30">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
-                    {/* Logo */}
-                    <Link to="/" className="flex items-center space-x-2">
-                        <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-                            <span className="text-white font-bold text-xl">V</span>
-                        </div>
-                        <span className="text-xl font-bold text-gray-900 hidden sm:block">
-                            Voleena Foods
-                        </span>
-                    </Link>
+                    {/* Logo and Sidebar Controls */}
+                    <div className="flex items-center space-x-2">
+                        {showSidebarToggle && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={onToggleMobileSidebar}
+                                    className="lg:hidden p-2 text-gray-700 hover:text-primary-700 hover:bg-gray-100 rounded-md"
+                                    aria-label={isMobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+                                    title={isMobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
+                                >
+                                    {isMobileSidebarOpen ? <FaTimes className="w-5 h-5" /> : <FaBars className="w-5 h-5" />}
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={onToggleSidebar}
+                                    className="hidden lg:inline-flex p-2 text-gray-700 hover:text-primary-700 hover:bg-gray-100 rounded-md"
+                                    aria-label={isSidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
+                                    title={isSidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
+                                >
+                                    {isSidebarVisible ? <FaTimes className="w-5 h-5" /> : <FaBars className="w-5 h-5" />}
+                                </button>
+                            </>
+                        )}
+
+                        <Link to="/" className="flex items-center space-x-2">
+                            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                                <span className="text-white font-bold text-xl">V</span>
+                            </div>
+                            <span className="text-xl font-bold text-gray-900 hidden sm:block">
+                                Voleena Foods
+                            </span>
+                        </Link>
+                    </div>
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex space-x-1">
@@ -202,24 +236,26 @@ const Header = () => {
                 </div>
 
                 {/* Mobile Navigation */}
-                <nav className="md:hidden pb-4 flex flex-wrap gap-2">
-                    {navigationItems.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`px-3 py-2 rounded-md text-xs font-medium flex items-center space-x-1 ${isActive(item.path)
-                                    ? 'bg-primary-100 text-primary-700'
-                                    : 'text-gray-700 bg-gray-100'
-                                    }`}
-                            >
-                                <Icon className="w-3 h-3" />
-                                <span>{item.label}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
+                {!showSidebarToggle && (
+                    <nav className="md:hidden pb-4 flex flex-wrap gap-2">
+                        {navigationItems.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <Link
+                                    key={item.path}
+                                    to={item.path}
+                                    className={`px-3 py-2 rounded-md text-xs font-medium flex items-center space-x-1 ${isActive(item.path)
+                                        ? 'bg-primary-100 text-primary-700'
+                                        : 'text-gray-700 bg-gray-100'
+                                        }`}
+                                >
+                                    <Icon className="w-3 h-3" />
+                                    <span>{item.label}</span>
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                )}
             </div>
         </header>
     );

@@ -63,46 +63,50 @@ const OrderTracking = () => {
     const [liveLocation, setLiveLocation] = useState(null);
     const [liveLocationError, setLiveLocationError] = useState('');
 
-    const mapOrderData = (data = {}) => ({
-        id: data.OrderID,
-        orderNumber: data.OrderNumber,
-        status: data.Status,
-        orderType: data.OrderType,
-        paymentMethod: data.payment?.Method || 'CASH',
-        paymentStatus: data.payment?.Status || null,
-        customer: {
-            name: data.customer?.Name || 'Customer',
-            phone: data.customer?.Phone || ''
-        },
-        deliveryId: data.delivery?.DeliveryID || data.delivery?.deliveryId || null,
-        deliveryAddress: data.delivery?.address ? {
-            line1: data.delivery.address.AddressLine1,
-            city: data.delivery.address.City,
-            district: data.delivery.address.District || '',
-            latitude: toFiniteNumber(data.delivery.address.Latitude ?? data.delivery.address.latitude),
-            longitude: toFiniteNumber(data.delivery.address.Longitude ?? data.delivery.address.longitude)
-        } : null,
-        deliveryPerson: (data.delivery?.deliveryStaff || data.delivery?.staff) ? {
-            name: (data.delivery?.deliveryStaff || data.delivery?.staff).Name,
-            phone: (data.delivery?.deliveryStaff || data.delivery?.staff).Phone
-        } : null,
-        confirmedAt: data.ConfirmedAt || data.confirmedAt || null,
-        preparingAt: data.PreparingAt || data.preparingAt || null,
-        readyAt: data.ReadyAt || data.readyAt || null,
-        deliveryAssignedAt: data.delivery?.AssignedAt || data.delivery?.assignedAt || null,
-        pickedUpAt: data.delivery?.PickedUpAt || data.delivery?.pickedUpAt || null,
-        estimatedDeliveryTime: data.delivery?.EstimatedDeliveryTime || data.delivery?.estimatedDeliveryTime || null,
-        placedAt: data.CreatedAt,
-        completedAt: data.CompletedAt || data.completedAt,
-        deliveredAt: data.delivery?.DeliveredAt || data.delivery?.deliveredAt,
-        cancelledAt: data.CancelledAt || data.cancelledAt || null,
-        items: (data.items || []).map((item) => ({
-            name: item.menuItem?.Name || item.combo?.Name || 'Item',
-            quantity: item.Quantity,
-            price: parseFloat(item.UnitPrice || 0)
-        })),
-        total: parseFloat(data.FinalAmount || data.TotalAmount || 0)
-    });
+    const mapOrderData = (data = {}) => {
+        const deliveryPerson = data.delivery?.deliveryStaff || data.delivery?.staff || null;
+
+        return {
+            id: data.OrderID,
+            orderNumber: data.OrderNumber,
+            status: data.Status,
+            orderType: data.OrderType,
+            paymentMethod: data.payment?.Method || 'CASH',
+            paymentStatus: data.payment?.Status || null,
+            customer: {
+                name: data.customer?.Name || 'Customer',
+                phone: data.customer?.Phone || ''
+            },
+            deliveryId: data.delivery?.DeliveryID || data.delivery?.deliveryId || null,
+            deliveryAddress: data.delivery?.address ? {
+                line1: data.delivery.address.AddressLine1,
+                city: data.delivery.address.City,
+                district: data.delivery.address.District || '',
+                latitude: toFiniteNumber(data.delivery.address.Latitude ?? data.delivery.address.latitude),
+                longitude: toFiniteNumber(data.delivery.address.Longitude ?? data.delivery.address.longitude)
+            } : null,
+            deliveryPerson: deliveryPerson ? {
+                name: deliveryPerson.Name,
+                phone: deliveryPerson.Phone
+            } : null,
+            confirmedAt: data.ConfirmedAt || data.confirmedAt || null,
+            preparingAt: data.PreparingAt || data.preparingAt || null,
+            readyAt: data.ReadyAt || data.readyAt || null,
+            deliveryAssignedAt: data.delivery?.AssignedAt || data.delivery?.assignedAt || null,
+            pickedUpAt: data.delivery?.PickedUpAt || data.delivery?.pickedUpAt || null,
+            estimatedDeliveryTime: data.delivery?.EstimatedDeliveryTime || data.delivery?.estimatedDeliveryTime || null,
+            placedAt: data.CreatedAt,
+            completedAt: data.CompletedAt || data.completedAt,
+            deliveredAt: data.delivery?.DeliveredAt || data.delivery?.deliveredAt,
+            cancelledAt: data.CancelledAt || data.cancelledAt || null,
+            items: (data.items || []).map((item) => ({
+                name: item.menuItem?.Name || item.combo?.Name || 'Item',
+                quantity: item.Quantity,
+                price: parseFloat(item.UnitPrice || 0)
+            })),
+            total: parseFloat(data.FinalAmount || data.TotalAmount || 0)
+        };
+    };
 
     useEffect(() => {
         const fetchOrder = async () => {
@@ -182,7 +186,7 @@ const OrderTracking = () => {
             isMounted = false;
             clearInterval(interval);
         };
-    }, [order?.deliveryId, order?.orderType, order?.status]);
+    }, [order?.deliveryId, order?.deliveryPerson?.name, order?.deliveryPerson?.phone, order?.orderType, order?.status]);
 
     const canCancelOrder = () => {
         const cancellableStatuses = ['PENDING', 'CONFIRMED'];

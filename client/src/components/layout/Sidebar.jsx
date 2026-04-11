@@ -16,7 +16,7 @@ import {
     FaMapMarkedAlt,
 } from 'react-icons/fa';
 
-const Sidebar = () => {
+const Sidebar = ({ className = '', onNavigate }) => {
     const { user } = useAuth();
     const location = useLocation();
 
@@ -74,7 +74,7 @@ const Sidebar = () => {
     }
 
     return (
-        <aside className="hidden lg:block w-64 bg-white shadow-lg min-h-[calc(100vh-4rem)] sticky top-16 self-start">
+        <aside className={className}>
             <nav className="p-4 space-y-1">
                 {menuItems.map((item) => {
                     const Icon = item.icon;
@@ -84,6 +84,7 @@ const Sidebar = () => {
                         <Link
                             key={item.path}
                             to={item.path}
+                            onClick={onNavigate}
                             className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${active
                                 ? 'bg-primary-100 text-primary-700 font-medium'
                                 : 'text-gray-700 hover:bg-gray-100'
