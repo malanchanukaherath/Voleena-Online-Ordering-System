@@ -118,6 +118,16 @@ class PaymentService {
             throw new Error('Online payments are not configured');
         }
 
+        const frontendBase = String(process.env.FRONTEND_URL || '').replace(/\/+$/, '');
+        const backendBase = String(process.env.BACKEND_URL || '').replace(/\/+$/, '');
+        const configuredReturnUrl = process.env.PAYHERE_RETURN_URL;
+        const configuredCancelUrl = process.env.PAYHERE_CANCEL_URL;
+        const configuredNotifyUrl = process.env.PAYHERE_NOTIFY_URL;
+
+        const returnUrl = configuredReturnUrl || `${frontendBase}/order-confirmation/${order.OrderID}`;
+        const cancelUrl = configuredCancelUrl || `${frontendBase}/checkout`;
+        const notifyUrl = configuredNotifyUrl || `${backendBase}/api/v1/payments/webhook/payhere`;
+
         const hash = this.generatePayHereHash(
             this.payHereConfig.merchantId,
             order.OrderNumber,
@@ -125,17 +135,20 @@ class PaymentService {
             'LKR'
         );
 
+        const mode = String(this.payHereConfig.mode || 'sandbox').toLowerCase();
+        const payHereHost = mode === 'live' ? 'www' : 'sandbox';
+
         return {
             success: true,
             paymentId: payment.PaymentID,
             method: 'ONLINE',
             gateway: 'PayHere',
-            paymentUrl: `https://${this.payHereConfig.mode === 'live' ? 'www' : 'sandbox'}.payhere.lk/pay/checkout`,
+            paymentUrl: `https://${payHereHost}.payhere.lk/pay/checkout`,
             paymentData: {
                 merchant_id: this.payHereConfig.merchantId,
-                return_url: `${process.env.FRONTEND_URL}/payment/success`,
-                cancel_url: `${process.env.FRONTEND_URL}/payment/cancel`,
-                notify_url: `${process.env.BACKEND_URL}/api/v1/payments/webhook/payhere`,
+                return_url: returnUrl,
+                cancel_url: cancelUrl,
+                notify_url: notifyUrl,
                 order_id: order.OrderNumber,
                 items: `Order #${order.OrderNumber}`,
                 currency: 'LKR',

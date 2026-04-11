@@ -200,7 +200,7 @@ const Cart = () => {
 
     if (cartItems.length === 0) {
         return (
-            <div className="max-w-7xl mx-auto">
+            <div className="mx-auto max-w-7xl px-4 sm:px-0">
                 <EmptyState
                     title="Your cart is empty"
                     description="Start adding items from our menu to place an order"
@@ -215,19 +215,19 @@ const Cart = () => {
     }
 
     return (
-        <div className="max-w-7xl mx-auto">
+        <div className="mx-auto max-w-7xl px-4 sm:px-0">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">Shopping Cart</h1>
+                <h1 className="mb-2 text-2xl font-bold sm:text-3xl">Shopping Cart</h1>
                 <p className="text-gray-600">Review your items before checkout</p>
             </div>
 
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
                 {/* Cart Items */}
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-lg shadow">
-                        <div className="p-6 border-b">
-                            <h2 className="text-xl font-semibold">Cart Items ({cartItems.length})</h2>
+                        <div className="border-b p-4 sm:p-6">
+                            <h2 className="text-lg font-semibold sm:text-xl">Cart Items ({cartItems.length})</h2>
                         </div>
                         <div className="divide-y">
                             {cartItems.map((item) => {
@@ -239,83 +239,85 @@ const Cart = () => {
                                 return (
                                     <div
                                         key={`${item.type}-${item.id}`}
-                                        className={`p-6 ${isStockIssue ? 'bg-red-50 border-l-4 border-red-500' : ''}`}
+                                        className={`p-4 sm:p-6 ${isStockIssue ? 'bg-red-50 border-l-4 border-red-500' : ''}`}
                                     >
-                                        <div className="flex items-start gap-4">
-                                            {/* Image */}
-                                            <div className="w-24 h-24 bg-gray-200 rounded flex-shrink-0 flex items-center justify-center relative">
-                                                {item.image ? (
-                                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded" />
-                                                ) : (
-                                                    <span className="text-gray-400 text-xs">No image</span>
-                                                )}
-                                                {isUnavailable && (
-                                                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded">
-                                                        <span className="text-white text-xs font-bold">Out of Stock</span>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            {/* Details */}
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <h3 className="font-semibold text-lg">{item.name}</h3>
-                                                    {isUnavailable && (
-                                                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">Unavailable</span>
+                                        <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+                                            <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
+                                                {/* Image */}
+                                                <div className="relative flex h-20 w-20 flex-shrink-0 items-center justify-center rounded bg-gray-200 sm:h-24 sm:w-24">
+                                                    {item.image ? (
+                                                        <img src={item.image} alt={item.name} className="h-full w-full rounded object-cover" />
+                                                    ) : (
+                                                        <span className="text-xs text-gray-400">No image</span>
                                                     )}
-                                                    {!isUnavailable && isOverStock && (
-                                                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">Exceeds Stock</span>
+                                                    {isUnavailable && (
+                                                        <div className="absolute inset-0 flex items-center justify-center rounded bg-black bg-opacity-50">
+                                                            <span className="text-xs font-bold text-white">Out of Stock</span>
+                                                        </div>
                                                     )}
                                                 </div>
-                                                <p className="text-primary-600 font-medium mb-2">
-                                                    LKR {item.price.toFixed(2)}
-                                                </p>
-                                                {hasFiniteStockLimit(item) && (
-                                                    <p className={`text-xs mb-2 ${isStockIssue ? 'text-red-600' : 'text-gray-500'}`}>
-                                                        {isOutOfStock(item)
-                                                            ? 'Out of stock today'
-                                                            : `Available today: ${item.stockQuantity}`}
-                                                    </p>
-                                                )}
-                                                {isOverStock && (
-                                                    <p className="text-xs text-red-600 mb-2">
-                                                        Quantity is above daily stock. Click "Fix Stock Issues" to auto-adjust.
-                                                    </p>
-                                                )}
 
-                                                {/* Quantity Controls */}
-                                                <div className="flex items-center gap-3">
-                                                    <div className="flex items-center border rounded">
+                                                {/* Details */}
+                                                <div className="min-w-0 flex-1">
+                                                    <div className="mb-1 flex flex-wrap items-center gap-2">
+                                                        <h3 className="break-words text-base font-semibold sm:text-lg">{item.name}</h3>
+                                                        {isUnavailable && (
+                                                            <span className="rounded bg-red-500 px-2 py-1 text-xs text-white">Unavailable</span>
+                                                        )}
+                                                        {!isUnavailable && isOverStock && (
+                                                            <span className="rounded bg-red-500 px-2 py-1 text-xs text-white">Exceeds Stock</span>
+                                                        )}
+                                                    </div>
+                                                    <p className="mb-2 font-medium text-primary-600">
+                                                        LKR {item.price.toFixed(2)}
+                                                    </p>
+                                                    {hasFiniteStockLimit(item) && (
+                                                        <p className={`mb-2 text-xs ${isStockIssue ? 'text-red-600' : 'text-gray-500'}`}>
+                                                            {isOutOfStock(item)
+                                                                ? 'Out of stock today'
+                                                                : `Available today: ${item.stockQuantity}`}
+                                                        </p>
+                                                    )}
+                                                    {isOverStock && (
+                                                        <p className="mb-2 text-xs text-red-600">
+                                                            Quantity is above daily stock. Click "Fix Stock Issues" to auto-adjust.
+                                                        </p>
+                                                    )}
+
+                                                    {/* Quantity Controls */}
+                                                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                                        <div className="flex items-center rounded border">
+                                                            <button
+                                                                onClick={() => updateQuantity(item.id, item.type, -1)}
+                                                                className="px-3 py-1 hover:bg-gray-100"
+                                                                disabled={item.quantity <= 1}
+                                                            >
+                                                                <FaMinus className="h-3 w-3" />
+                                                            </button>
+                                                            <span className="border-x px-3 py-1 sm:px-4">{item.quantity}</span>
+                                                            <button
+                                                                onClick={() => updateQuantity(item.id, item.type, 1)}
+                                                                className="px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                disabled={disableIncrease}
+                                                                title={disableIncrease ? 'Maximum available stock reached' : 'Increase quantity'}
+                                                            >
+                                                                <FaPlus className="h-3 w-3" />
+                                                            </button>
+                                                        </div>
                                                         <button
-                                                            onClick={() => updateQuantity(item.id, item.type, -1)}
-                                                            className="px-3 py-1 hover:bg-gray-100"
-                                                            disabled={item.quantity <= 1}
+                                                            onClick={() => removeItem(item.id, item.type)}
+                                                            className="flex items-center gap-2 text-red-600 hover:text-red-800"
                                                         >
-                                                            <FaMinus className="w-3 h-3" />
-                                                        </button>
-                                                        <span className="px-4 py-1 border-x">{item.quantity}</span>
-                                                        <button
-                                                            onClick={() => updateQuantity(item.id, item.type, 1)}
-                                                            className="px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
-                                                            disabled={disableIncrease}
-                                                            title={disableIncrease ? 'Maximum available stock reached' : 'Increase quantity'}
-                                                        >
-                                                            <FaPlus className="w-3 h-3" />
+                                                            <FaTrash />
+                                                            Remove
                                                         </button>
                                                     </div>
-                                                    <button
-                                                        onClick={() => removeItem(item.id, item.type)}
-                                                        className="text-red-600 hover:text-red-800 flex items-center gap-2"
-                                                    >
-                                                        <FaTrash />
-                                                        Remove
-                                                    </button>
                                                 </div>
                                             </div>
 
                                             {/* Item Total */}
-                                            <div className="text-right">
-                                                <p className="font-semibold text-lg">
+                                            <div className="sm:min-w-[120px] sm:text-right">
+                                                <p className="text-base font-semibold sm:text-lg">
                                                     LKR {(item.price * item.quantity).toFixed(2)}
                                                 </p>
                                             </div>
@@ -336,8 +338,8 @@ const Cart = () => {
 
                 {/* Order Summary */}
                 <div className="lg:col-span-1">
-                    <div className="bg-white rounded-lg shadow p-6 sticky top-6">
-                        <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+                    <div className="rounded-lg bg-white p-4 shadow sm:p-6 lg:sticky lg:top-6">
+                        <h2 className="mb-4 text-lg font-semibold sm:text-xl">Order Summary</h2>
                         {showLoginPrompt && (
                             <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
                                 Sign in before checkout to place your order.

@@ -12,6 +12,7 @@ router.post('/confirm-card', requireCustomer, paymentLimiter, paymentController.
 // Webhooks (no auth, no rate limit - external payment gateways must be able to reach)
 // Note: Webhooks are verified via signature instead of rate limiting
 router.post('/webhook/payhere', paymentController.payHereWebhook);
+router.post('/payhere/notify', paymentController.payHereWebhook);
 router.post('/webhook/stripe', paymentController.stripeWebhook);
 
 module.exports = router;

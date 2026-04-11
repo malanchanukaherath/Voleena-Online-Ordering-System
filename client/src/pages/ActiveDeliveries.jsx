@@ -106,27 +106,29 @@ const ActiveDeliveries = () => {
     };
 
     return (
-        <div className="p-6">
-            <h1 className="text-2xl font-bold mb-6">My Active Deliveries</h1>
+        <div className="p-4 sm:p-6">
+            <h1 className="mb-6 text-xl font-bold sm:text-2xl">My Active Deliveries</h1>
             <div className="space-y-4">
                 {deliveries.length === 0 ? (
-                    <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500">
+                    <div className="rounded-lg bg-white p-4 text-sm text-gray-500 shadow sm:p-6">
                         {error || 'No active deliveries.'}
                     </div>
                 ) : deliveries.map(delivery => (
-                    <div key={delivery.id} className="bg-white rounded-lg shadow p-6">
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 className="font-bold text-lg">{delivery.orderNumber}</h3>
+                    <div key={delivery.id} className="rounded-lg bg-white p-4 shadow sm:p-6">
+                        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0">
+                                <h3 className="break-words text-lg font-bold">{delivery.orderNumber}</h3>
                                 <p className="text-gray-700">{delivery.customer}</p>
-                                <p className="text-sm text-gray-500 flex items-center mt-1">
+                                <p className="mt-1 flex items-center text-sm text-gray-500 break-all sm:break-normal">
                                     <FaPhone className="mr-2" />{delivery.phone || 'Phone not available'}
                                 </p>
                             </div>
-                            <StatusBadge status={delivery.status} type="delivery" />
+                            <div className="self-start sm:self-auto">
+                                <StatusBadge status={delivery.status} type="delivery" />
+                            </div>
                         </div>
                         <div className="mb-4">
-                            <p className="text-sm text-gray-600 flex items-center">
+                            <p className="flex items-center text-sm text-gray-600 break-words">
                                 <FaMapMarkedAlt className="mr-2" />{delivery.address}
                             </p>
                             {delivery.lat && delivery.lng && (
@@ -136,15 +138,16 @@ const ActiveDeliveries = () => {
                                 </p>
                             )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             {getPendingUpdate(delivery.id) ? (
                                 <>
-                                    <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 flex items-center">
+                                    <div className="flex w-full items-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700 sm:w-auto">
                                         Changing to {getPendingUpdate(delivery.id).toStatus} in {getRemainingSeconds(delivery.id)}s
                                     </div>
                                     <Button
                                         size="sm"
                                         variant="success"
+                                        className="w-full sm:w-auto"
                                         onClick={() => commitPendingUpdateNow(delivery.id)}
                                     >
                                         Confirm Now
@@ -152,6 +155,7 @@ const ActiveDeliveries = () => {
                                     <Button
                                         size="sm"
                                         variant="outline"
+                                        className="w-full sm:w-auto"
                                         onClick={() => cancelPendingUpdate(delivery.id)}
                                     >
                                         Undo
@@ -160,6 +164,7 @@ const ActiveDeliveries = () => {
                             ) : (
                                 <Button
                                     size="sm"
+                                    className="w-full sm:w-auto"
                                     onClick={() => handleQueueAdvanceStatus(delivery)}
                                     disabled={!getNextStatus(delivery.status)}
                                 >
@@ -167,14 +172,14 @@ const ActiveDeliveries = () => {
                                 </Button>
                             )}
                             {delivery.phone && (
-                                <Button size="sm" variant="outline" onClick={() => window.open(`tel:${delivery.phone}`)}>Call Customer</Button>
+                                <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => window.open(`tel:${delivery.phone}`)}>Call Customer</Button>
                             )}
                             {getGoogleMapsNavigationUrl(delivery) && (
                                 <a
                                     href={getGoogleMapsNavigationUrl(delivery)}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex items-center px-3 py-2 text-sm border border-blue-600 text-blue-600 rounded-md hover:bg-blue-50 transition"
+                                    className="inline-flex w-full items-center justify-center rounded-md border border-blue-600 px-3 py-2 text-sm text-blue-600 transition hover:bg-blue-50 sm:w-auto"
                                 >
                                     <FaExternalLinkAlt className="mr-2" /> Navigate
                                 </a>

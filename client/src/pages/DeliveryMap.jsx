@@ -24,7 +24,7 @@ const DeliveryMap = () => {
 
     const mapContainerStyle = {
         width: '100%',
-        height: '600px',
+        height: 'clamp(320px, 60vh, 600px)',
         borderRadius: '8px'
     };
 
@@ -261,9 +261,9 @@ const DeliveryMap = () => {
 
     if (loading) {
         return (
-            <div className="p-6">
-                <h1 className="text-2xl font-bold mb-6">Delivery Map</h1>
-                <div className="bg-white rounded-lg shadow p-6">
+            <div className="p-4 sm:p-6">
+                <h1 className="mb-6 text-xl font-bold sm:text-2xl">Delivery Map</h1>
+                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
                     <div className="flex items-center justify-center h-96">
                         <div className="text-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
@@ -279,10 +279,10 @@ const DeliveryMap = () => {
     const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
     if (!googleMapsApiKey) {
         return (
-            <div className="p-6">
-                <h1 className="text-2xl font-bold mb-6">Delivery Tracking Map</h1>
-                <div className="bg-red-50 border border-red-200 rounded-lg shadow p-6">
-                    <div className="flex items-start gap-4">
+            <div className="p-4 sm:p-6">
+                <h1 className="mb-6 text-xl font-bold sm:text-2xl">Delivery Tracking Map</h1>
+                <div className="rounded-lg border border-red-200 bg-red-50 p-4 shadow sm:p-6">
+                    <div className="flex flex-col items-start gap-4 sm:flex-row">
                         <div className="flex-shrink-0">
                             <svg className="w-12 h-12 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -312,20 +312,20 @@ const DeliveryMap = () => {
     }
 
     return (
-        <div className="p-6">
-            <h1 className="text-2xl font-bold mb-6">Delivery Tracking Map</h1>
+        <div className="p-4 sm:p-6">
+            <h1 className="mb-6 text-xl font-bold sm:text-2xl">Delivery Tracking Map</h1>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {/* Map Section */}
                 <div className="lg:col-span-2">
                     <div className="bg-white rounded-lg shadow overflow-hidden">
                         {locationError && (
-                            <div className="bg-yellow-50 border-b border-yellow-200 p-3 flex items-center justify-between gap-3">
+                            <div className="flex flex-col gap-3 border-b border-yellow-200 bg-yellow-50 p-3 sm:flex-row sm:items-center sm:justify-between">
                                 <p className="text-sm text-yellow-800">{locationError}</p>
                                 <button
                                     type="button"
                                     onClick={requestCurrentLocation}
-                                    className="text-xs px-3 py-1.5 bg-yellow-100 text-yellow-900 rounded hover:bg-yellow-200 transition"
+                                    className="w-full rounded bg-yellow-100 px-3 py-1.5 text-xs text-yellow-900 transition hover:bg-yellow-200 sm:w-auto"
                                 >
                                     Enable Location
                                 </button>
@@ -432,7 +432,7 @@ const DeliveryMap = () => {
                                             >
                                                 {selectedDelivery?.id === delivery.id && (
                                                     <InfoWindow onCloseClick={() => setSelectedDelivery(null)}>
-                                                        <div className="p-3 w-64">
+                                                        <div className="w-56 p-3 sm:w-64">
                                                             <h3 className="font-bold text-sm mb-2">{delivery.customerName}</h3>
                                                             <p className="text-xs text-gray-600 mb-2">{delivery.address}</p>
                                                             <p className="text-xs mb-1">
@@ -485,7 +485,7 @@ const DeliveryMap = () => {
                     {/* Map Legend */}
                     <div className="bg-white rounded-lg shadow p-4 mt-4">
                         <h3 className="font-semibold mb-3">Status Legend</h3>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4">
                             <div className="flex items-center">
                                 <div className="w-4 h-4 bg-red-400 rounded-full mr-2"></div>
                                 <span>Restaurant</span>
@@ -566,7 +566,7 @@ const DeliveryMap = () => {
                         </div>
                     )}
 
-                    <div className="bg-white rounded-lg shadow p-6">
+                    <div className="rounded-lg bg-white p-4 shadow sm:p-6">
                         <h3 className="font-semibold mb-4 flex items-center">
                             <FaTruck className="mr-2 text-primary-600" />
                             Active Deliveries ({deliveries.length})
@@ -595,11 +595,11 @@ const DeliveryMap = () => {
                                             }`}
                                     >
                                         <p className="font-semibold text-sm mb-1">{delivery.customerName}</p>
-                                        <p className="text-xs text-gray-600 mb-2 flex items-center">
+                                        <p className="mb-2 flex items-center text-xs text-gray-600 break-words">
                                             <FaMapPin className="mr-1" />
                                             {delivery.address}
                                         </p>
-                                        <div className="flex items-center justify-between mb-2">
+                                        <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                                             <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(delivery.status)}`}>
                                                 {delivery.status}
                                             </span>
@@ -614,13 +614,13 @@ const DeliveryMap = () => {
                                         <div className="text-xs text-gray-600 mb-2">
                                             <strong>Distance:</strong> {formatDistanceKm(delivery.distance)} km
                                         </div>
-                                        <div className="flex gap-2">
+                                        <div className="flex flex-col gap-2 sm:flex-row">
                                             {getGoogleMapsNavigationUrl(delivery) && (
                                                 <a
                                                     href={getGoogleMapsNavigationUrl(delivery)}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="flex-1 inline-flex items-center justify-center text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition"
+                                                    className="inline-flex w-full items-center justify-center rounded bg-blue-600 px-2 py-1 text-xs text-white transition hover:bg-blue-700 sm:flex-1"
                                                 >
                                                     <FaExternalLinkAlt className="mr-1" /> Navigate
                                                 </a>
@@ -628,7 +628,7 @@ const DeliveryMap = () => {
                                             {delivery.phone && (
                                                 <a
                                                     href={`tel:${delivery.phone}`}
-                                                    className="flex-1 inline-flex items-center justify-center text-xs bg-primary-600 text-white px-2 py-1 rounded hover:bg-primary-700 transition"
+                                                    className="inline-flex w-full items-center justify-center rounded bg-primary-600 px-2 py-1 text-xs text-white transition hover:bg-primary-700 sm:flex-1"
                                                 >
                                                     <FaPhone className="mr-1" /> Call
                                                 </a>
@@ -652,7 +652,7 @@ const DeliveryMap = () => {
                             </p>
                         </div>
                     )}
-                    <div className="bg-white rounded-lg shadow p-6 mt-4">
+                    <div className="mt-4 rounded-lg bg-white p-4 shadow sm:p-6">
                         <h3 className="font-semibold mb-3 flex items-center">
                             <FaMapMarkerAlt className="mr-2 text-red-600" />
                             Restaurant

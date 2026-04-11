@@ -250,16 +250,16 @@ const DeliveryDashboard = () => {
     };
 
     return (
-        <div className="p-6">
-            <div className="flex items-center justify-between mb-8">
-                <h1 className="text-3xl font-bold">Delivery Dashboard</h1>
+        <div className="p-4 sm:p-6">
+            <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <h1 className="text-2xl font-bold sm:text-3xl">Delivery Dashboard</h1>
 
-                <div className="flex items-center gap-4">
+                <div className="flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 lg:w-auto">
                     {/* Availability Toggle */}
                     <button
                         onClick={toggleAvailability}
                         disabled={updatingAvailability}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg shadow transition-colors ${availability?.IsAvailable
+                        className={`flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2 shadow transition-colors sm:w-auto sm:justify-start ${availability?.IsAvailable
                             ? 'bg-green-600 hover:bg-green-700 text-white'
                             : 'bg-gray-400 hover:bg-gray-500 text-white'
                             } ${updatingAvailability ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -278,7 +278,7 @@ const DeliveryDashboard = () => {
                     </button>
 
                     {/* Location Status Indicator */}
-                    <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white shadow">
+                    <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 shadow sm:w-auto sm:justify-start">
                         <FaMapMarkerAlt className={`
                         ${locationPermission === 'granted' ? 'text-green-600' :
                                 locationPermission === 'denied' ? 'text-red-600' : 'text-yellow-600'}
@@ -306,26 +306,26 @@ const DeliveryDashboard = () => {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white rounded-lg shadow p-6">
+            <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
+                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
                     <FaTruck className="w-8 h-8 text-blue-600 mb-2" />
                     <p className="text-sm text-gray-600">Active Deliveries</p>
                     <p className="text-3xl font-bold">{stats.activeDeliveries}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
                     <FaClock className="w-8 h-8 text-orange-600 mb-2" />
                     <p className="text-sm text-gray-600">Pending Pickup</p>
                     <p className="text-3xl font-bold">{stats.pendingPickup}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
                     <FaCheckCircle className="w-8 h-8 text-green-600 mb-2" />
                     <p className="text-sm text-gray-600">Completed Today</p>
                     <p className="text-3xl font-bold">{stats.completedToday}</p>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white rounded-lg shadow p-6">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
+                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
                     <h3 className="text-lg font-semibold mb-4">Active Deliveries</h3>
 
                     {/* Availability Warning */}
@@ -365,30 +365,33 @@ const DeliveryDashboard = () => {
                                 </p>
                             </div>
                         ) : activeDeliveries.map(delivery => (
-                            <div key={delivery.id} className="p-4 bg-gray-50 rounded-lg">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div>
-                                        <p className="font-bold">{delivery.orderNumber}</p>
+                            <div key={delivery.id} className="rounded-lg bg-gray-50 p-3 sm:p-4">
+                                <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                                    <div className="min-w-0">
+                                        <p className="font-bold break-words">{delivery.orderNumber}</p>
                                         <p className="text-sm text-gray-600">{delivery.customer}</p>
-                                        <p className="text-xs text-gray-500">{delivery.address}</p>
+                                        <p className="text-xs text-gray-500 break-words">{delivery.address}</p>
                                         {delivery.lat && delivery.lng && (
                                             <p className="text-xs text-gray-400 mt-1">
                                                 GPS: {delivery.lat}, {delivery.lng}
                                             </p>
                                         )}
                                     </div>
-                                    <StatusBadge status={delivery.status} type="delivery" />
+                                    <div className="self-start sm:self-auto">
+                                        <StatusBadge status={delivery.status} type="delivery" />
+                                    </div>
                                 </div>
 
                                 <div className="flex flex-wrap gap-2 mt-3">
                                     {getPendingUpdate(delivery.id) ? (
                                         <>
-                                            <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 flex items-center">
+                                            <div className="flex w-full items-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700 sm:w-auto">
                                                 Changing to {getPendingUpdate(delivery.id).toStatus} in {getRemainingSeconds(delivery.id)}s
                                             </div>
                                             <Button
                                                 size="sm"
                                                 variant="success"
+                                                className="w-full sm:w-auto"
                                                 onClick={() => commitPendingUpdateNow(delivery.id)}
                                             >
                                                 Confirm Now
@@ -396,6 +399,7 @@ const DeliveryDashboard = () => {
                                             <Button
                                                 size="sm"
                                                 variant="outline"
+                                                className="w-full sm:w-auto"
                                                 onClick={() => cancelPendingUpdate(delivery.id)}
                                             >
                                                 Undo
@@ -404,6 +408,7 @@ const DeliveryDashboard = () => {
                                     ) : (
                                         <Button
                                             size="sm"
+                                            className="w-full sm:w-auto"
                                             onClick={() => handleQueueAdvanceStatus(delivery)}
                                             disabled={!getNextStatus(delivery.status)}
                                         >
@@ -413,7 +418,7 @@ const DeliveryDashboard = () => {
                                     {delivery.phone && (
                                         <a
                                             href={`tel:${delivery.phone}`}
-                                            className="inline-flex items-center text-xs bg-primary-600 text-white px-3 py-1.5 rounded hover:bg-primary-700 transition"
+                                            className="inline-flex w-full items-center justify-center rounded bg-primary-600 px-3 py-1.5 text-xs text-white transition hover:bg-primary-700 sm:w-auto"
                                         >
                                             <FaPhone className="mr-1" /> Call Customer
                                         </a>
@@ -423,7 +428,7 @@ const DeliveryDashboard = () => {
                                             href={getGoogleMapsNavigationUrl(delivery)}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-flex items-center text-xs bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700 transition"
+                                            className="inline-flex w-full items-center justify-center rounded bg-blue-600 px-3 py-1.5 text-xs text-white transition hover:bg-blue-700 sm:w-auto"
                                         >
                                             <FaExternalLinkAlt className="mr-1" /> Navigate
                                         </a>
@@ -437,9 +442,9 @@ const DeliveryDashboard = () => {
                     </Link>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
                     <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
                         <Link to="/delivery/active" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
                             <FaTruck className="w-8 h-8 mx-auto mb-2 text-primary-600" />
                             <p className="font-medium">My Deliveries</p>
