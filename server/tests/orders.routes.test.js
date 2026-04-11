@@ -99,6 +99,23 @@ describe('order routes', () => {
     }), undefined);
   });
 
+  test('rejects order creation with unsupported payment method', async () => {
+    setAuthUser({ id: 25, type: 'Customer', role: 'Customer' });
+
+    const response = await request(app)
+      .post('/api/v1/orders')
+      .send({
+        items: [{ menuItemId: 1, quantity: 1 }],
+        orderType: 'TAKEAWAY',
+        paymentMethod: 'BITCOIN'
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toMatch(/unsupported payment method/i);
+    expect(mockOrderService.createOrder).not.toHaveBeenCalled();
+  });
+
   test('filters GET /orders to the current customer', async () => {
     setAuthUser({ id: 88, type: 'Customer', role: 'Customer' });
     mockOrder.findAll.mockResolvedValue([]);

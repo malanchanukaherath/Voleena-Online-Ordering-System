@@ -84,16 +84,17 @@ const createAddressForCustomer = async (customerId, payload = {}) => {
         return { error: 'Address line 1 and city are required', status: 400 };
     }
 
-    let finalLat = latitude;
-    let finalLng = longitude;
+    let finalLat = Number(latitude);
+    let finalLng = Number(longitude);
+    const hasCoordinates = () => Number.isFinite(finalLat) && Number.isFinite(finalLng);
 
-    if (!finalLat || !finalLng) {
+    if (!hasCoordinates()) {
         try {
             const { geocodeAddress } = require('../services/distanceValidation');
             const addressText = `${addressLine1.trim()}${city ? ', ' + city.trim() : ''}${postalCode ? ', ' + postalCode.trim() : ''}`;
             const geocoded = await geocodeAddress(addressText, city);
-            finalLat = geocoded.lat;
-            finalLng = geocoded.lng;
+            finalLat = Number(geocoded.lat);
+            finalLng = Number(geocoded.lng);
             console.log(`Geocoded address: ${addressText} -> (${finalLat}, ${finalLng})`);
         } catch (geocodeError) {
             console.warn('Failed to geocode address, saving without coordinates:', geocodeError.message);
@@ -107,8 +108,8 @@ const createAddressForCustomer = async (customerId, payload = {}) => {
         City: city.trim(),
         PostalCode: postalCode ? postalCode.trim() : null,
         District: district ? district.trim() : null,
-        Latitude: finalLat || null,
-        Longitude: finalLng || null
+        Latitude: hasCoordinates() ? finalLat : null,
+        Longitude: hasCoordinates() ? finalLng : null
     });
 
     return { address };

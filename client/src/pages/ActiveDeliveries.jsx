@@ -131,7 +131,7 @@ const ActiveDeliveries = () => {
                             <p className="flex items-center text-sm text-gray-600 break-words">
                                 <FaMapMarkedAlt className="mr-2" />{delivery.address}
                             </p>
-                            {delivery.lat && delivery.lng && (
+                            {Number.isFinite(delivery.lat) && Number.isFinite(delivery.lng) && (
                                 <p className="text-xs text-gray-500 mt-2 flex items-center">
                                     <FaMapMarkerAlt className="mr-2" />
                                     GPS: {delivery.lat}, {delivery.lng}

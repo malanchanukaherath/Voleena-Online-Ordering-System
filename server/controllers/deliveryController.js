@@ -203,7 +203,6 @@ exports.updateDeliveryStatus = async (req, res) => {
       if (proof) {
         updateData.DeliveryProof = proof;
       }
-      updateData.EstimatedDeliveryTime = new Date();
     } else if (status === 'FAILED') {
       updateData.FailureReason = notes || 'Delivery failed';
     }
@@ -490,11 +489,12 @@ exports.validateDeliveryDistance = async (req, res) => {
   try {
     const { latitude, longitude, address } = req.body;
 
-    let lat = latitude;
-    let lng = longitude;
+    let lat = Number(latitude);
+    let lng = Number(longitude);
+    let hasCoordinates = Number.isFinite(lat) && Number.isFinite(lng);
 
     // If coordinates not provided, try to geocode the address
-    if ((!lat || !lng) && address) {
+    if (!hasCoordinates && address) {
       // Validate address has proper fields
       if (!address.addressLine1 || !validateAddressLine(address.addressLine1)) {
         return res.status(400).json({
@@ -508,8 +508,9 @@ exports.validateDeliveryDistance = async (req, res) => {
         const addressText = `${address.addressLine1}${address.city ? ', ' + address.city : ''}${regionSegment ? ', ' + regionSegment : ''}`;
         // Pass city parameter for fallback geocoding (when API key not configured)
         const geocoded = await geocodeAddress(addressText, address.city);
-        lat = geocoded.lat;
-        lng = geocoded.lng;
+        lat = Number(geocoded.lat);
+        lng = Number(geocoded.lng);
+        hasCoordinates = Number.isFinite(lat) && Number.isFinite(lng);
 
         // Log geocoding method used (for debugging)
         console.log(`[Distance Validation] Geocoded via: ${geocoded.method || 'google_full_address'} -> (${lat}, ${lng})`);
@@ -530,7 +531,7 @@ exports.validateDeliveryDistance = async (req, res) => {
     }
 
     // If still no coordinates, reject
-    if (!lat || !lng) {
+    if (!hasCoordinates) {
       return res.status(400).json({
         success: false,
         message: 'Address coordinates could not be determined. Please verify your address details.'

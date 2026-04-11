@@ -106,8 +106,16 @@ exports.initiatePayment = async (req, res) => {
     }
 
     const existingPayment = await Payment.findOne({ where: { OrderID: orderId } });
-    if (existingPayment && ['PAID', 'PENDING'].includes(existingPayment.Status)) {
-      return res.status(409).json({ error: 'Payment already exists for this order' });
+    if (existingPayment) {
+      if (existingPayment.Method !== paymentMethod) {
+        return res.status(409).json({
+          error: `Payment method already set to ${existingPayment.Method} for this order`
+        });
+      }
+
+      if (existingPayment.Status === 'PAID') {
+        return res.status(409).json({ error: 'Payment is already completed for this order' });
+      }
     }
 
     const customer = await Customer.findByPk(order.CustomerID);
@@ -115,7 +123,7 @@ exports.initiatePayment = async (req, res) => {
       return res.status(404).json({ error: 'Customer not found' });
     }
 
-    const paymentData = await paymentService.initializePayment(order, customer, paymentMethod);
+    const paymentData = await paymentService.initializePayment(order, customer, paymentMethod, existingPayment || null);
 
     return res.json({ success: true, data: paymentData });
   } catch (error) {

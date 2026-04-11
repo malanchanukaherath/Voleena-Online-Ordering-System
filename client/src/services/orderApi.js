@@ -26,6 +26,10 @@ export const createAddress = async (address) => {
   return backendApi.post('/api/v1/customers/me/addresses', address);
 };
 
+export const updateCheckoutContactProfile = async (profile) => {
+  return backendApi.put('/api/v1/customers/me', profile);
+};
+
 /**
  * Validate delivery distance for an address
  */

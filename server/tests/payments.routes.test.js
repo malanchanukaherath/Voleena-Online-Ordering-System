@@ -90,6 +90,44 @@ describe('payment routes', () => {
     expect(mockPaymentService.initializePayment).toHaveBeenCalled();
   });
 
+  test('reuses an existing pending payment when method matches', async () => {
+    setAuthUser({ id: 10, type: 'Customer', role: 'Customer' });
+    const existingPayment = { PaymentID: 101, Method: 'CARD', Status: 'PENDING' };
+
+    mockOrder.findByPk.mockResolvedValue({ OrderID: 1, CustomerID: 10, Status: 'CONFIRMED' });
+    mockPayment.findOne.mockResolvedValue(existingPayment);
+    mockCustomer.findByPk.mockResolvedValue({ CustomerID: 10, Name: 'Customer', Email: 'user@example.com' });
+    mockPaymentService.initializePayment.mockResolvedValue({ clientSecret: 'cs_test_reuse' });
+
+    const response = await request(app)
+      .post('/api/v1/payments/initiate')
+      .send({ orderId: 1, paymentMethod: 'CARD' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(mockPaymentService.initializePayment).toHaveBeenCalledWith(
+      expect.objectContaining({ OrderID: 1 }),
+      expect.objectContaining({ CustomerID: 10 }),
+      'CARD',
+      existingPayment
+    );
+  });
+
+  test('rejects initiation when payment method is already set differently', async () => {
+    setAuthUser({ id: 10, type: 'Customer', role: 'Customer' });
+
+    mockOrder.findByPk.mockResolvedValue({ OrderID: 1, CustomerID: 10, Status: 'CONFIRMED' });
+    mockPayment.findOne.mockResolvedValue({ PaymentID: 102, Method: 'ONLINE', Status: 'PENDING' });
+
+    const response = await request(app)
+      .post('/api/v1/payments/initiate')
+      .send({ orderId: 1, paymentMethod: 'CARD' });
+
+    expect(response.status).toBe(409);
+    expect(response.body.error).toMatch(/already set/i);
+    expect(mockPaymentService.initializePayment).not.toHaveBeenCalled();
+  });
+
   test('rejects PayHere webhooks with missing required fields', async () => {
     const response = await request(app)
       .post('/api/v1/payments/webhook/payhere')

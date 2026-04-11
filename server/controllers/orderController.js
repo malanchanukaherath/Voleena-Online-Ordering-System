@@ -1,6 +1,8 @@
 const { Order, OrderItem, MenuItem, ComboPack, Customer, Delivery, Address, sequelize } = require('../models');
 const orderService = require('../services/orderService');
 
+const ALLOWED_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
+
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
     const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -17,8 +19,9 @@ const isAddressTableMissingError = (error) => {
 // Create new order
 exports.createOrder = async (req, res) => {
     try {
-        const { items, orderType, addressId, specialInstructions, promotionCode } = req.body;
+        const { items, orderType, addressId, specialInstructions, promotionCode, paymentMethod = 'CASH' } = req.body;
         const customerId = req.user.id;
+        const normalizedPaymentMethod = typeof paymentMethod === 'string' ? paymentMethod.trim().toUpperCase() : '';
 
         if (!items || items.length === 0) {
             return res.status(400).json({
@@ -26,10 +29,19 @@ exports.createOrder = async (req, res) => {
                 message: 'Order must contain at least one item'
             });
         }
+
+        if (!ALLOWED_PAYMENT_METHODS.has(normalizedPaymentMethod)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Unsupported payment method'
+            });
+        }
+
         const orderData = {
             orderType,
             specialInstructions,
             promotionId: promotionCode || null,
+            paymentMethod: normalizedPaymentMethod,
             items: items.map((item) => ({
                 menuItemId: item.menuItemId || null,
                 comboId: item.comboId || null,

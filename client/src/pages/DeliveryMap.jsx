@@ -108,6 +108,8 @@ const DeliveryMap = () => {
 
                 const formattedDeliveries = data.map((delivery) => {
                     const distanceKm = toFiniteNumber(delivery.DistanceKm, 5);
+                    const destinationLat = toFiniteNumber(delivery.address?.Latitude);
+                    const destinationLng = toFiniteNumber(delivery.address?.Longitude);
 
                     return {
                         id: delivery.DeliveryID,
@@ -123,8 +125,9 @@ const DeliveryMap = () => {
                         currentLng: toFiniteNumber(delivery.CurrentLongitude),
                         lastLocationUpdate: delivery.LastLocationUpdate,
                         // Destination coordinates
-                        lat: toFiniteNumber(delivery.address?.Latitude, 6.8721),
-                        lng: toFiniteNumber(delivery.address?.Longitude, 80.7840),
+                        lat: destinationLat,
+                        lng: destinationLng,
+                        hasDestinationCoordinates: Number.isFinite(destinationLat) && Number.isFinite(destinationLng),
                         distance: distanceKm,
                         estimatedTime: Math.ceil(distanceKm * 2) // ~2 min per km
                     };
@@ -233,7 +236,11 @@ const DeliveryMap = () => {
     const calculateBounds = () => {
         if (deliveries.length === 0 && !currentLocation) return null;
 
-        const points = [restaurantLocation, ...deliveries.map((delivery) => ({ lat: delivery.lat, lng: delivery.lng }))];
+        const destinationPoints = deliveries
+            .filter((delivery) => Number.isFinite(delivery.lat) && Number.isFinite(delivery.lng))
+            .map((delivery) => ({ lat: delivery.lat, lng: delivery.lng }));
+
+        const points = [restaurantLocation, ...destinationPoints];
 
         if (currentLocation) {
             points.push(currentLocation);
@@ -424,59 +431,63 @@ const DeliveryMap = () => {
                                             )}
 
                                             {/* Delivery Destination */}
-                                            <Marker
-                                                position={{ lat: delivery.lat, lng: delivery.lng }}
-                                                title={delivery.customerName}
-                                                icon={getMarkerColor(delivery.status)}
-                                                onClick={() => handleMarkerClick(delivery)}
-                                            >
-                                                {selectedDelivery?.id === delivery.id && (
-                                                    <InfoWindow onCloseClick={() => setSelectedDelivery(null)}>
-                                                        <div className="w-56 p-3 sm:w-64">
-                                                            <h3 className="font-bold text-sm mb-2">{delivery.customerName}</h3>
-                                                            <p className="text-xs text-gray-600 mb-2">{delivery.address}</p>
-                                                            <p className="text-xs mb-1">
-                                                                <strong>Order:</strong> {delivery.orderNumber}
-                                                            </p>
-                                                            <p className="text-xs mb-1">
-                                                                <strong>Distance:</strong> {formatDistanceKm(delivery.distance)} km
-                                                            </p>
-                                                            <p className="text-xs mb-1">
-                                                                <strong>Est. Time:</strong> {delivery.estimatedTime} mins
-                                                            </p>
-                                                            {delivery.lastLocationUpdate && (
-                                                                <p className="text-xs mb-2 text-gray-500">
-                                                                    <strong>Last Update:</strong> {new Date(delivery.lastLocationUpdate).toLocaleTimeString()}
+                                            {delivery.hasDestinationCoordinates && (
+                                                <Marker
+                                                    position={{ lat: delivery.lat, lng: delivery.lng }}
+                                                    title={delivery.customerName}
+                                                    icon={getMarkerColor(delivery.status)}
+                                                    onClick={() => handleMarkerClick(delivery)}
+                                                >
+                                                    {selectedDelivery?.id === delivery.id && (
+                                                        <InfoWindow onCloseClick={() => setSelectedDelivery(null)}>
+                                                            <div className="w-56 p-3 sm:w-64">
+                                                                <h3 className="font-bold text-sm mb-2">{delivery.customerName}</h3>
+                                                                <p className="text-xs text-gray-600 mb-2">{delivery.address}</p>
+                                                                <p className="text-xs mb-1">
+                                                                    <strong>Order:</strong> {delivery.orderNumber}
                                                                 </p>
-                                                            )}
-                                                            {delivery.phone && (
-                                                                <a
-                                                                    href={`tel:${delivery.phone}`}
-                                                                    className="inline-flex items-center text-xs bg-primary-600 text-white px-2 py-1 rounded mt-2 hover:bg-primary-700"
-                                                                >
-                                                                    <FaPhone className="mr-1" /> Call
-                                                                </a>
-                                                            )}
-                                                        </div>
-                                                    </InfoWindow>
-                                                )}
-                                            </Marker>
+                                                                <p className="text-xs mb-1">
+                                                                    <strong>Distance:</strong> {formatDistanceKm(delivery.distance)} km
+                                                                </p>
+                                                                <p className="text-xs mb-1">
+                                                                    <strong>Est. Time:</strong> {delivery.estimatedTime} mins
+                                                                </p>
+                                                                {delivery.lastLocationUpdate && (
+                                                                    <p className="text-xs mb-2 text-gray-500">
+                                                                        <strong>Last Update:</strong> {new Date(delivery.lastLocationUpdate).toLocaleTimeString()}
+                                                                    </p>
+                                                                )}
+                                                                {delivery.phone && (
+                                                                    <a
+                                                                        href={`tel:${delivery.phone}`}
+                                                                        className="inline-flex items-center text-xs bg-primary-600 text-white px-2 py-1 rounded mt-2 hover:bg-primary-700"
+                                                                    >
+                                                                        <FaPhone className="mr-1" /> Call
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        </InfoWindow>
+                                                    )}
+                                                </Marker>
+                                            )}
                                         </React.Fragment>
                                     ))}
 
                                     {/* Route Lines to All Deliveries */}
-                                    {deliveries.map((delivery) => (
-                                        <Polyline
-                                            key={`route-${delivery.id}`}
-                                            path={[restaurantLocation, { lat: delivery.lat, lng: delivery.lng }]}
-                                            options={{
-                                                strokeColor: '#FF6B6B',
-                                                strokeOpacity: 0.4,
-                                                strokeWeight: 2,
-                                                geodesic: true
-                                            }}
-                                        />
-                                    ))}
+                                    {deliveries
+                                        .filter((delivery) => delivery.hasDestinationCoordinates)
+                                        .map((delivery) => (
+                                            <Polyline
+                                                key={`route-${delivery.id}`}
+                                                path={[restaurantLocation, { lat: delivery.lat, lng: delivery.lng }]}
+                                                options={{
+                                                    strokeColor: '#FF6B6B',
+                                                    strokeOpacity: 0.4,
+                                                    strokeWeight: 2,
+                                                    geodesic: true
+                                                }}
+                                            />
+                                        ))}
                                 </GoogleMap>
                             </LoadScript>
                         )}
@@ -614,6 +625,11 @@ const DeliveryMap = () => {
                                         <div className="text-xs text-gray-600 mb-2">
                                             <strong>Distance:</strong> {formatDistanceKm(delivery.distance)} km
                                         </div>
+                                        {!delivery.hasDestinationCoordinates && (
+                                            <div className="text-xs text-amber-700 mb-2">
+                                                Destination GPS unavailable for this address.
+                                            </div>
+                                        )}
                                         <div className="flex flex-col gap-2 sm:flex-row">
                                             {getGoogleMapsNavigationUrl(delivery) && (
                                                 <a

@@ -208,4 +208,44 @@ describe('delivery routes', () => {
       IsAvailable: false
     }), expect.any(Object));
   });
+
+  test('accepts explicit numeric coordinates including zero values', async () => {
+    validateDeliveryDistanceWithFallback.mockResolvedValue({ isValid: true, distance: 0, maxDistance: 8 });
+
+    const response = await request(app)
+      .post('/api/v1/delivery/validate-distance')
+      .send({ latitude: 0, longitude: 0 });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(geocodeAddress).not.toHaveBeenCalled();
+  });
+
+  test('does not overwrite ETA when delivery is marked delivered', async () => {
+    setAuthUser({ id: 12, type: 'Staff', role: 'Delivery' });
+
+    const deliveryRecord = {
+      DeliveryID: 99,
+      DeliveryStaffID: 12,
+      OrderID: 777,
+      Status: 'IN_TRANSIT',
+      DistanceKm: 5,
+      update: jest.fn().mockResolvedValue(true)
+    };
+
+    mockDelivery.findByPk.mockResolvedValue(deliveryRecord);
+    mockOrder.findByPk.mockResolvedValue({ OrderID: 777, Status: 'OUT_FOR_DELIVERY' });
+    mockOrder.update.mockResolvedValue([1]);
+    mockDeliveryStaffAvailability.update.mockResolvedValue([1]);
+    mockOrderStatusHistory.create.mockResolvedValue({});
+
+    const response = await request(app)
+      .put('/api/v1/delivery/deliveries/99/status')
+      .send({ status: 'DELIVERED' });
+
+    expect(response.status).toBe(200);
+    const updatePayload = deliveryRecord.update.mock.calls[0][0];
+    expect(updatePayload.EstimatedDeliveryTime).toBeUndefined();
+    expect(updatePayload.DeliveredAt).toBeDefined();
+  });
 });

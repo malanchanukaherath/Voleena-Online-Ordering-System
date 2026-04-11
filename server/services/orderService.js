@@ -27,6 +27,8 @@ const markAddressUnavailableError = (error) => {
     return error;
 };
 
+const CUSTOMER_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
+
 /**
  * Order Management Service
  * Implements complete order lifecycle with atomic operations
@@ -122,6 +124,13 @@ class OrderService {
             const orderType = orderData.orderType || orderData.order_type;
             const specialInstructions = orderData.specialInstructions || orderData.special_instructions;
             const promotionId = orderData.promotionId || orderData.promotion_id;
+            const normalizedPaymentMethod = typeof (orderData.paymentMethod || orderData.payment_method) === 'string'
+                ? String(orderData.paymentMethod || orderData.payment_method).trim().toUpperCase()
+                : 'CASH';
+
+            if (orderType !== 'WALK_IN' && !CUSTOMER_PAYMENT_METHODS.has(normalizedPaymentMethod)) {
+                throw new Error('Unsupported payment method for order creation');
+            }
 
             // Validate delivery distance if delivery order (FR09)
             let deliveryDistance = 0;
@@ -266,6 +275,17 @@ class OrderService {
                 await OrderItem.create({
                     OrderID: order.OrderID,
                     ...item
+                }, { transaction });
+            }
+
+            // Persist payment intent at order creation so kitchen can gate unpaid online/card orders.
+            if (orderType !== 'WALK_IN') {
+                await Payment.create({
+                    OrderID: order.OrderID,
+                    Amount: order.FinalAmount,
+                    Method: normalizedPaymentMethod,
+                    Status: 'PENDING',
+                    GatewayStatus: normalizedPaymentMethod === 'CASH' ? 'PAY_ON_DELIVERY' : 'PENDING'
                 }, { transaction });
             }
 

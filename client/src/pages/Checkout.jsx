@@ -8,7 +8,7 @@ import Select from '../components/ui/Select';
 import Textarea from '../components/ui/Textarea';
 import { StripePaymentModal } from '../components/payment/StripePaymentModal';
 import { getCart, clearCart } from '../utils/cartStorage';
-import { calculateDeliveryFeeByDistance, confirmCardPayment, createAddress, createOrder, initiatePayment, validateDeliveryDistance } from '../services/orderApi';
+import { calculateDeliveryFeeByDistance, confirmCardPayment, createAddress, createOrder, initiatePayment, updateCheckoutContactProfile, validateDeliveryDistance } from '../services/orderApi';
 
 const RESTAURANT_LOCATION = {
     lat: 7.120035696626918,
@@ -551,6 +551,12 @@ const Checkout = () => {
                 return next;
             });
 
+            await updateCheckoutContactProfile({
+                name: formData.name.trim(),
+                email: formData.email.trim() || null,
+                phone: formData.phone.trim()
+            });
+
             if (formData.paymentMethod === 'CARD' && !isStripeClientConfigured) {
                 throw new Error('Card payments are not configured for this environment');
             }
@@ -619,6 +625,7 @@ const Checkout = () => {
             const orderPayload = {
                 orderType: formData.orderType,
                 addressId,
+                paymentMethod: formData.paymentMethod,
                 specialInstructions: formData.specialInstructions,
                 items: cartItems.map((item) => ({
                     menuItemId: item.type === 'menu' ? item.menuItemId || item.id : null,
@@ -744,6 +751,9 @@ const Checkout = () => {
                         {/* Contact Information */}
                         <div className="bg-white rounded-lg shadow p-6">
                             <h2 className="text-xl font-semibold mb-4">Contact Information</h2>
+                            <p className="text-sm text-gray-500 mb-4">
+                                These details will be saved to your profile for delivery communication and payment receipts.
+                            </p>
                             <div className="space-y-4">
                                 <Input
                                     label="Full Name"

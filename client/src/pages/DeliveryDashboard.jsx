@@ -242,7 +242,7 @@ const DeliveryDashboard = () => {
         }
 
         const destination = `${delivery.lat},${delivery.lng}`;
-        if (currentLocation?.lat && currentLocation?.lng) {
+        if (Number.isFinite(currentLocation?.lat) && Number.isFinite(currentLocation?.lng)) {
             return `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination}&travelmode=driving`;
         }
 
@@ -371,7 +371,7 @@ const DeliveryDashboard = () => {
                                         <p className="font-bold break-words">{delivery.orderNumber}</p>
                                         <p className="text-sm text-gray-600">{delivery.customer}</p>
                                         <p className="text-xs text-gray-500 break-words">{delivery.address}</p>
-                                        {delivery.lat && delivery.lng && (
+                                        {Number.isFinite(delivery.lat) && Number.isFinite(delivery.lng) && (
                                             <p className="text-xs text-gray-400 mt-1">
                                                 GPS: {delivery.lat}, {delivery.lng}
                                             </p>

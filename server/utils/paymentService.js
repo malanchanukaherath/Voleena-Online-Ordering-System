@@ -54,22 +54,42 @@ class PaymentService {
      * @param {string} paymentMethod - 'CASH', 'CARD', 'ONLINE', 'WALLET'
      * @returns {Promise<Object>} Payment details
      */
-    async initializePayment(order, customer, paymentMethod = 'CASH') {
-        let payment;
+    async initializePayment(order, customer, paymentMethod = 'CASH', existingPayment = null) {
+        let payment = existingPayment;
 
         try {
             if (!SUPPORTED_PAYMENT_METHODS.has(paymentMethod)) {
                 throw new Error('Unsupported payment method');
             }
 
-            // Create payment record
-            payment = await Payment.create({
-                OrderID: order.OrderID,
-                Amount: order.FinalAmount,
-                Method: paymentMethod,
-                Status: 'PENDING',
-                TransactionID: this.generateTransactionID()
-            });
+            if (!payment) {
+                payment = await Payment.create({
+                    OrderID: order.OrderID,
+                    Amount: order.FinalAmount,
+                    Method: paymentMethod,
+                    Status: 'PENDING',
+                    GatewayStatus: paymentMethod === 'CASH' ? 'PAY_ON_DELIVERY' : 'PENDING'
+                });
+            } else {
+                if (payment.Method !== paymentMethod) {
+                    throw new Error(`Existing payment method is ${payment.Method}. Requested ${paymentMethod}.`);
+                }
+
+                const updates = {
+                    Amount: order.FinalAmount
+                };
+
+                if (paymentMethod === 'CASH') {
+                    updates.Status = payment.Status === 'PAID' ? 'PAID' : 'PENDING';
+                    updates.GatewayStatus = payment.Status === 'PAID' ? payment.GatewayStatus || 'PAID' : 'PAY_ON_DELIVERY';
+                    updates.TransactionID = null;
+                } else if (payment.Status === 'FAILED') {
+                    updates.Status = 'PENDING';
+                    updates.GatewayStatus = buildGatewayStatus('RETRY_PENDING', paymentMethod);
+                }
+
+                await payment.update(updates);
+            }
 
             // Handle different payment methods
             if (paymentMethod === 'CASH') {
@@ -175,6 +195,41 @@ class PaymentService {
 
         const stripe = require('stripe')(this.stripeConfig.secretKey);
         const amount = toMinorUnits(order.FinalAmount);
+
+        if (payment.TransactionID) {
+            try {
+                const existingIntent = await stripe.paymentIntents.retrieve(payment.TransactionID);
+
+                if (existingIntent?.status === 'succeeded') {
+                    await payment.update({
+                        Status: 'PAID',
+                        PaidAt: payment.PaidAt || new Date(),
+                        GatewayStatus: 'SUCCESS'
+                    });
+
+                    return {
+                        success: true,
+                        paymentId: payment.PaymentID,
+                        method: 'CARD',
+                        gateway: 'Stripe',
+                        status: 'PAID'
+                    };
+                }
+
+                if (existingIntent?.client_secret && ['requires_payment_method', 'requires_confirmation', 'requires_action', 'processing'].includes(existingIntent.status)) {
+                    return {
+                        success: true,
+                        paymentId: payment.PaymentID,
+                        method: 'CARD',
+                        gateway: 'Stripe',
+                        clientSecret: existingIntent.client_secret,
+                        publishableKey: this.stripeConfig.publishableKey
+                    };
+                }
+            } catch (retrieveError) {
+                console.warn(`⚠️ Failed to reuse Stripe payment intent ${payment.TransactionID}:`, retrieveError.message);
+            }
+        }
 
         const paymentIntent = await stripe.paymentIntents.create({
             amount,

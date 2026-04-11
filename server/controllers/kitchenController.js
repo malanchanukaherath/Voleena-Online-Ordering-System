@@ -34,17 +34,40 @@ const trySyncCardPaymentStatus = async (payment) => {
   return false;
 };
 
+const requiresSettledPayment = (payment) => {
+  return !!payment && ['CARD', 'ONLINE', 'WALLET'].includes(payment.Method);
+};
+
 /**
  * Get kitchen dashboard statistics
  */
 exports.getDashboardStats = async (req, res) => {
   try {
+    const { Op } = sequelize.Sequelize;
+
     // Active orders (CONFIRMED, PREPARING)
     const activeOrders = await Order.count({
+      include: [{
+        model: Payment,
+        as: 'payment',
+        attributes: [],
+        required: false
+      }],
       where: {
-        Status: {
-          [sequelize.Sequelize.Op.in]: ['CONFIRMED', 'PREPARING']
-        }
+        [Op.or]: [
+          { Status: 'PREPARING' },
+          {
+            [Op.and]: [
+              { Status: 'CONFIRMED' },
+              {
+                [Op.or]: [
+                  { '$payment.Method$': 'CASH' },
+                  { '$payment.Status$': 'PAID' }
+                ]
+              }
+            ]
+          }
+        ]
       }
     });
 
@@ -94,10 +117,11 @@ exports.getDashboardStats = async (req, res) => {
 exports.getAssignedOrders = async (req, res) => {
   try {
     const { status } = req.query;
+    const { Op } = sequelize.Sequelize;
 
     const where = {
       Status: {
-        [sequelize.Sequelize.Op.in]: ['CONFIRMED', 'PREPARING', 'READY']
+        [Op.in]: ['CONFIRMED', 'PREPARING', 'READY']
       }
     };
 
@@ -105,9 +129,39 @@ exports.getAssignedOrders = async (req, res) => {
       where.Status = status;
     }
 
+    if (status === 'CONFIRMED') {
+      where[Op.or] = [
+        { '$payment.Method$': 'CASH' },
+        { '$payment.Status$': 'PAID' }
+      ];
+    }
+
+    if (!status) {
+      where[Op.or] = [
+        { Status: { [Op.in]: ['PREPARING', 'READY'] } },
+        {
+          [Op.and]: [
+            { Status: 'CONFIRMED' },
+            {
+              [Op.or]: [
+                { '$payment.Method$': 'CASH' },
+                { '$payment.Status$': 'PAID' }
+              ]
+            }
+          ]
+        }
+      ];
+    }
+
     const orders = await Order.findAll({
       where,
       include: [
+        {
+          model: Payment,
+          as: 'payment',
+          attributes: ['PaymentID', 'Method', 'Status', 'GatewayStatus'],
+          required: false
+        },
         {
           model: OrderItem,
           as: 'items',
@@ -176,8 +230,14 @@ exports.updateOrderStatus = async (req, res) => {
       });
     }
 
-    // Verify payment before marking as READY for non-cash methods.
-    if (status === 'READY' && order.payment) {
+    // Require settled non-cash payments before kitchen starts preparation.
+    if (['PREPARING', 'READY'].includes(status)) {
+      if (!order.payment) {
+        return res.status(400).json({
+          error: 'Cannot start preparation: payment record is missing'
+        });
+      }
+
       // For CARD payments, attempt just-in-time sync in case webhook has not yet updated status.
       if (order.payment.Method === 'CARD' && order.payment.Status !== 'PAID') {
         const synced = await trySyncCardPaymentStatus(order.payment);
@@ -186,10 +246,9 @@ exports.updateOrderStatus = async (req, res) => {
         }
       }
 
-      // CARD/ONLINE/WALLET orders must show as PAID before kitchen can mark ready.
-      if (['CARD', 'ONLINE', 'WALLET'].includes(order.payment.Method) && order.payment.Status !== 'PAID') {
+      if (requiresSettledPayment(order.payment) && order.payment.Status !== 'PAID') {
         return res.status(400).json({
-          error: 'Cannot mark order ready: Online payment not completed'
+          error: 'Cannot start preparation: online payment not completed'
         });
       }
     }
