@@ -198,6 +198,8 @@ const ComboManagement = () => {
 
     const validateForm = () => {
         const newErrors = {};
+        const parsedDiscount = formData.discount === '' ? 0 : parseFloat(formData.discount);
+        const hasDiscountInValidation = Number.isFinite(parsedDiscount) && parsedDiscount > 0;
 
         if (!formData.name.trim()) {
             newErrors.name = 'Combo name is required';
@@ -207,11 +209,10 @@ const ComboManagement = () => {
             newErrors.description = 'Description is required';
         }
 
-        if (!formData.price || parseFloat(formData.price) <= 0) {
+        if (!hasDiscountInValidation && (!formData.price || parseFloat(formData.price) <= 0)) {
             newErrors.price = 'Valid price is required';
         }
 
-        const parsedDiscount = formData.discount === '' ? 0 : parseFloat(formData.discount);
         if (!Number.isFinite(parsedDiscount) || parsedDiscount < 0 || parsedDiscount >= 100) {
             newErrors.discount = 'Discount must be between 0 and less than 100%';
         }
@@ -347,6 +348,9 @@ const ComboManagement = () => {
     const computedDiscountedPrice = hasDiscountOverride && computedOriginalPrice > 0
         ? Number((computedOriginalPrice * (1 - (formDiscountValue / 100))).toFixed(2))
         : null;
+    const displayPriceValue = computedDiscountedPrice !== null
+        ? computedDiscountedPrice.toFixed(2)
+        : formData.price;
 
     return (
         <div className="p-6">
@@ -482,11 +486,12 @@ const ComboManagement = () => {
                                 name="price"
                                 type="number"
                                 step="0.01"
-                                value={formData.price}
+                                value={displayPriceValue}
                                 onChange={handleChange}
                                 error={errors.price}
+                                disabled={computedDiscountedPrice !== null}
                                 helperText={computedDiscountedPrice !== null
-                                    ? `Auto-calculated from items and discount: LKR ${computedDiscountedPrice.toFixed(2)}`
+                                    ? `Locked while discount is set. Auto-calculated price: LKR ${computedDiscountedPrice.toFixed(2)}`
                                     : 'Manual combo price when discount is 0%.'}
                                 required
                             />
