@@ -29,14 +29,12 @@ const Modal = ({
 
   if (!isOpen) return null;
 
-  // On very small screens we want the modal to take most of the width and be scrollable.
-  // Use mobile-first classes: default to full-width with side margin, and at sm+ apply max widths.
   const sizeClasses = {
-    sm: 'w-full mx-4 sm:mx-auto sm:max-w-md',
-    md: 'w-full mx-4 sm:mx-auto sm:max-w-lg',
-    lg: 'w-full mx-4 sm:mx-auto sm:max-w-2xl',
-    xl: 'w-full mx-4 sm:mx-auto sm:max-w-4xl',
-    full: 'w-full mx-4 sm:mx-auto sm:max-w-full'
+    sm: 'max-w-md',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl',
+    xl: 'max-w-4xl',
+    full: 'max-w-full'
   };
 
   return (
@@ -49,7 +47,7 @@ const Modal = ({
       
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
-        <div className={`relative w-full ${sizeClasses[size]} ${className}`}>
+        <div className={`relative w-full min-w-0 ${sizeClasses[size]} ${className}`}>
           <div className="bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto">
             {/* Header */}
             {title && (

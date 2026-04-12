@@ -5,17 +5,17 @@ services:
     container_name: mysql_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: voleena_foods_db
-      MYSQL_USER: voleena_user
-      MYSQL_PASSWORD: voleena
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-voleena_foods_db}
+      MYSQL_USER: ${MYSQL_USER:-voleena_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-voleena}
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./database/safe_schema_full_completion_v2_4.sql:/docker-entrypoint-initdb.d/01-safe-schema.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$${MYSQL_ROOT_PASSWORD}\""]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -75,9 +75,9 @@ services:
       db:
         condition: service_healthy
     environment:
-      MYSQL_DATABASE: voleena_foods_db
-      MYSQL_USER: voleena_user
-      MYSQL_PASSWORD: voleena
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-voleena_foods_db}
+      MYSQL_USER: ${MYSQL_USER:-voleena_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-voleena}
     volumes:
       - ./database:/database:ro
     command: >

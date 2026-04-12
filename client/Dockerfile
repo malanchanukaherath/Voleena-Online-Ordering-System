@@ -12,7 +12,7 @@ ENV VITE_GOOGLE_MAPS_API_KEY=$VITE_GOOGLE_MAPS_API_KEY
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm ci
 
 COPY . .
 RUN npm run build

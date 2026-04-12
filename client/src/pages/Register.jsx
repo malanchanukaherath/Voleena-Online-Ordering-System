@@ -131,13 +131,13 @@ const Register = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
-      <div className="mx-auto w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
+      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] sm:max-w-md">
         <div className="flex justify-center">
           <div className="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">V</span>
           </div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
+        <h2 className="mt-6 text-center text-2xl font-bold text-gray-900 break-words sm:text-3xl">
           Create your account
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
@@ -151,7 +151,7 @@ const Register = () => {
         </p>
       </div>
 
-      <div className="mt-8 mx-auto w-full max-w-[calc(100vw-2rem)] sm:max-w-md">
+      <div className="mt-8 mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] sm:max-w-md">
         <Card className="w-full max-w-full py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <Input
@@ -240,7 +240,7 @@ const Register = () => {
                 required
                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
               />
-              <label htmlFor="agree-terms" className="ml-2 block text-sm text-gray-900">
+              <label htmlFor="agree-terms" className="ml-2 block min-w-0 text-sm text-gray-900">
                 I agree to the{' '}
                 <Link to="/terms" className="text-primary-600 hover:text-primary-500">
                   Terms of Service

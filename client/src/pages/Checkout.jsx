@@ -473,10 +473,7 @@ const Checkout = () => {
                 }
             };
 
-            console.log('[Distance Validation] Sending request with:', payload);
             const response = await validateDeliveryDistance(payload);
-
-            console.log('[Distance Validation] Response:', response.data);
 
             if (response.data?.success) {
                 const data = response.data.data;

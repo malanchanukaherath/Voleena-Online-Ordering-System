@@ -20,6 +20,11 @@ logs/
 # Runtime backups (EC2 deploy script)
 backups/
 
+# Local database dumps
+database/archive/*.sql
+database/**/*.dump
+database/**/*.backup
+
 # Node
 node_modules/
 **/node_modules/

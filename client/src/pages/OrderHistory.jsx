@@ -72,8 +72,7 @@ const OrderHistory = () => {
         setStatusFilter('');
     };
 
-    const handleReorder = (orderId) => {
-        console.log('Reordering:', orderId);
+    const handleReorder = () => {
         alert('Items added to cart!');
     };
 
