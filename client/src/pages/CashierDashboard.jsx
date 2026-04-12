@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
     FaCashRegister,
@@ -181,6 +181,11 @@ const sanitizeNumericInput = (rawValue, allowDecimal = true) => {
 };
 
 const CashierDashboard = ({ posOnly = false }) => {
+    const getViewportSize = () => ({
+        width: typeof window !== 'undefined' ? window.innerWidth : 1366,
+        height: typeof window !== 'undefined' ? window.innerHeight : 768
+    });
+
     const [stats, setStats] = useState({
         pendingOrders: 0,
         todayOrders: 0,
@@ -209,6 +214,8 @@ const CashierDashboard = ({ posOnly = false }) => {
     const [customerSearchLoading, setCustomerSearchLoading] = useState(false);
     const [customerSearchError, setCustomerSearchError] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState(null);
+    const [viewportSize, setViewportSize] = useState(getViewportSize);
+    const posSearchInputRef = useRef(null);
 
     const [calcPrice, setCalcPrice] = useState('');
     const [calcQuantity, setCalcQuantity] = useState('1');
@@ -229,6 +236,48 @@ const CashierDashboard = ({ posOnly = false }) => {
         () => currentWalkInOrder.reduce((sum, item) => sum + (Number.parseInt(item.quantity, 10) || 0), 0),
         [currentWalkInOrder]
     );
+
+    const isCompactHeight = useMemo(
+        () => posOnly && viewportSize.height < 760,
+        [posOnly, viewportSize.height]
+    );
+
+    const isUltraWide = useMemo(
+        () => posOnly && (viewportSize.width / Math.max(viewportSize.height, 1)) >= 2,
+        [posOnly, viewportSize.height, viewportSize.width]
+    );
+
+    const posCatalogMaxHeight = useMemo(() => {
+        if (!posOnly) {
+            return '30rem';
+        }
+
+        if (viewportSize.height < 650) {
+            return '34vh';
+        }
+
+        if (viewportSize.height < 820) {
+            return '42vh';
+        }
+
+        return '52vh';
+    }, [posOnly, viewportSize.height]);
+
+    const posBillMaxHeight = useMemo(() => {
+        if (!posOnly) {
+            return '16rem';
+        }
+
+        if (viewportSize.height < 650) {
+            return '24vh';
+        }
+
+        if (viewportSize.height < 820) {
+            return '30vh';
+        }
+
+        return '36vh';
+    }, [posOnly, viewportSize.height]);
 
     const posMenuCategories = useMemo(() => {
         const categorySet = new Set();
@@ -561,6 +610,47 @@ const CashierDashboard = ({ posOnly = false }) => {
             document.removeEventListener('fullscreenchange', onFullscreenChange);
         };
     }, []);
+
+    useEffect(() => {
+        const onResize = () => {
+            setViewportSize(getViewportSize());
+        };
+
+        onResize();
+        window.addEventListener('resize', onResize);
+
+        return () => {
+            window.removeEventListener('resize', onResize);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!posOnly) {
+            return undefined;
+        }
+
+        const onKeyDown = (event) => {
+            const activeTag = document.activeElement?.tagName;
+            const isTyping = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement?.isContentEditable;
+
+            if (event.key === '/' && !isTyping) {
+                event.preventDefault();
+                posSearchInputRef.current?.focus();
+                return;
+            }
+
+            if (event.key === 'Escape') {
+                setSelectedOrderEntryKey(null);
+                setQuantityPadValue('');
+            }
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+
+        return () => {
+            window.removeEventListener('keydown', onKeyDown);
+        };
+    }, [posOnly]);
 
     const loadData = useCallback(async () => {
         const [statsResult, ordersResult, menuResult, comboResult] = await Promise.allSettled([
@@ -1076,7 +1166,7 @@ const CashierDashboard = ({ posOnly = false }) => {
             )}
 
             {posOnly && (
-                <div className="mt-8 bg-white rounded-lg shadow p-6">
+                <div className="mt-6 bg-white rounded-lg shadow p-3 sm:p-4 xl:p-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                         <h3 className="text-lg font-semibold">Walk-In POS</h3>
                         <div className="flex items-center gap-3">
@@ -1118,7 +1208,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                         </div>
                     )}
 
-                    <div className="mb-6 rounded-lg border border-gray-200 p-4">
+                    <div className="mb-6 rounded-lg border border-gray-200 p-3 sm:p-4">
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                             <div>
                                 <h4 className="font-semibold text-gray-900">Customer Record</h4>
@@ -1218,8 +1308,8 @@ const CashierDashboard = ({ posOnly = false }) => {
                         )}
                     </div>
 
-                    <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
-                        <div className="xl:col-span-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <div className={`grid grid-cols-1 xl:grid-cols-5 ${isUltraWide ? '2xl:grid-cols-7' : '2xl:grid-cols-6'} gap-4 xl:gap-6`}>
+                        <div className={`xl:col-span-3 ${isUltraWide ? '2xl:col-span-4' : '2xl:col-span-4'} rounded-xl border border-gray-200 bg-gray-50 p-3 sm:p-4`}>
                             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                 <h4 className="font-semibold">POS Catalog</h4>
                                 <div className="text-xs text-gray-500">
@@ -1227,14 +1317,15 @@ const CashierDashboard = ({ posOnly = false }) => {
                                 </div>
                             </div>
 
-                            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div className="md:col-span-2 relative">
+                            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                                <div className="sm:col-span-2 relative">
                                     <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                     <input
+                                        ref={posSearchInputRef}
                                         type="text"
                                         value={posSearchTerm}
                                         onChange={(event) => setPosSearchTerm(event.target.value)}
-                                        placeholder="Search by item name, category, type"
+                                        placeholder="Search item/category/type (press /)"
                                         className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none"
                                     />
                                 </div>
@@ -1269,13 +1360,13 @@ const CashierDashboard = ({ posOnly = false }) => {
                                 ))}
                             </div>
 
-                            <div className="mt-4 max-h-[30rem] overflow-y-auto pr-1">
+                            <div className="mt-4 overflow-y-auto pr-1" style={{ maxHeight: posCatalogMaxHeight }}>
                                 {filteredPosItems.length === 0 ? (
                                     <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-gray-500">
                                         No POS items match this filter.
                                     </div>
                                 ) : (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-3">
                                         {filteredPosItems.map((item) => {
                                             const entryKey = createPosEntryKey(item);
                                             const inCartItem = currentWalkInOrder.find((orderItem) => createOrderEntryKey(orderItem) === entryKey);
@@ -1324,7 +1415,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                             </div>
                         </div>
 
-                        <div className="xl:col-span-2 rounded-xl border border-gray-200 bg-white p-4">
+                        <div className={`xl:col-span-2 2xl:col-span-2 rounded-xl border border-gray-200 bg-white p-3 sm:p-4 ${isCompactHeight ? 'space-y-3' : ''}`}>
                             <div className="flex items-center justify-between">
                                 <h4 className="font-semibold">Current Bill</h4>
                                 <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
@@ -1332,7 +1423,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                                 </span>
                             </div>
 
-                            <div className="mt-4 max-h-[16rem] overflow-y-auto space-y-2 pr-1">
+                            <div className="mt-4 overflow-y-auto space-y-2 pr-1" style={{ maxHeight: posBillMaxHeight }}>
                                 {currentWalkInOrder.length === 0 ? (
                                     <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
                                         Add menu items from the left catalog.
@@ -1386,7 +1477,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                                                             updateWalkInQuantity(entryKey, -1);
                                                             setSelectedOrderEntryKey(entryKey);
                                                         }}
-                                                        className="h-7 w-7 rounded border border-gray-300 bg-white"
+                                                        className="h-9 w-9 rounded border border-gray-300 bg-white"
                                                     >
                                                         -
                                                     </button>
@@ -1398,7 +1489,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                                                             updateWalkInQuantity(entryKey, 1);
                                                             setSelectedOrderEntryKey(entryKey);
                                                         }}
-                                                        className="h-7 w-7 rounded border border-gray-300 bg-white"
+                                                        className="h-9 w-9 rounded border border-gray-300 bg-white"
                                                         disabled={stockLimit !== null && item.quantity >= stockLimit}
                                                     >
                                                         +
@@ -1468,7 +1559,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                                                     key={key}
                                                     type="button"
                                                     onClick={() => handleQuantityPadDigit(key)}
-                                                    className="rounded border border-gray-300 bg-white px-3 py-2 text-sm font-semibold hover:border-primary-500"
+                                                    className="rounded border border-gray-300 bg-white px-3 py-3 text-base font-semibold hover:border-primary-500"
                                                     disabled={!selectedOrderItem}
                                                 >
                                                     {key}
@@ -1509,7 +1600,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                             {walkInError && <p className="text-sm text-red-600 mt-3">{walkInError}</p>}
                             {walkInSuccess && <p className="text-sm text-green-700 mt-3">{walkInSuccess}</p>}
 
-                            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div className="mt-4 sticky bottom-0 bg-white pt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <button
                                     type="button"
                                     onClick={clearWalkInOrder}
