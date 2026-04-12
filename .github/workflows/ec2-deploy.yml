@@ -4,6 +4,12 @@ on:
   push:
     branches: [ "main" ]
   workflow_dispatch:
+    inputs:
+      seed_accounts:
+        description: Seed known login accounts on EC2
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ec2-production-deploy
@@ -15,6 +21,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     strategy:
       matrix:
         include:
@@ -49,27 +56,21 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, voleena-ec2]
     needs: build
+    timeout-minutes: 30
     steps:
-      - name: Deploy on EC2 over SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: 13.202.87.92
-          port: 22
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-          timeout: 120s
-          command_timeout: 30m
-          debug: false
-          script_stop: true
-          script: |
-            set -e
-            export DEPLOY_STRATEGY=pull
-            export DOCKERHUB_USERNAME="${{ secrets.DOCKER_USERNAME }}"
-            export DOCKERHUB_TOKEN="${{ secrets.DOCKERHUB_TOKEN }}"
-            export IMAGE_TAG="sha-${{ github.sha }}"
-            cd ~/Voleena-Online-Ordering-System
-            git fetch origin
-            git pull --ff-only origin main
-            bash scripts/deploy-ec2.sh
+      - name: Deploy locally on EC2
+        env:
+          DEPLOY_STRATEGY: pull
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          IMAGE_TAG: sha-${{ github.sha }}
+          RUN_ACCOUNT_SEED: ${{ github.event.inputs.seed_accounts || 'false' }}
+          TARGET_BRANCH: main
+        run: |
+          set -euo pipefail
+          cd ~/Voleena-Online-Ordering-System
+          git fetch origin
+          git pull --ff-only origin main
+          bash scripts/deploy-ec2.sh

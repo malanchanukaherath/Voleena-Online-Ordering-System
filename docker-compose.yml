@@ -90,6 +90,7 @@ services:
       "
 
   backend_seed:
+    image: ${BACKEND_IMAGE:-voleena-backend:local}
     build: ./server
     container_name: backend_seed_job
     profiles: ["init"]
@@ -104,8 +105,8 @@ services:
       BACKEND_URL: ${BACKEND_URL:-http://localhost:3001}
     command: ["node", "seed_roles_and_staff.js"]
     depends_on:
-      db_sync:
-        condition: service_completed_successfully
+      db:
+        condition: service_healthy
       backend:
         condition: service_healthy
 

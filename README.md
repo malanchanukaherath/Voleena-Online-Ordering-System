@@ -166,6 +166,8 @@ npm run lint
 - GitHub Actions deploy builds and pushes `voleena-backend` and `voleena-frontend` first, then EC2 pulls the exact `sha-<commit>` images to avoid slow production builds.
 - Manual EC2 deploy with local builds: `TARGET_BRANCH=main ./deploy-ec2.sh`
 - Manual EC2 deploy with prebuilt Docker Hub images: `DEPLOY_STRATEGY=pull DOCKERHUB_USERNAME=<dockerhub-user> IMAGE_TAG=latest TARGET_BRANCH=main ./deploy-ec2.sh` (`DOCKERHUB_TOKEN` is optional for private images)
+- Full EC2 rebuild guide: `docs/ec2-rebuild.md`
+- Self-hosted runner guide: `docs/ec2-self-hosted-runner.md`
 
 ## Testing
 

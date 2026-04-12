@@ -112,13 +112,20 @@ case "${DEPLOY_STRATEGY}" in
     ;;
 esac
 
-echo "8) Checking containers..."
+if [ "${RUN_ACCOUNT_SEED:-false}" = "true" ]; then
+  echo "8) Seeding login accounts because RUN_ACCOUNT_SEED=true..."
+  docker compose --profile init run --rm --no-deps backend_seed
+else
+  echo "8) Skipping login account seed. Set RUN_ACCOUNT_SEED=true for first-time EC2 setup."
+fi
+
+echo "9) Checking containers..."
 docker compose ps
 
-echo "9) Checking backend logs..."
+echo "10) Checking backend logs..."
 docker logs --tail=80 backend_app
 
-echo "10) Checking key database tables..."
+echo "11) Checking key database tables..."
 docker exec mysql_db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "SHOW TABLES LIKE '\''activity_log'\''; SHOW TABLES LIKE '\''otp_verification'\''; SHOW TABLES LIKE '\''app_notification'\''; SELECT COUNT(*) AS customers FROM customer;"'
 
 echo "DONE: deploy completed safely."

@@ -1,21 +1,20 @@
 /**
- * Seed Roles and Test Staff Accounts
- * Run this script to create initial roles and staff accounts for testing
- * 
+ * Seed roles and known login accounts for a fresh deployment.
+ *
  * Usage: node server/seed_roles_and_staff.js
  */
 
-const bcrypt = require('bcryptjs');
-const { sequelize, Role, Staff } = require('./models');
+const { sequelize, Role, Staff, Customer } = require('./models');
 
 const roles = [
+  { RoleName: 'Customer', Description: 'Customer role for placing orders' },
   { RoleName: 'Admin', Description: 'System Administrator with full access' },
   { RoleName: 'Cashier', Description: 'Cashier staff - manage orders and customers' },
   { RoleName: 'Kitchen', Description: 'Kitchen staff - manage food preparation' },
   { RoleName: 'Delivery', Description: 'Delivery staff - manage deliveries' }
 ];
 
-const testStaff = [
+const staffAccounts = [
   {
     Name: 'Admin User',
     Email: 'admin@gmail.com',
@@ -46,73 +45,129 @@ const testStaff = [
   }
 ];
 
-async function seedRolesAndStaff() {
-  try {
-    console.log('🌱 Starting seed process...\n');
+const customerAccounts = [
+  {
+    Name: 'Sanjani',
+    Email: 'sanjani@gmail.com',
+    Phone: '0771234571',
+    Password: 'Sanjani@123'
+  }
+];
 
-    // Create roles
-    console.log('📋 Creating roles...');
-    for (const roleData of roles) {
-      const [role, created] = await Role.findOrCreate({
-        where: { RoleName: roleData.RoleName },
-        defaults: roleData
-      });
+async function upsertRoles() {
+  console.log('Creating roles...');
 
-      if (created) {
-        console.log(`✅ Created role: ${roleData.RoleName}`);
-      } else {
-        console.log(`ℹ️  Role already exists: ${roleData.RoleName}`);
-      }
+  for (const roleData of roles) {
+    const [, created] = await Role.findOrCreate({
+      where: { RoleName: roleData.RoleName },
+      defaults: roleData
+    });
+
+    console.log(`${created ? 'Created' : 'Exists'} role: ${roleData.RoleName}`);
+  }
+}
+
+async function upsertStaffAccounts() {
+  console.log('\nCreating staff accounts...');
+
+  for (const staffData of staffAccounts) {
+    const role = await Role.findOne({ where: { RoleName: staffData.RoleName } });
+
+    if (!role) {
+      throw new Error(`Role not found: ${staffData.RoleName}`);
     }
 
-    console.log('\n👥 Creating test staff accounts...');
-    for (const staffData of testStaff) {
-      // Find role
-      const role = await Role.findOne({ where: { RoleName: staffData.RoleName } });
-      
-      if (!role) {
-        console.log(`❌ Role not found: ${staffData.RoleName}`);
-        continue;
-      }
-
-      // Check if staff already exists
-      const existing = await Staff.findOne({ where: { Email: staffData.Email } });
-      
-      if (existing) {
-        console.log(`ℹ️  Staff already exists: ${staffData.Email}`);
-        continue;
-      }
-
-      // Create staff
-      const staff = await Staff.create({
+    const [staff, created] = await Staff.findOrCreate({
+      where: { Email: staffData.Email },
+      defaults: {
         Name: staffData.Name,
         Email: staffData.Email,
         Phone: staffData.Phone,
         Password: staffData.Password,
         RoleID: role.RoleID,
         IsActive: true
-      });
+      }
+    });
 
-      console.log(`✅ Created staff: ${staffData.Email} (${staffData.RoleName})`);
-      console.log(`   Password: ${staffData.Password}`);
+    if (!created) {
+      await staff.update({
+        Name: staffData.Name,
+        Phone: staffData.Phone,
+        Password: staffData.Password,
+        RoleID: role.RoleID,
+        IsActive: true
+      });
     }
 
-    console.log('\n✨ Seed completed successfully!\n');
-    console.log('📝 Test Accounts:');
-    console.log('─'.repeat(60));
-    console.log('Admin:    admin@voleena.com    | Password: Admin@123');
-    console.log('Cashier:  cashier@voleena.com  | Password: Cashier@123');
-    console.log('Kitchen:  kitchen@voleena.com  | Password: Kitchen@123');
-    console.log('Delivery: delivery@voleena.com | Password: Delivery@123');
-    console.log('─'.repeat(60));
-    console.log('\n⚠️  Remember to change these passwords in production!\n');
+    if (staffData.RoleName === 'Delivery') {
+      await sequelize.query(
+        `INSERT INTO delivery_staff_availability (delivery_staff_id, is_available, last_updated)
+         VALUES (:staffId, 1, NOW())
+         ON DUPLICATE KEY UPDATE is_available = VALUES(is_available), last_updated = NOW()`,
+        { replacements: { staffId: staff.StaffID } }
+      );
+    }
 
+    console.log(`${created ? 'Created' : 'Updated'} staff: ${staffData.Email} (${staffData.RoleName})`);
+  }
+}
+
+async function upsertCustomerAccounts() {
+  console.log('\nCreating customer accounts...');
+
+  for (const customerData of customerAccounts) {
+    const [customer, created] = await Customer.findOrCreate({
+      where: { Email: customerData.Email },
+      defaults: {
+        Name: customerData.Name,
+        Email: customerData.Email,
+        Phone: customerData.Phone,
+        Password: customerData.Password,
+        IsEmailVerified: true,
+        IsPhoneVerified: true,
+        IsActive: true,
+        AccountStatus: 'ACTIVE',
+        PreferredNotification: 'BOTH'
+      }
+    });
+
+    if (!created) {
+      await customer.update({
+        Name: customerData.Name,
+        Phone: customerData.Phone,
+        Password: customerData.Password,
+        IsEmailVerified: true,
+        IsPhoneVerified: true,
+        IsActive: true,
+        AccountStatus: 'ACTIVE',
+        PreferredNotification: 'BOTH'
+      });
+    }
+
+    console.log(`${created ? 'Created' : 'Updated'} customer: ${customerData.Email}`);
+  }
+}
+
+async function seedRolesAndAccounts() {
+  try {
+    console.log('Starting account seed...\n');
+    await upsertRoles();
+    await upsertStaffAccounts();
+    await upsertCustomerAccounts();
+
+    console.log('\nSeed completed successfully.');
+    console.log('Accounts:');
+    console.log('Admin:    admin@gmail.com    | Password: Admin@123');
+    console.log('Cashier:  cashier@gmail.com  | Password: Cashier@123');
+    console.log('Kitchen:  kitchen@gmail.com  | Password: Kitchen@123');
+    console.log('Delivery: delivery@gmail.com | Password: Delivery@123');
+    console.log('Customer: sanjani@gmail.com  | Password: Sanjani@123');
   } catch (error) {
-    console.error('❌ Seed failed:', error);
+    console.error('Seed failed:', error);
+    process.exitCode = 1;
   } finally {
     await sequelize.close();
   }
 }
 
-// Run the seed
-seedRolesAndStaff();
+seedRolesAndAccounts();
