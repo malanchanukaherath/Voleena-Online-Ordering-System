@@ -38,7 +38,7 @@ CREATE TABLE `activity_log` (
   KEY `idx_entity` (`entity_type`,`entity_id`),
   KEY `idx_created_at` (`created_at`),
   KEY `idx_action` (`action`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=54 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -47,6 +47,7 @@ CREATE TABLE `activity_log` (
 
 LOCK TABLES `activity_log` WRITE;
 /*!40000 ALTER TABLE `activity_log` DISABLE KEYS */;
+INSERT INTO `activity_log` VALUES (1,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-10T22:50:55.458Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1','2026-04-10 22:50:55'),(2,'STAFF',4,'UPDATE','unknown',NULL,'{\"path\": \"/availability\", \"method\": \"PUT\", \"timestamp\": \"2026-04-10T22:50:56.045Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1','2026-04-10 22:50:56'),(3,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-10T22:51:37.148Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1','2026-04-10 22:51:37'),(4,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-10T22:52:07.052Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-10 22:52:07'),(5,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-10T22:52:37.322Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-10 22:52:37'),(6,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-10T22:52:37.326Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-10 22:52:37'),(7,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-10T22:52:37.427Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-10 22:52:37'),(8,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-10T22:53:07.316Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-10 22:53:07'),(9,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-10T22:53:37.325Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-10 22:53:37'),(10,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-10T22:53:37.328Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-10 22:53:37'),(11,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-10T22:53:37.439Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-10 22:53:37'),(12,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-10T22:54:07.328Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-10 22:54:07'),(13,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T05:04:51.015Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 05:04:51'),(14,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T05:05:12.462Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1','2026-04-11 05:05:12'),(15,'STAFF',1,'UPDATE','unknown',NULL,'{\"path\": \"/settings\", \"method\": \"PUT\", \"timestamp\": \"2026-04-11T06:40:39.252Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:40:39'),(16,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:41:03.667Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:41:03'),(17,'STAFF',4,'UPDATE','8',NULL,'{\"path\": \"/deliveries/8/status\", \"method\": \"PUT\", \"timestamp\": \"2026-04-11T06:41:22.312Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:41:22'),(18,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:44:28.351Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:44:28'),(19,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:44:28.454Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:44:28'),(20,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:44:44.316Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:44:44'),(21,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:44:47.321Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:44:47'),(22,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:44:47.326Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:44:47'),(23,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:44:47.340Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:44:47'),(24,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:45:03.309Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:45:03'),(25,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:45:18.318Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:45:18'),(26,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:45:18.320Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:45:18'),(27,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:45:34.317Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:45:34'),(28,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:45:48.326Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:45:48'),(29,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:46:04.312Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:46:04'),(30,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:46:18.320Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:46:18'),(31,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:46:34.309Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:46:34'),(32,'STAFF',1,'STAFF_ALREADY_EXISTS','Staff',5,'\"{\\\"staffName\\\":\\\"Delivery2\\\",\\\"email\\\":\\\"delivery2@gmail.com\\\",\\\"role\\\":\\\"Delivery\\\",\\\"isNew\\\":false}\"','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:48:40'),(33,'STAFF',3,'CREATE','unknown',NULL,'{\"path\": \"/daily\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:49:16.424Z\", \"statusCode\": 201}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:49:16'),(34,'CUSTOMER',4,'UPDATE','unknown',NULL,'{\"path\": \"/me\", \"method\": \"PUT\", \"timestamp\": \"2026-04-11T06:50:01.480Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:50:01'),(35,'CUSTOMER',4,'CREATE','me',NULL,'{\"path\": \"/me/addresses\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:50:01.775Z\", \"statusCode\": 201}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:50:01'),(36,'CUSTOMER',4,'CREATE','unknown',NULL,'{\"path\": \"/\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:50:01.936Z\", \"statusCode\": 201}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:50:01'),(37,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T06:50:30.957Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:50:30'),(38,'STAFF',4,'UPDATE','8',NULL,'{\"path\": \"/deliveries/8/status\", \"method\": \"PUT\", \"timestamp\": \"2026-04-11T06:50:38.072Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:50:38'),(39,'STAFF',3,'UPDATE','10',NULL,'{\"path\": \"/orders/10/status\", \"method\": \"PUT\", \"timestamp\": \"2026-04-11T06:51:20.605Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 06:51:20'),(40,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:18:23.720Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:18:23'),(41,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:18:26.191Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:18:26'),(42,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:18:27.662Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:18:27'),(43,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:18:27.691Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:18:27'),(44,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:18:28.726Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:18:28'),(45,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:18:59.137Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:18:59'),(46,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:18:59.145Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:18:59'),(47,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:19:29.135Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:19:29'),(48,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:19:29.199Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:19:29'),(49,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:19:59.139Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:19:59'),(50,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:20:29.145Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:20:29'),(51,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:20:29.243Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:20:29'),(52,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:20:59.133Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:20:59'),(53,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/deliveries/8/location\", \"method\": \"POST\", \"timestamp\": \"2026-04-11T17:22:03.193Z\", \"statusCode\": 200}','::1','Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.0.0 Safari/537.36','2026-04-11 17:22:03');
 /*!40000 ALTER TABLE `activity_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -72,7 +73,7 @@ CREATE TABLE `address` (
   PRIMARY KEY (`address_id`),
   KEY `idx_address_customer_id` (`customer_id`),
   CONSTRAINT `fk_address_customer` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -81,7 +82,50 @@ CREATE TABLE `address` (
 
 LOCK TABLES `address` WRITE;
 /*!40000 ALTER TABLE `address` DISABLE KEYS */;
+INSERT INTO `address` VALUES (1,4,'33/12','Halgampitiyawatta','Kalagedihena','11875','Gamapaha',7.11670000,80.05830000,'2026-04-07 14:22:46','2026-04-07 14:22:46'),(3,4,'43G5+RRC, Kalagedihena, Sri Lanka',NULL,'Kalagedihena',NULL,NULL,7.12704372,80.05916595,'2026-04-07 14:44:52','2026-04-07 14:44:52'),(4,4,'43G5+RRC, Kalagedihena, Sri Lanka',NULL,'Kalagedihena',NULL,NULL,7.12715018,80.05912304,'2026-04-07 15:35:35','2026-04-07 15:35:35'),(5,4,'43G5+RRC, Kalagedihena, Sri Lanka',NULL,'Kalagedihena',NULL,NULL,7.12704372,80.05916595,'2026-04-07 15:45:01','2026-04-07 15:45:01'),(6,4,'43G5+RRC, Kalagedihena, Sri Lanka',NULL,'Kalagedihena',NULL,NULL,7.12704372,80.05916595,'2026-04-07 15:47:04','2026-04-07 15:47:04'),(7,4,'43G5+RRC, Kalagedihena, Sri Lanka','2nd Floor','Kalagedihena',NULL,NULL,7.12704372,80.05916595,'2026-04-07 15:55:22','2026-04-07 15:55:22'),(8,4,'43G5+RRC, Kalagedihena, Sri Lanka','2nd Floor','Kalagedihena',NULL,NULL,7.12704372,80.05916595,'2026-04-07 16:02:42','2026-04-07 16:02:42'),(9,4,'43G5+RRC, Kalagedihena, Sri Lanka','2nd Floor','Kalagedihena',NULL,NULL,7.12704372,80.05916595,'2026-04-07 16:57:43','2026-04-07 16:57:43'),(10,4,'43G5+RRC, Kalagedihena, Sri Lanka',NULL,'Kalagedihena',NULL,NULL,7.12704372,80.05916595,'2026-04-08 23:11:19','2026-04-08 23:11:19'),(11,4,'43G5+RRC, Kalagedihena, Sri Lanka','33/12','Kalagedihena',NULL,NULL,7.12704372,80.05916595,'2026-04-11 12:20:01','2026-04-11 12:20:01');
 /*!40000 ALTER TABLE `address` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `app_notification`
+--
+
+DROP TABLE IF EXISTS `app_notification`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `app_notification` (
+  `app_notification_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `recipient_type` enum('CUSTOMER','STAFF') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `recipient_id` int unsigned NOT NULL,
+  `recipient_role` enum('CUSTOMER','ADMIN','CASHIER','KITCHEN','DELIVERY','STAFF') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `event_type` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `title` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `message` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `payload_json` json DEFAULT NULL,
+  `priority` enum('LOW','MEDIUM','HIGH','CRITICAL') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'MEDIUM',
+  `is_read` tinyint(1) NOT NULL DEFAULT '0',
+  `read_at` datetime DEFAULT NULL,
+  `related_order_id` int unsigned DEFAULT NULL,
+  `dedupe_key` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`app_notification_id`),
+  UNIQUE KEY `uk_app_notif_dedupe_key` (`dedupe_key`),
+  KEY `idx_app_notif_recipient_unread_created` (`recipient_type`,`recipient_id`,`is_read`,`created_at`),
+  KEY `idx_app_notif_role_unread_created` (`recipient_role`,`is_read`,`created_at`),
+  KEY `idx_app_notif_related_order_created` (`related_order_id`,`created_at`),
+  KEY `idx_app_notif_event_created` (`event_type`,`created_at`),
+  CONSTRAINT `fk_app_notif_order` FOREIGN KEY (`related_order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `app_notification`
+--
+
+LOCK TABLES `app_notification` WRITE;
+/*!40000 ALTER TABLE `app_notification` DISABLE KEYS */;
+/*!40000 ALTER TABLE `app_notification` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -112,7 +156,7 @@ CREATE TABLE `category` (
 
 LOCK TABLES `category` WRITE;
 /*!40000 ALTER TABLE `category` DISABLE KEYS */;
-INSERT INTO `category` VALUES (1,'Burgers',NULL,NULL,0,1,'2026-04-05 11:30:08','2026-04-05 11:30:08');
+INSERT INTO `category` VALUES (1,'Burgers',NULL,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1775563977/voleena/category/download-1775563975781-54239536.jpg',0,1,'2026-04-05 11:30:08','2026-04-10 18:47:23');
 /*!40000 ALTER TABLE `category` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -223,7 +267,7 @@ CREATE TABLE `customer` (
 
 LOCK TABLES `customer` WRITE;
 /*!40000 ALTER TABLE `customer` DISABLE KEYS */;
-INSERT INTO `customer` VALUES (1,'Walk-in Customer',NULL,'7000000000','90cc17501c9c0cba6d4c0697e63e5881c9e63a6d362aa7dda62c6646a5d584ec',NULL,0,0,1,'ACTIVE','SMS','System-generated guest profile for cashier walk-in orders',NULL,'2026-04-03 18:22:24','2026-04-03 18:22:24'),(2,'Chanuka','chanuka@gmail.com','0770000000','$2a$10$/hIYODbZcm7tNyek7reJS.sdfhASZtKDybieqB.UjPlQUvLxc9HUu',NULL,1,1,1,'ACTIVE','BOTH',NULL,NULL,'2026-04-03 18:25:45','2026-04-03 18:29:31'),(3,'Test User','test@example.com','0712345678','$2a$10$hWF5yTjJgvfA4qARcw4VQOAxCLIBC0YrwsTf0S.DveTP/6XH8FZEm',NULL,0,0,1,'ACTIVE','BOTH',NULL,NULL,'2026-04-05 11:03:21','2026-04-05 11:03:21'),(4,'Sanjani','sanjani@gmail.com','0719998799','$2a$10$QcVmqNOUv9bp69KVnj.4deL16y.e2KpFvTWL0yytivwXfKvQTEVZu',NULL,1,0,1,'ACTIVE','BOTH',NULL,NULL,'2026-04-07 08:30:59','2026-04-07 08:32:40');
+INSERT INTO `customer` VALUES (1,'Walk-in Customer',NULL,'7000000000','90cc17501c9c0cba6d4c0697e63e5881c9e63a6d362aa7dda62c6646a5d584ec',NULL,0,0,1,'ACTIVE','SMS','System-generated guest profile for cashier walk-in orders',NULL,'2026-04-03 18:22:24','2026-04-03 18:22:24'),(2,'Chanuka','chanuka@gmail.com','0770000000','$2a$10$/hIYODbZcm7tNyek7reJS.sdfhASZtKDybieqB.UjPlQUvLxc9HUu',NULL,1,1,1,'ACTIVE','BOTH',NULL,NULL,'2026-04-03 18:25:45','2026-04-03 18:29:31'),(3,'Test User','test@example.com','0712345678','$2a$10$hWF5yTjJgvfA4qARcw4VQOAxCLIBC0YrwsTf0S.DveTP/6XH8FZEm',NULL,0,0,1,'ACTIVE','BOTH',NULL,NULL,'2026-04-05 11:03:21','2026-04-05 11:03:21'),(4,'Sanjani','malanherath4@gmail.com','0719888260','$2a$10$QcVmqNOUv9bp69KVnj.4deL16y.e2KpFvTWL0yytivwXfKvQTEVZu',NULL,1,0,1,'ACTIVE','BOTH',NULL,NULL,'2026-04-07 08:30:59','2026-04-11 06:50:01');
 /*!40000 ALTER TABLE `customer` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -257,7 +301,7 @@ CREATE TABLE `daily_stock` (
   CONSTRAINT `chk_opening_positive` CHECK ((`opening_quantity` >= 0)),
   CONSTRAINT `chk_sold_positive` CHECK ((`sold_quantity` >= 0)),
   CONSTRAINT `chk_stock_valid` CHECK ((`closing_quantity` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -266,7 +310,7 @@ CREATE TABLE `daily_stock` (
 
 LOCK TABLES `daily_stock` WRITE;
 /*!40000 ALTER TABLE `daily_stock` DISABLE KEYS */;
-INSERT INTO `daily_stock` (`stock_id`, `menu_item_id`, `stock_date`, `opening_quantity`, `sold_quantity`, `adjusted_quantity`, `version`, `updated_by`, `last_updated`) VALUES (1,1,'2026-04-05',12,3,0,1,NULL,'2026-04-05 11:43:53');
+INSERT INTO `daily_stock` (`stock_id`, `menu_item_id`, `stock_date`, `opening_quantity`, `sold_quantity`, `adjusted_quantity`, `version`, `updated_by`, `last_updated`) VALUES (1,1,'2026-04-05',12,3,0,1,NULL,'2026-04-05 11:43:53'),(2,1,'2026-04-07',12,3,0,11,NULL,'2026-04-07 11:27:43'),(3,1,'2026-04-08',12,1,0,1,NULL,'2026-04-08 17:41:19'),(4,1,'2026-04-10',12,0,0,0,1,'2026-04-10 18:47:33'),(5,1,'2026-04-11',12,1,0,1,NULL,'2026-04-11 06:50:01');
 /*!40000 ALTER TABLE `daily_stock` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -306,7 +350,7 @@ CREATE TABLE `delivery` (
   KEY `idx_delivery_location_update` (`last_location_update` DESC),
   CONSTRAINT `fk_delivery_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_delivery_staff` FOREIGN KEY (`delivery_staff_id`) REFERENCES `staff` (`staff_id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -315,6 +359,7 @@ CREATE TABLE `delivery` (
 
 LOCK TABLES `delivery` WRITE;
 /*!40000 ALTER TABLE `delivery` DISABLE KEYS */;
+INSERT INTO `delivery` VALUES (1,2,NULL,3,'PENDING',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1.29,NULL,NULL,NULL,'2026-04-07 09:14:53','2026-04-07 09:14:53'),(2,3,NULL,4,'PENDING',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1.29,NULL,NULL,NULL,'2026-04-07 10:05:35','2026-04-07 10:05:35'),(3,4,NULL,5,'PENDING',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1.29,NULL,NULL,NULL,'2026-04-07 10:15:02','2026-04-07 10:15:02'),(4,5,NULL,6,'PENDING',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1.29,NULL,NULL,NULL,'2026-04-07 10:17:04','2026-04-07 10:17:04'),(5,6,NULL,7,'PENDING',NULL,NULL,NULL,NULL,NULL,NULL,NULL,1.29,NULL,NULL,NULL,'2026-04-07 10:25:23','2026-04-07 10:25:23'),(6,7,4,8,'DELIVERED','2026-04-07 11:06:50','2026-04-07 11:07:52','2026-04-07 11:08:53','2026-04-07 16:38:53',NULL,NULL,NULL,1.29,7.12704372,80.05916595,'2026-04-07 16:38:51','2026-04-07 10:32:42','2026-04-07 11:08:53'),(7,8,4,9,'DELIVERED','2026-04-07 11:28:38','2026-04-07 11:29:04','2026-04-07 11:29:06','2026-04-07 16:59:06',NULL,NULL,NULL,1.29,7.12704372,80.05916595,'2026-04-07 16:58:46','2026-04-07 11:27:43','2026-04-07 11:29:06'),(8,9,4,10,'IN_TRANSIT','2026-04-10 18:47:00','2026-04-11 06:41:22',NULL,'2026-04-11 12:24:38',NULL,NULL,NULL,1.29,7.12704372,80.05916595,'2026-04-11 22:52:03','2026-04-08 17:41:19','2026-04-11 17:22:03'),(9,10,5,11,'ASSIGNED','2026-04-11 06:51:21',NULL,NULL,'2026-04-11 12:30:21',NULL,NULL,NULL,1.29,NULL,NULL,NULL,'2026-04-11 06:50:01','2026-04-11 06:51:21');
 /*!40000 ALTER TABLE `delivery` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -370,7 +415,7 @@ CREATE TABLE `delivery_staff_availability` (
   KEY `idx_current_order` (`current_order_id`),
   CONSTRAINT `fk_availability_order` FOREIGN KEY (`current_order_id`) REFERENCES `order` (`order_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_availability_staff` FOREIGN KEY (`delivery_staff_id`) REFERENCES `staff` (`staff_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -379,7 +424,7 @@ CREATE TABLE `delivery_staff_availability` (
 
 LOCK TABLES `delivery_staff_availability` WRITE;
 /*!40000 ALTER TABLE `delivery_staff_availability` DISABLE KEYS */;
-INSERT INTO `delivery_staff_availability` VALUES (1,4,1,NULL,'2026-04-03 18:27:39');
+INSERT INTO `delivery_staff_availability` VALUES (1,4,1,9,'2026-04-10 22:50:56'),(8,5,0,10,'2026-04-11 06:51:21');
 /*!40000 ALTER TABLE `delivery_staff_availability` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -411,7 +456,6 @@ CREATE TABLE `email_verification_token` (
 
 LOCK TABLES `email_verification_token` WRITE;
 /*!40000 ALTER TABLE `email_verification_token` DISABLE KEYS */;
-INSERT INTO `email_verification_token` VALUES (2,4,'002cc2dcfcb33dcb9e51501e3c7ca82efcf21824fb105bc551918aac4b7e2d3c','2026-04-07 14:30:59','2026-04-07 14:02:40','2026-04-07 08:30:59');
 /*!40000 ALTER TABLE `email_verification_token` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -444,7 +488,7 @@ CREATE TABLE `feedback` (
   CONSTRAINT `fk_feedback_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_feedback_responded_by` FOREIGN KEY (`responded_by`) REFERENCES `staff` (`staff_id`) ON DELETE SET NULL,
   CONSTRAINT `chk_rating_range` CHECK ((`rating` between 1 and 5))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -453,6 +497,7 @@ CREATE TABLE `feedback` (
 
 LOCK TABLES `feedback` WRITE;
 /*!40000 ALTER TABLE `feedback` DISABLE KEYS */;
+INSERT INTO `feedback` VALUES (1,3,'{\"comment\":\"\",\"positiveTags\":[\"Good taste\"],\"issueTags\":[]}',4,8,'ORDER',NULL,NULL,NULL,'2026-04-07 11:45:03');
 /*!40000 ALTER TABLE `feedback` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -491,7 +536,7 @@ CREATE TABLE `menu_item` (
 
 LOCK TABLES `menu_item` WRITE;
 /*!40000 ALTER TABLE `menu_item` DISABLE KEYS */;
-INSERT INTO `menu_item` VALUES (1,'Chicken Burger',NULL,500.00,NULL,1,1,1,1,'2026-04-05 11:30:24','2026-04-05 12:00:00');
+INSERT INTO `menu_item` VALUES (1,'Chicken Burger',NULL,500.00,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1775563964/voleena/menu/download-1-1775563963411-1a685f41.jpg',1,1,1,1,'2026-04-05 11:30:24','2026-04-11 17:30:00');
 /*!40000 ALTER TABLE `menu_item` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -578,7 +623,7 @@ CREATE TABLE `order` (
   CONSTRAINT `fk_order_promotion` FOREIGN KEY (`promotion_id`) REFERENCES `promotion` (`promotion_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_order_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `staff` (`staff_id`) ON DELETE SET NULL,
   CONSTRAINT `chk_total_positive` CHECK ((`total_amount` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -587,7 +632,7 @@ CREATE TABLE `order` (
 
 LOCK TABLES `order` WRITE;
 /*!40000 ALTER TABLE `order` DISABLE KEYS */;
-INSERT INTO `order` (`order_id`, `order_number`, `customer_id`, `total_amount`, `promotion_id`, `discount_amount`, `delivery_fee`, `status`, `order_type`, `special_instructions`, `cancellation_reason`, `cancelled_by`, `confirmed_at`, `preparing_at`, `ready_at`, `completed_at`, `cancelled_at`, `confirmed_by`, `updated_by`, `created_at`, `updated_at`) VALUES (1,'VF2604050001',2,500.00,NULL,0.00,0.00,'READY','TAKEAWAY',NULL,NULL,NULL,'2026-04-05 11:39:29','2026-04-05 11:43:41','2026-04-05 11:43:53',NULL,NULL,NULL,3,'2026-04-05 11:39:29','2026-04-05 11:43:53');
+INSERT INTO `order` (`order_id`, `order_number`, `customer_id`, `total_amount`, `promotion_id`, `discount_amount`, `delivery_fee`, `status`, `order_type`, `special_instructions`, `cancellation_reason`, `cancelled_by`, `confirmed_at`, `preparing_at`, `ready_at`, `completed_at`, `cancelled_at`, `confirmed_by`, `updated_by`, `created_at`, `updated_at`) VALUES (1,'VF2604050001',2,500.00,NULL,0.00,0.00,'CANCELLED','TAKEAWAY',NULL,NULL,NULL,'2026-04-05 11:39:29','2026-04-05 11:43:41','2026-04-05 11:43:53',NULL,'2026-04-07 09:08:54',NULL,1,'2026-04-05 11:39:29','2026-04-07 09:08:54'),(2,'VF2604070001',4,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',NULL,NULL,NULL,'2026-04-07 09:14:52',NULL,NULL,NULL,'2026-04-07 10:04:59',NULL,1,'2026-04-07 09:14:52','2026-04-07 10:04:59'),(3,'VF2604070002',4,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:05:35',NULL,NULL,NULL,'2026-04-07 10:08:04',NULL,NULL,'2026-04-07 10:05:35','2026-04-07 10:08:04'),(4,'VF2604070003',4,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:15:02',NULL,NULL,NULL,'2026-04-07 10:34:28',NULL,NULL,'2026-04-07 10:15:02','2026-04-07 10:34:28'),(5,'VF2604070004',4,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:17:04',NULL,NULL,NULL,'2026-04-07 10:22:05',NULL,NULL,'2026-04-07 10:17:04','2026-04-07 10:22:05'),(6,'VF2604070005',4,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:25:23',NULL,NULL,NULL,'2026-04-07 10:28:09',NULL,NULL,'2026-04-07 10:25:23','2026-04-07 10:28:09'),(7,'VF2604070006',4,500.00,NULL,0.00,100.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-07 10:32:42','2026-04-07 10:37:16','2026-04-07 11:06:50','2026-04-07 11:08:53',NULL,NULL,3,'2026-04-07 10:32:42','2026-04-07 11:08:53'),(8,'VF2604070007',4,500.00,NULL,0.00,100.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-07 11:27:43','2026-04-07 11:28:37','2026-04-07 11:28:38','2026-04-07 11:29:06',NULL,NULL,3,'2026-04-07 11:27:43','2026-04-07 11:29:06'),(9,'VF2604080001',4,500.00,NULL,0.00,100.00,'OUT_FOR_DELIVERY','DELIVERY',NULL,NULL,NULL,'2026-04-08 17:41:19','2026-04-10 18:46:56','2026-04-10 18:47:00',NULL,NULL,NULL,3,'2026-04-08 17:41:19','2026-04-11 06:50:38'),(10,'VF2604110001',4,500.00,NULL,0.00,100.00,'READY','DELIVERY',NULL,NULL,NULL,'2026-04-11 06:50:01','2026-04-11 06:51:20','2026-04-11 06:51:21',NULL,NULL,NULL,3,'2026-04-11 06:50:01','2026-04-11 06:51:21');
 /*!40000 ALTER TABLE `order` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -616,7 +661,7 @@ CREATE TABLE `order_item` (
   CONSTRAINT `fk_order_item_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE,
   CONSTRAINT `chk_item_quantity` CHECK ((`quantity` > 0)),
   CONSTRAINT `chk_unit_price` CHECK ((`unit_price` >= 0))
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -625,7 +670,7 @@ CREATE TABLE `order_item` (
 
 LOCK TABLES `order_item` WRITE;
 /*!40000 ALTER TABLE `order_item` DISABLE KEYS */;
-INSERT INTO `order_item` (`order_item_id`, `order_id`, `menu_item_id`, `combo_id`, `quantity`, `unit_price`, `item_notes`) VALUES (1,1,1,NULL,1,500.00,NULL);
+INSERT INTO `order_item` (`order_item_id`, `order_id`, `menu_item_id`, `combo_id`, `quantity`, `unit_price`, `item_notes`) VALUES (1,1,1,NULL,1,500.00,NULL),(2,2,1,NULL,1,500.00,NULL),(3,3,1,NULL,1,500.00,NULL),(4,4,1,NULL,1,500.00,NULL),(5,5,1,NULL,1,500.00,NULL),(6,6,1,NULL,1,500.00,NULL),(7,7,1,NULL,1,500.00,NULL),(8,8,1,NULL,1,500.00,NULL),(9,9,1,NULL,1,500.00,NULL),(10,10,1,NULL,1,500.00,NULL);
 /*!40000 ALTER TABLE `order_item` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -651,7 +696,7 @@ CREATE TABLE `order_status_history` (
   KEY `idx_changed_by` (`changed_by`),
   CONSTRAINT `fk_history_changed_by` FOREIGN KEY (`changed_by`) REFERENCES `staff` (`staff_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_history_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=38 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -660,7 +705,7 @@ CREATE TABLE `order_status_history` (
 
 LOCK TABLES `order_status_history` WRITE;
 /*!40000 ALTER TABLE `order_status_history` DISABLE KEYS */;
-INSERT INTO `order_status_history` VALUES (1,1,NULL,'CONFIRMED',NULL,'SYSTEM','Order created and auto-confirmed','2026-04-05 11:39:29'),(2,1,'CONFIRMED','PREPARING',3,'STAFF','Status updated by kitchen staff','2026-04-05 11:43:41'),(3,1,'CONFIRMED','PREPARING',3,'STAFF','Status updated by kitchen staff','2026-04-05 11:43:41'),(4,1,'PREPARING','READY',3,'STAFF','Status updated by kitchen staff','2026-04-05 11:43:53'),(5,1,'PREPARING','READY',3,'STAFF','Status updated by kitchen staff','2026-04-05 11:43:53');
+INSERT INTO `order_status_history` VALUES (1,1,NULL,'CONFIRMED',NULL,'SYSTEM','Order created and auto-confirmed','2026-04-05 11:39:29'),(2,1,'CONFIRMED','PREPARING',3,'STAFF','Status updated by kitchen staff','2026-04-05 11:43:41'),(3,1,'CONFIRMED','PREPARING',3,'STAFF','Status updated by kitchen staff','2026-04-05 11:43:41'),(4,1,'PREPARING','READY',3,'STAFF','Status updated by kitchen staff','2026-04-05 11:43:53'),(5,1,'PREPARING','READY',3,'STAFF','Status updated by kitchen staff','2026-04-05 11:43:53'),(6,1,'READY','CANCELLED',1,'STAFF',NULL,'2026-04-07 09:08:54'),(7,1,'READY','CANCELLED',1,'STAFF',NULL,'2026-04-07 09:08:54'),(8,2,NULL,'CONFIRMED',NULL,'SYSTEM','Order created and auto-confirmed','2026-04-07 09:14:53'),(9,2,'CONFIRMED','CANCELLED',1,'STAFF',NULL,'2026-04-07 10:04:59'),(10,3,NULL,'CONFIRMED',NULL,'SYSTEM','Order created and auto-confirmed','2026-04-07 10:05:35'),(11,3,'CONFIRMED','CANCELLED',4,'CUSTOMER','Cancelled by customer','2026-04-07 10:08:04'),(12,4,NULL,'CONFIRMED',NULL,'SYSTEM','Order created and auto-confirmed','2026-04-07 10:15:02'),(13,5,NULL,'CONFIRMED',NULL,'SYSTEM','Order created and auto-confirmed','2026-04-07 10:17:04'),(14,5,'CONFIRMED','CANCELLED',4,'CUSTOMER','Cancelled by customer','2026-04-07 10:22:05'),(15,6,NULL,'CONFIRMED',NULL,'SYSTEM','Order created and auto-confirmed','2026-04-07 10:25:23'),(16,6,'CONFIRMED','CANCELLED',4,'CUSTOMER','Cancelled by customer','2026-04-07 10:28:09'),(17,7,NULL,'CONFIRMED',NULL,'SYSTEM','Order created and auto-confirmed','2026-04-07 10:32:42'),(18,4,'CONFIRMED','CANCELLED',4,'CUSTOMER','Cancelled by customer','2026-04-07 10:34:28'),(19,7,'CONFIRMED','PREPARING',3,'STAFF','Status updated by kitchen staff','2026-04-07 10:37:16'),(20,7,'PREPARING','READY',3,'STAFF','Status updated by kitchen staff','2026-04-07 11:06:50'),(21,7,'READY','OUT_FOR_DELIVERY',4,'STAFF','Delivery status updated to PICKED_UP','2026-04-07 11:07:52'),(22,7,'OUT_FOR_DELIVERY','OUT_FOR_DELIVERY',4,'STAFF','Delivery status updated to IN_TRANSIT','2026-04-07 11:08:19'),(23,7,'OUT_FOR_DELIVERY','DELIVERED',4,'STAFF','Delivery status updated to DELIVERED','2026-04-07 11:08:53'),(24,8,NULL,'CONFIRMED',NULL,'SYSTEM','Order created and auto-confirmed','2026-04-07 11:27:43'),(25,8,'CONFIRMED','PREPARING',3,'STAFF','Status updated by kitchen staff','2026-04-07 11:28:37'),(26,8,'PREPARING','READY',3,'STAFF','Status updated by kitchen staff','2026-04-07 11:28:38'),(27,8,'READY','OUT_FOR_DELIVERY',4,'STAFF','Delivery status updated to PICKED_UP','2026-04-07 11:29:04'),(28,8,'OUT_FOR_DELIVERY','OUT_FOR_DELIVERY',4,'STAFF','Delivery status updated to IN_TRANSIT','2026-04-07 11:29:05'),(29,8,'OUT_FOR_DELIVERY','DELIVERED',4,'STAFF','Delivery status updated to DELIVERED','2026-04-07 11:29:06'),(30,9,NULL,'CONFIRMED',NULL,'SYSTEM','Order created and auto-confirmed','2026-04-08 17:41:19'),(31,9,'CONFIRMED','PREPARING',3,'STAFF','Status updated by kitchen staff','2026-04-10 18:46:56'),(32,9,'PREPARING','READY',3,'STAFF','Status updated by kitchen staff','2026-04-10 18:47:00'),(33,9,'READY','OUT_FOR_DELIVERY',4,'STAFF','Delivery status updated to PICKED_UP','2026-04-11 06:41:22'),(34,10,NULL,'CONFIRMED',NULL,'SYSTEM','Order created and auto-confirmed','2026-04-11 06:50:01'),(35,9,'OUT_FOR_DELIVERY','OUT_FOR_DELIVERY',4,'STAFF','Delivery status updated to IN_TRANSIT','2026-04-11 06:50:38'),(36,10,'CONFIRMED','PREPARING',3,'STAFF','Status updated by kitchen staff','2026-04-11 06:51:20'),(37,10,'PREPARING','READY',3,'STAFF','Status updated by kitchen staff','2026-04-11 06:51:21');
 /*!40000 ALTER TABLE `order_status_history` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -757,7 +802,7 @@ CREATE TABLE `payment` (
   KEY `idx_payment_created_at` (`created_at`),
   CONSTRAINT `fk_payment_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE,
   CONSTRAINT `chk_amount_positive` CHECK ((`amount` > 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -766,6 +811,7 @@ CREATE TABLE `payment` (
 
 LOCK TABLES `payment` WRITE;
 /*!40000 ALTER TABLE `payment` DISABLE KEYS */;
+INSERT INTO `payment` VALUES (1,4,600.00,'CARD','PENDING','pi_3TJWewCp4XuCJFA91pc4jPzT',NULL,NULL,NULL,NULL,'2026-04-07 10:15:02','2026-04-07 10:15:03'),(2,5,600.00,'CARD','PAID','pi_3TJWgvCp4XuCJFA91Op34btM','SUCCESS','2026-04-07 10:20:39',NULL,NULL,'2026-04-07 10:17:04','2026-04-07 10:20:39'),(3,6,600.00,'CARD','PAID','pi_3TJWoxCp4XuCJFA91yp3w3m1','SUCCESS','2026-04-07 10:25:39',NULL,NULL,'2026-04-07 10:25:23','2026-04-07 10:25:39'),(4,7,600.00,'CARD','PAID','pi_3TJWw3Cp4XuCJFA90gPFZl7J','SUCCESS','2026-04-07 10:33:12',NULL,NULL,'2026-04-07 10:32:42','2026-04-07 10:33:12'),(5,8,600.00,'CARD','PAID','pi_3TJXnHCp4XuCJFA90bdANnrf','SUCCESS','2026-04-07 11:28:10',NULL,NULL,'2026-04-07 11:27:43','2026-04-07 11:28:10'),(6,9,600.00,'CARD','PAID','pi_3TK06NCp4XuCJFA911bEF2ui','SUCCESS','2026-04-08 17:41:35','2026-04-08 17:41:48','Cancelled by customer','2026-04-08 17:41:19','2026-04-10 18:47:00'),(7,10,600.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-11 06:50:01','2026-04-11 06:50:01');
 /*!40000 ALTER TABLE `payment` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -862,7 +908,7 @@ CREATE TABLE `staff` (
   KEY `idx_staff_role` (`role_id`),
   KEY `idx_staff_active` (`is_active`),
   CONSTRAINT `fk_staff_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`role_id`) ON DELETE RESTRICT
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -871,7 +917,7 @@ CREATE TABLE `staff` (
 
 LOCK TABLES `staff` WRITE;
 /*!40000 ALTER TABLE `staff` DISABLE KEYS */;
-INSERT INTO `staff` VALUES (1,'Admin User',2,'admin@gmail.com','0771234567','$2a$10$RS8rv9E.fUjR8G3vvFtfYOTgC0h3A9zffCdQzAA68gRxbUU0OS0pO',1,NULL,'2026-04-03 18:22:35','2026-04-03 18:22:35'),(2,'Cashier User',3,'cashier@gmail.com','0771234568','$2a$10$mIJgBi1qwwJIhey0qcwP1eGMq5mctK9DemMofOojy.ZgyRJvhH7Pu',1,NULL,'2026-04-03 18:22:35','2026-04-03 18:22:35'),(3,'Kitchen User',4,'kitchen@gmail.com','0771234569','$2a$10$CNXR6gN7jKHlWqilxn.Qneqw7YkyKSkB1CWn1Vcn.i6sOMcnZ.S96',1,NULL,'2026-04-03 18:22:35','2026-04-03 18:22:35'),(4,'Delivery User',5,'delivery@gmail.com','0771234570','$2a$10$MvH5QvgsK7fruS.fCRSoXO27U/OlPAApxLEPiiGJXMwTF.A93Ojhe',1,NULL,'2026-04-03 18:22:35','2026-04-03 18:22:35');
+INSERT INTO `staff` VALUES (1,'Admin User',2,'admin@gmail.com','0771234567','$2a$10$RS8rv9E.fUjR8G3vvFtfYOTgC0h3A9zffCdQzAA68gRxbUU0OS0pO',1,NULL,'2026-04-03 18:22:35','2026-04-03 18:22:35'),(2,'Cashier User',3,'cashier@gmail.com','0771234568','$2a$10$mIJgBi1qwwJIhey0qcwP1eGMq5mctK9DemMofOojy.ZgyRJvhH7Pu',1,NULL,'2026-04-03 18:22:35','2026-04-03 18:22:35'),(3,'Kitchen User',4,'kitchen@gmail.com','0771234569','$2a$10$CNXR6gN7jKHlWqilxn.Qneqw7YkyKSkB1CWn1Vcn.i6sOMcnZ.S96',1,NULL,'2026-04-03 18:22:35','2026-04-03 18:22:35'),(4,'Delivery User',5,'delivery@gmail.com','0771234570','$2a$10$MvH5QvgsK7fruS.fCRSoXO27U/OlPAApxLEPiiGJXMwTF.A93Ojhe',1,NULL,'2026-04-03 18:22:35','2026-04-03 18:22:35'),(5,'Delivery2',5,'delivery2@gmail.com','0719882360','$2a$10$RX6mLa7XceCkUuINZn76heaHSrjsQ2SMOhrTuI4Pdy7MGEl.4Le2u',1,NULL,'2026-04-07 12:29:50','2026-04-07 12:29:50');
 /*!40000 ALTER TABLE `staff` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -900,7 +946,7 @@ CREATE TABLE `stock_movement` (
   KEY `idx_created_by` (`created_by`),
   CONSTRAINT `fk_movement_created_by` FOREIGN KEY (`created_by`) REFERENCES `staff` (`staff_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_movement_menu_item` FOREIGN KEY (`menu_item_id`) REFERENCES `menu_item` (`menu_item_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=21 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -909,7 +955,7 @@ CREATE TABLE `stock_movement` (
 
 LOCK TABLES `stock_movement` WRITE;
 /*!40000 ALTER TABLE `stock_movement` DISABLE KEYS */;
-INSERT INTO `stock_movement` VALUES (1,1,'2026-04-05','OPENING',12,NULL,'MANUAL','Opening stock set',1,'2026-04-05 11:30:39'),(2,1,'2026-04-05','SALE',-1,1,'ORDER','Order #1',NULL,'2026-04-05 11:39:29');
+INSERT INTO `stock_movement` VALUES (1,1,'2026-04-05','OPENING',12,NULL,'MANUAL','Opening stock set',1,'2026-04-05 11:30:39'),(2,1,'2026-04-05','SALE',-1,1,'ORDER','Order #1',NULL,'2026-04-05 11:39:29'),(3,1,'2026-04-07','OPENING',12,NULL,'MANUAL','Opening stock set',3,'2026-04-07 09:05:06'),(4,1,'2026-04-07','SALE',-1,2,'ORDER','Order #2',NULL,'2026-04-07 09:14:53'),(5,1,'2026-04-07','SALE',-1,3,'ORDER','Order #3',NULL,'2026-04-07 10:05:35'),(6,1,'2026-04-07','RETURN',1,3,'ORDER','Order #3 cancelled - stock returned',4,'2026-04-07 10:08:04'),(7,1,'2026-04-07','SALE',-1,4,'ORDER','Order #4',NULL,'2026-04-07 10:15:02'),(8,1,'2026-04-07','SALE',-1,5,'ORDER','Order #5',NULL,'2026-04-07 10:17:04'),(9,1,'2026-04-07','RETURN',1,5,'ORDER','Order #5 cancelled - stock returned',4,'2026-04-07 10:21:12'),(10,1,'2026-04-07','SALE',-1,6,'ORDER','Order #6',NULL,'2026-04-07 10:25:23'),(11,1,'2026-04-07','RETURN',1,6,'ORDER','Order #6 cancelled - stock returned',4,'2026-04-07 10:27:18'),(12,1,'2026-04-07','SALE',-1,7,'ORDER','Order #7',NULL,'2026-04-07 10:32:42'),(13,1,'2026-04-07','RETURN',1,4,'ORDER','Order #4 cancelled - stock returned',4,'2026-04-07 10:34:28'),(14,1,'2026-04-07','SALE',-1,8,'ORDER','Order #8',NULL,'2026-04-07 11:27:43'),(15,1,'2026-04-08','OPENING',12,NULL,'MANUAL','Opening stock set',3,'2026-04-08 17:40:40'),(16,1,'2026-04-08','SALE',-1,9,'ORDER','Order #9',NULL,'2026-04-08 17:41:19'),(18,1,'2026-04-10','OPENING',12,NULL,'MANUAL','Opening stock set',1,'2026-04-10 18:47:33'),(19,1,'2026-04-11','OPENING',12,NULL,'MANUAL','Opening stock set',3,'2026-04-11 06:49:16'),(20,1,'2026-04-11','SALE',-1,10,'ORDER','Order #10',NULL,'2026-04-11 06:50:01');
 /*!40000 ALTER TABLE `stock_movement` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -931,7 +977,7 @@ CREATE TABLE `system_settings` (
   UNIQUE KEY `uk_setting_key` (`setting_key`),
   KEY `idx_updated_by` (`updated_by`),
   CONSTRAINT `fk_settings_updated_by` FOREIGN KEY (`updated_by`) REFERENCES `staff` (`staff_id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -940,7 +986,7 @@ CREATE TABLE `system_settings` (
 
 LOCK TABLES `system_settings` WRITE;
 /*!40000 ALTER TABLE `system_settings` DISABLE KEYS */;
-INSERT INTO `system_settings` VALUES (1,'max_delivery_distance_km','15','Maximum delivery distance in kilometers',NULL,'2026-04-03 18:22:24'),(2,'restaurant_latitude','7.0000000','Restaurant location latitude',NULL,'2026-04-03 18:22:24'),(3,'restaurant_longitude','80.0000000','Restaurant location longitude',NULL,'2026-04-03 18:22:24'),(4,'order_auto_cancel_minutes','30','Auto-cancel unconfirmed orders after minutes',NULL,'2026-04-03 18:22:24'),(5,'session_timeout_minutes','30','User session timeout in minutes',NULL,'2026-04-03 18:22:24'),(6,'min_order_amount','500','Minimum order amount in LKR',NULL,'2026-04-03 18:22:24'),(7,'delivery_fee','150','Standard delivery fee in LKR',NULL,'2026-04-03 18:22:24'),(8,'tax_percentage','0','Tax percentage on orders',NULL,'2026-04-03 18:22:24'),(9,'otp_expiry_minutes','10','OTP expiry time in minutes',NULL,'2026-04-03 18:22:24'),(10,'max_otp_attempts','3','Maximum OTP verification attempts',NULL,'2026-04-03 18:22:24');
+INSERT INTO `system_settings` VALUES (1,'max_delivery_distance_km','15','Maximum delivery distance in kilometers',NULL,'2026-04-03 18:22:24'),(2,'restaurant_latitude','7.0000000','Restaurant location latitude',NULL,'2026-04-03 18:22:24'),(3,'restaurant_longitude','80.0000000','Restaurant location longitude',NULL,'2026-04-03 18:22:24'),(4,'order_auto_cancel_minutes','30','Auto-cancel unconfirmed orders after minutes',NULL,'2026-04-03 18:22:24'),(5,'session_timeout_minutes','30','User session timeout in minutes',NULL,'2026-04-03 18:22:24'),(6,'min_order_amount','500','Minimum order amount in LKR',NULL,'2026-04-03 18:22:24'),(7,'delivery_fee','150','Standard delivery fee in LKR',NULL,'2026-04-03 18:22:24'),(8,'tax_percentage','0','Tax percentage on orders',NULL,'2026-04-03 18:22:24'),(9,'otp_expiry_minutes','10','OTP expiry time in minutes',NULL,'2026-04-03 18:22:24'),(10,'max_otp_attempts','3','Maximum OTP verification attempts',NULL,'2026-04-03 18:22:24'),(11,'admin_settings_payload_v1','{\"restaurantName\":\"Voleena Foods\",\"email\":\"contact@voleenafoods.com\",\"phone\":\"+94 11 234 5678\",\"address\":\"123 Main Street, Colombo, Sri Lanka\",\"timezone\":\"Asia/Colombo\",\"currency\":\"LKR\",\"businessHours\":{\"monday\":{\"open\":\"09:00\",\"close\":\"22:00\",\"closed\":false},\"tuesday\":{\"open\":\"09:00\",\"close\":\"22:00\",\"closed\":false},\"wednesday\":{\"open\":\"09:00\",\"close\":\"22:00\",\"closed\":false},\"thursday\":{\"open\":\"09:00\",\"close\":\"22:00\",\"closed\":false},\"friday\":{\"open\":\"09:00\",\"close\":\"22:00\",\"closed\":false},\"saturday\":{\"open\":\"09:00\",\"close\":\"23:00\",\"closed\":false},\"sunday\":{\"open\":\"10:00\",\"close\":\"22:00\",\"closed\":false}},\"orderPrefix\":\"ORD\",\"minOrderAmount\":500,\"maxOrderAmount\":50000,\"orderTimeout\":30,\"autoConfirmOrders\":false,\"deliveryFee\":150,\"freeDeliveryThreshold\":2500,\"maxDeliveryDistance\":15,\"estimatedDeliveryTime\":45,\"emailNotifications\":true,\"smsNotifications\":true,\"orderConfirmation\":true,\"orderStatusUpdates\":true,\"promotionalEmails\":false,\"cashOnDelivery\":true,\"onlinePayment\":true,\"cardPayment\":true,\"minimumCashChange\":100}','Admin system settings payload (JSON)',1,'2026-04-11 06:40:39');
 /*!40000 ALTER TABLE `system_settings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -1095,4 +1141,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-07 14:20:03
+-- Dump completed on 2026-04-12 22:27:24

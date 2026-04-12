@@ -148,6 +148,7 @@ function createApp() {
   app.use('/api/v1/payments', require('./routes/payments'));
   app.use('/api/v1/feedback', require('./routes/feedback'));
   app.use('/api/v1/settings', require('./routes/settings'));
+  app.use('/api/v1/notifications', require('./routes/notifications'));
   app.use('/api/v1/delivery', require('./routes/deliveryRoutes'));
   app.use('/api/v1/admin', require('./routes/adminRoutes'));
   app.use('/api/v1/kitchen', require('./routes/kitchenRoutes'));
@@ -171,6 +172,7 @@ function createApp() {
   app.use('/api/payments', deprecationMiddleware('/payments'), require('./routes/payments'));
   app.use('/api/feedback', deprecationMiddleware('/feedback'), require('./routes/feedback'));
   app.use('/api/settings', deprecationMiddleware('/settings'), require('./routes/settings'));
+  app.use('/api/notifications', deprecationMiddleware('/notifications'), require('./routes/notifications'));
   app.use('/api/delivery', deprecationMiddleware('/delivery'), require('./routes/deliveryRoutes'));
   app.use('/api/admin', deprecationMiddleware('/admin'), require('./routes/adminRoutes'));
   app.use('/api/kitchen', deprecationMiddleware('/kitchen'), require('./routes/kitchenRoutes'));

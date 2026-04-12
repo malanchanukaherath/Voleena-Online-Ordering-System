@@ -928,6 +928,10 @@ const CashierDashboard = ({ posOnly = false }) => {
         });
     }, []);
 
+    const clearCashAmountReceived = useCallback(() => {
+        setCashAmountReceived('');
+    }, []);
+
     useEffect(() => {
         if (!selectedOrderEntryKey) {
             return;
@@ -1534,6 +1538,14 @@ const CashierDashboard = ({ posOnly = false }) => {
                                             className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm hover:border-primary-500 hover:text-primary-700"
                                         >
                                             Exact
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={clearCashAmountReceived}
+                                            className="rounded border border-red-300 bg-white px-3 py-1.5 text-sm text-red-700 hover:border-red-500 hover:text-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                            disabled={!cashAmountReceived}
+                                        >
+                                            Clear
                                         </button>
                                     </div>
                                 </div>

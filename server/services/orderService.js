@@ -7,6 +7,7 @@ const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('./emailService');
 const { sendOrderConfirmationSMS, sendOrderStatusUpdateSMS } = require('./smsService');
 const systemSettingsService = require('./systemSettingsService');
+const appNotificationService = require('./appNotificationService');
 
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
@@ -29,6 +30,14 @@ const markAddressUnavailableError = (error) => {
 };
 
 const CUSTOMER_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
+
+const notifySafely = async (action, context) => {
+    try {
+        await action();
+    } catch (error) {
+        console.error(`[APP_NOTIFICATION] ${context}:`, error.message);
+    }
+};
 
 /**
  * Order Management Service
@@ -380,6 +389,47 @@ class OrderService {
                 }
             }
 
+            const statusLabel = shouldAutoConfirm ? 'confirmed' : 'pending confirmation';
+            const eventType = shouldAutoConfirm ? 'ORDER_CONFIRMED' : 'ORDER_CREATED';
+
+            await notifySafely(async () => {
+                await appNotificationService.notifyStaffRoles(['Cashier', 'Kitchen', 'Admin'], {
+                    eventType,
+                    title: `Order #${orderNumber}`,
+                    message: `New ${orderType.toLowerCase()} order #${orderNumber} is ${statusLabel}.`,
+                    priority: shouldAutoConfirm ? 'MEDIUM' : 'HIGH',
+                    relatedOrderId: order.OrderID,
+                    payload: {
+                        orderId: order.OrderID,
+                        orderNumber,
+                        orderType,
+                        status: shouldAutoConfirm ? 'CONFIRMED' : 'PENDING'
+                    },
+                    dedupeKey: `${eventType}:STAFF:${order.OrderID}`
+                });
+            }, 'Failed to notify staff on order creation');
+
+            if (orderType !== 'WALK_IN') {
+                await notifySafely(async () => {
+                    await appNotificationService.notifyCustomer(customerId, {
+                        eventType,
+                        title: `Order #${orderNumber}`,
+                        message: shouldAutoConfirm
+                            ? `Your order #${orderNumber} has been confirmed.`
+                            : `Your order #${orderNumber} is pending confirmation.`,
+                        priority: 'MEDIUM',
+                        relatedOrderId: order.OrderID,
+                        payload: {
+                            orderId: order.OrderID,
+                            orderNumber,
+                            orderType,
+                            status: shouldAutoConfirm ? 'CONFIRMED' : 'PENDING'
+                        },
+                        dedupeKey: `${eventType}:CUSTOMER:${customerId}:${order.OrderID}`
+                    });
+                }, 'Failed to notify customer on order creation');
+            }
+
             return order;
         } catch (error) {
             await transaction.rollback();
@@ -578,6 +628,61 @@ class OrderService {
         } catch (notifError) {
             console.error('Notification error:', notifError);
         }
+
+        const statusMessageMap = {
+            CONFIRMED: 'Order confirmed',
+            PREPARING: 'Order is being prepared',
+            READY: order.OrderType === 'DELIVERY' ? 'Order is ready for dispatch' : 'Order is ready',
+            OUT_FOR_DELIVERY: 'Order is out for delivery',
+            DELIVERED: 'Order delivered',
+            CANCELLED: 'Order cancelled'
+        };
+
+        if (order.OrderType !== 'WALK_IN' && order.CustomerID) {
+            await notifySafely(async () => {
+                await appNotificationService.notifyCustomer(order.CustomerID, {
+                    eventType: 'ORDER_STATUS_UPDATED',
+                    title: `Order #${order.OrderNumber}`,
+                    message: statusMessageMap[newStatus] || `Order status updated to ${newStatus}`,
+                    priority: ['CANCELLED'].includes(newStatus) ? 'HIGH' : 'MEDIUM',
+                    relatedOrderId: order.OrderID,
+                    payload: {
+                        orderId: order.OrderID,
+                        orderNumber: order.OrderNumber,
+                        oldStatus,
+                        newStatus
+                    },
+                    dedupeKey: `ORDER_STATUS_UPDATED:CUSTOMER:${order.CustomerID}:${order.OrderID}:${newStatus}`
+                });
+            }, 'Failed to notify customer on order status update');
+        }
+
+        await notifySafely(async () => {
+            const recipientRoles = ['Admin'];
+
+            if (['CONFIRMED', 'PREPARING', 'READY', 'CANCELLED'].includes(newStatus)) {
+                recipientRoles.push('Cashier', 'Kitchen');
+            }
+
+            if (['OUT_FOR_DELIVERY', 'DELIVERED'].includes(newStatus)) {
+                recipientRoles.push('Delivery');
+            }
+
+            await appNotificationService.notifyStaffRoles(recipientRoles, {
+                eventType: 'ORDER_STATUS_UPDATED',
+                title: `Order #${order.OrderNumber}`,
+                message: `Order status changed from ${oldStatus} to ${newStatus}.`,
+                priority: ['CANCELLED'].includes(newStatus) ? 'HIGH' : 'MEDIUM',
+                relatedOrderId: order.OrderID,
+                payload: {
+                    orderId: order.OrderID,
+                    orderNumber: order.OrderNumber,
+                    oldStatus,
+                    newStatus
+                },
+                dedupeKey: `ORDER_STATUS_UPDATED:STAFF:${order.OrderID}:${newStatus}`
+            });
+        }, 'Failed to notify staff on order status update');
 
         return order;
     }
@@ -921,6 +1026,40 @@ class OrderService {
             console.log(`[AUTO-ASSIGN]    - Active deliveries: ${selectedStaff.active_deliveries}`);
             console.log(`[AUTO-ASSIGN]    - Avg completion time: ${selectedStaff.avg_completion_time.toFixed(1)} minutes`);
             console.log(`[AUTO-ASSIGN] 🎉 Auto-assignment completed successfully!`);
+
+            await notifySafely(async () => {
+                await appNotificationService.notifyStaffById(staffId, {
+                    eventType: 'DELIVERY_ASSIGNED',
+                    title: `New Delivery Assignment`,
+                    message: `Order #${delivery.order?.OrderNumber || orderId} has been assigned to you.`,
+                    priority: 'HIGH',
+                    relatedOrderId: orderId,
+                    payload: {
+                        orderId,
+                        orderNumber: delivery.order?.OrderNumber || null,
+                        deliveryId: delivery.DeliveryID
+                    },
+                    dedupeKey: `DELIVERY_ASSIGNED:STAFF:${staffId}:${orderId}`
+                });
+            }, 'Failed to notify assigned rider after auto-assignment');
+
+            await notifySafely(async () => {
+                await appNotificationService.notifyStaffRoles(['Admin', 'Cashier'], {
+                    eventType: 'DELIVERY_ASSIGNED',
+                    title: `Delivery Staff Assigned`,
+                    message: `${selectedStaff.Name} assigned to order #${delivery.order?.OrderNumber || orderId}.`,
+                    priority: 'MEDIUM',
+                    relatedOrderId: orderId,
+                    payload: {
+                        orderId,
+                        orderNumber: delivery.order?.OrderNumber || null,
+                        deliveryId: delivery.DeliveryID,
+                        staffId,
+                        staffName: selectedStaff.Name
+                    },
+                    dedupeKey: `DELIVERY_ASSIGNED:STAFF_BROADCAST:${orderId}:${staffId}`
+                });
+            }, 'Failed to notify staff after auto-assignment');
 
             return staffId;
 
