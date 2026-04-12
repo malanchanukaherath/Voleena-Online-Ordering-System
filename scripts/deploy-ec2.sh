@@ -5,7 +5,7 @@ set -Eeuo pipefail
 REPO_DIR="${REPO_DIR:-$HOME/Voleena-Online-Ordering-System}"
 TARGET_BRANCH="${TARGET_BRANCH:-main}"
 COMPOSE_FILE_CHECK="${COMPOSE_FILE_CHECK:-/tmp/voleena-compose-check.yml}"
-DEPLOY_STRATEGY="${DEPLOY_STRATEGY:-build}"
+DEPLOY_STRATEGY="${DEPLOY_STRATEGY:-auto}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 
 export DOCKER_CLIENT_TIMEOUT="${DOCKER_CLIENT_TIMEOUT:-900}"
@@ -14,9 +14,28 @@ export COMPOSE_HTTP_TIMEOUT="${COMPOSE_HTTP_TIMEOUT:-900}"
 echo "==> Deploy started at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "==> Repo: ${REPO_DIR}"
 echo "==> Branch: ${TARGET_BRANCH}"
-echo "==> Deploy strategy: ${DEPLOY_STRATEGY}"
 
 cd "${REPO_DIR}"
+
+if [ "${DEPLOY_STRATEGY}" = "auto" ]; then
+  if [ -n "${DOCKERHUB_USERNAME:-}" ]; then
+    DEPLOY_STRATEGY="pull"
+  else
+    RUNNING_BACKEND_IMAGE="$(docker inspect -f '{{.Config.Image}}' backend_app 2>/dev/null || true)"
+    case "${RUNNING_BACKEND_IMAGE}" in
+      */voleena-backend:*)
+        DOCKERHUB_USERNAME="${RUNNING_BACKEND_IMAGE%%/*}"
+        DEPLOY_STRATEGY="pull"
+        echo "==> Inferred Docker Hub user from backend_app image: ${DOCKERHUB_USERNAME}"
+        ;;
+      *)
+        DEPLOY_STRATEGY="build"
+        ;;
+    esac
+  fi
+fi
+
+echo "==> Deploy strategy: ${DEPLOY_STRATEGY}"
 
 echo "1) Backing up database..."
 mkdir -p backups
@@ -80,10 +99,11 @@ case "${DEPLOY_STRATEGY}" in
     docker compose up -d --no-build backend frontend
     ;;
   build)
+    echo "NOTE: Local Docker builds can be slow on t3.micro. For faster deploys, use DEPLOY_STRATEGY=pull DOCKERHUB_USERNAME=<dockerhub-user>."
     echo "Building backend image on EC2..."
-    docker compose build --progress=plain backend
+    docker compose --progress=plain build backend
     echo "Building frontend image on EC2..."
-    docker compose build --progress=plain frontend
+    docker compose --progress=plain build frontend
     docker compose up -d --no-build backend frontend
     ;;
   *)
