@@ -1,4 +1,14 @@
-const { AppNotification, Staff, Role } = require('../models');
+let AppNotification;
+let Staff;
+let Role;
+
+try {
+    ({ AppNotification, Staff, Role } = require('../models'));
+} catch (error) {
+    if (process.env.NODE_ENV !== 'test') {
+        console.warn('[APP_NOTIFICATION] Models unavailable at startup:', error.message);
+    }
+}
 
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 30;
@@ -36,6 +46,15 @@ class AppNotificationService {
     }
 
     async listForUser(user, options = {}) {
+        if (!AppNotification) {
+            return {
+                total: 0,
+                limit: DEFAULT_LIMIT,
+                offset: 0,
+                items: []
+            };
+        }
+
         const recipient = this.buildRecipientFromUser(user);
         const limit = Math.min(Math.max(Number.parseInt(options.limit, 10) || DEFAULT_LIMIT, 1), MAX_LIMIT);
         const offset = Math.max(Number.parseInt(options.offset, 10) || 0, 0);
@@ -66,6 +85,10 @@ class AppNotificationService {
     }
 
     async countUnreadForUser(user) {
+        if (!AppNotification) {
+            return 0;
+        }
+
         const recipient = this.buildRecipientFromUser(user);
 
         return AppNotification.count({
@@ -78,6 +101,10 @@ class AppNotificationService {
     }
 
     async markAsReadForUser(user, notificationId) {
+        if (!AppNotification) {
+            return false;
+        }
+
         const recipient = this.buildRecipientFromUser(user);
 
         const [updated] = await AppNotification.update({
@@ -96,6 +123,10 @@ class AppNotificationService {
     }
 
     async markAllAsReadForUser(user) {
+        if (!AppNotification) {
+            return 0;
+        }
+
         const recipient = this.buildRecipientFromUser(user);
 
         const [updated] = await AppNotification.update({
@@ -124,6 +155,10 @@ class AppNotificationService {
         relatedOrderId = null,
         dedupeKey = null
     }) {
+        if (!AppNotification) {
+            return null;
+        }
+
         const normalizedRecipientType = String(recipientType || '').trim().toUpperCase();
         const normalizedRecipientId = Number.parseInt(recipientId, 10);
         const normalizedRecipientRole = recipientRole ? String(recipientRole).trim().toUpperCase() : null;
@@ -200,6 +235,10 @@ class AppNotificationService {
     }
 
     async notifyStaffRoles(roleNames, payload) {
+        if (!Staff || !Role) {
+            return 0;
+        }
+
         const normalizedRoles = [...new Set((Array.isArray(roleNames) ? roleNames : [roleNames])
             .map((roleName) => String(roleName || '').trim())
             .filter(Boolean))];
@@ -221,11 +260,14 @@ class AppNotificationService {
             }]
         });
 
+        const baseDedupeKey = payload?.dedupeKey ? String(payload.dedupeKey).trim() : null;
+
         await Promise.all(staffMembers.map((staff) => this.createNotification({
             ...payload,
             recipientType: 'STAFF',
             recipientId: staff.StaffID,
-            recipientRole: String(staff.role?.RoleName || 'STAFF').toUpperCase()
+            recipientRole: String(staff.role?.RoleName || 'STAFF').toUpperCase(),
+            dedupeKey: baseDedupeKey ? `${baseDedupeKey}:${staff.StaffID}`.slice(0, 191) : null
         })));
 
         return staffMembers.length;

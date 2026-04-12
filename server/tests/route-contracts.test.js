@@ -88,6 +88,13 @@ jest.mock('../controllers/uploadController', () => ({
   uploadImage: mockOkHandler
 }));
 
+jest.mock('../controllers/notificationController', () => ({
+  getMyNotifications: mockOkHandler,
+  getUnreadCount: mockOkHandler,
+  markOneAsRead: mockOkHandler,
+  markAllAsRead: mockOkHandler
+}));
+
 const { resetAuthState, setAuthMode, setAuthUser } = require('./helpers/mockAuth');
 const createTestApp = require('./helpers/createTestApp');
 
@@ -187,6 +194,16 @@ const routerDefinitions = [
     protectedEndpoints: [
       ['get', '/folders'],
       ['post', '/image']
+    ]
+  },
+  {
+    prefix: '/api/v1/notifications',
+    router: require('../routes/notifications'),
+    protectedEndpoints: [
+      ['get', '/'],
+      ['get', '/unread-count'],
+      ['patch', '/read-all'],
+      ['patch', '/123/read']
     ]
   }
 ];

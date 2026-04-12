@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const paymentService = require('../utils/paymentService');
 const { Order, Customer, Payment } = require('../models');
+const appNotificationService = require('../services/appNotificationService');
 
 const PAYHERE_SUCCESS = '2';
 const PAYHERE_PENDING = '0';
@@ -32,6 +33,65 @@ function buildGatewayStatus(status, detail) {
     .replace(/[^A-Z0-9_]+/g, '_')
     .replace(/_+/g, '_')
     .slice(0, 50);
+}
+
+async function notifyPaymentUpdate(order, payment, nextStatus) {
+  try {
+    if (!order || !payment) {
+      return;
+    }
+
+    const orderNumber = order.OrderNumber || order.OrderID;
+    const method = payment.Method || 'PAYMENT';
+
+    const customerMessageByStatus = {
+      PAID: `Payment received for order #${orderNumber}.`,
+      FAILED: `Payment failed for order #${orderNumber}. Please try again.`,
+      PENDING: `Payment for order #${orderNumber} is pending confirmation.`
+    };
+
+    const staffMessageByStatus = {
+      PAID: `Order #${orderNumber} payment completed via ${method}.`,
+      FAILED: `Order #${orderNumber} payment failed (${method}).`,
+      PENDING: `Order #${orderNumber} payment is pending review (${method}).`
+    };
+
+    if (order.CustomerID && order.OrderType !== 'WALK_IN') {
+      await appNotificationService.notifyCustomer(order.CustomerID, {
+        eventType: 'PAYMENT_STATUS_UPDATED',
+        title: `Order #${orderNumber}`,
+        message: customerMessageByStatus[nextStatus] || `Payment status updated to ${nextStatus}.`,
+        priority: nextStatus === 'FAILED' ? 'HIGH' : 'MEDIUM',
+        relatedOrderId: order.OrderID,
+        payload: {
+          orderId: order.OrderID,
+          orderNumber,
+          paymentId: payment.PaymentID,
+          paymentMethod: method,
+          paymentStatus: nextStatus
+        },
+        dedupeKey: `PAYMENT_STATUS_UPDATED:CUSTOMER:${order.CustomerID}:${payment.PaymentID}:${nextStatus}`
+      });
+    }
+
+    await appNotificationService.notifyStaffRoles(['Cashier', 'Admin'], {
+      eventType: 'PAYMENT_STATUS_UPDATED',
+      title: `Order #${orderNumber}`,
+      message: staffMessageByStatus[nextStatus] || `Payment status updated to ${nextStatus}.`,
+      priority: nextStatus === 'FAILED' ? 'HIGH' : 'MEDIUM',
+      relatedOrderId: order.OrderID,
+      payload: {
+        orderId: order.OrderID,
+        orderNumber,
+        paymentId: payment.PaymentID,
+        paymentMethod: method,
+        paymentStatus: nextStatus
+      },
+      dedupeKey: `PAYMENT_STATUS_UPDATED:STAFF:${payment.PaymentID}:${nextStatus}`
+    });
+  } catch (error) {
+    console.error('[APP_NOTIFICATION] payment update:', error.message);
+  }
 }
 
 async function findStripePaymentRecord(intent) {
@@ -213,6 +273,8 @@ exports.confirmCardPayment = async (req, res) => {
       GatewayStatus: 'SUCCESS'
     });
 
+    await notifyPaymentUpdate(order, payment, 'PAID');
+
     return res.json({
       success: true,
       data: {
@@ -300,6 +362,8 @@ exports.payHereWebhook = async (req, res) => {
       GatewayStatus: isPaid ? 'SUCCESS' : isPending ? 'PENDING' : buildGatewayStatus('FAILED', payload.status_code)
     });
 
+    await notifyPaymentUpdate(order, payment, isPaid ? 'PAID' : isPending ? 'PENDING' : 'FAILED');
+
     return res.json({ success: true });
   } catch (error) {
     console.error('PayHere webhook error:', error);
@@ -377,6 +441,8 @@ exports.stripeWebhook = async (req, res) => {
         PaidAt: new Date(),
         GatewayStatus: 'SUCCESS'
       });
+
+      await notifyPaymentUpdate(order, payment, 'PAID');
     }
 
     if (event.type === 'payment_intent.payment_failed' || event.type === 'payment_intent.canceled') {
@@ -388,6 +454,8 @@ exports.stripeWebhook = async (req, res) => {
           intent.last_payment_error?.code || intent.status
         )
       });
+
+      await notifyPaymentUpdate(order, payment, 'FAILED');
     }
 
     if (event.type === 'payment_intent.processing') {
@@ -396,6 +464,8 @@ exports.stripeWebhook = async (req, res) => {
         PaidAt: null,
         GatewayStatus: buildGatewayStatus('PENDING', intent.status)
       });
+
+      await notifyPaymentUpdate(order, payment, 'PENDING');
     }
 
     return res.json({ received: true });

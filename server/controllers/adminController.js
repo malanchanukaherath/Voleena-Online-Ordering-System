@@ -16,6 +16,7 @@ const {
 const bcrypt = require('bcryptjs');
 const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 const systemSettingsService = require('../services/systemSettingsService');
+const appNotificationService = require('../services/appNotificationService');
 
 const parseAnalyticsDateRange = (query) => {
   const hasCustomRange = Boolean(query.startDate || query.endDate);
@@ -950,6 +951,13 @@ exports.assignDeliveryStaff = async (req, res) => {
       return res.status(400).json({ error: 'Order ID and Staff ID are required' });
     }
 
+    const order = await Order.findByPk(normalizedOrderId, { transaction, lock: transaction.LOCK.UPDATE });
+
+    if (!order) {
+      await transaction.rollback();
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
     // Check if order exists and lock the row to avoid concurrent re-assignment.
     const delivery = await Delivery.findOne({
       where: { OrderID: normalizedOrderId },
@@ -1078,6 +1086,54 @@ exports.assignDeliveryStaff = async (req, res) => {
     );
 
     await transaction.commit();
+
+    try {
+      await appNotificationService.notifyStaffById(normalizedStaffId, {
+        eventType: 'DELIVERY_ASSIGNED',
+        title: 'New Delivery Assignment',
+        message: `Order #${order.OrderNumber || normalizedOrderId} has been assigned to you.`,
+        priority: 'HIGH',
+        relatedOrderId: normalizedOrderId,
+        payload: {
+          orderId: normalizedOrderId,
+          orderNumber: order.OrderNumber || null,
+          assignedBy: req.user?.id || null
+        },
+        dedupeKey: `DELIVERY_ASSIGNED:STAFF:${normalizedStaffId}:${normalizedOrderId}`
+      });
+
+      if (order.CustomerID) {
+        await appNotificationService.notifyCustomer(order.CustomerID, {
+          eventType: 'ORDER_OUT_FOR_DELIVERY',
+          title: `Order #${order.OrderNumber || normalizedOrderId}`,
+          message: 'Your order is now out for delivery.',
+          priority: 'HIGH',
+          relatedOrderId: normalizedOrderId,
+          payload: {
+            orderId: normalizedOrderId,
+            orderNumber: order.OrderNumber || null
+          },
+          dedupeKey: `ORDER_OUT_FOR_DELIVERY:CUSTOMER:${order.CustomerID}:${normalizedOrderId}`
+        });
+      }
+
+      await appNotificationService.notifyStaffRoles(['Cashier', 'Admin'], {
+        eventType: 'DELIVERY_ASSIGNED',
+        title: `Order #${order.OrderNumber || normalizedOrderId}`,
+        message: `${staff.Name} assigned for delivery.`,
+        priority: 'MEDIUM',
+        relatedOrderId: normalizedOrderId,
+        payload: {
+          orderId: normalizedOrderId,
+          orderNumber: order.OrderNumber || null,
+          staffId: normalizedStaffId,
+          staffName: staff.Name
+        },
+        dedupeKey: `DELIVERY_ASSIGNED:STAFF_BROADCAST:${normalizedOrderId}:${normalizedStaffId}`
+      });
+    } catch (notificationError) {
+      console.error('[APP_NOTIFICATION] assignDeliveryStaff:', notificationError.message);
+    }
 
     return res.json({
       success: true,

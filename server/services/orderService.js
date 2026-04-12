@@ -532,6 +532,7 @@ class OrderService {
     async updateOrderStatus(orderId, newStatus, staffId, notes = null) {
         const transaction = await sequelize.transaction();
         let order;
+        let oldStatus;
 
         try {
             order = await Order.findByPk(orderId, {
@@ -543,7 +544,7 @@ class OrderService {
                 throw new Error('Order not found');
             }
 
-            const oldStatus = order.Status;
+            oldStatus = order.Status;
 
             // Validate status transition
             this.validateStatusTransition(oldStatus, newStatus);

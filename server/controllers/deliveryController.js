@@ -4,6 +4,7 @@ const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 const { validateAddressLine, validateCoordinates } = require('../utils/validationUtils');
 const { calculateDeliveryFee, getDeliveryFeeConfig, estimateDeliveryFee } = require('../utils/deliveryFeeCalculator');
 const systemSettingsService = require('../services/systemSettingsService');
+const appNotificationService = require('../services/appNotificationService');
 
 const isAddressTableMissingError = (error) => {
   const mysqlCode = error?.original?.code || error?.parent?.code;
@@ -279,6 +280,70 @@ exports.updateDeliveryStatus = async (req, res) => {
     }, { transaction });
 
     await transaction.commit();
+
+    try {
+      const orderNumber = order?.OrderNumber || delivery.OrderID;
+
+      if (order?.CustomerID) {
+        const customerMessageByStatus = {
+          PICKED_UP: 'Your order has been picked up by the delivery rider.',
+          IN_TRANSIT: 'Your order is on the way.',
+          DELIVERED: 'Your order has been delivered.',
+          FAILED: 'Delivery attempt failed. Our team will follow up shortly.'
+        };
+
+        await appNotificationService.notifyCustomer(order.CustomerID, {
+          eventType: 'DELIVERY_STATUS_UPDATED',
+          title: `Order #${orderNumber}`,
+          message: customerMessageByStatus[status] || `Delivery status updated to ${status}`,
+          priority: ['DELIVERED', 'FAILED'].includes(status) ? 'HIGH' : 'MEDIUM',
+          relatedOrderId: delivery.OrderID,
+          payload: {
+            orderId: delivery.OrderID,
+            orderNumber,
+            deliveryId: delivery.DeliveryID,
+            previousStatus,
+            status
+          },
+          dedupeKey: `DELIVERY_STATUS_UPDATED:CUSTOMER:${order.CustomerID}:${delivery.OrderID}:${status}`
+        });
+      }
+
+      await appNotificationService.notifyStaffRoles(['Admin', 'Cashier'], {
+        eventType: 'DELIVERY_STATUS_UPDATED',
+        title: `Order #${orderNumber}`,
+        message: `Delivery status changed from ${previousStatus} to ${status}.`,
+        priority: status === 'FAILED' ? 'HIGH' : 'MEDIUM',
+        relatedOrderId: delivery.OrderID,
+        payload: {
+          orderId: delivery.OrderID,
+          orderNumber,
+          deliveryId: delivery.DeliveryID,
+          staffId: delivery.DeliveryStaffID,
+          previousStatus,
+          status
+        },
+        dedupeKey: `DELIVERY_STATUS_UPDATED:STAFF:${delivery.OrderID}:${status}`
+      });
+
+      if (status === 'FAILED') {
+        await appNotificationService.notifyStaffRoles(['Delivery'], {
+          eventType: 'DELIVERY_REASSIGNMENT_REQUIRED',
+          title: `Order #${orderNumber}`,
+          message: 'Delivery failed and requires reassignment.',
+          priority: 'HIGH',
+          relatedOrderId: delivery.OrderID,
+          payload: {
+            orderId: delivery.OrderID,
+            orderNumber,
+            deliveryId: delivery.DeliveryID
+          },
+          dedupeKey: `DELIVERY_REASSIGNMENT_REQUIRED:${delivery.OrderID}`
+        });
+      }
+    } catch (notificationError) {
+      console.error('[APP_NOTIFICATION] updateDeliveryStatus:', notificationError.message);
+    }
 
     return res.json({
       success: true,

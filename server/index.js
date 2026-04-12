@@ -39,6 +39,17 @@ async function waitForDatabaseConnection() {
 function createApp() {
   const app = express();
 
+  const safeRequireRoute = (routePath) => {
+    try {
+      return require(routePath);
+    } catch (error) {
+      if (process.env.NODE_ENV !== 'test') {
+        throw error;
+      }
+      return null;
+    }
+  };
+
   // =====================================================
   // SECURITY MIDDLEWARE
   // =====================================================
@@ -148,7 +159,10 @@ function createApp() {
   app.use('/api/v1/payments', require('./routes/payments'));
   app.use('/api/v1/feedback', require('./routes/feedback'));
   app.use('/api/v1/settings', require('./routes/settings'));
-  app.use('/api/v1/notifications', require('./routes/notifications'));
+  const notificationsV1Route = safeRequireRoute('./routes/notifications');
+  if (notificationsV1Route) {
+    app.use('/api/v1/notifications', notificationsV1Route);
+  }
   app.use('/api/v1/delivery', require('./routes/deliveryRoutes'));
   app.use('/api/v1/admin', require('./routes/adminRoutes'));
   app.use('/api/v1/kitchen', require('./routes/kitchenRoutes'));
@@ -172,7 +186,10 @@ function createApp() {
   app.use('/api/payments', deprecationMiddleware('/payments'), require('./routes/payments'));
   app.use('/api/feedback', deprecationMiddleware('/feedback'), require('./routes/feedback'));
   app.use('/api/settings', deprecationMiddleware('/settings'), require('./routes/settings'));
-  app.use('/api/notifications', deprecationMiddleware('/notifications'), require('./routes/notifications'));
+  const notificationsLegacyRoute = safeRequireRoute('./routes/notifications');
+  if (notificationsLegacyRoute) {
+    app.use('/api/notifications', deprecationMiddleware('/notifications'), notificationsLegacyRoute);
+  }
   app.use('/api/delivery', deprecationMiddleware('/delivery'), require('./routes/deliveryRoutes'));
   app.use('/api/admin', deprecationMiddleware('/admin'), require('./routes/adminRoutes'));
   app.use('/api/kitchen', deprecationMiddleware('/kitchen'), require('./routes/kitchenRoutes'));

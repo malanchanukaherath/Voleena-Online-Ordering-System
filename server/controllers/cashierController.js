@@ -2,6 +2,7 @@ const { Order, Customer, OrderItem, MenuItem, ComboPack, Delivery, Address, Orde
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const orderService = require('../services/orderService');
+const appNotificationService = require('../services/appNotificationService');
 
 const DEFAULT_STORE_NAME = process.env.POS_STORE_NAME || 'Voleena Foods';
 const DEFAULT_STORE_ADDRESS = process.env.POS_STORE_ADDRESS || 'Store Address Not Configured';
@@ -162,6 +163,58 @@ async function resolveWalkInCustomer(rawCustomerId) {
   }
 
   return customer;
+}
+
+async function notifyCashierOrderStatusChange(order, newStatus, options = {}) {
+  try {
+    if (!order) {
+      return;
+    }
+
+    const orderNumber = order.OrderNumber || order.OrderID;
+    const oldStatus = options.oldStatus || null;
+    const reason = options.reason || null;
+
+    if (order.CustomerID && order.OrderType !== 'WALK_IN') {
+      const customerMessage = newStatus === 'CONFIRMED'
+        ? `Your order #${orderNumber} has been confirmed.`
+        : `Your order #${orderNumber} has been cancelled.`;
+
+      await appNotificationService.notifyCustomer(order.CustomerID, {
+        eventType: 'ORDER_STATUS_UPDATED',
+        title: `Order #${orderNumber}`,
+        message: customerMessage,
+        priority: newStatus === 'CANCELLED' ? 'HIGH' : 'MEDIUM',
+        relatedOrderId: order.OrderID,
+        payload: {
+          orderId: order.OrderID,
+          orderNumber,
+          oldStatus,
+          newStatus,
+          reason
+        },
+        dedupeKey: `ORDER_STATUS_UPDATED:CUSTOMER:${order.CustomerID}:${order.OrderID}:${newStatus}`
+      });
+    }
+
+    await appNotificationService.notifyStaffRoles(['Admin', 'Kitchen'], {
+      eventType: 'ORDER_STATUS_UPDATED',
+      title: `Order #${orderNumber}`,
+      message: `Order status changed to ${newStatus}.`,
+      priority: newStatus === 'CANCELLED' ? 'HIGH' : 'MEDIUM',
+      relatedOrderId: order.OrderID,
+      payload: {
+        orderId: order.OrderID,
+        orderNumber,
+        oldStatus,
+        newStatus,
+        reason
+      },
+      dedupeKey: `ORDER_STATUS_UPDATED:STAFF:${order.OrderID}:${newStatus}`
+    });
+  } catch (error) {
+    console.error('[APP_NOTIFICATION] cashier status change:', error.message);
+  }
 }
 
 /**
@@ -580,6 +633,8 @@ exports.confirmOrder = async (req, res) => {
       CreatedAt: new Date()
     });
 
+    await notifyCashierOrderStatusChange(order, 'CONFIRMED', { oldStatus: 'PENDING' });
+
     return res.json({
       success: true,
       message: 'Order confirmed successfully',
@@ -629,6 +684,11 @@ exports.cancelOrder = async (req, res) => {
       ChangedByType: 'STAFF',
       Notes: reason || 'Cancelled by cashier',
       CreatedAt: new Date()
+    });
+
+    await notifyCashierOrderStatusChange(order, 'CANCELLED', {
+      oldStatus: previousStatus,
+      reason: reason || 'Cancelled by cashier'
     });
 
     return res.json({
