@@ -15,7 +15,7 @@ const escapeHtml = (unsafeValue) => String(unsafeValue ?? '')
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
   .replace(/>/g, '&gt;')
-  .replace(/\"/g, '&quot;')
+  .replace(/"/g, '&quot;')
   .replace(/'/g, '&#039;');
 
 const formatCurrency = (value) => `LKR ${toFiniteNumber(value, 0).toFixed(2)}`;
