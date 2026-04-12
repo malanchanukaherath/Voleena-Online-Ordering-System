@@ -20,9 +20,9 @@ test -s "${BACKUP}"
 ls -lh "${BACKUP}"
 
 echo "2) Checking EC2 repo state..."
-git status --short
+git status --short --untracked-files=no
 
-if [ -n "$(git status --porcelain)" ]; then
+if [ -n "$(git status --porcelain --untracked-files=no)" ]; then
   echo "STOP: Repository has uncommitted changes on EC2. Commit/stash/remove them, then retry."
   exit 1
 fi

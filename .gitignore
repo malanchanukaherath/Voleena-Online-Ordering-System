@@ -17,6 +17,9 @@ Thumbs.db
 *.log
 logs/
 
+# Runtime backups (EC2 deploy script)
+backups/
+
 # Node
 node_modules/
 **/node_modules/
