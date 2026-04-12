@@ -198,6 +198,7 @@ const ResetPassword = () => {
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-3 top-9 text-gray-500"
+                                aria-label={showPassword ? 'Hide new password' : 'Show new password'}
                             >
                                 {showPassword ? <FaEyeSlash /> : <FaEye />}
                             </button>
@@ -218,6 +219,7 @@ const ResetPassword = () => {
                                 type="button"
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 className="absolute right-3 top-9 text-gray-500"
+                                aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
                             >
                                 {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
                             </button>

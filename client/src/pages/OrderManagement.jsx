@@ -289,7 +289,7 @@ const OrderManagement = () => {
                                                             onClick={() => queueOrderStatusUpdate(order)}
                                                             disabled={getSelectedStatus(order) === order.status}
                                                         >
-                                                            Queue Update
+                                                            Apply in 5s
                                                         </Button>
                                                         {getSelectedStatus(order) !== order.status && (
                                                             <Button

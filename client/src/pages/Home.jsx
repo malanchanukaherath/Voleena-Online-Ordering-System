@@ -246,9 +246,9 @@ const Home = () => {
             )}
 
             {/* Features Section */}
-            <section className="py-16 bg-gray-50">
+            <section className="py-12 bg-gray-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-bold text-center mb-12">Why Choose Us?</h2>
+                    <h2 className="text-3xl font-bold text-center mb-10">Order With Confidence</h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {features.map((feature, index) => {
                             const Icon = feature.icon;
@@ -270,10 +270,10 @@ const Home = () => {
             </section>
 
             {/* Featured Items Preview */}
-            <section className="py-16">
+            <section className="py-12">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-3xl font-bold">Featured Items</h2>
+                        <h2 className="text-3xl font-bold">Popular Picks</h2>
                         <Link to="/menu" className="text-primary-600 hover:text-primary-700 font-medium">
                             View All →
                         </Link>

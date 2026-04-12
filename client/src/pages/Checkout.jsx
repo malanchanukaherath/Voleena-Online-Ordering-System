@@ -81,6 +81,12 @@ const Checkout = () => {
     }, [paymentMethodSettings.cashOnDelivery, paymentMethodSettings.cardPayment, paymentMethodSettings.onlinePayment]);
 
     useEffect(() => {
+        if (formData.orderType === 'DELIVERY' && !deliveryAddressMethod && googleMapsApiKey) {
+            setDeliveryAddressMethod('GPS');
+        }
+    }, [deliveryAddressMethod, formData.orderType, googleMapsApiKey]);
+
+    useEffect(() => {
         const baseDeliveryFee = Number(publicSettings.delivery?.baseFee);
         if (Number.isFinite(baseDeliveryFee) && formData.orderType === 'DELIVERY' && !distanceInfo) {
             setDeliveryFee(baseDeliveryFee);
@@ -769,6 +775,7 @@ const Checkout = () => {
         deliveryFee: formData.orderType === 'DELIVERY' ? (hasFreeDeliveryByOrderValue ? 0 : deliveryFee) : 0,
     };
     cartSummary.total = cartSummary.subtotal + cartSummary.deliveryFee;
+    const needsDeliveryLocation = formData.orderType === 'DELIVERY' && !distanceInfo?.isValid;
 
     return (
         <div className="max-w-7xl mx-auto">
@@ -848,11 +855,14 @@ const Checkout = () => {
                         {/* Delivery Address (with Distance Validation) */}
                         {formData.orderType === 'DELIVERY' && (
                             <div className="bg-white rounded-lg shadow p-6">
-                                <h2 className="text-xl font-semibold mb-4">Delivery Address</h2>
+                                <h2 className="text-xl font-semibold mb-2">Delivery Address</h2>
+                                <p className="text-sm text-gray-600 mb-4">
+                                    We use your location to confirm you are in our delivery area and calculate the final delivery fee.
+                                </p>
                                 
                                 {/* Two Options Box */}
                                 <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                    <p className="text-sm font-medium text-gray-700 mb-3">Choose how to provide your delivery address:</p>
+                                    <p className="text-sm font-medium text-gray-700 mb-3">Choose the easiest way to set your delivery point:</p>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         <button
                                             type="button"
@@ -868,8 +878,8 @@ const Checkout = () => {
                                                 </div>
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900">GPS Location</p>
-                                                <p className="text-xs text-gray-600 mt-1">Pin on map or use your current location</p>
+                                                <p className="text-sm font-medium text-gray-900">Pin delivery location</p>
+                                                <p className="text-xs text-gray-600 mt-1">Use the map, search, or current location</p>
                                             </div>
                                         </button>
 
@@ -889,7 +899,7 @@ const Checkout = () => {
                                                 </div>
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900">Manual Entry</p>
+                                                <p className="text-sm font-medium text-gray-900">Enter address manually</p>
                                                 <p className="text-xs text-gray-600 mt-1">Type your full delivery address</p>
                                             </div>
                                         </button>
@@ -1195,11 +1205,16 @@ const Checkout = () => {
                             {errors.cart && (
                                 <p className="text-sm text-red-600 mb-3">{errors.cart}</p>
                             )}
+                            {needsDeliveryLocation && !errors.submit && !errors.cart && (
+                                <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3 mb-3">
+                                    Choose and validate your delivery location to place a delivery order.
+                                </p>
+                            )}
                             <Button
                                 type="submit"
                                 size="lg"
                                 className="w-full mb-3"
-                                disabled={cartItems.length === 0 || isSubmitting || (formData.orderType === 'DELIVERY' && !distanceInfo?.isValid)}
+                                disabled={cartItems.length === 0 || isSubmitting || needsDeliveryLocation}
                             >
                                 {isSubmitting ? 'Placing Order...' : 'Place Order'}
                             </Button>

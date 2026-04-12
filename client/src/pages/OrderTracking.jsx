@@ -282,7 +282,7 @@ const OrderTracking = () => {
             setToastMessage(
                 isCashOnDelivery
                     ? 'Order cancelled successfully.'
-                    : 'Order cancelled successfully. Your refund will be processed automatically via Stripe.'
+                    : 'Order cancelled successfully. Your refund will be reviewed and processed through the payment provider.'
             );
             setToastType('success');
             setShowToast(true);
@@ -447,7 +447,7 @@ const OrderTracking = () => {
                                         {order.paymentMethod === 'CASH' ? (
                                             <p>Order cancelled successfully.</p>
                                         ) : (
-                                            <p>Order cancelled successfully. Your refund will be processed automatically via Stripe.</p>
+                                            <p>Order cancelled successfully. Your refund will be reviewed and processed through the payment provider.</p>
                                         )}
                                     </div>
                                 </div>
@@ -627,8 +627,7 @@ const OrderTracking = () => {
                             <div className="bg-blue-50 border border-blue-200 rounded p-3">
                                 <p className="text-sm text-blue-800">
                                     <strong>Refund Information:</strong><br />
-                                    A refund of <strong>LKR {order.total.toFixed(2)}</strong> will be initiated to your original payment method.
-                                    Processing time: 3-5 business days.
+                                    Refunds for online payments are reviewed and processed through the payment provider. Processing time may vary by provider.
                                 </p>
                             </div>
                         )}

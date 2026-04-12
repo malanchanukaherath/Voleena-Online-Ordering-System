@@ -340,8 +340,10 @@ const Menu = () => {
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         options={categoryOptions}
-                        label="Category"
+                        label="Filter by category"
                         name="category"
+                        placeholder="All categories"
+                        helperText={categoryOptions.length > 0 ? 'Showing menu items and combo packs' : 'Categories load from available menu items'}
                     />
                     {hasActiveFilters && (
                         <div className="flex items-end">
@@ -448,8 +450,15 @@ const Menu = () => {
                 <EmptyState
                     type="search"
                     title="No items found"
-                    description="Try adjusting your search or filter criteria"
-                    action={hasActiveFilters ? <FilterResetButton onClick={clearFilters} /> : null}
+                    description="Try a different search, choose all categories, or browse today's available items."
+                    action={
+                        hasActiveFilters ? (
+                            <div className="flex flex-col gap-3 sm:flex-row">
+                                <FilterResetButton onClick={clearFilters} />
+                                <Button onClick={clearFilters}>Show All Items</Button>
+                            </div>
+                        ) : null
+                    }
                 />
             )}
         </div>

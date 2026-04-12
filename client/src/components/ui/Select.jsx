@@ -8,6 +8,7 @@ const Select = ({
     options = [],
     error,
     helperText,
+    placeholder,
     required = false,
     disabled = false,
     className = '',
@@ -37,7 +38,7 @@ const Select = ({
         `}
                 {...props}
             >
-                <option value="">Select {label || 'option'}</option>
+                <option value="">{placeholder || `Select ${label || 'option'}`}</option>
                 {options.map((option) => (
                     <option
                         key={option.value}

@@ -432,7 +432,7 @@ const DeliveryDashboard = () => {
                                             onClick={() => handleQueueAdvanceStatus(delivery)}
                                             disabled={!getNextStatus(delivery.status)}
                                         >
-                                            Queue {getActionLabel(delivery.status)}
+                                            {getActionLabel(delivery.status)} in 5s
                                         </Button>
                                     )}
                                     {delivery.phone && (

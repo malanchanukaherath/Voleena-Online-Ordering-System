@@ -164,7 +164,7 @@ const Header = ({
                     </div>
 
                     {/* Desktop Navigation */}
-                    <nav className="hidden md:flex space-x-1">
+                    <nav className={`${showSidebarToggle ? 'hidden' : 'hidden md:flex'} space-x-1`}>
                         {navigationItems.map((item) => {
                             const Icon = item.icon;
                             return (

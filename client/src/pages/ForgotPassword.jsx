@@ -8,10 +8,10 @@ import authService from '../services/authService';
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
-    const [step, setStep] = useState(1); // 1: Enter email/phone, 2: Select method
+    const [step, setStep] = useState(1); // 1: Enter email, 2: Confirm email delivery
     const [formData, setFormData] = useState({
-        identifier: '', // email or phone
-        method: 'email' // email or sms
+        identifier: '',
+        method: 'email'
     });
     const [errors, setErrors] = useState({});
     const [showToast, setShowToast] = useState(false);
@@ -78,7 +78,7 @@ const ForgotPassword = () => {
                 <div className="text-center mb-8">
                     <h1 className="text-2xl font-bold mb-2">Forgot Password?</h1>
                     <p className="text-gray-600 text-sm">
-                        {step === 1 ? 'Enter your email or phone number' : 'Choose verification method'}
+                        {step === 1 ? 'Enter your email address' : 'Confirm email delivery'}
                     </p>
                 </div>
 
@@ -115,37 +115,17 @@ const ForgotPassword = () => {
                         </div>
 
                         <div className="space-y-3">
-                            <p className="text-sm font-medium text-gray-700">Select verification method:</p>
+                            <p className="text-sm font-medium text-gray-700">Verification method:</p>
 
-                            <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                <input
-                                    type="radio"
-                                    name="method"
-                                    value="email"
-                                    checked={formData.method === 'email'}
-                                    onChange={handleChange}
-                                    className="w-4 h-4 text-primary-600"
-                                />
+                            <div className="flex items-center p-4 border-2 rounded-lg border-primary-500 bg-primary-50">
+                                <span className="flex h-4 w-4 items-center justify-center rounded-full border border-primary-600" aria-hidden="true">
+                                    <span className="h-2 w-2 rounded-full bg-primary-600" />
+                                </span>
                                 <div className="ml-3">
                                     <p className="font-medium">Email Verification</p>
                                     <p className="text-sm text-gray-500">Receive OTP via email</p>
                                 </div>
-                            </label>
-
-                            <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                                <input
-                                    type="radio"
-                                    name="method"
-                                    value="sms"
-                                    checked={formData.method === 'sms'}
-                                    onChange={handleChange}
-                                    className="w-4 h-4 text-primary-600"
-                                />
-                                <div className="ml-3">
-                                    <p className="font-medium">SMS Verification</p>
-                                    <p className="text-sm text-gray-500">Receive OTP via text message</p>
-                                </div>
-                            </label>
+                            </div>
                         </div>
 
                         <div className="flex gap-3">

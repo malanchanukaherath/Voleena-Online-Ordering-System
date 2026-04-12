@@ -355,7 +355,7 @@ const Cart = () => {
                                 <span className="font-medium">LKR {deliveryFee.toFixed(2)}</span>
                             </div>
                             <div className="text-xs text-gray-500">
-                                Final delivery fee is calculated at checkout based on distance.
+                                Final delivery fee is confirmed at checkout after we validate your delivery distance.
                             </div>
                             <div className="border-t pt-3 flex justify-between">
                                 <span className="font-semibold text-lg">Total</span>

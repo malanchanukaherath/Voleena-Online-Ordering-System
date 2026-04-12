@@ -145,7 +145,7 @@ const KitchenOrders = () => {
                                 </>
                             ) : (
                                 <Button size="sm" onClick={() => handleQueueStatusUpdate(order)} disabled={!getNextStatus(order.status)}>
-                                    Queue {getActionLabel(order.status)}
+                                    {getActionLabel(order.status)} in 5s
                                 </Button>
                             )}
                         </div>
