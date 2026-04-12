@@ -13,6 +13,7 @@ import { resolveAssetUrl } from '../config/api';
 const ComboManagement = () => {
     const [combos, setCombos] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
+    const [menuItemPriceLookup, setMenuItemPriceLookup] = useState({});
     const [isLoading, setIsLoading] = useState(true);
 
     const [showModal, setShowModal] = useState(false);
@@ -40,7 +41,8 @@ const ComboManagement = () => {
         name: combo.Name,
         description: combo.Description || '',
         price: Number(combo.Price) || 0,
-        discount: combo.DiscountPercentage ? Number(combo.DiscountPercentage) : 0,
+        discount: Math.max(Number(combo.DiscountPercentage) || 0, 0),
+        originalPrice: Math.max(Number(combo.OriginalPrice) || 0, 0),
         startDate: combo.ScheduleStartDate,
         endDate: combo.ScheduleEndDate,
         image: resolveAssetUrl(combo.ImageURL || combo.Image_URL || null),
@@ -79,15 +81,44 @@ const ComboManagement = () => {
                     value: item.MenuItemID || item.ItemID,
                     label: item.Name
                 }));
+                const priceLookup = response.data.reduce((acc, item) => {
+                    const itemId = Number(item.MenuItemID || item.ItemID);
+                    const itemPrice = Number(item.Price);
+                    if (Number.isInteger(itemId) && Number.isFinite(itemPrice)) {
+                        acc[itemId] = itemPrice;
+                    }
+                    return acc;
+                }, {});
                 setMenuItems(mapped);
+                setMenuItemPriceLookup(priceLookup);
             } else {
                 setMenuItems([]);
+                setMenuItemPriceLookup({});
             }
         } catch (error) {
             console.error('Error loading menu items:', error);
             setMenuItems([]);
+            setMenuItemPriceLookup({});
         }
     }, []);
+
+    const calculateOriginalPrice = useCallback((items) => {
+        if (!Array.isArray(items)) {
+            return 0;
+        }
+
+        return items.reduce((sum, item) => {
+            const menuItemId = Number(item.menuItemId);
+            const quantity = Number(item.quantity);
+            const unitPrice = menuItemPriceLookup[menuItemId];
+
+            if (!Number.isInteger(menuItemId) || !Number.isFinite(quantity) || quantity < 1 || !Number.isFinite(unitPrice)) {
+                return sum;
+            }
+
+            return sum + (unitPrice * quantity);
+        }, 0);
+    }, [menuItemPriceLookup]);
 
     useEffect(() => {
         fetchCombos();
@@ -180,8 +211,16 @@ const ComboManagement = () => {
             newErrors.price = 'Valid price is required';
         }
 
-        if (formData.discount && (parseFloat(formData.discount) < 0 || parseFloat(formData.discount) > 100)) {
-            newErrors.discount = 'Discount must be between 0-100%';
+        const parsedDiscount = formData.discount === '' ? 0 : parseFloat(formData.discount);
+        if (!Number.isFinite(parsedDiscount) || parsedDiscount < 0 || parsedDiscount >= 100) {
+            newErrors.discount = 'Discount must be between 0 and less than 100%';
+        }
+
+        if (!newErrors.discount && parsedDiscount > 0) {
+            const originalPrice = calculateOriginalPrice(formData.items);
+            if (originalPrice <= 0) {
+                newErrors.discount = 'Discount requires valid combo items with prices';
+            }
         }
 
         if (!formData.startDate) {
@@ -210,17 +249,29 @@ const ComboManagement = () => {
 
         if (!validateForm()) return;
 
+        const validItems = formData.items.filter(item => item.menuItemId && Number(item.quantity) >= 1);
+        const parsedDiscount = formData.discount === '' ? 0 : parseFloat(formData.discount);
+        let effectivePrice = parseFloat(formData.price);
+
+        if (Number.isFinite(parsedDiscount) && parsedDiscount > 0) {
+            const originalPrice = calculateOriginalPrice(validItems);
+            effectivePrice = Number((originalPrice * (1 - (parsedDiscount / 100))).toFixed(2));
+        }
+
+        if (!Number.isFinite(effectivePrice) || effectivePrice <= 0) {
+            setErrors((prev) => ({ ...prev, price: 'Calculated combo price must be greater than 0' }));
+            return;
+        }
+
         const payload = {
             Name: formData.name.trim(),
             Description: formData.description.trim(),
-            Price: parseFloat(formData.price),
+            Price: effectivePrice,
             ScheduleStartDate: formData.startDate,
             ScheduleEndDate: formData.endDate,
             ImageURL: formData.imageUrl || null,
             IsActive: formData.isActive,
-            items: formData.items
-                .filter(item => item.menuItemId && Number(item.quantity) >= 1)
-                .map(item => ({
+            items: validItems.map(item => ({
                     MenuItemID: Number(item.menuItemId),
                     ItemID: Number(item.menuItemId),
                     Quantity: Number(item.quantity)
@@ -290,6 +341,13 @@ const ComboManagement = () => {
         return combo.isActive && now >= start && now <= end;
     };
 
+    const formDiscountValue = formData.discount === '' ? 0 : Number(formData.discount);
+    const hasDiscountOverride = Number.isFinite(formDiscountValue) && formDiscountValue > 0;
+    const computedOriginalPrice = calculateOriginalPrice(formData.items);
+    const computedDiscountedPrice = hasDiscountOverride && computedOriginalPrice > 0
+        ? Number((computedOriginalPrice * (1 - (formDiscountValue / 100))).toFixed(2))
+        : null;
+
     return (
         <div className="p-6">
             <div className="mb-8 flex justify-between items-center">
@@ -334,8 +392,8 @@ const ComboManagement = () => {
                                                 </div>
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4">LKR {combo.price}</td>
-                                        <td className="px-6 py-4">{combo.discount}%</td>
+                                        <td className="px-6 py-4">LKR {combo.price.toFixed(2)}</td>
+                                        <td className="px-6 py-4">{combo.discount > 0 ? `${combo.discount.toFixed(2)}%` : '0%'}</td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm">
                                                 <div className="flex items-center text-gray-600">
@@ -427,6 +485,9 @@ const ComboManagement = () => {
                                 value={formData.price}
                                 onChange={handleChange}
                                 error={errors.price}
+                                helperText={computedDiscountedPrice !== null
+                                    ? `Auto-calculated from items and discount: LKR ${computedDiscountedPrice.toFixed(2)}`
+                                    : 'Manual combo price when discount is 0%.'}
                                 required
                             />
 
@@ -439,6 +500,7 @@ const ComboManagement = () => {
                                 value={formData.discount}
                                 onChange={handleChange}
                                 error={errors.discount}
+                                helperText="When above 0%, discount recalculates combo price from selected item prices."
                             />
                         </div>
 

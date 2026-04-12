@@ -3,6 +3,33 @@ const { Op, literal } = require('sequelize');
 const db = require('../models');
 const { uploadImageFile, deleteImageByUrl } = require('../services/uploadService');
 
+const toMoneyNumber = (value) => {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const enrichComboPricing = (comboData) => {
+    const items = Array.isArray(comboData.items) ? comboData.items : [];
+    const originalPrice = items.reduce((sum, item) => {
+        const itemPrice = toMoneyNumber(item?.menuItem?.Price);
+        const quantity = toMoneyNumber(item?.Quantity);
+        return sum + (itemPrice * quantity);
+    }, 0);
+
+    const comboPrice = toMoneyNumber(comboData.Price);
+    const discount = Math.max(originalPrice - comboPrice, 0);
+    const discountPercentage = originalPrice > 0
+        ? Number.parseFloat(((discount / originalPrice) * 100).toFixed(2))
+        : 0;
+
+    return {
+        ...comboData,
+        OriginalPrice: Number.parseFloat(originalPrice.toFixed(2)),
+        Discount: Number.parseFloat(discount.toFixed(2)),
+        DiscountPercentage: discountPercentage
+    };
+};
+
 const createComboPack = async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
@@ -112,21 +139,7 @@ const getAllComboPacks = async (req, res) => {
             order: [[literal('`ComboPack`.`created_at`'), 'DESC']]
         });
 
-        const enrichedCombos = comboPacks.map(combo => {
-            const comboData = combo.toJSON();
-            const originalPrice = comboData.items.reduce((sum, item) => {
-                return sum + (item.menuItem.Price * item.Quantity);
-            }, 0);
-            const discount = originalPrice - comboData.Price;
-            const discountPercentage = originalPrice > 0 ? ((discount / originalPrice) * 100).toFixed(2) : 0;
-
-            return {
-                ...comboData,
-                OriginalPrice: originalPrice,
-                Discount: discount,
-                DiscountPercentage: parseFloat(discountPercentage)
-            };
-        });
+        const enrichedCombos = comboPacks.map((combo) => enrichComboPricing(combo.toJSON()));
 
         res.json({
             success: true,
@@ -160,21 +173,7 @@ const getActiveComboPacks = async (req, res) => {
             order: [[literal('`ComboPack`.`created_at`'), 'DESC']]
         });
 
-        const enrichedCombos = comboPacks.map(combo => {
-            const comboData = combo.toJSON();
-            const originalPrice = comboData.items.reduce((sum, item) => {
-                return sum + (item.menuItem.Price * item.Quantity);
-            }, 0);
-            const discount = originalPrice - comboData.Price;
-            const discountPercentage = originalPrice > 0 ? ((discount / originalPrice) * 100).toFixed(2) : 0;
-
-            return {
-                ...comboData,
-                OriginalPrice: originalPrice,
-                Discount: discount,
-                DiscountPercentage: parseFloat(discountPercentage)
-            };
-        });
+        const enrichedCombos = comboPacks.map((combo) => enrichComboPricing(combo.toJSON()));
 
         res.json({
             success: true,
@@ -205,21 +204,9 @@ const getComboPack = async (req, res) => {
             return res.status(404).json({ error: 'Combo pack not found' });
         }
 
-        const comboData = comboPack.toJSON();
-        const originalPrice = comboData.items.reduce((sum, item) => {
-            return sum + (item.menuItem.Price * item.Quantity);
-        }, 0);
-        const discount = originalPrice - comboData.Price;
-        const discountPercentage = originalPrice > 0 ? ((discount / originalPrice) * 100).toFixed(2) : 0;
-
         res.json({
             success: true,
-            data: {
-                ...comboData,
-                OriginalPrice: originalPrice,
-                Discount: discount,
-                DiscountPercentage: parseFloat(discountPercentage)
-            }
+            data: enrichComboPricing(comboPack.toJSON())
         });
     } catch (error) {
         console.error('Get combo pack error:', error);
@@ -283,12 +270,14 @@ const updateComboPack = async (req, res) => {
             for (const item of items) {
                 const menuItem = await MenuItem.findByPk(item.MenuItemID);
                 if (!menuItem) {
+                    await transaction.rollback();
                     return res.status(404).json({
                         success: false,
                         message: `Menu item with ID ${item.MenuItemID} not found`
                     });
                 }
                 if (!menuItem.IsActive) {
+                    await transaction.rollback();
                     return res.status(400).json({
                         success: false,
                         message: `Menu item ${menuItem.Name} is not active`
