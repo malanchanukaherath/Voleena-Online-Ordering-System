@@ -191,7 +191,6 @@ const CashierDashboard = ({ posOnly = false }) => {
     });
     const [recentOrders, setRecentOrders] = useState([]);
     const [posItems, setPosItems] = useState([]);
-    const [isWalkInOpen, setIsWalkInOpen] = useState(Boolean(posOnly));
     const [isPosFullscreen, setIsPosFullscreen] = useState(false);
     const [currentWalkInOrder, setCurrentWalkInOrder] = useState([]);
     const [walkInPaymentMethod, setWalkInPaymentMethod] = useState('CASH');
@@ -551,12 +550,6 @@ const CashierDashboard = ({ posOnly = false }) => {
     }, []);
 
     useEffect(() => {
-        if (posOnly) {
-            setIsWalkInOpen(true);
-        }
-    }, [posOnly]);
-
-    useEffect(() => {
         const onFullscreenChange = () => {
             setIsPosFullscreen(Boolean(document.fullscreenElement));
         };
@@ -644,7 +637,7 @@ const CashierDashboard = ({ posOnly = false }) => {
     }, [loadData]);
 
     useEffect(() => {
-        if (!isWalkInOpen) {
+        if (!posOnly) {
             return undefined;
         }
 
@@ -670,10 +663,10 @@ const CashierDashboard = ({ posOnly = false }) => {
             isActive = false;
             clearInterval(menuRefreshInterval);
         };
-    }, [isWalkInOpen, loadPosCatalog]);
+    }, [posOnly, loadPosCatalog]);
 
     useEffect(() => {
-        if (!isWalkInOpen) {
+        if (!posOnly) {
             return undefined;
         }
 
@@ -719,7 +712,7 @@ const CashierDashboard = ({ posOnly = false }) => {
             isActive = false;
             clearTimeout(searchTimer);
         };
-    }, [customerSearchTerm, isWalkInOpen, selectedCustomer?.CustomerID]);
+    }, [customerSearchTerm, posOnly, selectedCustomer?.CustomerID]);
 
     const addToWalkInOrder = (catalogItem) => {
         setWalkInError('');
@@ -1072,14 +1065,6 @@ const CashierDashboard = ({ posOnly = false }) => {
                             <FaCashRegister className="w-8 h-8 mx-auto mb-2 text-primary-600" />
                             <p className="font-medium">Open POS Full View</p>
                         </Link>
-                        <button
-                            type="button"
-                            onClick={() => setIsWalkInOpen((prev) => !prev)}
-                            className="p-4 border-2 rounded-lg hover:border-primary-500 text-center"
-                        >
-                            <FaCashRegister className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                            <p className="font-medium">Quick POS Panel</p>
-                        </button>
                         <Link to="/cashier/customers/new" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
                             <FaUsers className="w-8 h-8 mx-auto mb-2 text-primary-600" />
                             <p className="font-medium">New Customer</p>
@@ -1090,7 +1075,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                 </>
             )}
 
-            {(posOnly || isWalkInOpen) && (
+            {posOnly && (
                 <div className="mt-8 bg-white rounded-lg shadow p-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                         <h3 className="text-lg font-semibold">Walk-In POS</h3>
