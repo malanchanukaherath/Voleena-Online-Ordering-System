@@ -295,11 +295,19 @@ exports.cancelOrder = async (req, res) => {
     try {
         const { id } = req.params;
         const { reason } = req.body;
-        const cancelledByType = req.user.type === 'Customer'
-            ? 'CUSTOMER'
-            : req.user.role === 'Cashier'
-                ? 'CASHIER'
-                : 'ADMIN';
+        let cancelledByType;
+        if (req.user.type === 'Customer') {
+            cancelledByType = 'CUSTOMER';
+        } else if (req.user.type === 'Staff' && req.user.role === 'Cashier') {
+            cancelledByType = 'CASHIER';
+        } else if (req.user.type === 'Staff' && req.user.role === 'Admin') {
+            cancelledByType = 'ADMIN';
+        } else {
+            return res.status(403).json({
+                success: false,
+                message: 'Only customers, cashiers, or admins can cancel orders'
+            });
+        }
 
         // Log cancellation attempt for auditing
         console.log(`[AUDIT] Order cancellation attempt - OrderID: ${id}, User: ${req.user.id}, Type: ${cancelledByType}, Reason: ${reason.substring(0, 50)}...`);

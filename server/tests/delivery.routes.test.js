@@ -176,6 +176,60 @@ describe('delivery routes', () => {
     expect(response.status).toBe(403);
   });
 
+  test('rejects staff users whose ID only matches the customer ID', async () => {
+    setAuthUser({ id: 55, type: 'Staff', role: 'Delivery' });
+    mockDelivery.findOne.mockResolvedValue({
+      DeliveryID: 7,
+      CurrentLatitude: 6.9,
+      CurrentLongitude: 79.8,
+      LastLocationUpdate: new Date().toISOString(),
+      Status: 'IN_TRANSIT',
+      DeliveryStaffID: 12,
+      order: { CustomerID: 55, OrderType: 'DELIVERY' }
+    });
+
+    const response = await request(app)
+      .get('/api/v1/delivery/deliveries/7/location');
+
+    expect(response.status).toBe(403);
+  });
+
+  test('rejects customers whose ID only matches the delivery staff ID', async () => {
+    setAuthUser({ id: 12, type: 'Customer', role: 'Customer' });
+    mockDelivery.findOne.mockResolvedValue({
+      DeliveryID: 7,
+      CurrentLatitude: 6.9,
+      CurrentLongitude: 79.8,
+      LastLocationUpdate: new Date().toISOString(),
+      Status: 'IN_TRANSIT',
+      DeliveryStaffID: 12,
+      order: { CustomerID: 55, OrderType: 'DELIVERY' }
+    });
+
+    const response = await request(app)
+      .get('/api/v1/delivery/deliveries/7/location');
+
+    expect(response.status).toBe(403);
+  });
+
+  test('allows the assigned delivery staff to read their delivery location', async () => {
+    setAuthUser({ id: 12, type: 'Staff', role: 'Delivery' });
+    mockDelivery.findOne.mockResolvedValue({
+      DeliveryID: 7,
+      CurrentLatitude: 6.9,
+      CurrentLongitude: 79.8,
+      LastLocationUpdate: new Date().toISOString(),
+      Status: 'IN_TRANSIT',
+      DeliveryStaffID: 12,
+      order: { CustomerID: 55, OrderType: 'DELIVERY' }
+    });
+
+    const response = await request(app)
+      .get('/api/v1/delivery/deliveries/7/location');
+
+    expect(response.status).toBe(200);
+  });
+
   test('returns conflict when customer delivery person is not assigned yet', async () => {
     setAuthUser({ id: 55, type: 'Customer', role: 'Customer' });
     mockDelivery.findOne.mockResolvedValue({

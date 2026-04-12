@@ -181,6 +181,15 @@ describe('auth routes', () => {
   });
 
   test('refreshes session tokens when valid refresh token is provided', async () => {
+    mockCustomer.findOne.mockResolvedValue({
+      CustomerID: 21,
+      Name: 'Refresh User',
+      Email: 'refresh@example.com',
+      Phone: '+94773333333',
+      AccountStatus: 'ACTIVE',
+      IsActive: true,
+      IsEmailVerified: true
+    });
     const expiredSoonAccessToken = jwt.sign(
       { id: 21, email: 'refresh@example.com', role: 'Customer', type: 'Customer' },
       process.env.JWT_SECRET,
@@ -207,6 +216,35 @@ describe('auth routes', () => {
 
     expect(decodedAccess.email).toBe('refresh@example.com');
     expect(decodedRefresh.email).toBe('refresh@example.com');
+    expect(mockCustomer.findOne).toHaveBeenCalledWith(expect.objectContaining({
+      where: expect.objectContaining({
+        CustomerID: 21,
+        AccountStatus: 'ACTIVE',
+        IsActive: true
+      })
+    }));
+  });
+
+  test('rejects refresh when the current customer is no longer active', async () => {
+    mockCustomer.findOne.mockResolvedValue(null);
+    const accessToken = jwt.sign(
+      { id: 21, email: 'refresh@example.com', role: 'Customer', type: 'Customer' },
+      process.env.JWT_SECRET,
+      { expiresIn: '1m' }
+    );
+    const refreshToken = jwt.sign(
+      { id: 21, email: 'refresh@example.com', role: 'Customer', type: 'Customer' },
+      process.env.JWT_REFRESH_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    const response = await request(app)
+      .post('/api/v1/auth/refresh')
+      .set('Authorization', `Bearer ${accessToken}`)
+      .send({ refreshToken });
+
+    expect(response.status).toBe(401);
+    expect(response.body.error).toMatch(/invalid refresh token/i);
   });
 
   test('rejects logout without a bearer token', async () => {
@@ -282,6 +320,7 @@ describe('auth routes', () => {
     expect(insertSql).toContain('user_type');
     expect(insertSql).not.toContain('OTPCode');
     expect(insertOptions.replacements[2]).toMatch(/^[a-f0-9]{64}$/);
+    expect(insertOptions.replacements[2]).not.toContain('reset@example.com');
   });
 
   test('verifies reset OTP and returns reset token payload', async () => {

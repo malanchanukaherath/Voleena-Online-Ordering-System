@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
-const { authenticateToken, requireCustomer, requireCashier, requireStaff } = require('../middleware/auth');
+const { authenticateToken, requireCustomer, requireCashier, requireStaff, requireRole } = require('../middleware/auth');
 const { orderLimiter, confirmOrderLimiter } = require('../middleware/rateLimiter');
 const { validateOrderCancellation } = require('../middleware/validation');
 
@@ -15,6 +15,6 @@ router.get('/:id', authenticateToken, orderController.getOrderById); // Role-fil
 router.post('/:id/confirm', requireCashier, confirmOrderLimiter, orderController.confirmOrder);
 router.patch('/:id/status', requireStaff, orderController.updateOrderStatus);
 // CRITICAL: Validation prevents SQL injection and XSS attacks via cancellation reason
-router.delete('/:id', authenticateToken, validateOrderCancellation, orderController.cancelOrder); // Role-filtered in controller
+router.delete('/:id', authenticateToken, requireRole('Customer', 'Admin', 'Cashier'), validateOrderCancellation, orderController.cancelOrder); // Role-filtered in controller
 
 module.exports = router;

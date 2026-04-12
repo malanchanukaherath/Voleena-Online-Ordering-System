@@ -713,6 +713,10 @@ class OrderService {
         });
 
         try {
+            if (!['CUSTOMER', 'CASHIER', 'ADMIN'].includes(cancelledByType)) {
+                throw new Error('Access denied. Only customers, cashiers, or admins can cancel orders');
+            }
+
             console.log(`[ORDER_CANCEL] Starting cancellation - OrderID: ${orderId}, CancelledBy: ${cancelledBy}, Type: ${cancelledByType}`);
 
             const order = await Order.findByPk(orderId, {

@@ -10,7 +10,7 @@ services:
       MYSQL_USER: ${MYSQL_USER:-voleena_user}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD:-voleena}
     ports:
-      - "3306:3306"
+      - "127.0.0.1:3306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./database/safe_schema_full_completion_v2_4.sql:/docker-entrypoint-initdb.d/01-safe-schema.sql:ro

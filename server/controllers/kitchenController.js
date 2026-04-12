@@ -262,9 +262,8 @@ exports.updateOrderStatus = async (req, res) => {
       'Status updated by kitchen staff'
     );
 
-    // Update stock after order is marked READY
+    // Stock is reserved when the order is confirmed; READY must not sell the same items again.
     if (status === 'READY') {
-      await updateStockForOrder(orderId);
       console.log(`[KITCHEN] 🍽️  Order ${order.OrderNumber} marked as READY`);
       console.log(`[KITCHEN] 📦 Order Type: ${order.OrderType}`);
       if (order.OrderType === 'DELIVERY') {
@@ -282,42 +281,6 @@ exports.updateOrderStatus = async (req, res) => {
     return res.status(400).json({ error: error.message || 'Failed to update order status' });
   }
 };
-
-/**
- * Helper function to update stock when order is ready
- */
-async function updateStockForOrder(orderId) {
-  const today = new Date().toISOString().split('T')[0];
-
-  const orderItems = await OrderItem.findAll({
-    where: { OrderID: orderId },
-    include: [{
-      model: MenuItem,
-      as: 'menuItem'
-    }]
-  });
-
-  for (const item of orderItems) {
-    if (item.MenuItemID) {
-      // Update or create daily stock entry
-      const [stock, created] = await DailyStock.findOrCreate({
-        where: {
-          MenuItemID: item.MenuItemID,
-          StockDate: today
-        },
-        defaults: {
-          OpeningQuantity: 0,
-          SoldQuantity: item.Quantity,
-          AdjustedQuantity: 0
-        }
-      });
-
-      if (!created) {
-        await stock.increment('SoldQuantity', { by: item.Quantity });
-      }
-    }
-  }
-}
 
 /**
  * Get daily stock for all menu items

@@ -27,6 +27,19 @@ const resolveTargetFolder = (folder) => {
     return ALLOWED_FOLDERS.includes(folder) ? folder : null;
 };
 
+const hasAllowedImageSignature = (buffer) => {
+    if (!Buffer.isBuffer(buffer) || buffer.length < 12) {
+        return false;
+    }
+
+    const isJpeg = buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+    const isPng = buffer.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+    const isWebp = buffer.subarray(0, 4).toString('ascii') === 'RIFF'
+        && buffer.subarray(8, 12).toString('ascii') === 'WEBP';
+
+    return isJpeg || isPng || isWebp;
+};
+
 const uploadBufferToCloudinary = (buffer, uploadOptions) => {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
@@ -45,6 +58,12 @@ const uploadImageFile = async (file, folder = 'menu') => {
 
     if (!file || !file.buffer) {
         const error = new Error('Image file is required');
+        error.statusCode = 400;
+        throw error;
+    }
+
+    if (!hasAllowedImageSignature(file.buffer)) {
+        const error = new Error('Only valid image files (JPEG, PNG, WEBP) are allowed');
         error.statusCode = 400;
         throw error;
     }
@@ -138,5 +157,6 @@ module.exports = {
     uploadImageFile,
     deleteImageByUrl,
     extractPublicIdFromUrl,
+    hasAllowedImageSignature,
     ALLOWED_FOLDERS
 };

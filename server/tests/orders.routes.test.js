@@ -173,4 +173,27 @@ describe('order routes', () => {
     expect(response.status).toBe(200);
     expect(mockOrderService.cancelOrder).toHaveBeenCalledWith('1', 'Need to change address', 4, 'CUSTOMER');
   });
+
+  test('allows a cashier to cancel an order', async () => {
+    setAuthUser({ id: 9, type: 'Staff', role: 'Cashier' });
+    mockOrderService.cancelOrder.mockResolvedValue({ OrderID: 1, items: [] });
+
+    const response = await request(app)
+      .delete('/api/v1/orders/1')
+      .send({ reason: 'Customer requested cancellation' });
+
+    expect(response.status).toBe(200);
+    expect(mockOrderService.cancelOrder).toHaveBeenCalledWith('1', 'Customer requested cancellation', 9, 'CASHIER');
+  });
+
+  test('rejects kitchen staff order cancellation', async () => {
+    setAuthUser({ id: 21, type: 'Staff', role: 'Kitchen' });
+
+    const response = await request(app)
+      .delete('/api/v1/orders/1')
+      .send({ reason: 'Kitchen cannot fulfill this order' });
+
+    expect(response.status).toBe(403);
+    expect(mockOrderService.cancelOrder).not.toHaveBeenCalled();
+  });
 });

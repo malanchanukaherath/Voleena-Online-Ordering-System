@@ -155,6 +155,61 @@ const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
  */
 const isValidPassword = (password) => password && password.length >= 8;
 
+const buildRefreshPayloadFromCurrentUser = async (decoded) => {
+  if (decoded.type === 'Customer') {
+    const customer = await Customer.findOne({
+      where: {
+        CustomerID: decoded.id,
+        AccountStatus: 'ACTIVE',
+        IsActive: true
+      }
+    });
+
+    if (!customer || !customer.IsEmailVerified) {
+      throw new Error('USER_NOT_ACTIVE');
+    }
+
+    return {
+      id: customer.CustomerID,
+      name: customer.Name,
+      email: customer.Email,
+      phone: customer.Phone,
+      role: 'Customer',
+      type: 'Customer'
+    };
+  }
+
+  if (decoded.type === 'Staff') {
+    const staff = await Staff.findOne({
+      where: {
+        StaffID: decoded.id,
+        IsActive: true
+      },
+      include: [{
+        model: Role,
+        as: 'role',
+        attributes: ['RoleID', 'RoleName', 'Description']
+      }]
+    });
+
+    if (!staff) {
+      throw new Error('USER_NOT_ACTIVE');
+    }
+
+    return {
+      id: staff.StaffID,
+      name: staff.Name,
+      email: staff.Email,
+      role: staff.role ? staff.role.RoleName : 'Staff',
+      roleId: staff.RoleID,
+      type: 'Staff',
+      permissions: {}
+    };
+  }
+
+  throw new Error('USER_NOT_ACTIVE');
+};
+
 /**
  * Staff Login - Admin, Cashier, Kitchen, Delivery
  */
@@ -391,16 +446,8 @@ exports.refreshToken = async (req, res) => {
       // Verify refresh token
       const decoded = verifyRefreshToken(refreshToken);
 
-      // Generate NEW access token with fresh expiry
-      const newPayload = {
-        id: decoded.id,
-        name: decoded.name,
-        email: decoded.email,
-        role: decoded.role,
-        type: decoded.type,
-        roleId: decoded.roleId,
-        permissions: decoded.permissions
-      };
+      // Generate new tokens only after checking the current user and role state.
+      const newPayload = await buildRefreshPayloadFromCurrentUser(decoded);
 
       const newAccessToken = generateToken(newPayload);
 
@@ -708,7 +755,7 @@ exports.requestPasswordReset = async (req, res) => {
     }
 
     // Generate 6-digit OTP
-    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpCode = crypto.randomInt(100000, 1000000).toString();
     const otpHash = hashOtpCode(otpCode);
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 

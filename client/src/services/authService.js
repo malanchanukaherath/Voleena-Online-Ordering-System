@@ -324,6 +324,19 @@ class AuthService {
 
   // Logout user
   logout() {
+    const token = localStorage.getItem('token');
+
+    if (token) {
+      fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      }).catch(() => {
+        // Local logout should still succeed if the API is unavailable.
+      });
+    }
+
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('tokenExpiry');

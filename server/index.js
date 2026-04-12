@@ -296,6 +296,9 @@ async function startServer() {
 
     // Sync models only when explicitly enabled
     if (process.env.DB_SYNC === 'true') {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('Refusing to run Sequelize sync in production. Use reviewed migrations or SQL scripts instead.');
+      }
       await sequelize.sync({ alter: false });
       console.log('✅ Models synchronized');
     }

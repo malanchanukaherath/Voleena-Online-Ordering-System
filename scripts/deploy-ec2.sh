@@ -46,8 +46,12 @@ until [ "$(docker inspect -f '{{.State.Health.Status}}' mysql_db 2>/dev/null)" =
   sleep 2
 done
 
-echo "6) Applying safe schema sync..."
-docker compose --profile init run --rm db_sync
+if [ "${RUN_DB_SYNC:-false}" = "true" ]; then
+  echo "6) Applying safe schema sync because RUN_DB_SYNC=true..."
+  docker compose --profile init run --rm db_sync
+else
+  echo "6) Skipping schema sync. Set RUN_DB_SYNC=true only after reviewing the SQL for this deploy."
+fi
 
 echo "7) Rebuilding and restarting app containers..."
 docker compose up -d --build backend frontend

@@ -158,10 +158,9 @@ class PayHereService {
      */
     async processRefund(payment, reason) {
         // PayHere doesn't have automated refund API
-        // This would need manual processing or integration with payment processor
-
-        payment.Status = 'REFUNDED';
-        payment.RefundedAt = new Date();
+        // Keep the payment paid until the manual refund is completed outside the app.
+        payment.GatewayStatus = 'MANUAL_REFUND_REQUIRED';
+        payment.RefundedAt = null;
         payment.RefundReason = reason;
         await payment.save();
 

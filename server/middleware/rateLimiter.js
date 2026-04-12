@@ -112,6 +112,20 @@ const publicLookupLimiter = rateLimit({
 });
 
 /**
+ * Upload rate limiter
+ * Limits authenticated image uploads to reduce storage and processing abuse.
+ */
+const uploadLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: process.env.NODE_ENV === 'production' ? 30 : 120,
+    message: {
+        success: false,
+        error: 'Too many upload requests, please try again later'
+    },
+    store: makeRedisStore('rl:upload:')
+});
+
+/**
  * Order creation rate limiter
  */
 const orderLimiter = rateLimit({
@@ -179,6 +193,7 @@ module.exports = {
     verifyEmailLimiter,
     publicLookupLimiter,
     orderLimiter,
+    uploadLimiter,
     paymentLimiter,
     confirmOrderLimiter,
     passwordResetLimiter

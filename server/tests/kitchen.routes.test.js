@@ -120,4 +120,29 @@ describe('kitchen routes', () => {
     expect(response.body.success).toBe(true);
     expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('11', 'PREPARING', 21, 'Status updated by kitchen staff');
   });
+
+  test('does not update daily stock again when an order is marked ready', async () => {
+    const order = {
+      OrderID: 12,
+      OrderNumber: 'ORD-12',
+      OrderType: 'TAKEAWAY',
+      Status: 'PREPARING',
+      payment: {
+        Method: 'CASH',
+        Status: 'PENDING'
+      }
+    };
+
+    mockOrder.findByPk.mockResolvedValue(order);
+    mockOrderService.updateOrderStatus.mockResolvedValue({ ...order, Status: 'READY' });
+
+    const response = await request(app)
+      .put('/api/v1/kitchen/orders/12/status')
+      .send({ status: 'READY' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('12', 'READY', 21, 'Status updated by kitchen staff');
+    expect(mockDailyStock.findOrCreate).not.toHaveBeenCalled();
+  });
 });

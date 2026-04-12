@@ -25,7 +25,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
           timeout: 120s
           command_timeout: 30m
-          debug: true
+          debug: false
           script_stop: true
           script: |
             set -e
