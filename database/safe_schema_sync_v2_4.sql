@@ -355,10 +355,54 @@ SET @idx_exists := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TAB
 SET @sql := IF(@tbl_exists = 1 AND @idx_exists = 0, 'CREATE INDEX `idx_feedback_created_at` ON `feedback`(`created_at`)', 'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- =====================================================
+-- 6) In-app notifications migration (safe)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS `app_notification` (
+  `app_notification_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `recipient_type` ENUM('CUSTOMER','STAFF') NOT NULL,
+  `recipient_id` INT UNSIGNED NOT NULL,
+  `recipient_role` ENUM('CUSTOMER','ADMIN','CASHIER','KITCHEN','DELIVERY','STAFF') DEFAULT NULL,
+  `event_type` VARCHAR(64) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `message` TEXT NOT NULL,
+  `payload_json` JSON DEFAULT NULL,
+  `priority` ENUM('LOW','MEDIUM','HIGH','CRITICAL') NOT NULL DEFAULT 'MEDIUM',
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+  `read_at` DATETIME DEFAULT NULL,
+  `related_order_id` INT UNSIGNED DEFAULT NULL,
+  `dedupe_key` VARCHAR(191) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`app_notification_id`),
+  UNIQUE KEY `uk_app_notif_dedupe_key` (`dedupe_key`),
+  KEY `idx_app_notif_recipient_unread_created` (`recipient_type`, `recipient_id`, `is_read`, `created_at`),
+  KEY `idx_app_notif_role_unread_created` (`recipient_role`, `is_read`, `created_at`),
+  KEY `idx_app_notif_related_order_created` (`related_order_id`, `created_at`),
+  KEY `idx_app_notif_event_created` (`event_type`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @tbl_exists := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'app_notification');
+SET @order_tbl_exists := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'order');
+SET @fk_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.REFERENTIAL_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = @db
+    AND TABLE_NAME = 'app_notification'
+    AND CONSTRAINT_NAME = 'fk_app_notif_order'
+);
+SET @sql := IF(
+  @tbl_exists = 1 AND @order_tbl_exists = 1 AND @fk_exists = 0,
+  'ALTER TABLE `app_notification` ADD CONSTRAINT `fk_app_notif_order` FOREIGN KEY (`related_order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 COMMIT;
 
 -- =====================================================
--- 6) Verification queries
+-- 7) Verification queries
 -- =====================================================
 
 SELECT 'customer table exists' AS check_name, COUNT(*) AS ok
@@ -372,5 +416,9 @@ WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'staff';
 SELECT 'role table exists' AS check_name, COUNT(*) AS ok
 FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'role';
+
+SELECT 'app_notification table exists' AS check_name, COUNT(*) AS ok
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'app_notification';
 
 SELECT role_name FROM role ORDER BY role_name;

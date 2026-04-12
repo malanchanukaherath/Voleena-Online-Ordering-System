@@ -1,7 +1,15 @@
-Use this to seed data to database
+Database folder usage (production-safe)
 
-docker compose up -d
+- `safe_schema_full_completion_v2_4.sql`: full idempotent schema for new/empty databases.
+- `safe_schema_sync_v2_4.sql`: additive sync for existing databases (use this in EC2 deployments).
+- `archive/data_full_dump_local_only.sql`: local development dump only. Do not apply on production.
 
-docker compose --profile init up --abort-on-container-exit db_sync backend_seed
+Recommended seed/sync sequence:
 
-docker compose --profile init down
+```bash
+docker compose up -d db
+docker compose --profile init run --rm db_sync
+docker compose --profile init run --rm backend_seed
+```
+
+Avoid applying raw full dumps that contain `DROP TABLE` statements on live environments.

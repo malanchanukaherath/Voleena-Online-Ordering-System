@@ -797,7 +797,51 @@ SELECT 'max_otp_attempts', '3', 'Maximum OTP verification attempts'
 WHERE NOT EXISTS (SELECT 1 FROM `system_settings` WHERE `setting_key`='max_otp_attempts');
 
 -- =====================================================
--- 8) Trigger and views
+-- 8) In-app notifications table (safe)
+-- =====================================================
+
+CREATE TABLE IF NOT EXISTS `app_notification` (
+  `app_notification_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `recipient_type` ENUM('CUSTOMER','STAFF') NOT NULL,
+  `recipient_id` INT UNSIGNED NOT NULL,
+  `recipient_role` ENUM('CUSTOMER','ADMIN','CASHIER','KITCHEN','DELIVERY','STAFF') DEFAULT NULL,
+  `event_type` VARCHAR(64) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `message` TEXT NOT NULL,
+  `payload_json` JSON DEFAULT NULL,
+  `priority` ENUM('LOW','MEDIUM','HIGH','CRITICAL') NOT NULL DEFAULT 'MEDIUM',
+  `is_read` TINYINT(1) NOT NULL DEFAULT 0,
+  `read_at` DATETIME DEFAULT NULL,
+  `related_order_id` INT UNSIGNED DEFAULT NULL,
+  `dedupe_key` VARCHAR(191) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`app_notification_id`),
+  UNIQUE KEY `uk_app_notif_dedupe_key` (`dedupe_key`),
+  KEY `idx_app_notif_recipient_unread_created` (`recipient_type`, `recipient_id`, `is_read`, `created_at`),
+  KEY `idx_app_notif_role_unread_created` (`recipient_role`, `is_read`, `created_at`),
+  KEY `idx_app_notif_related_order_created` (`related_order_id`, `created_at`),
+  KEY `idx_app_notif_event_created` (`event_type`, `created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @tbl_exists := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'app_notification');
+SET @order_tbl_exists := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'order');
+SET @fk_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.REFERENTIAL_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = @db
+    AND TABLE_NAME = 'app_notification'
+    AND CONSTRAINT_NAME = 'fk_app_notif_order'
+);
+SET @sql := IF(
+  @tbl_exists = 1 AND @order_tbl_exists = 1 AND @fk_exists = 0,
+  'ALTER TABLE `app_notification` ADD CONSTRAINT `fk_app_notif_order` FOREIGN KEY (`related_order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+-- =====================================================
+-- 9) Trigger and views
 -- =====================================================
 
 DROP TRIGGER IF EXISTS `trg_auto_disable_menu_item`;
@@ -863,7 +907,7 @@ LEFT JOIN `daily_stock` ds ON mi.menu_item_id = ds.menu_item_id AND ds.stock_dat
 COMMIT;
 
 -- =====================================================
--- 9) Verification
+-- 10) Verification
 -- =====================================================
 
 SELECT 'menu_item exists' AS check_name, COUNT(*) AS ok
@@ -877,3 +921,7 @@ WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'combo_pack';
 SELECT 'order exists' AS check_name, COUNT(*) AS ok
 FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'order';
+
+SELECT 'app_notification exists' AS check_name, COUNT(*) AS ok
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'app_notification';

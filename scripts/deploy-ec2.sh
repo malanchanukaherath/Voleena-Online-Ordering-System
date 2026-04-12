@@ -39,19 +39,26 @@ if grep -n "docker_schema_patch" "${COMPOSE_FILE_CHECK}"; then
 fi
 echo "OK: docker_schema_patch is not referenced."
 
-echo "5) Rebuilding and restarting app containers..."
-docker compose up -d --build backend frontend
+echo "5) Starting DB and waiting for health..."
+docker compose up -d db
+until [ "$(docker inspect -f '{{.State.Health.Status}}' mysql_db 2>/dev/null)" = "healthy" ]; do
+  echo "Waiting for mysql_db to be healthy..."
+  sleep 2
+done
 
 echo "6) Applying safe schema sync..."
 docker compose --profile init run --rm db_sync
 
-echo "7) Checking containers..."
+echo "7) Rebuilding and restarting app containers..."
+docker compose up -d --build backend frontend
+
+echo "8) Checking containers..."
 docker compose ps
 
-echo "8) Checking backend logs..."
+echo "9) Checking backend logs..."
 docker logs --tail=80 backend_app
 
-echo "9) Checking key database tables..."
-docker exec mysql_db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "SHOW TABLES LIKE '\''activity_log'\''; SHOW TABLES LIKE '\''otp_verification'\''; SELECT COUNT(*) AS customers FROM customer;"'
+echo "10) Checking key database tables..."
+docker exec mysql_db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "SHOW TABLES LIKE '\''activity_log'\''; SHOW TABLES LIKE '\''otp_verification'\''; SHOW TABLES LIKE '\''app_notification'\''; SELECT COUNT(*) AS customers FROM customer;"'
 
 echo "DONE: deploy completed safely."
