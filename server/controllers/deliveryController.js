@@ -309,24 +309,24 @@ exports.updateDeliveryStatus = async (req, res) => {
         });
       }
 
-      await appNotificationService.notifyStaffRoles(['Admin', 'Cashier'], {
-        eventType: 'DELIVERY_STATUS_UPDATED',
-        title: `Order #${orderNumber}`,
-        message: `Delivery status changed from ${previousStatus} to ${status}.`,
-        priority: status === 'FAILED' ? 'HIGH' : 'MEDIUM',
-        relatedOrderId: delivery.OrderID,
-        payload: {
-          orderId: delivery.OrderID,
-          orderNumber,
-          deliveryId: delivery.DeliveryID,
-          staffId: delivery.DeliveryStaffID,
-          previousStatus,
-          status
-        },
-        dedupeKey: `DELIVERY_STATUS_UPDATED:STAFF:${delivery.OrderID}:${status}`
-      });
-
       if (status === 'FAILED') {
+        await appNotificationService.notifyStaffRoles(['Admin', 'Cashier'], {
+          eventType: 'DELIVERY_STATUS_UPDATED',
+          title: `Order #${orderNumber}`,
+          message: `Delivery failed and needs immediate follow-up/reassignment.`,
+          priority: 'HIGH',
+          relatedOrderId: delivery.OrderID,
+          payload: {
+            orderId: delivery.OrderID,
+            orderNumber,
+            deliveryId: delivery.DeliveryID,
+            staffId: delivery.DeliveryStaffID,
+            previousStatus,
+            status
+          },
+          dedupeKey: `DELIVERY_STATUS_UPDATED:STAFF:${delivery.OrderID}:${status}`
+        });
+
         await appNotificationService.notifyStaffRoles(['Delivery'], {
           eventType: 'DELIVERY_REASSIGNMENT_REQUIRED',
           title: `Order #${orderNumber}`,
@@ -339,6 +339,23 @@ exports.updateDeliveryStatus = async (req, res) => {
             deliveryId: delivery.DeliveryID
           },
           dedupeKey: `DELIVERY_REASSIGNMENT_REQUIRED:${delivery.OrderID}`
+        });
+      } else if (status === 'DELIVERED') {
+        await appNotificationService.notifyStaffRoles(['Admin'], {
+          eventType: 'DELIVERY_STATUS_UPDATED',
+          title: `Order #${orderNumber}`,
+          message: `Delivery completed successfully.`,
+          priority: 'MEDIUM',
+          relatedOrderId: delivery.OrderID,
+          payload: {
+            orderId: delivery.OrderID,
+            orderNumber,
+            deliveryId: delivery.DeliveryID,
+            staffId: delivery.DeliveryStaffID,
+            previousStatus,
+            status
+          },
+          dedupeKey: `DELIVERY_STATUS_UPDATED:STAFF:${delivery.OrderID}:${status}`
         });
       }
     } catch (notificationError) {

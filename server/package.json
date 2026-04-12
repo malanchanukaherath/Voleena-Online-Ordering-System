@@ -19,8 +19,8 @@
     "express",
     "mysql"
   ],
-  "author": "Voleena Foods",
-  "license": "ISC",
+  "author": "Malan Chanuka Herath",
+  "license": "UNLICENSED",
   "dependencies": {
     "axios": "^1.6.0",
     "bcryptjs": "^2.4.3",

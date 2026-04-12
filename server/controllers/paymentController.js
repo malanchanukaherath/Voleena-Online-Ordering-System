@@ -56,7 +56,7 @@ async function notifyPaymentUpdate(order, payment, nextStatus) {
       PENDING: `Order #${orderNumber} payment is pending review (${method}).`
     };
 
-    if (order.CustomerID && order.OrderType !== 'WALK_IN') {
+    if (order.CustomerID && order.OrderType !== 'WALK_IN' && ['PAID', 'FAILED'].includes(nextStatus)) {
       await appNotificationService.notifyCustomer(order.CustomerID, {
         eventType: 'PAYMENT_STATUS_UPDATED',
         title: `Order #${orderNumber}`,
@@ -74,21 +74,41 @@ async function notifyPaymentUpdate(order, payment, nextStatus) {
       });
     }
 
-    await appNotificationService.notifyStaffRoles(['Cashier', 'Admin'], {
-      eventType: 'PAYMENT_STATUS_UPDATED',
-      title: `Order #${orderNumber}`,
-      message: staffMessageByStatus[nextStatus] || `Payment status updated to ${nextStatus}.`,
-      priority: nextStatus === 'FAILED' ? 'HIGH' : 'MEDIUM',
-      relatedOrderId: order.OrderID,
-      payload: {
-        orderId: order.OrderID,
-        orderNumber,
-        paymentId: payment.PaymentID,
-        paymentMethod: method,
-        paymentStatus: nextStatus
-      },
-      dedupeKey: `PAYMENT_STATUS_UPDATED:STAFF:${payment.PaymentID}:${nextStatus}`
-    });
+    if (nextStatus === 'FAILED') {
+      await appNotificationService.notifyStaffRoles(['Cashier', 'Admin'], {
+        eventType: 'PAYMENT_STATUS_UPDATED',
+        title: `Order #${orderNumber}`,
+        message: staffMessageByStatus[nextStatus] || `Payment status updated to ${nextStatus}.`,
+        priority: 'HIGH',
+        relatedOrderId: order.OrderID,
+        payload: {
+          orderId: order.OrderID,
+          orderNumber,
+          paymentId: payment.PaymentID,
+          paymentMethod: method,
+          paymentStatus: nextStatus
+        },
+        dedupeKey: `PAYMENT_STATUS_UPDATED:STAFF:${payment.PaymentID}:${nextStatus}`
+      });
+    }
+
+    if (nextStatus === 'PENDING') {
+      await appNotificationService.notifyStaffRoles(['Admin'], {
+        eventType: 'PAYMENT_STATUS_UPDATED',
+        title: `Order #${orderNumber}`,
+        message: staffMessageByStatus[nextStatus] || `Payment status updated to ${nextStatus}.`,
+        priority: 'MEDIUM',
+        relatedOrderId: order.OrderID,
+        payload: {
+          orderId: order.OrderID,
+          orderNumber,
+          paymentId: payment.PaymentID,
+          paymentMethod: method,
+          paymentStatus: nextStatus
+        },
+        dedupeKey: `PAYMENT_STATUS_UPDATED:STAFF:${payment.PaymentID}:${nextStatus}`
+      });
+    }
   } catch (error) {
     console.error('[APP_NOTIFICATION] payment update:', error.message);
   }
@@ -430,6 +450,8 @@ exports.stripeWebhook = async (req, res) => {
           PaidAt: null,
           GatewayStatus: buildGatewayStatus('REVIEW', reviewReason)
         });
+
+        await notifyPaymentUpdate(order, payment, 'PENDING');
 
         console.error(`❌ Stripe payment requires manual review: ${intent.id} (${reviewReason})`);
         return res.json({ received: true, review: true });

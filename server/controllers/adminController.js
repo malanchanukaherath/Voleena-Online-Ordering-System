@@ -1117,7 +1117,7 @@ exports.assignDeliveryStaff = async (req, res) => {
         });
       }
 
-      await appNotificationService.notifyStaffRoles(['Cashier', 'Admin'], {
+      await appNotificationService.notifyStaffRoles(['Admin'], {
         eventType: 'DELIVERY_ASSIGNED',
         title: `Order #${order.OrderNumber || normalizedOrderId}`,
         message: `${staff.Name} assigned for delivery.`,

@@ -391,9 +391,10 @@ class OrderService {
 
             const statusLabel = shouldAutoConfirm ? 'confirmed' : 'pending confirmation';
             const eventType = shouldAutoConfirm ? 'ORDER_CONFIRMED' : 'ORDER_CREATED';
+            const creationRecipientRoles = ['Kitchen', 'Admin'];
 
             await notifySafely(async () => {
-                await appNotificationService.notifyStaffRoles(['Cashier', 'Kitchen', 'Admin'], {
+                await appNotificationService.notifyStaffRoles(creationRecipientRoles, {
                     eventType,
                     title: `Order #${orderNumber}`,
                     message: `New ${orderType.toLowerCase()} order #${orderNumber} is ${statusLabel}.`,
@@ -639,7 +640,13 @@ class OrderService {
             CANCELLED: 'Order cancelled'
         };
 
-        if (order.OrderType !== 'WALK_IN' && order.CustomerID) {
+        const shouldNotifyCustomerOnStatus =
+            order.OrderType !== 'WALK_IN'
+            && order.CustomerID
+            && !['PREPARING'].includes(newStatus)
+            && !(order.OrderType === 'DELIVERY' && newStatus === 'READY');
+
+        if (shouldNotifyCustomerOnStatus) {
             await notifySafely(async () => {
                 await appNotificationService.notifyCustomer(order.CustomerID, {
                     eventType: 'ORDER_STATUS_UPDATED',
@@ -659,20 +666,23 @@ class OrderService {
         }
 
         await notifySafely(async () => {
-            const recipientRoles = ['Admin'];
+            const staffRoleMatrixByStatus = {
+                CONFIRMED: ['Kitchen', 'Admin'],
+                PREPARING: ['Admin'],
+                READY: order.OrderType === 'DELIVERY' ? ['Admin'] : ['Cashier', 'Admin'],
+                OUT_FOR_DELIVERY: ['Admin'],
+                DELIVERED: ['Admin'],
+                CANCELLED: ['Admin', 'Cashier']
+            };
 
-            if (['CONFIRMED', 'PREPARING', 'READY', 'CANCELLED'].includes(newStatus)) {
-                recipientRoles.push('Cashier', 'Kitchen');
-            }
-
-            if (['OUT_FOR_DELIVERY', 'DELIVERED'].includes(newStatus)) {
-                recipientRoles.push('Delivery');
-            }
+            const recipientRoles = staffRoleMatrixByStatus[newStatus] || ['Admin'];
 
             await appNotificationService.notifyStaffRoles(recipientRoles, {
                 eventType: 'ORDER_STATUS_UPDATED',
                 title: `Order #${order.OrderNumber}`,
-                message: `Order status changed from ${oldStatus} to ${newStatus}.`,
+                message: newStatus === 'READY' && order.OrderType !== 'DELIVERY'
+                    ? `Order #${order.OrderNumber} is ready for customer handover.`
+                    : `Order status changed from ${oldStatus} to ${newStatus}.`,
                 priority: ['CANCELLED'].includes(newStatus) ? 'HIGH' : 'MEDIUM',
                 relatedOrderId: order.OrderID,
                 payload: {
@@ -1045,7 +1055,7 @@ class OrderService {
             }, 'Failed to notify assigned rider after auto-assignment');
 
             await notifySafely(async () => {
-                await appNotificationService.notifyStaffRoles(['Admin', 'Cashier'], {
+                await appNotificationService.notifyStaffRoles(['Admin'], {
                     eventType: 'DELIVERY_ASSIGNED',
                     title: `Delivery Staff Assigned`,
                     message: `${selectedStaff.Name} assigned to order #${delivery.order?.OrderNumber || orderId}.`,
