@@ -22,6 +22,7 @@ services:
       start_period: 20s
 
   backend:
+    image: ${BACKEND_IMAGE:-voleena-backend:local}
     build: ./server
     container_name: backend_app
     restart: always
@@ -46,6 +47,7 @@ services:
         condition: service_healthy
 
   frontend:
+    image: ${FRONTEND_IMAGE:-voleena-frontend:local}
     build:
       context: ./client
       args:

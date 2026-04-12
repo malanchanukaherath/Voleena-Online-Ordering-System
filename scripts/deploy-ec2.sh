@@ -5,10 +5,16 @@ set -Eeuo pipefail
 REPO_DIR="${REPO_DIR:-$HOME/Voleena-Online-Ordering-System}"
 TARGET_BRANCH="${TARGET_BRANCH:-main}"
 COMPOSE_FILE_CHECK="${COMPOSE_FILE_CHECK:-/tmp/voleena-compose-check.yml}"
+DEPLOY_STRATEGY="${DEPLOY_STRATEGY:-build}"
+IMAGE_TAG="${IMAGE_TAG:-latest}"
+
+export DOCKER_CLIENT_TIMEOUT="${DOCKER_CLIENT_TIMEOUT:-900}"
+export COMPOSE_HTTP_TIMEOUT="${COMPOSE_HTTP_TIMEOUT:-900}"
 
 echo "==> Deploy started at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "==> Repo: ${REPO_DIR}"
 echo "==> Branch: ${TARGET_BRANCH}"
+echo "==> Deploy strategy: ${DEPLOY_STRATEGY}"
 
 cd "${REPO_DIR}"
 
@@ -53,8 +59,38 @@ else
   echo "6) Skipping schema sync. Set RUN_DB_SYNC=true only after reviewing the SQL for this deploy."
 fi
 
-echo "7) Rebuilding and restarting app containers..."
-docker compose up -d --build backend frontend
+echo "7) Updating and restarting app containers..."
+case "${DEPLOY_STRATEGY}" in
+  pull)
+    if [ -z "${DOCKERHUB_USERNAME:-}" ]; then
+      echo "STOP: DEPLOY_STRATEGY=pull requires DOCKERHUB_USERNAME."
+      exit 1
+    fi
+
+    export BACKEND_IMAGE="${BACKEND_IMAGE:-${DOCKERHUB_USERNAME}/voleena-backend:${IMAGE_TAG}}"
+    export FRONTEND_IMAGE="${FRONTEND_IMAGE:-${DOCKERHUB_USERNAME}/voleena-frontend:${IMAGE_TAG}}"
+
+    if [ -n "${DOCKERHUB_TOKEN:-}" ]; then
+      echo "Logging in to Docker Hub..."
+      printf '%s' "${DOCKERHUB_TOKEN}" | docker login -u "${DOCKERHUB_USERNAME}" --password-stdin
+    fi
+
+    echo "Pulling ${BACKEND_IMAGE} and ${FRONTEND_IMAGE}..."
+    docker compose pull backend frontend
+    docker compose up -d --no-build backend frontend
+    ;;
+  build)
+    echo "Building backend image on EC2..."
+    docker compose build --progress=plain backend
+    echo "Building frontend image on EC2..."
+    docker compose build --progress=plain frontend
+    docker compose up -d --no-build backend frontend
+    ;;
+  *)
+    echo "STOP: Unknown DEPLOY_STRATEGY='${DEPLOY_STRATEGY}'. Use 'build' or 'pull'."
+    exit 1
+    ;;
+esac
 
 echo "8) Checking containers..."
 docker compose ps

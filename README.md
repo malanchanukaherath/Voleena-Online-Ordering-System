@@ -163,6 +163,9 @@ npm run lint
 
 - EC2 helper script: `scripts/deploy-ec2.sh`
 - Container definitions: `client/Dockerfile`, `server/Dockerfile`
+- GitHub Actions deploy builds and pushes `voleena-backend` and `voleena-frontend` first, then EC2 pulls the exact `sha-<commit>` images to avoid slow production builds.
+- Manual EC2 deploy with local builds: `TARGET_BRANCH=main ./deploy-ec2.sh`
+- Manual EC2 deploy with prebuilt Docker Hub images: `DEPLOY_STRATEGY=pull DOCKERHUB_USERNAME=<dockerhub-user> IMAGE_TAG=latest TARGET_BRANCH=main ./deploy-ec2.sh` (`DOCKERHUB_TOKEN` is optional for private images)
 
 ## Testing
 
