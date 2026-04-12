@@ -18,6 +18,7 @@ import {
     FaChartLine,
     FaBoxes,
     FaMapMarkedAlt,
+    FaCashRegister,
 } from 'react-icons/fa';
 import NotificationCenter from '../ui/NotificationCenter';
 import { usePublicSettings } from '../../hooks/usePublicSettings';
@@ -96,6 +97,7 @@ const Header = ({
             case 'Cashier':
                 return [
                     { path: '/cashier', label: 'Dashboard', icon: FaTachometerAlt },
+                    { path: '/cashier/pos', label: 'POS', icon: FaCashRegister },
                     { path: '/cashier/orders', label: 'Orders', icon: FaClipboardList },
                     { path: '/cashier/customers/new', label: 'New Customer', icon: FaUsers },
                 ];

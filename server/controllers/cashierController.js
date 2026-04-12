@@ -1,7 +1,101 @@
-const { Order, Customer, OrderItem, MenuItem, Delivery, Address, OrderStatusHistory, Payment, sequelize } = require('../models');
+const { Order, Customer, OrderItem, MenuItem, ComboPack, Delivery, Address, OrderStatusHistory, Payment, Staff, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const orderService = require('../services/orderService');
+
+const DEFAULT_STORE_NAME = process.env.POS_STORE_NAME || 'Voleena Foods';
+const DEFAULT_STORE_ADDRESS = process.env.POS_STORE_ADDRESS || 'Store Address Not Configured';
+const DEFAULT_STORE_CONTACT = process.env.POS_STORE_CONTACT || 'N/A';
+const DEFAULT_TERMINAL_ID = process.env.POS_TERMINAL_ID || 'WEB-POS-1';
+
+const toFiniteNumber = (value, fallback = 0) => {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const toPositiveNumberOrNull = (value) => {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    return null;
+  }
+
+  return parsed;
+};
+
+const getOrderCreatedAt = (order) => order?.created_at || order?.CreatedAt || order?.createdAt || new Date();
+
+const buildReceiptPayload = (order, options = {}) => {
+  const subtotal = toFiniteNumber(order?.TotalAmount, 0);
+  const discount = toFiniteNumber(order?.DiscountAmount, 0);
+  const deliveryFee = toFiniteNumber(order?.DeliveryFee, 0);
+  const tax = 0;
+  const total = toFiniteNumber(order?.FinalAmount, Math.max((subtotal - discount) + deliveryFee + tax, 0));
+  const paidAmountFromPayment = toFiniteNumber(order?.payment?.Amount, total);
+  const amountReceived = toFiniteNumber(
+    options.amountReceived,
+    paidAmountFromPayment
+  );
+  const change = toFiniteNumber(
+    options.change,
+    Math.max(amountReceived - total, 0)
+  );
+
+  return {
+    receiptNumber: order?.OrderNumber || `OID-${order?.OrderID || 'N/A'}`,
+    orderId: order?.OrderID || null,
+    orderNumber: order?.OrderNumber || null,
+    orderType: order?.OrderType || null,
+    printedAt: new Date().toISOString(),
+    orderCreatedAt: getOrderCreatedAt(order),
+    terminalId: options.terminalId || DEFAULT_TERMINAL_ID,
+    cashierName: options.cashierName || order?.confirmer?.Name || 'Cashier',
+    customer: {
+      id: order?.customer?.CustomerID || null,
+      name: order?.customer?.Name || 'Walk-in Customer',
+      phone: order?.customer?.Phone || '',
+      email: order?.customer?.Email || ''
+    },
+    store: {
+      name: DEFAULT_STORE_NAME,
+      address: DEFAULT_STORE_ADDRESS,
+      contact: DEFAULT_STORE_CONTACT
+    },
+    items: (order?.items || []).map((item) => {
+      const unitPrice = toFiniteNumber(item?.UnitPrice, toFiniteNumber(item?.menuItem?.Price, toFiniteNumber(item?.combo?.Price, 0)));
+      const quantity = Number.parseInt(item?.Quantity, 10) || 0;
+
+      return {
+        orderItemId: item?.OrderItemID || null,
+        menuItemId: item?.MenuItemID || null,
+        comboId: item?.ComboID || null,
+        name: item?.menuItem?.Name || item?.combo?.Name || 'Item',
+        quantity,
+        unitPrice,
+        lineTotal: quantity * unitPrice
+      };
+    }),
+    pricing: {
+      subtotal,
+      discount,
+      tax,
+      deliveryFee,
+      total,
+      amountReceived,
+      change
+    },
+    payment: {
+      paymentId: order?.payment?.PaymentID || null,
+      method: order?.payment?.Method || 'N/A',
+      status: order?.payment?.Status || 'PENDING',
+      paidAt: order?.payment?.PaidAt || null,
+      amount: paidAmountFromPayment
+    }
+  };
+};
 
 const isAddressTableMissingError = (error) => {
   const mysqlCode = error?.original?.code || error?.parent?.code;
@@ -163,7 +257,13 @@ exports.createWalkInOrder = async (req, res) => {
       payment_method: paymentMethod,
       special_instructions: specialInstructions,
       customer_id: customerIdFromSnakeCase,
-      customerId: customerIdFromCamelCase
+      customerId: customerIdFromCamelCase,
+      amount_received: amountReceivedFromSnakeCase,
+      amountReceived: amountReceivedFromCamelCase,
+      change_amount: changeAmountFromSnakeCase,
+      changeAmount: changeAmountFromCamelCase,
+      terminal_id: terminalIdFromSnakeCase,
+      terminalId: terminalIdFromCamelCase
     } = req.body;
 
     if (!Array.isArray(items) || items.length === 0) {
@@ -210,6 +310,22 @@ exports.createWalkInOrder = async (req, res) => {
       items: normalizedItems
     });
 
+    if (
+      Number.isInteger(req.user?.id)
+      && req.user?.type === 'Staff'
+      && order?.Status === 'CONFIRMED'
+    ) {
+      await Order.update(
+        { ConfirmedBy: req.user.id },
+        {
+          where: {
+            OrderID: order.OrderID,
+            ConfirmedBy: null
+          }
+        }
+      );
+    }
+
     const amount = Number(order.FinalAmount ?? order.TotalAmount ?? 0);
     const isPaidAtCounter = normalizedPaymentMethod === 'CASH';
 
@@ -241,15 +357,37 @@ exports.createWalkInOrder = async (req, res) => {
             model: MenuItem,
             as: 'menuItem',
             attributes: ['MenuItemID', 'Name', 'Price']
+          }, {
+            model: ComboPack,
+            as: 'combo',
+            attributes: ['ComboID', 'Name', 'Price']
           }]
+        },
+        {
+          model: Staff,
+          as: 'confirmer',
+          attributes: ['StaffID', 'Name']
         }
       ]
+    });
+
+    const amountReceived = toPositiveNumberOrNull(amountReceivedFromSnakeCase ?? amountReceivedFromCamelCase);
+    const changeAmount = toPositiveNumberOrNull(changeAmountFromSnakeCase ?? changeAmountFromCamelCase);
+    const terminalId = String(terminalIdFromSnakeCase ?? terminalIdFromCamelCase ?? '').trim();
+    const cashierName = String(req.user?.name || '').trim() || 'Cashier';
+
+    const receipt = buildReceiptPayload(completeOrder, {
+      amountReceived,
+      change: changeAmount,
+      terminalId: terminalId || DEFAULT_TERMINAL_ID,
+      cashierName
     });
 
     return res.status(201).json({
       success: true,
       message: 'Walk-in order created and sent to kitchen',
-      data: completeOrder
+      data: completeOrder,
+      receipt
     });
   } catch (error) {
     console.error('Create walk-in order error:', error);
@@ -301,7 +439,16 @@ exports.getAllOrders = async (req, res) => {
             model: MenuItem,
             as: 'menuItem',
             attributes: ['MenuItemID', 'Name', 'Price']
+          }, {
+            model: ComboPack,
+            as: 'combo',
+            attributes: ['ComboID', 'Name', 'Price']
           }]
+        },
+        {
+          model: Payment,
+          as: 'payment',
+          attributes: ['PaymentID', 'Method', 'Status', 'Amount', 'PaidAt']
         }
       ],
       order: [
@@ -321,6 +468,71 @@ exports.getAllOrders = async (req, res) => {
   } catch (error) {
     console.error('Get all orders error:', error);
     return res.status(500).json({ error: 'Failed to fetch orders' });
+  }
+};
+
+/**
+ * Get full receipt data for a specific order id (manual reprint support)
+ */
+exports.getOrderReceipt = async (req, res) => {
+  try {
+    const parsedOrderId = Number.parseInt(req.params.orderId, 10);
+
+    if (!Number.isInteger(parsedOrderId) || parsedOrderId <= 0) {
+      return res.status(400).json({ error: 'Invalid order id' });
+    }
+
+    const terminalIdFromQuery = String(req.query?.terminalId || '').trim();
+    const order = await Order.findByPk(parsedOrderId, {
+      include: [
+        {
+          model: Customer,
+          as: 'customer',
+          attributes: ['CustomerID', 'Name', 'Email', 'Phone']
+        },
+        {
+          model: Payment,
+          as: 'payment',
+          attributes: ['PaymentID', 'Method', 'Status', 'Amount', 'PaidAt']
+        },
+        {
+          model: OrderItem,
+          as: 'items',
+          include: [{
+            model: MenuItem,
+            as: 'menuItem',
+            attributes: ['MenuItemID', 'Name', 'Price']
+          }, {
+            model: ComboPack,
+            as: 'combo',
+            attributes: ['ComboID', 'Name', 'Price']
+          }]
+        },
+        {
+          model: Staff,
+          as: 'confirmer',
+          attributes: ['StaffID', 'Name']
+        }
+      ]
+    });
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    const receipt = buildReceiptPayload(order, {
+      terminalId: terminalIdFromQuery || DEFAULT_TERMINAL_ID,
+      cashierName: order?.confirmer?.Name || String(req.user?.name || '').trim() || 'Cashier'
+    });
+
+    return res.json({
+      success: true,
+      data: order,
+      receipt
+    });
+  } catch (error) {
+    console.error('Get order receipt error:', error);
+    return res.status(500).json({ error: 'Failed to fetch receipt data' });
   }
 };
 

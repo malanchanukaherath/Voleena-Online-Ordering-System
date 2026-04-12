@@ -43,6 +43,7 @@ jest.mock('../controllers/kitchenController', () => ({
 jest.mock('../controllers/cashierController', () => ({
   getDashboardStats: mockOkHandler,
   getAllOrders: mockOkHandler,
+  getOrderReceipt: mockOkHandler,
   createWalkInOrder: mockOkHandler,
   confirmOrder: mockOkHandler,
   cancelOrder: mockOkHandler,
@@ -127,6 +128,7 @@ const routerDefinitions = [
     protectedEndpoints: [
       ['get', '/dashboard/stats'],
       ['get', '/orders'],
+      ['get', '/orders/1/receipt'],
       ['post', '/walkin-order'],
       ['put', '/orders/1/confirm'],
       ['put', '/orders/1/cancel'],

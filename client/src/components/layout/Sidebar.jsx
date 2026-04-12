@@ -14,6 +14,7 @@ import {
     FaCog,
     FaTruck,
     FaMapMarkedAlt,
+    FaCashRegister,
 } from 'react-icons/fa';
 
 const Sidebar = ({ className = '', onNavigate }) => {
@@ -44,6 +45,7 @@ const Sidebar = ({ className = '', onNavigate }) => {
             case 'Cashier':
                 return [
                     { path: '/cashier', label: 'Dashboard', icon: FaTachometerAlt },
+                    { path: '/cashier/pos', label: 'POS', icon: FaCashRegister },
                     { path: '/cashier/orders', label: 'Orders', icon: FaClipboardList },
                     { path: '/cashier/customers/new', label: 'New Customer', icon: FaUsers },
                 ];

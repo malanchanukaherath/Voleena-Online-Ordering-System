@@ -194,6 +194,19 @@ class CashierService {
     return handleResponse(response);
   }
 
+  async getOrderReceipt(orderId, terminalId = '') {
+    const query = new URLSearchParams();
+    if (terminalId) {
+      query.set('terminalId', terminalId);
+    }
+
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    const response = await fetch(`${API_BASE_URL}/api/v1/cashier/orders/${orderId}/receipt${suffix}`, {
+      headers: getAuthHeaders()
+    });
+    return handleResponse(response);
+  }
+
   async createWalkInOrder(orderData) {
     const response = await fetch(`${API_BASE_URL}/api/v1/cashier/walkin-order`, {
       method: 'POST',

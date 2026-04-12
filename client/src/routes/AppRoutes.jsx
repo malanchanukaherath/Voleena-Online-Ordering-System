@@ -123,6 +123,7 @@ const AppRoutes = () => {
 
       {/* Cashier Protected Routes */}
       <Route path="/cashier/dashboard" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CashierDashboard /></ProtectedRoute>} />
+      <Route path="/cashier/pos" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CashierDashboard posOnly /></ProtectedRoute>} />
       <Route path="/cashier" element={<Navigate to="/cashier/dashboard" replace />} />
       <Route path="/cashier/orders" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CashierOrders /></ProtectedRoute>} />
       <Route path="/cashier/customers/new" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CustomerRegistration /></ProtectedRoute>} />

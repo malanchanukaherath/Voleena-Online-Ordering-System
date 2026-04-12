@@ -3,7 +3,8 @@ const request = require('supertest');
 const mockOrder = {
   count: jest.fn(),
   findAll: jest.fn(),
-  findByPk: jest.fn()
+  findByPk: jest.fn(),
+  update: jest.fn()
 };
 
 const mockCustomer = {
@@ -16,8 +17,10 @@ const mockCustomer = {
 
 const mockOrderItem = {};
 const mockMenuItem = {};
+const mockComboPack = {};
 const mockDelivery = {};
 const mockAddress = {};
+const mockStaff = {};
 const mockOrderStatusHistory = {
   create: jest.fn()
 };
@@ -46,8 +49,10 @@ jest.mock('../models', () => ({
   Customer: mockCustomer,
   OrderItem: mockOrderItem,
   MenuItem: mockMenuItem,
+  ComboPack: mockComboPack,
   Delivery: mockDelivery,
   Address: mockAddress,
+  Staff: mockStaff,
   OrderStatusHistory: mockOrderStatusHistory,
   Payment: mockPayment,
   sequelize: mockSequelize
@@ -85,6 +90,15 @@ describe('cashier routes', () => {
     expect(response.status).toBe(401);
   });
 
+  test('rejects receipt retrieval when unauthenticated', async () => {
+    setAuthMode('unauthorized');
+
+    const response = await request(app)
+      .get('/api/v1/cashier/orders/501/receipt');
+
+    expect(response.status).toBe(401);
+  });
+
   test('creates a guest walk-in order when no customer is selected', async () => {
     mockCustomer.findOne.mockResolvedValue({
       CustomerID: 1,
@@ -95,6 +109,7 @@ describe('cashier routes', () => {
       OrderID: 501,
       FinalAmount: 1500
     });
+    mockOrder.update.mockResolvedValue([1]);
     mockPayment.create.mockResolvedValue({ PaymentID: 71 });
     mockOrder.findByPk.mockResolvedValue({
       OrderID: 501,
@@ -133,6 +148,7 @@ describe('cashier routes', () => {
       OrderID: 777,
       FinalAmount: 2400
     });
+    mockOrder.update.mockResolvedValue([1]);
     mockPayment.create.mockResolvedValue({ PaymentID: 88 });
     mockOrder.findByPk.mockResolvedValue({
       OrderID: 777,
@@ -184,5 +200,61 @@ describe('cashier routes', () => {
     expect(response.body.error).toMatch(/not active/i);
     expect(mockOrderService.createOrder).not.toHaveBeenCalled();
     expect(mockPayment.create).not.toHaveBeenCalled();
+  });
+
+  test('returns receipt payload for manual reprint by order id', async () => {
+    mockOrder.findByPk.mockResolvedValue({
+      OrderID: 501,
+      OrderNumber: 'VF2604110001',
+      OrderType: 'WALK_IN',
+      TotalAmount: 1500,
+      DiscountAmount: 0,
+      DeliveryFee: 0,
+      FinalAmount: 1500,
+      created_at: new Date('2026-04-11T10:30:00.000Z'),
+      customer: {
+        CustomerID: 1,
+        Name: 'Walk-in Customer',
+        Phone: '7000000000',
+        Email: null
+      },
+      payment: {
+        PaymentID: 71,
+        Method: 'CASH',
+        Status: 'PAID',
+        Amount: 1500,
+        PaidAt: new Date('2026-04-11T10:31:00.000Z')
+      },
+      items: [
+        {
+          OrderItemID: 90,
+          MenuItemID: 1,
+          ComboID: null,
+          Quantity: 2,
+          UnitPrice: 750,
+          menuItem: {
+            MenuItemID: 1,
+            Name: 'Chicken Kottu',
+            Price: 750
+          },
+          combo: null
+        }
+      ],
+      confirmer: {
+        StaffID: 2,
+        Name: 'Cashier One'
+      }
+    });
+
+    const response = await request(app)
+      .get('/api/v1/cashier/orders/501/receipt');
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.receipt).toBeDefined();
+    expect(response.body.receipt.orderId).toBe(501);
+    expect(response.body.receipt.receiptNumber).toBe('VF2604110001');
+    expect(response.body.receipt.items).toHaveLength(1);
+    expect(response.body.receipt.payment.method).toBe('CASH');
   });
 });

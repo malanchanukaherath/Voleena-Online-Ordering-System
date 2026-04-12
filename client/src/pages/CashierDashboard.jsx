@@ -7,12 +7,19 @@ import {
     FaLayerGroup,
     FaDollarSign,
     FaExclamationCircle,
-    FaUsers
+    FaUsers,
+    FaSearch,
+    FaPrint,
+    FaTimes,
+    FaExpand,
+    FaCompress
 } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import StatusBadge from '../components/ui/StatusBadge';
 import { cashierService } from '../services/dashboardService';
+import authService from '../services/authService';
+import { buildReceiptFromOrder, openReceiptPrintWindow } from '../utils/posReceiptPrint';
 
 const parseApiArray = (response) => {
     if (Array.isArray(response)) {
@@ -147,6 +154,15 @@ const CALCULATOR_KEYPAD_ROWS = [
     ['0', '00', '.']
 ];
 
+const POS_QUANTITY_KEYPAD_ROWS = [
+    ['7', '8', '9'],
+    ['4', '5', '6'],
+    ['1', '2', '3'],
+    ['0', '00']
+];
+
+const POS_QUICK_CASH_AMOUNTS = [500, 1000, 2000, 5000];
+
 const sanitizeNumericInput = (rawValue, allowDecimal = true) => {
     let sanitized = String(rawValue ?? '').replace(allowDecimal ? /[^0-9.]/g : /[^0-9]/g, '');
 
@@ -164,7 +180,7 @@ const sanitizeNumericInput = (rawValue, allowDecimal = true) => {
     return sanitized;
 };
 
-const CashierDashboard = () => {
+const CashierDashboard = ({ posOnly = false }) => {
     const [stats, setStats] = useState({
         pendingOrders: 0,
         todayOrders: 0,
@@ -175,12 +191,20 @@ const CashierDashboard = () => {
     });
     const [recentOrders, setRecentOrders] = useState([]);
     const [posItems, setPosItems] = useState([]);
-    const [isWalkInOpen, setIsWalkInOpen] = useState(false);
+    const [isWalkInOpen, setIsWalkInOpen] = useState(Boolean(posOnly));
+    const [isPosFullscreen, setIsPosFullscreen] = useState(false);
     const [currentWalkInOrder, setCurrentWalkInOrder] = useState([]);
     const [walkInPaymentMethod, setWalkInPaymentMethod] = useState('CASH');
+    const [cashAmountReceived, setCashAmountReceived] = useState('');
+    const [posSearchTerm, setPosSearchTerm] = useState('');
+    const [activeItemTypeFilter, setActiveItemTypeFilter] = useState('ALL');
+    const [activeCategoryFilter, setActiveCategoryFilter] = useState('ALL');
+    const [selectedOrderEntryKey, setSelectedOrderEntryKey] = useState(null);
+    const [quantityPadValue, setQuantityPadValue] = useState('');
     const [walkInSubmitting, setWalkInSubmitting] = useState(false);
     const [walkInError, setWalkInError] = useState('');
     const [walkInSuccess, setWalkInSuccess] = useState('');
+    const [lastReceipt, setLastReceipt] = useState(null);
     const [customerSearchTerm, setCustomerSearchTerm] = useState('');
     const [customerSearchResults, setCustomerSearchResults] = useState([]);
     const [customerSearchLoading, setCustomerSearchLoading] = useState(false);
@@ -198,6 +222,75 @@ const CashierDashboard = () => {
     const walkInTotal = useMemo(() => {
         return currentWalkInOrder.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     }, [currentWalkInOrder]);
+
+    const parsedCashAmountReceived = useMemo(() => Number.parseFloat(cashAmountReceived) || 0, [cashAmountReceived]);
+    const cashChangeDue = useMemo(() => Math.max(parsedCashAmountReceived - walkInTotal, 0), [parsedCashAmountReceived, walkInTotal]);
+
+    const walkInItemCount = useMemo(
+        () => currentWalkInOrder.reduce((sum, item) => sum + (Number.parseInt(item.quantity, 10) || 0), 0),
+        [currentWalkInOrder]
+    );
+
+    const posMenuCategories = useMemo(() => {
+        const categorySet = new Set();
+        posItems.forEach((item) => {
+            if (item.type !== 'menu') {
+                return;
+            }
+
+            const categoryName = item?.category?.Name || item?.category?.name || '';
+            if (categoryName) {
+                categorySet.add(categoryName);
+            }
+        });
+
+        return Array.from(categorySet).sort((a, b) => a.localeCompare(b));
+    }, [posItems]);
+
+    const filteredPosItems = useMemo(() => {
+        const search = posSearchTerm.trim().toLowerCase();
+
+        return posItems.filter((item) => {
+            if (activeItemTypeFilter === 'MENU' && item.type !== 'menu') {
+                return false;
+            }
+
+            if (activeItemTypeFilter === 'COMBO' && item.type !== 'combo') {
+                return false;
+            }
+
+            if (activeCategoryFilter !== 'ALL' && item.type === 'menu') {
+                const itemCategory = item?.category?.Name || item?.category?.name || '';
+                if (itemCategory !== activeCategoryFilter) {
+                    return false;
+                }
+            }
+
+            if (!search) {
+                return true;
+            }
+
+            const searchableText = [
+                item.Name,
+                item?.category?.Name,
+                item?.Description,
+                item.type
+            ]
+                .filter(Boolean)
+                .join(' ')
+                .toLowerCase();
+
+            return searchableText.includes(search);
+        });
+    }, [activeCategoryFilter, activeItemTypeFilter, posItems, posSearchTerm]);
+
+    const selectedOrderItem = useMemo(() => {
+        if (!selectedOrderEntryKey) {
+            return null;
+        }
+
+        return currentWalkInOrder.find((item) => createOrderEntryKey(item) === selectedOrderEntryKey) || null;
+    }, [currentWalkInOrder, selectedOrderEntryKey]);
 
     const quickCalcTotal = useMemo(() => {
         const price = Number.parseFloat(calcPrice) || 0;
@@ -434,6 +527,48 @@ const CashierDashboard = () => {
         reconcileWalkInOrderWithCatalog(nextCatalog);
     }, [reconcileWalkInOrderWithCatalog]);
 
+    const getTerminalId = useCallback(() => {
+        const terminalId = String(localStorage.getItem('posTerminalId') || import.meta.env.VITE_POS_TERMINAL_ID || 'WEB-POS-1').trim();
+        return terminalId || 'WEB-POS-1';
+    }, []);
+
+    const getCashierName = useCallback(() => {
+        const currentUser = authService.getCurrentUser();
+        return currentUser?.name || currentUser?.Name || currentUser?.email || 'Cashier';
+    }, []);
+
+    const togglePosFullscreen = useCallback(async () => {
+        try {
+            if (document.fullscreenElement) {
+                await document.exitFullscreen();
+                return;
+            }
+
+            await document.documentElement.requestFullscreen();
+        } catch {
+            setWalkInError('Fullscreen mode is not available in this browser/session.');
+        }
+    }, []);
+
+    useEffect(() => {
+        if (posOnly) {
+            setIsWalkInOpen(true);
+        }
+    }, [posOnly]);
+
+    useEffect(() => {
+        const onFullscreenChange = () => {
+            setIsPosFullscreen(Boolean(document.fullscreenElement));
+        };
+
+        document.addEventListener('fullscreenchange', onFullscreenChange);
+        onFullscreenChange();
+
+        return () => {
+            document.removeEventListener('fullscreenchange', onFullscreenChange);
+        };
+    }, []);
+
     const loadData = useCallback(async () => {
         const [statsResult, ordersResult, menuResult, comboResult] = await Promise.allSettled([
             cashierService.getDashboardStats(),
@@ -590,6 +725,9 @@ const CashierDashboard = () => {
         setWalkInError('');
         setWalkInSuccess('');
 
+        const orderEntryKey = createPosEntryKey(catalogItem);
+        setSelectedOrderEntryKey(orderEntryKey);
+
         const stockLimit = getCatalogStockLimit(catalogItem);
         if (stockLimit !== null && stockLimit <= 0) {
             setWalkInError(`${catalogItem.Name} is out of stock today.`);
@@ -597,7 +735,6 @@ const CashierDashboard = () => {
         }
 
         setCurrentWalkInOrder((prev) => {
-            const orderEntryKey = createPosEntryKey(catalogItem);
             const existing = prev.find((item) => createOrderEntryKey(item) === orderEntryKey);
             if (existing) {
                 if (stockLimit !== null && existing.quantity >= stockLimit) {
@@ -626,8 +763,9 @@ const CashierDashboard = () => {
         });
     };
 
-    const updateWalkInQuantity = (entryKey, delta) => {
+    const setWalkInQuantity = useCallback((entryKey, nextQuantity) => {
         setWalkInError('');
+
         setCurrentWalkInOrder((prev) => prev
             .map((item) => {
                 if (createOrderEntryKey(item) !== entryKey) {
@@ -636,9 +774,9 @@ const CashierDashboard = () => {
 
                 const catalogItem = posItems.find((catalogEntry) => createPosEntryKey(catalogEntry) === entryKey);
                 const stockLimit = getCatalogStockLimit(catalogItem);
-                const requestedQuantity = Math.max(item.quantity + delta, 0);
+                const requestedQuantity = Math.max(Number.parseInt(nextQuantity, 10) || 0, 0);
 
-                if (delta > 0 && stockLimit !== null && requestedQuantity > stockLimit) {
+                if (stockLimit !== null && requestedQuantity > stockLimit) {
                     setWalkInError(`Only ${stockLimit} item(s) available for ${item.name} today.`);
                     return item;
                 }
@@ -646,13 +784,91 @@ const CashierDashboard = () => {
                 return { ...item, quantity: requestedQuantity };
             })
             .filter((item) => item.quantity > 0));
+    }, [posItems]);
+
+    const updateWalkInQuantity = (entryKey, delta) => {
+        setWalkInError('');
+        const currentItem = currentWalkInOrder.find((item) => createOrderEntryKey(item) === entryKey);
+        if (!currentItem) {
+            return;
+        }
+
+        setWalkInQuantity(entryKey, currentItem.quantity + delta);
     };
 
     const clearWalkInOrder = () => {
         setCurrentWalkInOrder([]);
+        setCashAmountReceived('');
+        setSelectedOrderEntryKey(null);
+        setQuantityPadValue('');
         setWalkInError('');
         setWalkInSuccess('');
     };
+
+    const removeOrderItem = useCallback((entryKey) => {
+        setWalkInError('');
+        setCurrentWalkInOrder((prev) => prev.filter((item) => createOrderEntryKey(item) !== entryKey));
+
+        if (selectedOrderEntryKey === entryKey) {
+            setSelectedOrderEntryKey(null);
+            setQuantityPadValue('');
+        }
+    }, [selectedOrderEntryKey]);
+
+    const handleQuantityPadDigit = useCallback((digit) => {
+        setQuantityPadValue((prev) => {
+            const next = `${prev || ''}${digit}`;
+            const sanitized = sanitizeNumericInput(next, false).slice(0, 4);
+            return sanitized;
+        });
+    }, []);
+
+    const applyQuantityPadValue = useCallback(() => {
+        if (!selectedOrderEntryKey) {
+            setWalkInError('Select an item in the cart before using quantity keypad.');
+            return;
+        }
+
+        const nextQty = Number.parseInt(quantityPadValue, 10);
+        if (!Number.isInteger(nextQty) || nextQty < 0) {
+            setWalkInError('Enter a valid quantity before applying.');
+            return;
+        }
+
+        setWalkInQuantity(selectedOrderEntryKey, nextQty);
+    }, [quantityPadValue, selectedOrderEntryKey, setWalkInQuantity]);
+
+    const addQuickCashAmount = useCallback((amount) => {
+        setCashAmountReceived((prev) => {
+            const current = Number.parseFloat(prev) || 0;
+            return (current + amount).toFixed(2);
+        });
+    }, []);
+
+    useEffect(() => {
+        if (!selectedOrderEntryKey) {
+            return;
+        }
+
+        const stillExists = currentWalkInOrder.some((item) => createOrderEntryKey(item) === selectedOrderEntryKey);
+        if (!stillExists) {
+            setSelectedOrderEntryKey(null);
+            setQuantityPadValue('');
+        }
+    }, [currentWalkInOrder, selectedOrderEntryKey]);
+
+    useEffect(() => {
+        if (!selectedOrderItem) {
+            setQuantityPadValue('');
+            return;
+        }
+
+        setQuantityPadValue(String(selectedOrderItem.quantity || ''));
+    }, [selectedOrderItem]);
+
+    const printReceiptSafely = useCallback((receiptPayload) => {
+        openReceiptPrintWindow(receiptPayload);
+    }, []);
 
     const selectCustomerForWalkInOrder = (customer) => {
         setSelectedCustomer(customer);
@@ -676,11 +892,21 @@ const CashierDashboard = () => {
             return;
         }
 
+        if (walkInPaymentMethod === 'CASH' && parsedCashAmountReceived < walkInTotal) {
+            setWalkInError('Amount received must be at least the order total for cash payments.');
+            return;
+        }
+
         setWalkInSubmitting(true);
         setWalkInError('');
         setWalkInSuccess('');
 
         try {
+            const terminalId = getTerminalId();
+            const cashierName = getCashierName();
+            const amountReceived = walkInPaymentMethod === 'CASH' ? parsedCashAmountReceived : walkInTotal;
+            const changeAmount = walkInPaymentMethod === 'CASH' ? cashChangeDue : 0;
+
             const payload = {
                 items: currentWalkInOrder.map((item) => ({
                     ...(item.menuItemId ? { menu_item_id: item.menuItemId } : {}),
@@ -688,11 +914,33 @@ const CashierDashboard = () => {
                     quantity: item.quantity
                 })),
                 payment_method: walkInPaymentMethod,
+                amount_received: amountReceived,
+                change_amount: changeAmount,
+                terminal_id: terminalId,
                 ...(selectedCustomer?.CustomerID ? { customer_id: selectedCustomer.CustomerID } : {})
             };
 
             const response = await cashierService.createWalkInOrder(payload);
-            const orderNumber = response?.data?.OrderNumber || response?.data?.data?.OrderNumber || 'N/A';
+            const createdOrder = response?.data || response?.data?.data || null;
+            const orderNumber = createdOrder?.OrderNumber || 'N/A';
+
+            const receiptPayload = response?.receipt || buildReceiptFromOrder(createdOrder, {
+                amountReceived,
+                change: changeAmount,
+                terminalId,
+                cashierName,
+                paymentMethod: walkInPaymentMethod,
+                paymentStatus: walkInPaymentMethod === 'CASH' ? 'PAID' : 'PENDING'
+            });
+
+            if (receiptPayload) {
+                setLastReceipt(receiptPayload);
+                try {
+                    printReceiptSafely(receiptPayload);
+                } catch (printError) {
+                    setWalkInError(printError.message || 'Order saved, but receipt print failed. You can reprint manually.');
+                }
+            }
 
             setWalkInSuccess(
                 selectedCustomer
@@ -700,6 +948,7 @@ const CashierDashboard = () => {
                     : `Walk-in order ${orderNumber} sent to kitchen.`
             );
             setCurrentWalkInOrder([]);
+            setCashAmountReceived('');
             resetWalkInCustomer();
             await loadData();
         } catch (error) {
@@ -709,11 +958,44 @@ const CashierDashboard = () => {
         }
     };
 
-    return (
-        <div className="p-6">
-            <h1 className="text-3xl font-bold mb-8">Cashier Dashboard</h1>
+    const reprintLastReceipt = () => {
+        if (!lastReceipt) {
+            setWalkInError('No receipt available to reprint yet.');
+            return;
+        }
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        setWalkInError('');
+        try {
+            printReceiptSafely(lastReceipt);
+        } catch (error) {
+            setWalkInError(error.message || 'Failed to reprint receipt.');
+        }
+    };
+
+    return (
+        <div className={posOnly ? 'min-h-screen bg-gray-50 p-4 md:p-6' : 'p-6'}>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-8">
+                <h1 className="text-3xl font-bold">{posOnly ? 'Cashier POS' : 'Cashier Dashboard'}</h1>
+                {posOnly && (
+                    <div className="flex flex-wrap gap-2">
+                        <Link to="/cashier/dashboard" className="px-4 py-2 border rounded hover:bg-gray-100 text-sm font-medium">
+                            Back to Dashboard
+                        </Link>
+                        <button
+                            type="button"
+                            onClick={togglePosFullscreen}
+                            className="px-4 py-2 border rounded hover:bg-gray-100 text-sm font-medium inline-flex items-center gap-2"
+                        >
+                            {isPosFullscreen ? <FaCompress className="h-4 w-4" /> : <FaExpand className="h-4 w-4" />}
+                            {isPosFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {!posOnly && (
+                <>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                 <div className="bg-white rounded-lg shadow p-6">
                     <FaClipboardList className="w-8 h-8 text-blue-600 mb-2" />
                     <p className="text-sm text-gray-600">Today's Orders</p>
@@ -786,13 +1068,17 @@ const CashierDashboard = () => {
                             <FaClipboardList className="w-8 h-8 mx-auto mb-2 text-primary-600" />
                             <p className="font-medium">Manage Orders</p>
                         </Link>
+                        <Link to="/cashier/pos" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
+                            <FaCashRegister className="w-8 h-8 mx-auto mb-2 text-primary-600" />
+                            <p className="font-medium">Open POS Full View</p>
+                        </Link>
                         <button
                             type="button"
                             onClick={() => setIsWalkInOpen((prev) => !prev)}
                             className="p-4 border-2 rounded-lg hover:border-primary-500 text-center"
                         >
                             <FaCashRegister className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                            <p className="font-medium">New Walk-In Order</p>
+                            <p className="font-medium">Quick POS Panel</p>
                         </button>
                         <Link to="/cashier/customers/new" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
                             <FaUsers className="w-8 h-8 mx-auto mb-2 text-primary-600" />
@@ -801,8 +1087,10 @@ const CashierDashboard = () => {
                     </div>
                 </div>
             </div>
+                </>
+            )}
 
-            {isWalkInOpen && (
+            {(posOnly || isWalkInOpen) && (
                 <div className="mt-8 bg-white rounded-lg shadow p-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                         <h3 className="text-lg font-semibold">Walk-In POS</h3>
@@ -820,6 +1108,30 @@ const CashierDashboard = () => {
                             </select>
                         </div>
                     </div>
+
+                    {walkInPaymentMethod === 'CASH' && (
+                        <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div>
+                                <label className="text-sm text-gray-600">Amount Received</label>
+                                <input
+                                    type="text"
+                                    inputMode="decimal"
+                                    value={cashAmountReceived}
+                                    onChange={(event) => setCashAmountReceived(sanitizeNumericInput(event.target.value, true))}
+                                    placeholder="0.00"
+                                    className="mt-1 w-full rounded border px-3 py-2 text-sm"
+                                />
+                            </div>
+                            <div className="rounded border border-gray-200 px-3 py-2">
+                                <p className="text-xs text-gray-500">Amount Due</p>
+                                <p className="text-lg font-semibold">LKR {walkInTotal.toFixed(2)}</p>
+                            </div>
+                            <div className="rounded border border-gray-200 px-3 py-2">
+                                <p className="text-xs text-gray-500">Change</p>
+                                <p className="text-lg font-semibold text-green-700">LKR {cashChangeDue.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="mb-6 rounded-lg border border-gray-200 p-4">
                         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -921,113 +1233,304 @@ const CashierDashboard = () => {
                         )}
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div>
-                            <h4 className="font-semibold mb-3">Available Items</h4>
-                            <div className="max-h-80 overflow-y-auto border rounded-lg divide-y">
-                                {posItems.length === 0 ? (
-                                    <div className="p-4 text-sm text-gray-500">No menu items or combo packs available.</div>
-                                ) : posItems.map((item) => (
+                    <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+                        <div className="xl:col-span-3 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                                <h4 className="font-semibold">POS Catalog</h4>
+                                <div className="text-xs text-gray-500">
+                                    Cashier: <span className="font-semibold text-gray-700">{getCashierName()}</span> • Terminal: <span className="font-semibold text-gray-700">{getTerminalId()}</span>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div className="md:col-span-2 relative">
+                                    <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        value={posSearchTerm}
+                                        onChange={(event) => setPosSearchTerm(event.target.value)}
+                                        placeholder="Search by item name, category, type"
+                                        className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm focus:border-primary-500 focus:outline-none"
+                                    />
+                                </div>
+                                <select
+                                    value={activeCategoryFilter}
+                                    onChange={(event) => setActiveCategoryFilter(event.target.value)}
+                                    className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                                >
+                                    <option value="ALL">All Categories</option>
+                                    {posMenuCategories.map((categoryName) => (
+                                        <option key={categoryName} value={categoryName}>{categoryName}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+                                {[
+                                    { key: 'ALL', label: 'All Items' },
+                                    { key: 'MENU', label: 'Menu Only' },
+                                    { key: 'COMBO', label: 'Combos Only' }
+                                ].map((filter) => (
                                     <button
-                                        key={createPosEntryKey(item)}
+                                        key={filter.key}
                                         type="button"
-                                        onClick={() => addToWalkInOrder(item)}
-                                        className="w-full text-left p-3 hover:bg-gray-50"
+                                        onClick={() => setActiveItemTypeFilter(filter.key)}
+                                        className={`rounded-full px-3 py-1 text-xs font-semibold transition ${activeItemTypeFilter === filter.key
+                                            ? 'bg-primary-600 text-white'
+                                            : 'bg-white border border-gray-300 text-gray-600 hover:border-primary-500 hover:text-primary-600'}`}
                                     >
-                                        <div className="flex justify-between items-center">
-                                            <div className="flex items-center gap-2">
-                                                <span className="font-medium">{item.Name}</span>
-                                                {item.type === 'combo' && (
-                                                    <span className="inline-flex items-center gap-1 rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700">
-                                                        <FaLayerGroup className="h-3 w-3" /> Combo
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className="text-sm font-semibold">LKR {Number(item.Price || 0).toFixed(2)}</span>
-                                        </div>
-                                        {item.type === 'menu' && Number.isFinite(item.StockQuantity) && (
-                                            <p className="mt-1 text-xs text-gray-500">
-                                                {item.StockQuantity > 0
-                                                    ? `Available today: ${item.StockQuantity}`
-                                                    : 'Out of stock today'}
-                                            </p>
-                                        )}
-                                        {item.type === 'combo' && item.OriginalPrice > item.Price && (
-                                            <p className="mt-1 text-xs text-gray-500">
-                                                Save LKR {(item.OriginalPrice - item.Price).toFixed(2)}
-                                            </p>
-                                        )}
+                                        {filter.label}
                                     </button>
                                 ))}
                             </div>
+
+                            <div className="mt-4 max-h-[30rem] overflow-y-auto pr-1">
+                                {filteredPosItems.length === 0 ? (
+                                    <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-gray-500">
+                                        No POS items match this filter.
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {filteredPosItems.map((item) => {
+                                            const entryKey = createPosEntryKey(item);
+                                            const inCartItem = currentWalkInOrder.find((orderItem) => createOrderEntryKey(orderItem) === entryKey);
+
+                                            return (
+                                                <button
+                                                    key={entryKey}
+                                                    type="button"
+                                                    onClick={() => addToWalkInOrder(item)}
+                                                    className="rounded-lg border border-gray-200 bg-white p-3 text-left hover:border-primary-400 hover:shadow-sm"
+                                                >
+                                                    <div className="flex items-center justify-between gap-2">
+                                                        <p className="font-semibold text-gray-900 line-clamp-2">{item.Name}</p>
+                                                        <p className="font-semibold text-primary-700">LKR {Number(item.Price || 0).toFixed(2)}</p>
+                                                    </div>
+
+                                                    <div className="mt-2 flex items-center gap-2 text-xs">
+                                                        <span className={`rounded-full px-2 py-0.5 font-semibold ${item.type === 'combo'
+                                                            ? 'bg-primary-100 text-primary-700'
+                                                            : 'bg-gray-100 text-gray-700'}`}
+                                                        >
+                                                            {item.type === 'combo' ? 'Combo' : (item?.category?.Name || 'Menu')}
+                                                        </span>
+                                                        {item.type === 'combo' && (
+                                                            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 font-semibold text-blue-700">
+                                                                <FaLayerGroup className="h-3 w-3" /> Pack
+                                                            </span>
+                                                        )}
+                                                        {inCartItem && (
+                                                            <span className="rounded-full bg-green-100 px-2 py-0.5 font-semibold text-green-700">
+                                                                In cart: {inCartItem.quantity}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    {item.type === 'menu' && Number.isFinite(item.StockQuantity) && (
+                                                        <p className="mt-2 text-xs text-gray-500">
+                                                            {item.StockQuantity > 0 ? `Available today: ${item.StockQuantity}` : 'Out of stock today'}
+                                                        </p>
+                                                    )}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        <div>
-                            <h4 className="font-semibold mb-3">Current Order</h4>
-                            <div className="border rounded-lg p-3 space-y-3 min-h-[220px]">
-                                {currentWalkInOrder.length === 0 ? (
-                                    <p className="text-sm text-gray-500">No items selected.</p>
-                                ) : currentWalkInOrder.map((item) => (
-                                    <div key={createOrderEntryKey(item)} className="flex items-center justify-between">
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-medium">{item.name}</p>
-                                                {item.type === 'combo' && (
-                                                    <span className="inline-flex items-center rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700">
-                                                        Combo
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-sm text-gray-500">LKR {item.price.toFixed(2)} each</p>
-                                            {item.type === 'menu' && (() => {
-                                                const catalogItem = posItems.find((catalogEntry) => createPosEntryKey(catalogEntry) === createOrderEntryKey(item));
-                                                const stockLimit = getCatalogStockLimit(catalogItem);
-                                                return stockLimit !== null ? (
-                                                    <p className="text-xs text-gray-500">Available today: {stockLimit}</p>
-                                                ) : null;
-                                            })()}
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => updateWalkInQuantity(createOrderEntryKey(item), -1)}
-                                                className="w-7 h-7 border rounded"
-                                            >
-                                                -
-                                            </button>
-                                            <span className="w-7 text-center">{item.quantity}</span>
-                                            <button
-                                                type="button"
-                                                onClick={() => updateWalkInQuantity(createOrderEntryKey(item), 1)}
-                                                className="w-7 h-7 border rounded disabled:cursor-not-allowed disabled:opacity-50"
-                                                disabled={(() => {
-                                                    const catalogItem = posItems.find((catalogEntry) => createPosEntryKey(catalogEntry) === createOrderEntryKey(item));
-                                                    const stockLimit = getCatalogStockLimit(catalogItem);
-                                                    return stockLimit !== null && item.quantity >= stockLimit;
-                                                })()}
-                                            >
-                                                +
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
+                        <div className="xl:col-span-2 rounded-xl border border-gray-200 bg-white p-4">
+                            <div className="flex items-center justify-between">
+                                <h4 className="font-semibold">Current Bill</h4>
+                                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+                                    {walkInItemCount} item(s)
+                                </span>
                             </div>
 
-                            <div className="mt-4 flex items-center justify-between">
-                                <span className="text-gray-600">Total</span>
-                                <span className="text-xl font-bold">LKR {walkInTotal.toFixed(2)}</span>
+                            <div className="mt-4 max-h-[16rem] overflow-y-auto space-y-2 pr-1">
+                                {currentWalkInOrder.length === 0 ? (
+                                    <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
+                                        Add menu items from the left catalog.
+                                    </div>
+                                ) : currentWalkInOrder.map((item) => {
+                                    const entryKey = createOrderEntryKey(item);
+                                    const isSelected = selectedOrderEntryKey === entryKey;
+                                    const catalogItem = posItems.find((catalogEntry) => createPosEntryKey(catalogEntry) === entryKey);
+                                    const stockLimit = getCatalogStockLimit(catalogItem);
+
+                                    return (
+                                        <div
+                                            key={entryKey}
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => setSelectedOrderEntryKey(entryKey)}
+                                            onKeyDown={(event) => {
+                                                if (event.key === 'Enter' || event.key === ' ') {
+                                                    event.preventDefault();
+                                                    setSelectedOrderEntryKey(entryKey);
+                                                }
+                                            }}
+                                            className={`rounded-lg border p-3 ${isSelected ? 'border-primary-500 bg-primary-50' : 'border-gray-200 bg-gray-50'}`}
+                                        >
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="min-w-0">
+                                                    <p className="font-medium truncate">{item.name}</p>
+                                                    <p className="text-xs text-gray-500">LKR {item.price.toFixed(2)} each</p>
+                                                    {stockLimit !== null && (
+                                                        <p className="text-xs text-gray-500">Available: {stockLimit}</p>
+                                                    )}
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={(event) => {
+                                                        event.stopPropagation();
+                                                        removeOrderItem(entryKey);
+                                                    }}
+                                                    className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-100"
+                                                >
+                                                    <FaTimes className="h-3 w-3" />
+                                                </button>
+                                            </div>
+
+                                            <div className="mt-3 flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            updateWalkInQuantity(entryKey, -1);
+                                                            setSelectedOrderEntryKey(entryKey);
+                                                        }}
+                                                        className="h-7 w-7 rounded border border-gray-300 bg-white"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            updateWalkInQuantity(entryKey, 1);
+                                                            setSelectedOrderEntryKey(entryKey);
+                                                        }}
+                                                        className="h-7 w-7 rounded border border-gray-300 bg-white"
+                                                        disabled={stockLimit !== null && item.quantity >= stockLimit}
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                                <p className="font-semibold">LKR {(item.price * item.quantity).toFixed(2)}</p>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                                <div className="flex items-center justify-between text-sm">
+                                    <span>Order Total</span>
+                                    <span className="text-xl font-bold text-gray-900">LKR {walkInTotal.toFixed(2)}</span>
+                                </div>
+                                {walkInPaymentMethod === 'CASH' && (
+                                    <div className="mt-2 text-sm text-gray-700">
+                                        Received: <span className="font-semibold">LKR {parsedCashAmountReceived.toFixed(2)}</span> • Change: <span className="font-semibold text-green-700">LKR {cashChangeDue.toFixed(2)}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {walkInPaymentMethod === 'CASH' && (
+                                <div className="mt-3">
+                                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Quick Cash Add</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {POS_QUICK_CASH_AMOUNTS.map((amount) => (
+                                            <button
+                                                key={amount}
+                                                type="button"
+                                                onClick={() => addQuickCashAmount(amount)}
+                                                className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm hover:border-primary-500 hover:text-primary-700"
+                                            >
+                                                +{amount}
+                                            </button>
+                                        ))}
+                                        <button
+                                            type="button"
+                                            onClick={() => setCashAmountReceived(walkInTotal.toFixed(2))}
+                                            className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm hover:border-primary-500 hover:text-primary-700"
+                                        >
+                                            Exact
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="mt-4 rounded-lg border border-gray-200 p-3">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Quantity Keypad</p>
+                                <p className="mt-1 text-sm text-gray-600">
+                                    {selectedOrderItem
+                                        ? `Editing: ${selectedOrderItem.name}`
+                                        : 'Select a cart item to edit quantity quickly'}
+                                </p>
+
+                                <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-right text-2xl font-semibold">
+                                    {quantityPadValue || '0'}
+                                </div>
+
+                                <div className="mt-3 space-y-2">
+                                    {POS_QUANTITY_KEYPAD_ROWS.map((row) => (
+                                        <div key={row.join('-')} className={`grid gap-2 ${row.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+                                            {row.map((key) => (
+                                                <button
+                                                    key={key}
+                                                    type="button"
+                                                    onClick={() => handleQuantityPadDigit(key)}
+                                                    className="rounded border border-gray-300 bg-white px-3 py-2 text-sm font-semibold hover:border-primary-500"
+                                                    disabled={!selectedOrderItem}
+                                                >
+                                                    {key}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="mt-3 grid grid-cols-3 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => setQuantityPadValue((prev) => prev.slice(0, -1))}
+                                        className="rounded border border-gray-300 bg-white px-3 py-2 text-xs hover:border-primary-500"
+                                        disabled={!selectedOrderItem || !quantityPadValue}
+                                    >
+                                        Backspace
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setQuantityPadValue('')}
+                                        className="rounded border border-gray-300 bg-white px-3 py-2 text-xs hover:border-primary-500"
+                                        disabled={!selectedOrderItem}
+                                    >
+                                        Clear
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={applyQuantityPadValue}
+                                        className="rounded bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+                                        disabled={!selectedOrderItem}
+                                    >
+                                        Apply Qty
+                                    </button>
+                                </div>
                             </div>
 
                             {walkInError && <p className="text-sm text-red-600 mt-3">{walkInError}</p>}
                             {walkInSuccess && <p className="text-sm text-green-700 mt-3">{walkInSuccess}</p>}
 
-                            <div className="mt-4 flex gap-3">
+                            <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <button
                                     type="button"
                                     onClick={clearWalkInOrder}
                                     className="px-4 py-2 border rounded hover:bg-gray-50"
                                 >
-                                    Clear Order
+                                    Clear Bill
                                 </button>
                                 <button
                                     type="button"
@@ -1035,7 +1538,15 @@ const CashierDashboard = () => {
                                     disabled={walkInSubmitting || currentWalkInOrder.length === 0}
                                     className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:opacity-50"
                                 >
-                                    {walkInSubmitting ? 'Sending...' : 'Send to Kitchen'}
+                                    {walkInSubmitting ? 'Sending...' : 'Complete Order'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={reprintLastReceipt}
+                                    disabled={!lastReceipt}
+                                    className="px-4 py-2 border rounded hover:bg-gray-50 disabled:opacity-50 inline-flex items-center justify-center gap-2"
+                                >
+                                    <FaPrint className="h-4 w-4" /> Reprint
                                 </button>
                             </div>
                         </div>
@@ -1043,7 +1554,8 @@ const CashierDashboard = () => {
                 </div>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+            {!posOnly && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
                 <div className="bg-white rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                         <FaCalculator className="text-primary-600" /> Quick Bill Calculator
@@ -1112,6 +1624,7 @@ const CashierDashboard = () => {
                     </div>
                 </div>
             </div>
+            )}
 
             <Modal
                 isOpen={activeCalculatorModal === 'quickBill'}
