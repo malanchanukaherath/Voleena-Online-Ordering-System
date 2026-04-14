@@ -5,7 +5,7 @@ import {
     FaCalculator,
     FaClipboardList,
     FaLayerGroup,
-    FaDollarSign,
+    FaMoneyBillWave,
     FaExclamationCircle,
     FaUsers,
     FaSearch,
@@ -1089,7 +1089,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                     <p className="text-3xl font-bold">{stats.todayOrders}</p>
                 </div>
                 <div className="bg-white rounded-lg shadow p-6">
-                    <FaDollarSign className="w-8 h-8 text-green-600 mb-2" />
+                    <FaMoneyBillWave className="w-8 h-8 text-green-600 mb-2" />
                     <p className="text-sm text-gray-600">Today's Revenue</p>
                     <p className="text-3xl font-bold">LKR {Number(stats.todayRevenue || 0).toFixed(2)}</p>
                 </div>

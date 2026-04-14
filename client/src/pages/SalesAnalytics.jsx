@@ -3,7 +3,7 @@ import {
     FaChartLine,
     FaClipboardList,
     FaCommentDots,
-    FaDollarSign,
+    FaMoneyBillWave,
     FaFileCsv,
     FaPrint,
     FaTruck
@@ -658,7 +658,7 @@ const SalesAnalytics = () => {
 
                 <div className="rounded-lg bg-white p-6 shadow">
                     <div className="mb-4 flex items-center gap-3">
-                        <FaDollarSign className="text-primary-600" />
+                        <FaMoneyBillWave className="text-primary-600" />
                         <h3 className="text-lg font-semibold">Payment Reconciliation</h3>
                     </div>
                     <div className="space-y-3">
