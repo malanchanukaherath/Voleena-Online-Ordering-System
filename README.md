@@ -183,4 +183,4 @@ npm run test:a11y
 
 ## Maintainer
 
-Voleena Foods
+Malan Chanuka Herath
