@@ -7,11 +7,14 @@ import {
     FaUsers,
     FaUserTie,
     FaChartLine,
-    FaDollarSign,
     FaShoppingBag,
     FaTruck,
     FaCheckCircle,
 } from 'react-icons/fa';
+
+const RevenueCurrencyIcon = ({ className = '' }) => (
+    <span className={`${className} inline-flex items-center justify-center text-sm font-bold leading-none`}>LKR</span>
+);
 
 const AdminDashboard = () => {
     const [statsData, setStatsData] = useState(null);
@@ -85,7 +88,7 @@ const AdminDashboard = () => {
             title: 'Total Revenue',
             value: `LKR ${(statsData?.totalRevenue ?? 0).toLocaleString()}`,
             change: statsData?.todayRevenue ? `+LKR ${statsData.todayRevenue.toLocaleString()} today` : '—',
-            icon: FaDollarSign,
+            icon: RevenueCurrencyIcon,
             color: 'bg-yellow-500',
             link: '/admin/analytics',
         },
