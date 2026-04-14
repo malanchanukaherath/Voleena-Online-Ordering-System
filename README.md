@@ -136,6 +136,7 @@ From repository root:
 
 ```bash
 npm test
+npm run api:smoke
 ```
 
 From `server/`:
@@ -157,6 +158,7 @@ npm run dev
 npm run build
 npm run preview
 npm run lint
+npm run test:a11y
 ```
 
 ## Deployment Notes
@@ -172,6 +174,11 @@ npm run lint
 ## Testing
 
 - Backend tests use Jest and coverage output under `server/coverage/`.
+- API smoke tests are in `postman/voleena-api-smoke.postman_collection.json` and can be run via `npm run api:smoke`.
+- Frontend accessibility checks run through Lighthouse CI config at `client/lighthouserc.json` and can be run via `npm --prefix client run test:a11y`.
+- CI automation:
+  - `.github/workflows/api-smoke-newman.yml` runs Postman/Newman smoke checks.
+  - `.github/workflows/frontend-a11y-lighthouse.yml` runs frontend Lighthouse accessibility checks.
 - Additional testing summary is available in `reports/testing-submission-report.md`.
 
 ## Maintainer

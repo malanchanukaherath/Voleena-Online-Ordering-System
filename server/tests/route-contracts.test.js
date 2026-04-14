@@ -92,7 +92,9 @@ jest.mock('../controllers/notificationController', () => ({
   getMyNotifications: mockOkHandler,
   getUnreadCount: mockOkHandler,
   markOneAsRead: mockOkHandler,
-  markAllAsRead: mockOkHandler
+  markAllAsRead: mockOkHandler,
+  deleteOne: mockOkHandler,
+  clearAll: mockOkHandler
 }));
 
 const { resetAuthState, setAuthMode, setAuthUser } = require('./helpers/mockAuth');
@@ -203,7 +205,9 @@ const routerDefinitions = [
       ['get', '/'],
       ['get', '/unread-count'],
       ['patch', '/read-all'],
-      ['patch', '/123/read']
+      ['patch', '/123/read'],
+      ['delete', '/123'],
+      ['delete', '/']
     ]
   }
 ];

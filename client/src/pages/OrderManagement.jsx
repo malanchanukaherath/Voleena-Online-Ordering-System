@@ -119,7 +119,6 @@ const OrderManagement = () => {
         cancelPendingUpdate,
         commitPendingUpdateNow,
         getPendingUpdate,
-        getRemainingSeconds,
     } = useDelayedStatusUpdate({
         delayMs: 5000,
         onCommit: async (update) => {

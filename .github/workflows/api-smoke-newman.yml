@@ -1,0 +1,33 @@
+name: API Smoke (Postman/Newman)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  newman-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      POSTMAN_BASE_URL: ${{ vars.POSTMAN_BASE_URL || 'https://www.voleenafoods.app' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Inject environment base URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -e "const fs=require('fs');const p='postman/voleena-local.postman_environment.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));const target=j.values.find(v=>v.key==='baseUrl');if(target){target.value=process.env.POSTMAN_BASE_URL;}fs.writeFileSync(p,JSON.stringify(j,null,2));"
+
+      - name: Run Newman smoke collection
+        run: npx --yes newman run postman/voleena-api-smoke.postman_collection.json -e postman/voleena-local.postman_environment.json --bail
