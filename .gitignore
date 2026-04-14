@@ -49,3 +49,5 @@ client/.env.local
 
 # AWS Keys
 *.pem
+
+.docx_extract
