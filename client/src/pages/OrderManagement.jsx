@@ -265,7 +265,7 @@ const OrderManagement = () => {
                                                 {getPendingUpdate(order.id) ? (
                                                     <div className="flex flex-wrap gap-2 items-center">
                                                         <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
-                                                            Applying in {getRemainingSeconds(order.id)}s
+                                                            Applying
                                                         </span>
                                                         <Button
                                                             size="sm"
@@ -289,7 +289,7 @@ const OrderManagement = () => {
                                                             onClick={() => queueOrderStatusUpdate(order)}
                                                             disabled={getSelectedStatus(order) === order.status}
                                                         >
-                                                            Apply in 5s
+                                                            Apply
                                                         </Button>
                                                         {getSelectedStatus(order) !== order.status && (
                                                             <Button

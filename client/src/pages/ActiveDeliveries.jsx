@@ -142,7 +142,7 @@ const ActiveDeliveries = () => {
                             {getPendingUpdate(delivery.id) ? (
                                 <>
                                     <div className="flex w-full items-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700 sm:w-auto">
-                                        Changing to {getPendingUpdate(delivery.id).toStatus} in {getRemainingSeconds(delivery.id)}s
+                                        Changing to {getPendingUpdate(delivery.id).toStatus}
                                     </div>
                                     <Button
                                         size="sm"
@@ -168,7 +168,7 @@ const ActiveDeliveries = () => {
                                     onClick={() => handleQueueAdvanceStatus(delivery)}
                                     disabled={!getNextStatus(delivery.status)}
                                 >
-                                    {getActionLabel(delivery.status)} in 5s
+                                    {getActionLabel(delivery.status)}
                                 </Button>
                             )}
                             {delivery.phone && (
