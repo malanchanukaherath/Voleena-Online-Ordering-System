@@ -105,3 +105,55 @@ exports.markAllAsRead = async (req, res) => {
         });
     }
 };
+
+exports.deleteOne = async (req, res) => {
+    try {
+        const notificationId = Number.parseInt(req.params.id, 10);
+
+        if (!Number.isInteger(notificationId) || notificationId <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Invalid notification id'
+            });
+        }
+
+        const deleted = await appNotificationService.deleteOneForUser(req.user, notificationId);
+
+        if (!deleted) {
+            return res.status(404).json({
+                success: false,
+                error: 'Notification not found'
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: 'Notification deleted'
+        });
+    } catch (error) {
+        console.error('Delete notification error:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to delete notification'
+        });
+    }
+};
+
+exports.clearAll = async (req, res) => {
+    try {
+        const deletedCount = await appNotificationService.clearAllForUser(req.user);
+
+        return res.json({
+            success: true,
+            data: {
+                deletedCount
+            }
+        });
+    } catch (error) {
+        console.error('Clear notifications error:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to clear notifications'
+        });
+    }
+};

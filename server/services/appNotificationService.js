@@ -143,6 +143,39 @@ class AppNotificationService {
         return updated;
     }
 
+    async deleteOneForUser(user, notificationId) {
+        if (!AppNotification) {
+            return false;
+        }
+
+        const recipient = this.buildRecipientFromUser(user);
+
+        const deleted = await AppNotification.destroy({
+            where: {
+                AppNotificationID: notificationId,
+                RecipientType: recipient.recipientType,
+                RecipientID: recipient.recipientId
+            }
+        });
+
+        return deleted > 0;
+    }
+
+    async clearAllForUser(user) {
+        if (!AppNotification) {
+            return 0;
+        }
+
+        const recipient = this.buildRecipientFromUser(user);
+
+        return AppNotification.destroy({
+            where: {
+                RecipientType: recipient.recipientType,
+                RecipientID: recipient.recipientId
+            }
+        });
+    }
+
     async createNotification({
         recipientType,
         recipientId,

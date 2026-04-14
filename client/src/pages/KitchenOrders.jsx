@@ -134,7 +134,7 @@ const KitchenOrders = () => {
                             {getPendingUpdate(order.id) ? (
                                 <>
                                     <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 flex items-center">
-                                        Status will update in {getRemainingSeconds(order.id)}s
+                                        Status update pending
                                     </div>
                                     <Button size="sm" variant="success" onClick={() => commitPendingUpdateNow(order.id)}>
                                         Confirm Now
@@ -145,7 +145,7 @@ const KitchenOrders = () => {
                                 </>
                             ) : (
                                 <Button size="sm" onClick={() => handleQueueStatusUpdate(order)} disabled={!getNextStatus(order.status)}>
-                                    {getActionLabel(order.status)} in 5s
+                                    {getActionLabel(order.status)}
                                 </Button>
                             )}
                         </div>

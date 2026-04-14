@@ -12,13 +12,10 @@ const NotificationCenter = () => {
     markAsRead, 
     markAllAsRead, 
     removeNotification, 
-    clearAll,
-    undoClear
+    clearAll
   } = useNotifications();
   
   const [isOpen, setIsOpen] = useState(false);
-  const [undoVisible, setUndoVisible] = useState(false);
-  const undoTimerRef = React.useRef(null);
 
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
@@ -102,10 +99,6 @@ const NotificationCenter = () => {
                   variant="danger"
                   onClick={() => {
                     if (clearAll) clearAll();
-                    // show undo bar
-                    setUndoVisible(true);
-                    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-                    undoTimerRef.current = setTimeout(() => setUndoVisible(false), 10000);
                   }}
                 >
                   Clear All
@@ -124,15 +117,6 @@ const NotificationCenter = () => {
             </div>
           ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto">
-              {/* Undo bar */}
-              {undoVisible && (
-                <div className="p-3 rounded bg-yellow-50 border border-yellow-200 mb-3 flex items-center justify-between">
-                  <div className="text-sm text-yellow-800">Notifications cleared</div>
-                  <div className="flex items-center gap-2">
-                    <Button size="sm" variant="outline" onClick={() => { if (undoClear) undoClear(); setUndoVisible(false); if (undoTimerRef.current) clearTimeout(undoTimerRef.current); }}>Undo</Button>
-                  </div>
-                </div>
-              )}
               {notifications.filter(n => n && n.id).map((notification) => (
                 <Card
                   key={notification.id}

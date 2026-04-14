@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import backendApi from '../services/backendApi';
 import { useAuth } from './AuthContext';
 
@@ -22,14 +22,7 @@ const toUiNotification = (item) => ({
 export const NotificationProvider = ({ children }) => {
   const { isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState([]);
-  const [lastCleared, setLastCleared] = useState([]);
-  const [dismissedIds, setDismissedIds] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const dismissedIdsRef = useRef(dismissedIds);
-
-  useEffect(() => {
-    dismissedIdsRef.current = dismissedIds;
-  }, [dismissedIds]);
 
   const syncNotifications = useCallback(async () => {
     if (!isAuthenticated) {
@@ -50,8 +43,7 @@ export const NotificationProvider = ({ children }) => {
       const list = Array.isArray(listResponse?.data?.data) ? listResponse.data.data : [];
       const mapped = list
         .map(toUiNotification)
-        .filter((notification) => notification?.id)
-        .filter((notification) => !dismissedIdsRef.current.includes(notification.id));
+        .filter((notification) => notification?.id);
 
       setNotifications(mapped);
 
@@ -68,8 +60,6 @@ export const NotificationProvider = ({ children }) => {
     if (!isAuthenticated) {
       setNotifications([]);
       setUnreadCount(0);
-      setLastCleared([]);
-      setDismissedIds([]);
       return;
     }
 
@@ -120,53 +110,38 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [syncNotifications]);
 
-  const removeNotification = useCallback((id) => {
+  const removeNotification = useCallback(async (id) => {
+    let wasUnread = false;
+
     setNotifications((current) => {
       const target = current.find((notification) => notification.id === id);
-      if (target && !target.read) {
-        setUnreadCount((count) => Math.max(count - 1, 0));
-      }
-
+      wasUnread = Boolean(target && !target.read);
       return current.filter((notification) => notification.id !== id);
     });
 
-    setDismissedIds((current) => (current.includes(id) ? current : [...current, id]));
-  }, []);
+    if (wasUnread) {
+      setUnreadCount((count) => Math.max(count - 1, 0));
+    }
+
+    try {
+      await backendApi.delete(`/api/v1/notifications/${id}`);
+    } catch (error) {
+      console.error('Failed to remove notification:', error?.response?.data || error.message);
+      await syncNotifications();
+    }
+  }, [syncNotifications]);
 
   const clearAll = useCallback(async () => {
-    setNotifications((current) => {
-      setLastCleared(current);
-      setDismissedIds((dismissed) => {
-        const currentIds = current.map((notification) => notification.id).filter(Boolean);
-        return Array.from(new Set([...dismissed, ...currentIds]));
-      });
-      return [];
-    });
+    setNotifications([]);
     setUnreadCount(0);
 
     try {
-      await backendApi.patch('/api/v1/notifications/read-all');
+      await backendApi.delete('/api/v1/notifications');
     } catch (error) {
       console.error('Failed to clear notifications:', error?.response?.data || error.message);
       await syncNotifications();
     }
   }, [syncNotifications]);
-
-  const undoClear = useCallback(() => {
-    const idsToRestore = lastCleared.map((notification) => notification.id);
-
-    setDismissedIds((current) => current.filter((id) => !idsToRestore.includes(id)));
-    setNotifications((current) => (current.length > 0 ? current : lastCleared));
-    setUnreadCount((current) => {
-      if (lastCleared.length === 0) {
-        return current;
-      }
-
-      const restoredUnread = lastCleared.filter((notification) => !notification.read).length;
-      return Math.max(current, restoredUnread);
-    });
-    setLastCleared([]);
-  }, [lastCleared]);
 
   const value = useMemo(() => ({
     notifications,
@@ -175,8 +150,7 @@ export const NotificationProvider = ({ children }) => {
     markAsRead,
     markAllAsRead,
     removeNotification,
-    clearAll,
-    undoClear
+    clearAll
   }), [
     notifications,
     unreadCount,
@@ -184,8 +158,7 @@ export const NotificationProvider = ({ children }) => {
     markAsRead,
     markAllAsRead,
     removeNotification,
-    clearAll,
-    undoClear
+    clearAll
   ]);
 
   return (

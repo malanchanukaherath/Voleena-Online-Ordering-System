@@ -4,7 +4,9 @@ const mockController = {
   getMyNotifications: jest.fn((req, res) => res.status(200).json({ success: true, data: [] })),
   getUnreadCount: jest.fn((req, res) => res.status(200).json({ success: true, data: { unreadCount: 3 } })),
   markOneAsRead: jest.fn((req, res) => res.status(200).json({ success: true })),
-  markAllAsRead: jest.fn((req, res) => res.status(200).json({ success: true }))
+  markAllAsRead: jest.fn((req, res) => res.status(200).json({ success: true })),
+  deleteOne: jest.fn((req, res) => res.status(200).json({ success: true })),
+  clearAll: jest.fn((req, res) => res.status(200).json({ success: true }))
 };
 
 jest.mock('../controllers/notificationController', () => mockController);
@@ -59,5 +61,19 @@ describe('notifications routes', () => {
 
     expect(response.status).toBe(200);
     expect(mockController.markAllAsRead).toHaveBeenCalledTimes(1);
+  });
+
+  test('deletes one notification', async () => {
+    const response = await request(app).delete('/api/v1/notifications/101').send({});
+
+    expect(response.status).toBe(200);
+    expect(mockController.deleteOne).toHaveBeenCalledTimes(1);
+  });
+
+  test('clears all notifications', async () => {
+    const response = await request(app).delete('/api/v1/notifications').send({});
+
+    expect(response.status).toBe(200);
+    expect(mockController.clearAll).toHaveBeenCalledTimes(1);
   });
 });
