@@ -335,7 +335,7 @@ const Home = () => {
                         Explore our menu and place your order in just a few clicks!
                     </p>
                     <Link to="/menu">
-                        <Button size="lg" className="bg-yellow-400 text-red-900 hover:bg-yellow-300">
+                        <Button size="lg" className="bg-orange-500 text-red-900 hover:bg-yellow-300">
                             Order Now
                         </Button>
                     </Link>
