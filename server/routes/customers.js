@@ -80,36 +80,26 @@ const findCustomerWithOptionalAddresses = async (customerId, attributes) => {
 const createAddressForCustomer = async (customerId, payload = {}) => {
     const { addressLine1, addressLine2, city, postalCode, district, latitude, longitude } = payload;
 
-    if (!addressLine1 || !city) {
+    const normalizedAddressLine1 = String(addressLine1 || '').trim();
+    const normalizedCity = String(city || '').trim();
+
+    if (!normalizedAddressLine1 || !normalizedCity) {
         return { error: 'Address line 1 and city are required', status: 400 };
     }
 
-    let finalLat = Number(latitude);
-    let finalLng = Number(longitude);
-    const hasCoordinates = () => Number.isFinite(finalLat) && Number.isFinite(finalLng);
-
-    if (!hasCoordinates()) {
-        try {
-            const { geocodeAddress } = require('../services/distanceValidation');
-            const addressText = `${addressLine1.trim()}${city ? ', ' + city.trim() : ''}${postalCode ? ', ' + postalCode.trim() : ''}`;
-            const geocoded = await geocodeAddress(addressText, city);
-            finalLat = Number(geocoded.lat);
-            finalLng = Number(geocoded.lng);
-            console.log(`Geocoded address: ${addressText} -> (${finalLat}, ${finalLng})`);
-        } catch (geocodeError) {
-            console.warn('Failed to geocode address, saving without coordinates:', geocodeError.message);
-        }
-    }
+    const parsedLatitude = Number(latitude);
+    const parsedLongitude = Number(longitude);
+    const hasCoordinates = Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude);
 
     const address = await Address.create({
         CustomerID: customerId,
-        AddressLine1: addressLine1.trim(),
+        AddressLine1: normalizedAddressLine1,
         AddressLine2: addressLine2 ? addressLine2.trim() : null,
-        City: city.trim(),
+        City: normalizedCity,
         PostalCode: postalCode ? postalCode.trim() : null,
         District: district ? district.trim() : null,
-        Latitude: hasCoordinates() ? finalLat : null,
-        Longitude: hasCoordinates() ? finalLng : null
+        Latitude: hasCoordinates ? parsedLatitude : null,
+        Longitude: hasCoordinates ? parsedLongitude : null
     });
 
     return { address };

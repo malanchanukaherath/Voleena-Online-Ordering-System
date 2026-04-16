@@ -19,7 +19,7 @@ const isAddressTableMissingError = (error) => {
 // Create new order
 exports.createOrder = async (req, res) => {
     try {
-        const { items, orderType, addressId, specialInstructions, promotionCode, paymentMethod = 'CASH' } = req.body;
+        const { items, orderType, addressId, specialInstructions, promotionCode, paymentMethod = 'CASH', deliveryCoordinates = null } = req.body;
         const customerId = req.user.id;
         const normalizedPaymentMethod = typeof paymentMethod === 'string' ? paymentMethod.trim().toUpperCase() : '';
 
@@ -42,6 +42,7 @@ exports.createOrder = async (req, res) => {
             specialInstructions,
             promotionId: promotionCode || null,
             paymentMethod: normalizedPaymentMethod,
+            deliveryCoordinates,
             items: items.map((item) => ({
                 menuItemId: item.menuItemId || null,
                 comboId: item.comboId || null,

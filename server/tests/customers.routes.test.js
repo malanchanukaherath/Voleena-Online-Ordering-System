@@ -241,16 +241,15 @@ describe('customer routes', () => {
     expect(response.body.error).toMatch(/required/i);
   });
 
-  test('geocodes and stores a customer address when coordinates are missing', async () => {
+  test('stores customer address without auto-geocoding when coordinates are missing', async () => {
     setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
-    geocodeAddress.mockResolvedValue({ lat: 6.9271, lng: 79.8612 });
     mockAddress.create.mockResolvedValue({
       AddressID: 51,
       AddressLine1: '15 Test Road',
       City: 'Colombo',
       PostalCode: '10000',
-      Latitude: 6.9271,
-      Longitude: 79.8612
+      Latitude: null,
+      Longitude: null
     });
 
     const response = await request(app)
@@ -263,11 +262,11 @@ describe('customer routes', () => {
 
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
-    expect(geocodeAddress).toHaveBeenCalled();
+    expect(geocodeAddress).not.toHaveBeenCalled();
     expect(mockAddress.create).toHaveBeenCalledWith(expect.objectContaining({
       CustomerID: 5,
-      Latitude: 6.9271,
-      Longitude: 79.8612
+      Latitude: null,
+      Longitude: null
     }));
   });
 

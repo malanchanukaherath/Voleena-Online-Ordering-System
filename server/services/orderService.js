@@ -1,7 +1,7 @@
 const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, ComboPackItem, Delivery, DeliveryStaffAvailability, Payment, Address, sequelize } = require('../models');
 const { Transaction, Op } = require('sequelize');
 const stockService = require('./stockService');
-const { validateDeliveryDistanceWithFallback } = require('./distanceValidation');
+const { geocodeAddress, validateDeliveryDistanceWithFallback } = require('./distanceValidation');
 const { calculateDeliveryFee } = require('../utils/deliveryFeeCalculator');
 const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 const { sendOrderConfirmationEmail, sendOrderStatusUpdateEmail } = require('./emailService');
@@ -183,13 +183,38 @@ class OrderService {
                     throw new Error('Delivery address not found for this customer');
                 }
 
-                if (!Number.isFinite(Number(address.Latitude)) || !Number.isFinite(Number(address.Longitude))) {
+                const payloadLatitude = Number(orderData?.deliveryCoordinates?.latitude);
+                const payloadLongitude = Number(orderData?.deliveryCoordinates?.longitude);
+                const hasPayloadCoordinates = Number.isFinite(payloadLatitude) && Number.isFinite(payloadLongitude);
+
+                let deliveryLatitude = Number(address.Latitude);
+                let deliveryLongitude = Number(address.Longitude);
+
+                if (!Number.isFinite(deliveryLatitude) || !Number.isFinite(deliveryLongitude)) {
+                    if (hasPayloadCoordinates) {
+                        deliveryLatitude = payloadLatitude;
+                        deliveryLongitude = payloadLongitude;
+                    } else {
+                        try {
+                            const addressText = [address.AddressLine1, address.City, address.PostalCode]
+                                .filter(Boolean)
+                                .join(', ');
+                            const geocoded = await geocodeAddress(addressText, address.City);
+                            deliveryLatitude = Number(geocoded.lat);
+                            deliveryLongitude = Number(geocoded.lng);
+                        } catch (geocodeError) {
+                            throw new Error('Unable to validate delivery distance for this address. Please update your address details or use GPS pinning at checkout.');
+                        }
+                    }
+                }
+
+                if (!Number.isFinite(deliveryLatitude) || !Number.isFinite(deliveryLongitude)) {
                     throw new Error('Address coordinates are required for delivery validation');
                 }
 
                 const distanceValidation = await validateDeliveryDistanceWithFallback(
-                    Number(address.Latitude),
-                    Number(address.Longitude)
+                    deliveryLatitude,
+                    deliveryLongitude
                 );
 
                 if (!distanceValidation.isValid) {
