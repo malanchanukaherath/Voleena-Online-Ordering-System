@@ -9,7 +9,9 @@ const mockCustomer = {
 
 const mockAddress = {
   create: jest.fn(),
-  findAll: jest.fn()
+  findAll: jest.fn(),
+  findOne: jest.fn(),
+  count: jest.fn()
 };
 
 jest.mock('../models', () => ({ Customer: mockCustomer, Address: mockAddress }));
@@ -33,6 +35,7 @@ describe('customer routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     resetAuthState();
+    mockAddress.count.mockResolvedValue(0);
   });
 
   test('rejects customer creation when unauthenticated', async () => {
@@ -268,6 +271,64 @@ describe('customer routes', () => {
       Latitude: null,
       Longitude: null
     }));
+  });
+
+  test('rejects address creation when customer already has maximum saved addresses', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    mockAddress.count.mockResolvedValue(3);
+
+    const response = await request(app)
+      .post('/api/v1/customers/me/addresses')
+      .send({
+        addressLine1: '11 Maximum Street',
+        city: 'Gampaha'
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/Maximum 3 saved addresses/i);
+  });
+
+  test('rejects deleting the last remaining saved address', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    mockAddress.count.mockResolvedValue(1);
+
+    const response = await request(app)
+      .delete('/api/v1/customers/me/addresses/51');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/At least one saved address is required/i);
+  });
+
+  test('updates customer owned address without persisting coordinates', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    const save = jest.fn().mockResolvedValue(undefined);
+    mockAddress.findOne.mockResolvedValue({
+      AddressID: 51,
+      CustomerID: 5,
+      AddressLine1: 'Old Road',
+      AddressLine2: null,
+      City: 'Colombo',
+      PostalCode: null,
+      District: null,
+      Latitude: 6.9,
+      Longitude: 79.8,
+      save
+    });
+
+    const response = await request(app)
+      .put('/api/v1/customers/me/addresses/51')
+      .send({
+        addressLine1: '22 Updated Lane',
+        city: 'Kadawatha',
+        latitude: 7.1,
+        longitude: 80.0
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(save).toHaveBeenCalled();
+    expect(response.body.address.latitude).toBeNull();
+    expect(response.body.address.longitude).toBeNull();
   });
 
   test('returns 404 when updating a missing customer', async () => {

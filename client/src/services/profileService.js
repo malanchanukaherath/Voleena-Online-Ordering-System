@@ -20,6 +20,10 @@ export const createCustomerAddress = async (payload) => {
   return backendApi.post('/api/v1/customers/me/addresses', payload);
 };
 
+export const updateCustomerAddress = async (addressId, payload) => {
+  return backendApi.put(`/api/v1/customers/me/addresses/${addressId}`, payload);
+};
+
 export const deleteCustomerAddress = async (addressId) => {
   return backendApi.delete(`/api/v1/customers/me/addresses/${addressId}`);
 };

@@ -22,6 +22,8 @@ const isValidProfileName = (name) => typeof name === 'string' && name.trim().len
 const isValidProfileEmail = (email) => email === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const isValidProfilePhone = (phone) => /^[+]?[0-9]{9,15}$/.test(phone);
 const isValidNotificationPreference = (value) => ['EMAIL', 'SMS', 'BOTH'].includes(value);
+const MAX_ADDRESSES_PER_CUSTOMER = 3;
+const MIN_ADDRESSES_PER_CUSTOMER = 1;
 
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
@@ -87,9 +89,37 @@ const createAddressForCustomer = async (customerId, payload = {}) => {
         return { error: 'Address line 1 and city are required', status: 400 };
     }
 
-    const parsedLatitude = Number(latitude);
-    const parsedLongitude = Number(longitude);
-    const hasCoordinates = Number.isFinite(parsedLatitude) && Number.isFinite(parsedLongitude);
+    if (normalizedAddressLine1.length < 5) {
+        return { error: 'Address line 1 must be at least 5 characters', status: 400 };
+    }
+
+    if (normalizedCity.length < 2) {
+        return { error: 'City must be at least 2 characters', status: 400 };
+    }
+
+    const existingAddressCount = await Address.count({
+        where: { CustomerID: customerId }
+    });
+
+    if (existingAddressCount >= MAX_ADDRESSES_PER_CUSTOMER) {
+        return {
+            error: `Maximum ${MAX_ADDRESSES_PER_CUSTOMER} saved addresses are allowed. Delete an address before adding a new one.`,
+            status: 400
+        };
+    }
+
+    const parseCoordinate = (value) => {
+        if (value === undefined || value === null || String(value).trim() === '') {
+            return null;
+        }
+
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+    };
+
+    const parsedLatitude = parseCoordinate(latitude);
+    const parsedLongitude = parseCoordinate(longitude);
+    const hasCoordinates = parsedLatitude !== null && parsedLongitude !== null;
 
     const address = await Address.create({
         CustomerID: customerId,
@@ -481,7 +511,11 @@ router.get('/me/addresses', requireCustomer, async (req, res) => {
  */
 router.post('/me/addresses', requireCustomer, async (req, res) => {
     try {
-        const result = await createAddressForCustomer(req.user.id, req.body);
+        const result = await createAddressForCustomer(req.user.id, {
+            ...req.body,
+            latitude: null,
+            longitude: null
+        });
         if (result.error) {
             return res.status(result.status).json({ error: result.error });
         }
@@ -512,12 +546,96 @@ router.post('/me/addresses', requireCustomer, async (req, res) => {
 });
 
 /**
+ * PUT /api/customers/me/addresses/:addressId
+ * Customer: Update own address
+ */
+router.put('/me/addresses/:addressId', requireCustomer, async (req, res) => {
+    try {
+        const { addressId } = req.params;
+        const { addressLine1, addressLine2, city, postalCode, district } = req.body;
+
+        const address = await Address.findOne({
+            where: {
+                AddressID: addressId,
+                CustomerID: req.user.id
+            }
+        });
+
+        if (!address) {
+            return res.status(404).json({ error: 'Address not found' });
+        }
+
+        const normalizedAddressLine1 = String(addressLine1 || '').trim();
+        const normalizedCity = String(city || '').trim();
+
+        if (!normalizedAddressLine1 || !normalizedCity) {
+            return res.status(400).json({ error: 'Address line 1 and city are required' });
+        }
+
+        if (normalizedAddressLine1.length < 5) {
+            return res.status(400).json({ error: 'Address line 1 must be at least 5 characters' });
+        }
+
+        if (normalizedCity.length < 2) {
+            return res.status(400).json({ error: 'City must be at least 2 characters' });
+        }
+
+        address.AddressLine1 = normalizedAddressLine1;
+        address.AddressLine2 = addressLine2 ? String(addressLine2).trim() : null;
+        address.City = normalizedCity;
+        address.PostalCode = postalCode ? String(postalCode).trim() : null;
+        address.District = district ? String(district).trim() : null;
+
+        // Customer self-edits intentionally do not persist coordinates.
+        address.Latitude = null;
+        address.Longitude = null;
+
+        await address.save();
+
+        return res.json({
+            success: true,
+            message: 'Address updated successfully',
+            address: {
+                id: address.AddressID,
+                addressLine1: address.AddressLine1,
+                addressLine2: address.AddressLine2,
+                city: address.City,
+                postalCode: address.PostalCode,
+                district: address.District,
+                latitude: address.Latitude,
+                longitude: address.Longitude
+            }
+        });
+    } catch (error) {
+        console.error('Update customer address error:', error);
+
+        if (handleAddressTableMissing(res, error)) {
+            return;
+        }
+
+        return res.status(500).json({ error: 'Failed to update address' });
+    }
+});
+
+/**
  * DELETE /api/customers/me/addresses/:addressId
  * Customer: Delete own address
  */
 router.delete('/me/addresses/:addressId', requireCustomer, async (req, res) => {
     try {
         const { addressId } = req.params;
+
+        const addressCount = await Address.count({
+            where: {
+                CustomerID: req.user.id
+            }
+        });
+
+        if (addressCount <= MIN_ADDRESSES_PER_CUSTOMER) {
+            return res.status(400).json({
+                error: 'At least one saved address is required. Please add another address before deleting this one.'
+            });
+        }
 
         const address = await Address.findOne({
             where: {
@@ -695,6 +813,18 @@ router.delete('/:id/addresses/:addressId', requireAdmin, async (req, res) => {
 
         if (!address) {
             return res.status(404).json({ error: 'Address not found for this customer' });
+        }
+
+        const addressCount = await Address.count({
+            where: {
+                CustomerID: customer.CustomerID
+            }
+        });
+
+        if (addressCount <= MIN_ADDRESSES_PER_CUSTOMER) {
+            return res.status(400).json({
+                error: 'At least one saved address is required for this customer.'
+            });
         }
 
         await address.destroy();

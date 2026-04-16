@@ -11,6 +11,7 @@ import {
     changeCustomerPassword,
     getCustomerAddresses,
     createCustomerAddress,
+    updateCustomerAddress,
     deleteCustomerAddress
 } from '../services/profileService';
 
@@ -83,6 +84,7 @@ const Profile = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
     const [addresses, setAddresses] = useState([]);
+    const [editingAddressId, setEditingAddressId] = useState(null);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -197,16 +199,29 @@ const Profile = () => {
         e.preventDefault();
         if (!validateAddressForm()) return;
 
+        if (!editingAddressId && addresses.length >= 3) {
+            setToastMessage('You can save up to 3 addresses only. Delete one to add a new address.');
+            setToastType('error');
+            setShowToast(true);
+            return;
+        }
+
         setIsAddressSaving(true);
 
         try {
-            await createCustomerAddress({
+            const payload = {
                 addressLine1: addressForm.addressLine1.trim(),
                 addressLine2: addressForm.addressLine2.trim() || null,
                 city: addressForm.city.trim(),
                 postalCode: addressForm.postalCode.trim() || null,
                 district: addressForm.district.trim() || null
-            });
+            };
+
+            if (editingAddressId) {
+                await updateCustomerAddress(editingAddressId, payload);
+            } else {
+                await createCustomerAddress(payload);
+            }
 
             setAddressForm({
                 addressLine1: '',
@@ -215,14 +230,15 @@ const Profile = () => {
                 postalCode: '',
                 district: ''
             });
+            setEditingAddressId(null);
 
-            setToastMessage('Address added successfully');
+            setToastMessage(editingAddressId ? 'Address updated successfully' : 'Address added successfully');
             setToastType('success');
             setShowToast(true);
 
             await loadAddresses();
         } catch (error) {
-            setToastMessage(getApiErrorMessage(error, 'Failed to add address. Please try again.'));
+            setToastMessage(getApiErrorMessage(error, editingAddressId ? 'Failed to update address. Please try again.' : 'Failed to add address. Please try again.'));
             setToastType('error');
             setShowToast(true);
         } finally {
@@ -230,8 +246,37 @@ const Profile = () => {
         }
     };
 
+    const handleStartAddressEdit = (address) => {
+        setEditingAddressId(address.id || null);
+        setAddressForm({
+            addressLine1: address.addressLine1 || '',
+            addressLine2: address.addressLine2 || '',
+            city: address.city || '',
+            postalCode: address.postalCode || '',
+            district: address.district || ''
+        });
+    };
+
+    const handleCancelAddressEdit = () => {
+        setEditingAddressId(null);
+        setAddressForm({
+            addressLine1: '',
+            addressLine2: '',
+            city: '',
+            postalCode: '',
+            district: ''
+        });
+    };
+
     const handleDeleteAddress = async (addressId) => {
         if (!addressId) return;
+
+        if (addresses.length <= 1) {
+            setToastMessage('At least one saved address is required. Add another address before deleting this one.');
+            setToastType('error');
+            setShowToast(true);
+            return;
+        }
 
         const confirmed = window.confirm('Are you sure you want to delete this address?');
         if (!confirmed) return;
@@ -239,6 +284,9 @@ const Profile = () => {
         try {
             await deleteCustomerAddress(addressId);
             setAddresses((prev) => prev.filter((address) => address.id !== addressId));
+            if (editingAddressId === addressId) {
+                handleCancelAddressEdit();
+            }
             setToastMessage('Address deleted successfully');
             setToastType('success');
             setShowToast(true);
@@ -564,6 +612,7 @@ const Profile = () => {
                         <FaMapMarkedAlt className="text-primary-600" />
                         Saved Addresses
                     </h2>
+                    <span className="text-xs text-gray-500">Maximum 3 addresses</span>
                 </div>
 
                 {isAddressLoading ? (
@@ -572,20 +621,36 @@ const Profile = () => {
                     <p className="text-sm text-gray-500 mb-4">No saved addresses yet.</p>
                 ) : (
                     <div className="space-y-3 mb-6">
-                        {addresses.map((address) => (
+                        {addresses.map((address, index) => (
                             <div key={address.id || `${address.addressLine1}-${address.city}`} className="border border-gray-200 rounded-md p-4">
-                                <p className="font-medium text-gray-800">{address.addressLine1}</p>
+                                <div className="flex items-start justify-between gap-3">
+                                    <p className="font-medium text-gray-800">{address.addressLine1}</p>
+                                    {index === 0 && (
+                                        <span className="text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded bg-green-100 text-green-700">
+                                            Default
+                                        </span>
+                                    )}
+                                </div>
                                 {address.addressLine2 && <p className="text-sm text-gray-600">{address.addressLine2}</p>}
                                 <p className="text-sm text-gray-600">
                                     {[address.city, address.district, address.postalCode].filter(Boolean).join(', ')}
                                 </p>
                                 {!!address.id && (
-                                    <div className="mt-3">
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        <Button
+                                            type="button"
+                                            variant="secondary"
+                                            size="sm"
+                                            onClick={() => handleStartAddressEdit(address)}
+                                        >
+                                            Edit Address
+                                        </Button>
                                         <Button
                                             type="button"
                                             variant="danger"
                                             size="sm"
                                             onClick={() => handleDeleteAddress(address.id)}
+                                            disabled={addresses.length <= 1}
                                         >
                                             Delete Address
                                         </Button>
@@ -596,7 +661,13 @@ const Profile = () => {
                     </div>
                 )}
 
-                <h3 className="text-lg font-semibold mb-4">Add New Address</h3>
+                {addresses.length <= 1 && (
+                    <p className="text-xs text-amber-700 mb-4">
+                        Keep at least one saved address. Checkout uses your first saved address as default.
+                    </p>
+                )}
+
+                <h3 className="text-lg font-semibold mb-4">{editingAddressId ? 'Edit Address' : 'Add New Address'}</h3>
                 <form onSubmit={handleAddressSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
                         <Input
@@ -640,14 +711,25 @@ const Profile = () => {
                         error={errors.postalCode}
                     />
                     <div className="md:col-span-2">
-                        <Button
-                            type="submit"
-                            className="w-full md:w-auto"
-                            loading={isAddressSaving}
-                            disabled={isAddressSaving || isAddressLoading}
-                        >
-                            Save Address
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                type="submit"
+                                className="w-full md:w-auto"
+                                loading={isAddressSaving}
+                                disabled={isAddressSaving || isAddressLoading || (!editingAddressId && addresses.length >= 3)}
+                            >
+                                {editingAddressId ? 'Update Address' : 'Save Address'}
+                            </Button>
+                            {editingAddressId && (
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={handleCancelAddressEdit}
+                                >
+                                    Cancel
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </form>
             </div>

@@ -8,7 +8,7 @@ import Select from '../components/ui/Select';
 import Textarea from '../components/ui/Textarea';
 import { StripePaymentModal } from '../components/payment/StripePaymentModal';
 import { getCart, clearCart } from '../utils/cartStorage';
-import { calculateDeliveryFeeByDistance, confirmCardPayment, createAddress, createOrder, initiatePayment, updateCheckoutContactProfile, validateDeliveryDistance } from '../services/orderApi';
+import { calculateDeliveryFeeByDistance, confirmCardPayment, createOrder, initiatePayment, updateCheckoutContactProfile, validateDeliveryDistance } from '../services/orderApi';
 import { getCustomerAddresses, getCustomerProfile } from '../services/profileService';
 import { usePublicSettings } from '../hooks/usePublicSettings';
 
@@ -21,11 +21,17 @@ const DELIVERY_MAP_LIBRARIES = ['places'];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const mapSavedAddress = (address = {}) => ({
+    id: address.AddressID ?? address.address_id ?? address.id ?? null,
     addressLine1: (address.AddressLine1 ?? address.addressLine1 ?? '').trim(),
     addressLine2: (address.AddressLine2 ?? address.addressLine2 ?? '').trim(),
     city: (address.City ?? address.city ?? '').trim(),
     postalCode: (address.PostalCode ?? address.postalCode ?? '').trim(),
 });
+
+const formatSavedAddressLabel = (address) => {
+    const parts = [address.addressLine1, address.city, address.postalCode].filter(Boolean);
+    return parts.join(', ');
+};
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -58,6 +64,9 @@ const Checkout = () => {
     const [searchAutocomplete, setSearchAutocomplete] = useState(null);
     const [mapSearchValue, setMapSearchValue] = useState('');
     const [deliveryAddressMethod, setDeliveryAddressMethod] = useState('');
+    const [savedAddresses, setSavedAddresses] = useState([]);
+    const [selectedAddressId, setSelectedAddressId] = useState('');
+    const [gpsDetectedAddress, setGpsDetectedAddress] = useState('');
     const cartItems = useMemo(() => getCart(), []);
     const { settings: publicSettings } = usePublicSettings();
     const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -87,6 +96,19 @@ const Checkout = () => {
 
         return options;
     }, [paymentMethodSettings.cashOnDelivery, paymentMethodSettings.cardPayment, paymentMethodSettings.onlinePayment]);
+
+    const selectedSavedAddress = useMemo(() => (
+        savedAddresses.find((address) => String(address.id) === String(selectedAddressId)) || null
+    ), [savedAddresses, selectedAddressId]);
+
+    const savedAddressOptions = useMemo(() => (
+        savedAddresses
+            .filter((address) => address.id !== null && address.id !== undefined)
+            .map((address) => ({
+                value: String(address.id),
+                label: formatSavedAddressLabel(address)
+            }))
+    ), [savedAddresses]);
 
     useEffect(() => {
         if (formData.orderType === 'DELIVERY' && !deliveryAddressMethod && googleMapsApiKey) {
@@ -133,24 +155,32 @@ const Checkout = () => {
 
             if (addressResult.status === 'fulfilled') {
                 const savedRows = addressResult.value?.data?.data || [];
-                const latestSavedAddress = mapSavedAddress(savedRows[0] || {});
-                const hasSavedAddress = Boolean(latestSavedAddress.addressLine1 && latestSavedAddress.city);
+                const mappedAddresses = savedRows.map(mapSavedAddress).filter((address) => address.id !== null && address.id !== undefined);
+
+                setSavedAddresses(mappedAddresses);
+
+                const defaultAddress = mappedAddresses[0] || null;
+                const hasSavedAddress = Boolean(defaultAddress?.addressLine1 && defaultAddress?.city);
 
                 if (hasSavedAddress) {
+                    setSelectedAddressId(String(defaultAddress.id));
                     setFormData((prev) => ({
                         ...prev,
-                        addressLine1: latestSavedAddress.addressLine1,
-                        addressLine2: latestSavedAddress.addressLine2,
-                        city: latestSavedAddress.city,
-                        postalCode: latestSavedAddress.postalCode,
+                        addressLine1: defaultAddress.addressLine1,
+                        addressLine2: defaultAddress.addressLine2,
+                        city: defaultAddress.city,
+                        postalCode: defaultAddress.postalCode,
                     }));
                     setDeliveryAddressMethod('MANUAL');
                     setCurrentLocation(null);
                     setMapCenter(RESTAURANT_LOCATION);
                     setMapSearchValue('');
+                    setGpsDetectedAddress('');
                     setLocationError('');
 
-                    await validateDeliveryAddressDistance(latestSavedAddress);
+                    await validateDeliveryAddressDistance(defaultAddress);
+                } else {
+                    setSelectedAddressId('');
                 }
             }
         };
@@ -208,6 +238,8 @@ const Checkout = () => {
                         const next = { ...prev };
                         delete next.distance;
                         delete next.distanceSuggestion;
+                        delete next.location;
+                        delete next.savedAddressId;
                         return next;
                     });
                     setLocationError('');
@@ -230,11 +262,6 @@ const Checkout = () => {
         );
 
         return locality?.long_name || '';
-    };
-
-    const extractPostalCodeFromAddressComponents = (components = []) => {
-        const postalCode = components.find(component => component.types.includes('postal_code'));
-        return postalCode?.long_name || '';
     };
 
     const reverseGeocodeAndAutofill = async (lat, lng) => {
@@ -267,18 +294,14 @@ const Checkout = () => {
 
             const addressLine1 = [streetNumber, route].filter(Boolean).join(' ') || neighborhood || primaryResult?.formatted_address || `Pinned location (${lat.toFixed(6)}, ${lng.toFixed(6)})`;
             const city = extractCityFromAddressComponents(components);
-            const postalCode = extractPostalCodeFromAddressComponents(components);
+            const composedDetectedAddress = [addressLine1, city].filter(Boolean).join(', ');
 
             setMapSearchValue(primaryResult?.formatted_address || '');
-            setFormData(prev => ({
-                ...prev,
-                addressLine1,
-                city: city || prev.city,
-                postalCode: postalCode || prev.postalCode
-            }));
+            setGpsDetectedAddress(composedDetectedAddress || primaryResult?.formatted_address || '');
         } catch (error) {
             console.warn('Reverse geocoding failed for pinned location:', error.message);
-            setLocationError('Location pin captured, but we could not auto-detect a readable address. You can switch to manual mode and type address details.');
+            setGpsDetectedAddress('');
+            setLocationError('Location pin captured, but we could not auto-detect a readable area name. You can still continue with GPS pinning.');
         }
     };
 
@@ -327,15 +350,51 @@ const Checkout = () => {
         await handlePlaceChanged();
     };
 
-    const handleDeliveryAddressMethodChange = (method) => {
-        setDeliveryAddressMethod(method);
-        setErrors(prev => {
+    const clearDeliveryValidationErrors = () => {
+        setErrors((prev) => {
             const next = { ...prev };
             delete next.deliveryAddressMethod;
             delete next.location;
             delete next.submit;
+            delete next.distance;
+            delete next.distanceSuggestion;
+            delete next.addressLine1;
+            delete next.city;
+            delete next.savedAddressId;
             return next;
         });
+    };
+
+    const handleSavedAddressChange = async (e) => {
+        const nextAddressId = e.target.value;
+        setSelectedAddressId(nextAddressId);
+        clearDeliveryValidationErrors();
+
+        const nextAddress = savedAddresses.find((address) => String(address.id) === String(nextAddressId));
+        if (!nextAddress) {
+            setDistanceInfo(null);
+            return;
+        }
+
+        setFormData((prev) => ({
+            ...prev,
+            addressLine1: nextAddress.addressLine1,
+            addressLine2: nextAddress.addressLine2,
+            city: nextAddress.city,
+            postalCode: nextAddress.postalCode
+        }));
+
+        if (formData.orderType === 'DELIVERY' && deliveryAddressMethod === 'MANUAL') {
+            setDistanceInfo(null);
+            setDeliveryFee(Number(publicSettings.delivery?.baseFee) || 100);
+            setDeliveryFeeBreakdown('');
+            await validateDeliveryAddressDistance(nextAddress);
+        }
+    };
+
+    const handleDeliveryAddressMethodChange = (method) => {
+        setDeliveryAddressMethod(method);
+        clearDeliveryValidationErrors();
 
         setDistanceInfo(null);
         setDeliveryFee(Number(publicSettings.delivery?.baseFee) || 100);
@@ -345,6 +404,18 @@ const Checkout = () => {
         if (method === 'MANUAL') {
             setCurrentLocation(null);
             setMapCenter(RESTAURANT_LOCATION);
+            setGpsDetectedAddress('');
+
+            if (selectedSavedAddress) {
+                setFormData((prev) => ({
+                    ...prev,
+                    addressLine1: selectedSavedAddress.addressLine1,
+                    addressLine2: selectedSavedAddress.addressLine2,
+                    city: selectedSavedAddress.city,
+                    postalCode: selectedSavedAddress.postalCode
+                }));
+                validateDeliveryAddressDistance(selectedSavedAddress);
+            }
         }
     };
 
@@ -489,19 +560,13 @@ const Checkout = () => {
 
         const placeLabel = place?.formatted_address || place?.name || '';
         const detectedCity = extractCityFromPlace(place);
-        const detectedPostalCode = extractPostalCodeFromAddressComponents(place?.address_components || []);
+        const detectedStreet = placeLabel || place?.name || '';
 
         setMapSearchValue(placeLabel);
+        setGpsDetectedAddress([detectedStreet, detectedCity].filter(Boolean).join(', '));
         setCurrentLocation({ lat, lng });
         setMapCenter({ lat, lng });
         setLocationError('');
-
-        setFormData(prev => ({
-            ...prev,
-            addressLine1: placeLabel || prev.addressLine1,
-            city: detectedCity || prev.city,
-            postalCode: detectedPostalCode || prev.postalCode
-        }));
 
         await validateCoordinatesForDelivery(lat, lng, 'Selected searched location');
     };
@@ -516,10 +581,12 @@ const Checkout = () => {
             return;
         }
 
+        const fallbackAddress = selectedSavedAddress || {};
+
         const candidateAddress = {
-            addressLine1: String(addressOverride?.addressLine1 ?? formData.addressLine1 ?? ''),
-            city: String(addressOverride?.city ?? formData.city ?? ''),
-            postalCode: String(addressOverride?.postalCode ?? formData.postalCode ?? '')
+            addressLine1: String(addressOverride?.addressLine1 ?? fallbackAddress.addressLine1 ?? formData.addressLine1 ?? ''),
+            city: String(addressOverride?.city ?? fallbackAddress.city ?? formData.city ?? ''),
+            postalCode: String(addressOverride?.postalCode ?? fallbackAddress.postalCode ?? formData.postalCode ?? '')
         };
 
         // Skip validation if required fields are not properly filled
@@ -567,6 +634,7 @@ const Checkout = () => {
                     setErrors(prev => {
                         const newErrors = { ...prev };
                         delete newErrors.distance;
+                        delete newErrors.savedAddressId;
                         return newErrors;
                     });
                 }
@@ -608,16 +676,16 @@ const Checkout = () => {
         else if (phoneDigits.length < 9 || phoneDigits.length > 15) newErrors.phone = 'Enter a valid phone number';
 
         if (formData.orderType === 'DELIVERY') {
+            if (savedAddresses.length === 0) {
+                newErrors.savedAddressId = 'Add at least one saved address in your profile before placing a delivery order.';
+            } else if (!selectedAddressId) {
+                newErrors.savedAddressId = 'Please select one of your saved addresses.';
+            }
+
             if (!deliveryAddressMethod) {
                 newErrors.deliveryAddressMethod = 'Please choose one delivery address method';
             } else if (deliveryAddressMethod === 'GPS') {
                 if (!currentLocation) newErrors.location = 'Please pin your delivery location or use your current location';
-            } else if (deliveryAddressMethod === 'MANUAL') {
-                if (!formData.addressLine1.trim()) newErrors.addressLine1 = 'Address is required';
-                else if (formData.addressLine1.trim().length < 5) newErrors.addressLine1 = 'Address must be at least 5 characters';
-
-                if (!formData.city.trim()) newErrors.city = 'City is required';
-                else if (formData.city.trim().length < 2) newErrors.city = 'City must be at least 2 characters';
             }
         }
 
@@ -687,6 +755,10 @@ const Checkout = () => {
             let addressId = null;
 
             if (formData.orderType === 'DELIVERY') {
+                if (!selectedSavedAddress || !selectedSavedAddress.id) {
+                    throw new Error('Please select one of your saved profile addresses for delivery.');
+                }
+
                 // Validate delivery distance before placing order
                 let distanceValidation;
 
@@ -703,9 +775,9 @@ const Checkout = () => {
                     // Otherwise, use address
                     distanceValidation = await validateDeliveryDistance({
                         address: {
-                            addressLine1: formData.addressLine1.trim(),
-                            city: formData.city.trim(),
-                            postalCode: formData.postalCode?.trim() || null
+                            addressLine1: selectedSavedAddress.addressLine1,
+                            city: selectedSavedAddress.city,
+                            postalCode: selectedSavedAddress.postalCode || null
                         }
                     });
                 }
@@ -720,25 +792,7 @@ const Checkout = () => {
                         `Delivery address is outside our service area (${validationData.distance.toFixed(2)}km > ${validationData.maxDistance}km)`
                     );
                 }
-
-                const resolvedAddressLine1 = formData.addressLine1.trim();
-                const resolvedCity = formData.city.trim();
-
-                if (!resolvedAddressLine1 || !resolvedCity) {
-                    throw new Error('Delivery address details are incomplete. Switch to manual mode and provide Address Line 1 and City before placing the order.');
-                }
-
-                // Save readable address only; GPS pin coordinates are not persisted.
-                const addressResponse = await createAddress({
-                    addressLine1: resolvedAddressLine1,
-                    addressLine2: formData.addressLine2 || null,
-                    city: resolvedCity,
-                    postalCode: formData.postalCode || null,
-                    district: null,
-                    latitude: null,
-                    longitude: null
-                });
-                addressId = addressResponse.data?.address?.id || addressResponse.data?.addressId || null;
+                addressId = selectedSavedAddress.id;
             }
 
             const orderPayload = {
@@ -818,11 +872,11 @@ const Checkout = () => {
             const nextErrors = { submit: message };
 
             if (message.toLowerCase().includes('delivery address is outside')) {
-                nextErrors.addressLine1 = message;
+                nextErrors.savedAddressId = message;
             }
 
             if (message.toLowerCase().includes('geocode')) {
-                nextErrors.addressLine1 = 'We could not validate this address. Please check the address details.';
+                nextErrors.savedAddressId = 'We could not validate this address. Please update your saved profile address details.';
             }
 
             setErrors(nextErrors);
@@ -966,14 +1020,54 @@ const Checkout = () => {
                                                 </div>
                                             </div>
                                             <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900">Enter address manually</p>
-                                                <p className="text-xs text-gray-600 mt-1">Type your full delivery address</p>
+                                                <p className="text-sm font-medium text-gray-900">Use saved profile address</p>
+                                                <p className="text-xs text-gray-600 mt-1">Select from your saved addresses (max 3)</p>
                                             </div>
                                         </button>
                                     </div>
 
                                     {errors.deliveryAddressMethod && (
                                         <p className="text-sm text-red-600 mt-3">{errors.deliveryAddressMethod}</p>
+                                    )}
+                                </div>
+
+                                <div className="mb-6 p-4 bg-white border border-gray-200 rounded-lg">
+                                    {savedAddressOptions.length > 0 ? (
+                                        <>
+                                            <Select
+                                                label="Saved Delivery Address"
+                                                name="selectedAddressId"
+                                                value={selectedAddressId}
+                                                onChange={handleSavedAddressChange}
+                                                options={savedAddressOptions}
+                                                error={errors.savedAddressId}
+                                                helperText="Checkout uses your first saved address as default. Manage addresses from your profile."
+                                                required
+                                            />
+
+                                            {selectedSavedAddress && (
+                                                <div className="mt-3 p-3 bg-gray-50 rounded border border-gray-200 text-sm text-gray-700">
+                                                    <p className="font-medium text-gray-900">Selected Address</p>
+                                                    <p className="mt-1">{selectedSavedAddress.addressLine1}</p>
+                                                    {selectedSavedAddress.addressLine2 && <p>{selectedSavedAddress.addressLine2}</p>}
+                                                    <p>{[selectedSavedAddress.city, selectedSavedAddress.postalCode].filter(Boolean).join(', ')}</p>
+                                                </div>
+                                            )}
+
+                                            <div className="mt-3 text-sm">
+                                                <Link to="/profile" className="text-primary-700 hover:text-primary-900 underline">
+                                                    Manage addresses in profile
+                                                </Link>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="p-3 bg-red-50 border border-red-200 rounded text-sm text-red-700">
+                                            <p className="font-medium">No saved addresses found.</p>
+                                            <p className="mt-1">Add at least one address in your profile before placing a delivery order.</p>
+                                            <Link to="/profile" className="inline-block mt-2 text-red-800 underline hover:text-red-900">
+                                                Go to Profile
+                                            </Link>
+                                        </div>
                                     )}
                                 </div>
 
@@ -1078,57 +1172,18 @@ const Checkout = () => {
                                                 <div>
                                                     <p className="font-medium">GPS coordinates captured successfully!</p>
                                                     <p className="text-xs mt-1 opacity-90">Coordinates: {currentLocation.lat.toFixed(6)}, {currentLocation.lng.toFixed(6)}</p>
-                                                    {(formData.addressLine1 || formData.city) && (
-                                                        <p className="text-xs mt-1">Detected address: {formData.addressLine1 || 'Pinned location'}{formData.city ? `, ${formData.city}` : ''}</p>
+                                                    {gpsDetectedAddress && (
+                                                        <p className="text-xs mt-1">Detected nearby area: {gpsDetectedAddress}</p>
                                                     )}
                                                 </div>
                                             </div>
                                         )}
-
-                                        <Input
-                                            label="Additional Delivery Details (Optional)"
-                                            name="addressLine2"
-                                            value={formData.addressLine2}
-                                            onChange={handleChange}
-                                            placeholder="Apartment, floor, landmark, etc."
-                                        />
                                     </>
                                 )}
 
                                 {deliveryAddressMethod === 'MANUAL' && (
-                                    <div className="space-y-4">
-                                        <Input
-                                            label="Address Line 1"
-                                            name="addressLine1"
-                                            value={formData.addressLine1}
-                                            onChange={handleChange}
-                                            onBlur={validateDeliveryAddressDistance}
-                                            error={errors.addressLine1}
-                                            required
-                                        />
-                                        <Input
-                                            label="Address Line 2"
-                                            name="addressLine2"
-                                            value={formData.addressLine2}
-                                            onChange={handleChange}
-                                        />
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <Input
-                                                label="City"
-                                                name="city"
-                                                value={formData.city}
-                                                onChange={handleChange}
-                                                onBlur={validateDeliveryAddressDistance}
-                                                error={errors.city}
-                                                required
-                                            />
-                                            <Input
-                                                label="Postal Code"
-                                                name="postalCode"
-                                                value={formData.postalCode}
-                                                onChange={handleChange}
-                                            />
-                                        </div>
+                                    <div className="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800">
+                                        Delivery distance validation will use the selected saved profile address above.
                                     </div>
                                 )}
 
