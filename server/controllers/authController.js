@@ -16,6 +16,8 @@ const refreshTokenFallbackSecret = process.env.JWT_REFRESH_SECRET;
 const EMAIL_VERIFICATION_TTL_MINUTES = parseInt(process.env.EMAIL_VERIFICATION_TTL_MINUTES || '30', 10);
 const EMAIL_RESEND_COOLDOWN_SECONDS = parseInt(process.env.EMAIL_RESEND_COOLDOWN_SECONDS || '60', 10);
 const VERIFICATION_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
+const PASSWORD_RESET_TOKEN_TTL_MINUTES = parseInt(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || '15', 10);
+const PASSWORD_RESET_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
 
 /**
  * Generate JWT Token with 30-minute expiry
@@ -154,6 +156,18 @@ const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
  * Validate password strength
  */
 const isValidPassword = (password) => password && password.length >= 8;
+
+const isPasswordResetTableMissingError = (error) => {
+  const mysqlCode = error?.original?.code || error?.parent?.code;
+  const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+
+  return mysqlCode === 'ER_NO_SUCH_TABLE' && message.includes('password_reset')
+    || (message.includes('no such table') && message.includes('password_reset'))
+    || (message.includes("doesn't exist") && message.includes('password_reset'));
+};
 
 const buildRefreshPayloadFromCurrentUser = async (decoded) => {
   if (decoded.type === 'Customer') {
@@ -836,6 +850,35 @@ exports.verifyResetOTP = async (req, res) => {
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
 
+    // Non-breaking persistence: save one-time reset token when password_reset table exists.
+    // Older environments without this table continue to work with OTP-only flow.
+    try {
+      const tokenExpiresAt = new Date(Date.now() + PASSWORD_RESET_TOKEN_TTL_MINUTES * 60 * 1000);
+
+      await sequelize.query(
+        `UPDATE password_reset
+         SET is_used = 1, used_at = NOW()
+         WHERE user_type = ? AND user_id = ? AND is_used = 0`,
+        {
+          replacements: [userType.toUpperCase(), userId],
+          type: sequelize.QueryTypes.UPDATE
+        }
+      );
+
+      await sequelize.query(
+        `INSERT INTO password_reset (user_type, user_id, reset_token, expires_at)
+         VALUES (?, ?, ?, ?)`,
+        {
+          replacements: [userType.toUpperCase(), userId, resetToken, tokenExpiresAt],
+          type: sequelize.QueryTypes.INSERT
+        }
+      );
+    } catch (tokenStoreError) {
+      if (!isPasswordResetTableMissingError(tokenStoreError)) {
+        throw tokenStoreError;
+      }
+    }
+
     return res.json({
       success: true,
       resetToken,
@@ -853,7 +896,7 @@ exports.verifyResetOTP = async (req, res) => {
  */
 exports.resetPassword = async (req, res) => {
   try {
-    const { email, otp, newPassword, userType } = req.body;
+    const { email, otp, newPassword, userType, resetToken } = req.body;
 
     if (!email || !otp || !newPassword || !userType) {
       return res.status(400).json({ error: 'All fields are required' });
@@ -880,6 +923,39 @@ exports.resetPassword = async (req, res) => {
 
     if (!user) {
       return res.status(400).json({ error: 'Invalid request' });
+    }
+
+    let resetRecord = null;
+    if (resetToken !== undefined && resetToken !== null && String(resetToken).trim() !== '') {
+      const normalizedResetToken = String(resetToken).trim();
+
+      if (!PASSWORD_RESET_TOKEN_PATTERN.test(normalizedResetToken)) {
+        return res.status(400).json({ error: 'Invalid reset token format' });
+      }
+
+      try {
+        [resetRecord] = await sequelize.query(
+          `SELECT reset_id
+           FROM password_reset
+           WHERE user_type = ? AND user_id = ? AND reset_token = ?
+             AND is_used = 0
+             AND expires_at > NOW()
+           ORDER BY created_at DESC
+           LIMIT 1`,
+          {
+            replacements: [userType.toUpperCase(), userId, normalizedResetToken],
+            type: sequelize.QueryTypes.SELECT
+          }
+        );
+      } catch (tokenReadError) {
+        if (!isPasswordResetTableMissingError(tokenReadError)) {
+          throw tokenReadError;
+        }
+      }
+
+      if (!resetRecord) {
+        return res.status(400).json({ error: 'Invalid or expired reset token' });
+      }
     }
 
     // Verify OTP
@@ -923,6 +999,16 @@ exports.resetPassword = async (req, res) => {
         type: sequelize.QueryTypes.UPDATE
       }
     );
+
+    if (resetRecord) {
+      await sequelize.query(
+        `UPDATE password_reset SET is_used = 1, used_at = NOW() WHERE reset_id = ?`,
+        {
+          replacements: [resetRecord.reset_id],
+          type: sequelize.QueryTypes.UPDATE
+        }
+      );
+    }
 
     return res.json({
       success: true,

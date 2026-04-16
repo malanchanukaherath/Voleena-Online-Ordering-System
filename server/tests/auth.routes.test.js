@@ -387,4 +387,43 @@ describe('auth routes', () => {
     expect(updateSql).toContain('otp_id');
     expect(updateOptions.replacements).toEqual([88]);
   });
+
+  test('accepts valid reset token and marks it used', async () => {
+    const resetToken = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+
+    mockCustomer.findOne.mockResolvedValue({
+      CustomerID: 53,
+      Email: 'token-reset@example.com'
+    });
+
+    mockSequelize.query
+      .mockResolvedValueOnce([{ reset_id: 19 }])
+      .mockResolvedValueOnce([{ otp_id: 92 }])
+      .mockResolvedValueOnce([{}, 1])
+      .mockResolvedValueOnce([{}, 1]);
+
+    bcrypt.hash.mockResolvedValue('hashed-password-value');
+    mockCustomer.update.mockResolvedValue([1]);
+
+    const response = await request(app)
+      .post('/api/v1/auth/password-reset/reset')
+      .send({
+        email: 'token-reset@example.com',
+        otp: '654321',
+        newPassword: 'NewSecret123',
+        userType: 'Customer',
+        resetToken
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+
+    const [tokenSelectSql, tokenSelectOptions] = mockSequelize.query.mock.calls[0];
+    const [tokenUpdateSql, tokenUpdateOptions] = mockSequelize.query.mock.calls[3];
+
+    expect(tokenSelectSql).toContain('FROM password_reset');
+    expect(tokenSelectOptions.replacements[2]).toBe(resetToken);
+    expect(tokenUpdateSql).toContain('UPDATE password_reset');
+    expect(tokenUpdateOptions.replacements).toEqual([19]);
+  });
 });

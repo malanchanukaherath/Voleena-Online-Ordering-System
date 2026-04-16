@@ -265,6 +265,54 @@ SET @idx_exists := (SELECT COUNT(*) FROM information_schema.STATISTICS WHERE TAB
 SET @sql := IF(@tbl_exists = 1 AND @idx_exists = 0, 'CREATE INDEX `idx_delivery_location_update` ON `delivery` (`last_location_update` DESC)', 'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- delivery.address_id FK safety: align signedness then add FK if missing
+SET @delivery_tbl_exists := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'delivery');
+SET @address_tbl_exists := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'address');
+SET @fk_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.REFERENTIAL_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = @db
+    AND TABLE_NAME = 'delivery'
+    AND CONSTRAINT_NAME = 'fk_delivery_address'
+);
+
+SET @is_signed := (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = @db
+    AND TABLE_NAME = 'address'
+    AND COLUMN_NAME = 'address_id'
+    AND COLUMN_TYPE = 'int'
+);
+SET @sql := IF(
+  @address_tbl_exists = 1 AND @fk_exists = 0 AND @is_signed = 1,
+  'ALTER TABLE `address` MODIFY COLUMN `address_id` INT UNSIGNED NOT NULL AUTO_INCREMENT',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @is_signed := (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = @db
+    AND TABLE_NAME = 'delivery'
+    AND COLUMN_NAME = 'address_id'
+    AND COLUMN_TYPE = 'int'
+);
+SET @sql := IF(
+  @delivery_tbl_exists = 1 AND @fk_exists = 0 AND @is_signed = 1,
+  'ALTER TABLE `delivery` MODIFY COLUMN `address_id` INT UNSIGNED NOT NULL',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @sql := IF(
+  @delivery_tbl_exists = 1 AND @address_tbl_exists = 1 AND @fk_exists = 0,
+  'ALTER TABLE `delivery` ADD CONSTRAINT `fk_delivery_address` FOREIGN KEY (`address_id`) REFERENCES `address` (`address_id`) ON DELETE RESTRICT',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- =====================================================
 -- 3) v2.3 walk-in orders migration (safe)
 -- =====================================================

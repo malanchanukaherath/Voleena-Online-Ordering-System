@@ -657,6 +657,17 @@ SET @sql := IF(@fk_exists=0 AND @t1=1 AND @t2=1, 'ALTER TABLE `order_status_hist
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
 -- delivery related
+SET @t1 := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=@db AND TABLE_NAME='address');
+SET @fk_exists := (SELECT COUNT(*) FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=@db AND TABLE_NAME='delivery' AND CONSTRAINT_NAME='fk_delivery_address');
+SET @is_signed := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='address' AND COLUMN_NAME='address_id' AND COLUMN_TYPE='int');
+SET @sql := IF(@t1=1 AND @fk_exists=0 AND @is_signed=1, 'ALTER TABLE `address` MODIFY COLUMN `address_id` INT UNSIGNED NOT NULL AUTO_INCREMENT', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @t1 := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=@db AND TABLE_NAME='delivery');
+SET @is_signed := (SELECT COUNT(*) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=@db AND TABLE_NAME='delivery' AND COLUMN_NAME='address_id' AND COLUMN_TYPE='int');
+SET @sql := IF(@t1=1 AND @fk_exists=0 AND @is_signed=1, 'ALTER TABLE `delivery` MODIFY COLUMN `address_id` INT UNSIGNED NOT NULL', 'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 SET @fk_exists := (SELECT COUNT(*) FROM information_schema.REFERENTIAL_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=@db AND TABLE_NAME='delivery' AND CONSTRAINT_NAME='fk_delivery_order');
 SET @t1 := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=@db AND TABLE_NAME='delivery');
 SET @t2 := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA=@db AND TABLE_NAME='order');
