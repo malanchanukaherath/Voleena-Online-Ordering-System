@@ -10,6 +10,7 @@ const SIDEBAR_VISIBILITY_STORAGE_KEY = 'dashboardSidebarVisible';
 const MainLayout = ({ children }) => {
     const { isAuthenticated } = useAuth();
     const location = useLocation();
+    const isPosRoute = location.pathname.startsWith('/cashier/pos');
     const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(() => {
         if (typeof window === 'undefined') {
             return true;
@@ -18,6 +19,7 @@ const MainLayout = ({ children }) => {
         return window.localStorage.getItem(SIDEBAR_VISIBILITY_STORAGE_KEY) !== 'false';
     });
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+    const [isFullscreen, setIsFullscreen] = useState(false);
 
     // Determine if we should show sidebar (for dashboard pages)
     const isDashboardRoute = () => {
@@ -27,10 +29,10 @@ const MainLayout = ({ children }) => {
 
     // Don't show header/footer on login/register pages
     const isAuthPage = ['/login', '/register'].includes(location.pathname);
-    const isPosOnlyRoute = location.pathname.startsWith('/cashier/pos');
 
     const showSidebar = isAuthenticated && isDashboardRoute();
     const showDesktopSidebar = showSidebar && isDesktopSidebarVisible;
+    const shouldShowFooter = !(isPosRoute && isFullscreen);
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
@@ -79,16 +81,21 @@ const MainLayout = ({ children }) => {
         };
     }, [showSidebar, isMobileSidebarOpen]);
 
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            setIsFullscreen(Boolean(document.fullscreenElement));
+        };
+
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        handleFullscreenChange();
+
+        return () => {
+            document.removeEventListener('fullscreenchange', handleFullscreenChange);
+        };
+    }, []);
+
     if (isAuthPage) {
         return <>{children}</>;
-    }
-
-    if (isPosOnlyRoute) {
-        return (
-            <div className="h-[100dvh] overflow-hidden bg-gray-50">
-                {children}
-            </div>
-        );
     }
 
     return (
@@ -138,7 +145,7 @@ const MainLayout = ({ children }) => {
                 </main>
             </div>
 
-            <Footer />
+            {shouldShowFooter && <Footer />}
         </div>
     );
 };

@@ -244,18 +244,6 @@ const CashierDashboard = ({ posOnly = false }) => {
         [posOnly, viewportSize.height, viewportSize.width]
     );
 
-    const posViewportScale = useMemo(() => {
-        if (!posOnly) {
-            return 1;
-        }
-
-        const widthScale = viewportSize.width / 1366;
-        const heightScale = viewportSize.height / 768;
-        const computedScale = Math.min(widthScale, heightScale);
-
-        return Math.max(0.82, Math.min(computedScale, 1.22));
-    }, [posOnly, viewportSize.height, viewportSize.width]);
-
     const posCatalogMaxHeight = useMemo(() => {
         if (!posOnly) {
             return '30rem';
@@ -641,33 +629,6 @@ const CashierDashboard = ({ posOnly = false }) => {
             window.removeEventListener('resize', onResize);
         };
     }, []);
-
-    useEffect(() => {
-        if (!posOnly) {
-            return undefined;
-        }
-
-        const root = document.documentElement;
-        const previousFontSize = root.style.fontSize;
-        root.style.fontSize = `${(16 * posViewportScale).toFixed(2)}px`;
-
-        return () => {
-            root.style.fontSize = previousFontSize;
-        };
-    }, [posOnly, posViewportScale]);
-
-    useEffect(() => {
-        if (!posOnly) {
-            return undefined;
-        }
-
-        const previousOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-
-        return () => {
-            document.body.style.overflow = previousOverflow;
-        };
-    }, [posOnly]);
 
     useEffect(() => {
         if (!posOnly) {
@@ -1105,8 +1066,8 @@ const CashierDashboard = ({ posOnly = false }) => {
     };
 
     return (
-        <div className={posOnly ? 'h-[100dvh] overflow-hidden bg-gray-50 p-2 md:p-3 flex flex-col' : 'p-6'}>
-            <div className={`flex flex-col md:flex-row md:items-center md:justify-between gap-3 ${posOnly ? 'mb-3' : 'mb-8'}`}>
+        <div className={posOnly ? 'min-h-screen bg-gray-50 p-4 md:p-6' : 'p-6'}>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-8">
                 <h1 className="text-3xl font-bold">{posOnly ? 'Cashier POS' : 'Cashier Dashboard'}</h1>
                 {posOnly && (
                     <div className="flex flex-wrap gap-2">
@@ -1215,7 +1176,7 @@ const CashierDashboard = ({ posOnly = false }) => {
             )}
 
             {posOnly && (
-                <div className="mt-2 flex-1 min-h-0 bg-white rounded-lg shadow p-3 sm:p-4 xl:p-5 overflow-hidden flex flex-col">
+                <div className="mt-6 bg-white rounded-lg shadow p-3 sm:p-4 xl:p-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                         <h3 className="text-lg font-semibold">Walk-In POS</h3>
                         <div className="flex items-center gap-3">
@@ -1312,7 +1273,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                         )}
 
                         {(customerSearchLoading || customerSearchResults.length > 0 || customerSearchTerm.trim()) && (
-                            <div className="mt-3 max-h-60 overflow-y-auto scrollbar-hide rounded-lg border border-gray-200 divide-y">
+                            <div className="mt-3 max-h-60 overflow-y-auto rounded-lg border border-gray-200 divide-y">
                                 {customerSearchLoading ? (
                                     <div className="p-3 text-sm text-gray-500">Searching customers...</div>
                                 ) : customerSearchResults.length === 0 ? (
@@ -1357,8 +1318,8 @@ const CashierDashboard = ({ posOnly = false }) => {
                         )}
                     </div>
 
-                    <div className={`grid grid-cols-1 xl:grid-cols-5 ${isUltraWide ? '2xl:grid-cols-7' : '2xl:grid-cols-6'} gap-4 xl:gap-6 flex-1 min-h-0`}>
-                        <div className={`xl:col-span-3 ${isUltraWide ? '2xl:col-span-4' : '2xl:col-span-4'} rounded-xl border border-gray-200 bg-gray-50 p-3 sm:p-4 min-h-0`}>
+                    <div className={`grid grid-cols-1 xl:grid-cols-5 ${isUltraWide ? '2xl:grid-cols-7' : '2xl:grid-cols-6'} gap-4 xl:gap-6`}>
+                        <div className={`xl:col-span-3 ${isUltraWide ? '2xl:col-span-4' : '2xl:col-span-4'} rounded-xl border border-gray-200 bg-gray-50 p-3 sm:p-4`}>
                             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                 <h4 className="font-semibold">POS Catalog</h4>
                                 <div className="text-xs text-gray-500">
@@ -1409,7 +1370,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                                 ))}
                             </div>
 
-                            <div className="mt-4 overflow-y-auto scrollbar-hide pr-1" style={{ maxHeight: posCatalogMaxHeight }}>
+                            <div className="mt-4 overflow-y-auto pr-1" style={{ maxHeight: posCatalogMaxHeight }}>
                                 {filteredPosItems.length === 0 ? (
                                     <div className="rounded-lg border border-dashed border-gray-300 bg-white p-6 text-center text-sm text-gray-500">
                                         No POS items match this filter.
@@ -1464,7 +1425,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                             </div>
                         </div>
 
-                        <div className={`xl:col-span-2 2xl:col-span-2 rounded-xl border border-gray-200 bg-white p-3 sm:p-4 min-h-0 ${isCompactHeight ? 'space-y-3' : ''}`}>
+                        <div className={`xl:col-span-2 2xl:col-span-2 rounded-xl border border-gray-200 bg-white p-3 sm:p-4 ${isCompactHeight ? 'space-y-3' : ''}`}>
                             <div className="flex items-center justify-between">
                                 <h4 className="font-semibold">Current Bill</h4>
                                 <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
@@ -1472,7 +1433,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                                 </span>
                             </div>
 
-                            <div className="mt-4 overflow-y-auto scrollbar-hide space-y-2 pr-1" style={{ maxHeight: posBillMaxHeight }}>
+                            <div className="mt-4 overflow-y-auto space-y-2 pr-1" style={{ maxHeight: posBillMaxHeight }}>
                                 {currentWalkInOrder.length === 0 ? (
                                     <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500">
                                         Add menu items from the left catalog.
