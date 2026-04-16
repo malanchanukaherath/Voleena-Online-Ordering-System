@@ -45,6 +45,17 @@ jest.mock('../services/verificationEmailService', () => ({
   sendEmailVerificationLink: jest.fn().mockResolvedValue({ provider: 'console' })
 }));
 
+const mockSendOTPSMS = jest.fn().mockResolvedValue({ success: true, messageId: 'sms-mock-id' });
+const mockSendOTPEmail = jest.fn().mockResolvedValue({ success: true, messageId: 'email-mock-id' });
+
+jest.mock('../services/smsService', () => ({
+  sendOTPSMS: (...args) => mockSendOTPSMS(...args)
+}));
+
+jest.mock('../services/emailService', () => ({
+  sendOTPEmail: (...args) => mockSendOTPEmail(...args)
+}));
+
 jest.mock('../middleware/rateLimiter', () => {
   const passThrough = (req, res, next) => next();
   return {
@@ -75,6 +86,8 @@ function makeAccessToken(payload) {
 describe('auth routes', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockSendOTPSMS.mockResolvedValue({ success: true, messageId: 'sms-mock-id' });
+    mockSendOTPEmail.mockResolvedValue({ success: true, messageId: 'email-mock-id' });
   });
 
   test('registers a customer and requests email verification', async () => {
@@ -302,6 +315,7 @@ describe('auth routes', () => {
     mockCustomer.findOne.mockResolvedValue({
       CustomerID: 31,
       Email: 'reset@example.com',
+      Phone: '+94771234567',
       Name: 'Reset User'
     });
     mockSequelize.query.mockResolvedValueOnce([{}, 1]);
@@ -321,6 +335,8 @@ describe('auth routes', () => {
     expect(insertSql).not.toContain('OTPCode');
     expect(insertOptions.replacements[2]).toMatch(/^[a-f0-9]{64}$/);
     expect(insertOptions.replacements[2]).not.toContain('reset@example.com');
+    expect(mockSendOTPSMS).toHaveBeenCalledWith('+94771234567', expect.any(String), 'PASSWORD_RESET');
+    expect(mockSendOTPEmail).toHaveBeenCalledWith('reset@example.com', expect.any(String), 'PASSWORD_RESET');
   });
 
   test('verifies reset OTP and returns reset token payload', async () => {

@@ -5,12 +5,37 @@ const { Notification } = require('../models');
 let twilioClient = null;
 let hasLoggedSmsFallbackWarning = false;
 
-if (process.env.SMS_PROVIDER === 'twilio' && process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN) {
-    twilioClient = twilio(
-        process.env.TWILIO_ACCOUNT_SID,
-        process.env.TWILIO_AUTH_TOKEN
+const shouldUseTwilio = process.env.SMS_PROVIDER === 'twilio';
+const hasApiKeyCredentials = Boolean(
+    process.env.TWILIO_ACCOUNT_SID
+    && process.env.TWILIO_API_KEY
+    && process.env.TWILIO_API_SECRET
+);
+const hasLegacyCredentials = Boolean(
+    process.env.TWILIO_ACCOUNT_SID
+    && process.env.TWILIO_AUTH_TOKEN
+);
+
+if (shouldUseTwilio && (hasApiKeyCredentials || hasLegacyCredentials)) {
+    twilioClient = hasApiKeyCredentials
+        ? twilio(process.env.TWILIO_API_KEY, process.env.TWILIO_API_SECRET, {
+            accountSid: process.env.TWILIO_ACCOUNT_SID
+        })
+        : twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+
+    console.log(
+        `✅ SMS service (Twilio) ready using ${hasApiKeyCredentials ? 'API key' : 'Auth token'} credentials`
     );
-    console.log('✅ SMS service (Twilio) ready');
+}
+
+const normalizePhone = (phone) => String(phone || '').trim();
+
+async function logNotification(payload) {
+    if (!Notification || typeof Notification.create !== 'function') {
+        return;
+    }
+
+    await Notification.create(payload);
 }
 
 /**
@@ -18,18 +43,34 @@ if (process.env.SMS_PROVIDER === 'twilio' && process.env.TWILIO_ACCOUNT_SID && p
  */
 async function sendSMS(to, message, relatedOrderId = null) {
     try {
-        let result;
+        const normalizedTo = normalizePhone(to);
+
+        if (!normalizedTo) {
+            throw new Error('Recipient phone number is required for SMS');
+        }
 
         if (twilioClient) {
-            // Send via Twilio
-            result = await twilioClient.messages.create({
-                body: message,
-                from: process.env.TWILIO_PHONE_NUMBER,
-                to: to
-            });
+            const messagingServiceSid = process.env.TWILIO_MESSAGING_SERVICE_SID;
+            const fromNumber = process.env.TWILIO_PHONE_NUMBER;
 
-            // Log notification
-            await Notification.create({
+            if (!messagingServiceSid && !fromNumber) {
+                throw new Error('Twilio sender is not configured. Set TWILIO_MESSAGING_SERVICE_SID or TWILIO_PHONE_NUMBER');
+            }
+
+            const createPayload = {
+                body: message,
+                to: normalizedTo
+            };
+
+            if (messagingServiceSid) {
+                createPayload.messagingServiceSid = messagingServiceSid;
+            } else {
+                createPayload.from = fromNumber;
+            }
+
+            const result = await twilioClient.messages.create(createPayload);
+
+            await logNotification({
                 RecipientType: 'CUSTOMER',
                 RecipientID: null,
                 NotificationType: 'SMS',
@@ -44,43 +85,46 @@ async function sendSMS(to, message, relatedOrderId = null) {
                 success: true,
                 messageId: result.sid
             };
-        } else {
-            if (!hasLoggedSmsFallbackWarning) {
-                console.warn('⚠️  SMS service is not configured. SMS will be logged to console.');
-                hasLoggedSmsFallbackWarning = true;
-            }
-
-            // Console logging for development
-            console.log('📱 SMS (Console):', to, message);
-
-            await Notification.create({
-                RecipientType: 'CUSTOMER',
-                RecipientID: null,
-                NotificationType: 'SMS',
-                Subject: null,
-                Message: message,
-                Status: 'SENT',
-                SentAt: new Date(),
-                RelatedOrderID: relatedOrderId
-            });
-
-            return {
-                success: true,
-                messageId: 'console-' + Date.now()
-            };
         }
-    } catch (error) {
-        // Log failed notification
-        await Notification.create({
+
+        if (!hasLoggedSmsFallbackWarning) {
+            console.warn('⚠️  SMS service is not configured. SMS will be logged to console.');
+            hasLoggedSmsFallbackWarning = true;
+        }
+
+        console.log('📱 SMS (Console):', normalizedTo, message);
+
+        await logNotification({
             RecipientType: 'CUSTOMER',
             RecipientID: null,
             NotificationType: 'SMS',
             Subject: null,
             Message: message,
-            Status: 'FAILED',
-            ErrorMessage: error.message,
+            Status: 'SENT',
+            ErrorMessage: 'SMS provider not configured - logged to console',
+            SentAt: new Date(),
             RelatedOrderID: relatedOrderId
         });
+
+        return {
+            success: true,
+            messageId: `console-${Date.now()}`
+        };
+    } catch (error) {
+        try {
+            await logNotification({
+                RecipientType: 'CUSTOMER',
+                RecipientID: null,
+                NotificationType: 'SMS',
+                Subject: null,
+                Message: message,
+                Status: 'FAILED',
+                ErrorMessage: error.message,
+                RelatedOrderID: relatedOrderId
+            });
+        } catch (notificationLogError) {
+            console.error('Failed to log SMS notification status:', notificationLogError.message);
+        }
 
         throw error;
     }

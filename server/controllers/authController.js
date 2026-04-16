@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { Customer, Staff, Role, sequelize } = require('../models');
 const { sendEmailVerificationLink } = require('../services/verificationEmailService');
+const { sendOTPSMS } = require('../services/smsService');
+const { sendOTPEmail } = require('../services/emailService');
 const {
   generateAccessToken,
   generateRefreshToken: generateRefreshJwt,
@@ -783,9 +785,31 @@ exports.requestPasswordReset = async (req, res) => {
       }
     );
 
-    // TODO: Send OTP via email
+    const deliveryTasks = [];
+
+    if (user?.Phone) {
+      deliveryTasks.push(
+        sendOTPSMS(user.Phone, otpCode, 'PASSWORD_RESET')
+      );
+    }
+
+    if (user?.Email) {
+      deliveryTasks.push(
+        sendOTPEmail(user.Email, otpCode, 'PASSWORD_RESET')
+      );
+    }
+
+    if (deliveryTasks.length > 0) {
+      const deliveryResults = await Promise.allSettled(deliveryTasks);
+      const failedDeliveries = deliveryResults.filter((result) => result.status === 'rejected');
+
+      if (failedDeliveries.length > 0) {
+        console.error('Password reset OTP delivery had failures:', failedDeliveries.map((result) => result.reason?.message || result.reason));
+      }
+    }
+
     if (process.env.NODE_ENV === 'development') {
-      console.log(`Password Reset OTP for ${email}: ${otpCode}`);
+      console.log(`Password Reset OTP generated for ${email}`);
     }
 
     return res.json({
