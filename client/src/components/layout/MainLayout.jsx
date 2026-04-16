@@ -27,6 +27,7 @@ const MainLayout = ({ children }) => {
 
     // Don't show header/footer on login/register pages
     const isAuthPage = ['/login', '/register'].includes(location.pathname);
+    const isPosOnlyRoute = location.pathname.startsWith('/cashier/pos');
 
     const showSidebar = isAuthenticated && isDashboardRoute();
     const showDesktopSidebar = showSidebar && isDesktopSidebarVisible;
@@ -80,6 +81,14 @@ const MainLayout = ({ children }) => {
 
     if (isAuthPage) {
         return <>{children}</>;
+    }
+
+    if (isPosOnlyRoute) {
+        return (
+            <div className="h-[100dvh] overflow-hidden bg-gray-50">
+                {children}
+            </div>
+        );
     }
 
     return (
