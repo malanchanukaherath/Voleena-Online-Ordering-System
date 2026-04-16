@@ -58,7 +58,7 @@ chmod +x install.sh
 Then update environment variables as needed:
 
 - `server/.env` (database, API keys, mail settings)
-- `client/.env` (frontend API base URL)
+- `client/.env` (frontend API base URL, Google Maps key)
 
 ### Option 2: Manual setup
 
@@ -80,7 +80,10 @@ For frontend, create `client/.env` if missing:
 
 ```env
 VITE_API_BASE_URL=http://localhost:3001
+VITE_GOOGLE_MAPS_API_KEY=your_google_maps_browser_key
 ```
+
+Note: Vite injects `VITE_*` variables at build/dev start time. If you change `VITE_GOOGLE_MAPS_API_KEY`, restart the frontend (`npm run dev`) or rebuild the frontend image.
 
 Set up the database:
 
@@ -123,6 +126,8 @@ Build and run all services:
 ```bash
 docker compose up --build
 ```
+
+If using Docker Compose, set `VITE_GOOGLE_MAPS_API_KEY` in the repository root `.env` (not only `server/.env`) because the frontend image receives it as a build argument.
 
 Optional initialization profile:
 

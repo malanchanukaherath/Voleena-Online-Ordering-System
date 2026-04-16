@@ -62,6 +62,24 @@ CREATE TABLE IF NOT EXISTS `customer` (
   KEY `idx_customer_created_by` (`created_by`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `address` (
+  `address_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `customer_id` INT UNSIGNED NOT NULL,
+  `address_line1` VARCHAR(255) NOT NULL,
+  `address_line2` VARCHAR(255) DEFAULT NULL,
+  `city` VARCHAR(100) NOT NULL,
+  `postal_code` VARCHAR(10) DEFAULT NULL,
+  `district` VARCHAR(100) DEFAULT NULL,
+  `latitude` DECIMAL(10, 8) DEFAULT NULL,
+  `longitude` DECIMAL(11, 8) DEFAULT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`address_id`),
+  KEY `idx_address_customer` (`customer_id`),
+  KEY `idx_address_city` (`city`),
+  KEY `idx_address_created` (`created_at`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Roles seed (idempotent)
 INSERT INTO `role` (`role_name`, `description`)
 SELECT 'Customer', 'Customer role for placing orders'
@@ -101,6 +119,16 @@ SET @fk_exists := (
 );
 SET @sql := IF(@fk_exists = 0,
   'ALTER TABLE `customer` ADD CONSTRAINT `fk_customer_created_by` FOREIGN KEY (`created_by`) REFERENCES `staff` (`staff_id`) ON DELETE SET NULL',
+  'SELECT 1');
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @fk_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.REFERENTIAL_CONSTRAINTS
+  WHERE CONSTRAINT_SCHEMA = @db AND TABLE_NAME = 'address' AND CONSTRAINT_NAME = 'fk_address_customer'
+);
+SET @sql := IF(@fk_exists = 0,
+  'ALTER TABLE `address` ADD CONSTRAINT `fk_address_customer` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`) ON DELETE CASCADE',
   'SELECT 1');
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 

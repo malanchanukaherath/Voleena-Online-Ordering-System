@@ -1148,7 +1148,7 @@ const Checkout = () => {
                                             </div>
                                         ) : (
                                             <div className="mb-6 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
-                                                Map pinning is unavailable because Google Maps key is missing. You can still use your current GPS location.
+                                                Map pinning is unavailable because the frontend Google Maps key is missing at build time (`VITE_GOOGLE_MAPS_API_KEY`). You can still use your current GPS location.
                                             </div>
                                         )}
 
