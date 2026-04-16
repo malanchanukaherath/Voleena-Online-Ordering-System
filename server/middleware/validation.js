@@ -12,8 +12,7 @@ function handleValidationErrors(req, res, next) {
             error: 'Validation failed',
             details: errors.array().map(err => ({
                 field: err.path,
-                message: err.msg,
-                value: err.value
+                message: err.msg
             }))
         });
     }
@@ -405,7 +404,7 @@ const validateOrderStatusUpdate = [
 
     body('status')
         .notEmpty().withMessage('Status is required')
-        .isIn(['PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'])
+        .isIn(['CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'])
         .withMessage('Invalid order status'),
 
     body('notes')

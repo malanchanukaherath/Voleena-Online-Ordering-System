@@ -189,7 +189,7 @@ const OrderTracking = () => {
     }, [order?.deliveryId, order?.deliveryPerson?.name, order?.deliveryPerson?.phone, order?.orderType, order?.status]);
 
     const canCancelOrder = () => {
-        const cancellableStatuses = ['PENDING', 'CONFIRMED'];
+        const cancellableStatuses = ['CONFIRMED'];
         const isNotCancelled = order.status !== 'CANCELLED';
         return cancellableStatuses.includes(order.status) && isNotCancelled;
     };
@@ -226,7 +226,7 @@ const OrderTracking = () => {
         }
 
         switch (status) {
-            case 'PENDING':
+            case 'PLACED':
                 return formatTimeLabel(order.placedAt);
             case 'CONFIRMED':
                 return formatTimeLabel(order.confirmedAt || order.placedAt);
@@ -303,9 +303,9 @@ const OrderTracking = () => {
 
     const trackingSteps = [
         {
-            status: 'PENDING',
+            status: 'PLACED',
             label: 'Order Placed',
-            time: getTimelineTime('PENDING'),
+            time: getTimelineTime('PLACED'),
             completed: true,
             icon: FaBox,
         },

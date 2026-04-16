@@ -1,6 +1,6 @@
 [build]
-  # Build command - force clean install
-  command = "npm install && npm run build"
+  # Build command - reproducible clean install
+  command = "npm ci && npm run build"
   
   # Directory with the static files
   publish = "dist"
@@ -61,11 +61,11 @@
 
 # Development context
 [context.deploy-preview]
-  command = "npm install && npm run build"
+  command = "npm ci && npm run build"
 
 [context.branch-deploy]
-  command = "npm install && npm run build"
+  command = "npm ci && npm run build"
 
 # Production context
 [context.production]
-  command = "npm install && npm run build"
+  command = "npm ci && npm run build"

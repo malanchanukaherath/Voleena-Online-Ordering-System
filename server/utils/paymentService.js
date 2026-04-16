@@ -295,6 +295,15 @@ class PaymentService {
                 console.log(`✅ Payment successful for Order #${order.OrderNumber}`);
             } else {
                 await notificationService.sendPaymentNotification(order, customer, payment);
+                if (order && !['CANCELLED', 'DELIVERED'].includes(order.Status)) {
+                    const orderService = require('../services/orderService');
+                    await orderService.cancelOrder(
+                        order.OrderID,
+                        `Payment callback failed: ${gatewayResponse?.status || status || 'FAILED'}`,
+                        null,
+                        'SYSTEM'
+                    );
+                }
                 console.log(`❌ Payment failed for Order #${order.OrderNumber}`);
             }
 

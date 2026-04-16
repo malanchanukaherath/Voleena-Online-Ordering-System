@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
 import { LoadScript, GoogleMap, Marker, Autocomplete } from '@react-google-maps/api';
@@ -114,6 +114,94 @@ const Checkout = () => {
             }))
     ), [savedAddresses]);
 
+    const fetchDeliveryFeeByDistance = useCallback(async (distanceKm) => {
+        const numericDistance = Number(distanceKm);
+        if (!Number.isFinite(numericDistance) || numericDistance < 0) {
+            return;
+        }
+
+        try {
+            const feeResponse = await calculateDeliveryFeeByDistance(numericDistance);
+            if (feeResponse.data?.success) {
+                setDeliveryFee(feeResponse.data.data.totalFee);
+                setDeliveryFeeBreakdown(feeResponse.data.data.breakdown);
+            }
+        } catch (err) {
+            console.error('Failed to calculate delivery fee:', err);
+        }
+    }, []);
+
+    const validateDeliveryAddressDistance = useCallback(async (addressOverride) => {
+        const candidateAddress = {
+            addressLine1: String(addressOverride?.addressLine1 ?? ''),
+            city: String(addressOverride?.city ?? ''),
+            postalCode: String(addressOverride?.postalCode ?? '')
+        };
+
+        if (!candidateAddress.addressLine1 || candidateAddress.addressLine1.trim().length < 5) {
+            return;
+        }
+
+        if (!candidateAddress.city || candidateAddress.city.trim().length < 2) {
+            return;
+        }
+
+        setValidatingDistance(true);
+        try {
+            const payload = {
+                address: {
+                    addressLine1: candidateAddress.addressLine1.trim(),
+                    city: candidateAddress.city.trim(),
+                    postalCode: candidateAddress.postalCode?.trim() || null
+                }
+            };
+
+            const response = await validateDeliveryDistance(payload);
+
+            if (response.data?.success) {
+                const data = response.data.data;
+                setDistanceInfo({
+                    isValid: data.isValid,
+                    distance: data.distance,
+                    maxDistance: data.maxDistance,
+                    method: data.method
+                });
+
+                if (data.isValid && data.distance) {
+                    await fetchDeliveryFeeByDistance(data.distance);
+                }
+
+                if (!data.isValid) {
+                    setErrors(prev => ({
+                        ...prev,
+                        distance: `Delivery address is outside our service area (${data.distance.toFixed(2)}km > ${data.maxDistance}km)`
+                    }));
+                } else {
+                    setErrors(prev => {
+                        const newErrors = { ...prev };
+                        delete newErrors.distance;
+                        delete newErrors.savedAddressId;
+                        return newErrors;
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Distance validation error:', error);
+
+            const errorMessage = error.response?.data?.message || 'Unable to validate delivery distance';
+            const suggestion = error.response?.data?.suggestion;
+
+            setDistanceInfo(null);
+            setErrors(prev => ({
+                ...prev,
+                distance: errorMessage,
+                distanceSuggestion: suggestion === 'USE_GPS_LOCATION' ? 'Use map pin/search or the "Use Current Location" button to set coordinates accurately.' : null
+            }));
+        } finally {
+            setValidatingDistance(false);
+        }
+    }, [fetchDeliveryFeeByDistance]);
+
     useEffect(() => {
         if (formData.orderType === 'DELIVERY' && !deliveryAddressMethod) {
             setDeliveryAddressMethod(DELIVERY_LOCATION_MODES.ADDRESS);
@@ -194,24 +282,7 @@ const Checkout = () => {
         return () => {
             isMounted = false;
         };
-    }, []);
-
-    const fetchDeliveryFeeByDistance = async (distanceKm) => {
-        const numericDistance = Number(distanceKm);
-        if (!Number.isFinite(numericDistance) || numericDistance < 0) {
-            return;
-        }
-
-        try {
-            const feeResponse = await calculateDeliveryFeeByDistance(numericDistance);
-            if (feeResponse.data?.success) {
-                setDeliveryFee(feeResponse.data.data.totalFee);
-                setDeliveryFeeBreakdown(feeResponse.data.data.breakdown);
-            }
-        } catch (err) {
-            console.error('Failed to calculate delivery fee:', err);
-        }
-    };
+    }, [validateDeliveryAddressDistance]);
 
     const validateCoordinatesForDelivery = async (lat, lng, outsideMessagePrefix = 'Selected location') => {
         try {
@@ -573,92 +644,6 @@ const Checkout = () => {
         setLocationError('');
 
         await validateCoordinatesForDelivery(lat, lng, 'Selected searched location');
-    };
-
-    /**
-     * Validate delivery distance when address changes or on blur
-     * Only validates if address line is at least 5 characters and city is provided
-     */
-    const validateDeliveryAddressDistance = async (addressOverride = null) => {
-        // Skip validation if not delivery order
-        if (formData.orderType !== 'DELIVERY') {
-            return;
-        }
-
-        const fallbackAddress = selectedSavedAddress || {};
-
-        const candidateAddress = {
-            addressLine1: String(addressOverride?.addressLine1 ?? fallbackAddress.addressLine1 ?? formData.addressLine1 ?? ''),
-            city: String(addressOverride?.city ?? fallbackAddress.city ?? formData.city ?? ''),
-            postalCode: String(addressOverride?.postalCode ?? fallbackAddress.postalCode ?? formData.postalCode ?? '')
-        };
-
-        // Skip validation if required fields are not properly filled
-        // (addressLine1 must be at least 5 chars, city must be provided)
-        if (!candidateAddress.addressLine1 || candidateAddress.addressLine1.trim().length < 5) {
-            return; // Silently skip - user is still typing
-        }
-
-        if (!candidateAddress.city || candidateAddress.city.trim().length < 2) {
-            return; // Silently skip - user hasn't entered city yet
-        }
-
-        setValidatingDistance(true);
-        try {
-            const payload = {
-                address: {
-                    addressLine1: candidateAddress.addressLine1.trim(),
-                    city: candidateAddress.city.trim(),
-                    postalCode: candidateAddress.postalCode?.trim() || null
-                }
-            };
-
-            const response = await validateDeliveryDistance(payload);
-
-            if (response.data?.success) {
-                const data = response.data.data;
-                setDistanceInfo({
-                    isValid: data.isValid,
-                    distance: data.distance,
-                    maxDistance: data.maxDistance,
-                    method: data.method
-                });
-
-                // Calculate delivery fee based on distance
-                if (data.isValid && data.distance) {
-                    await fetchDeliveryFeeByDistance(data.distance);
-                }
-
-                if (!data.isValid) {
-                    setErrors(prev => ({
-                        ...prev,
-                        distance: `Delivery address is outside our service area (${data.distance.toFixed(2)}km > ${data.maxDistance}km)`
-                    }));
-                } else {
-                    setErrors(prev => {
-                        const newErrors = { ...prev };
-                        delete newErrors.distance;
-                        delete newErrors.savedAddressId;
-                        return newErrors;
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('Distance validation error:', error);
-
-            // Show specific error message from server if available
-            const errorMessage = error.response?.data?.message || 'Unable to validate delivery distance';
-            const suggestion = error.response?.data?.suggestion;
-
-            setDistanceInfo(null);
-            setErrors(prev => ({
-                ...prev,
-                distance: errorMessage,
-                distanceSuggestion: suggestion === 'USE_GPS_LOCATION' ? 'Use map pin/search or the "Use Current Location" button to set coordinates accurately.' : null
-            }));
-        } finally {
-            setValidatingDistance(false);
-        }
     };
 
     const validateForm = () => {

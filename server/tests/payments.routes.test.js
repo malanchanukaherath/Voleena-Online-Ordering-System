@@ -20,8 +20,13 @@ const mockPaymentService = {
   initializePayment: jest.fn()
 };
 
+const mockOrderService = {
+  cancelOrder: jest.fn()
+};
+
 jest.mock('../models', () => ({ Order: mockOrder, Customer: mockCustomer, Payment: mockPayment }));
 jest.mock('../utils/paymentService', () => mockPaymentService);
+jest.mock('../services/orderService', () => mockOrderService);
 jest.mock('../middleware/auth', () => require('./helpers/mockAuth'));
 jest.mock('../middleware/rateLimiter', () => ({
   paymentLimiter: (req, res, next) => next()
@@ -128,6 +133,36 @@ describe('payment routes', () => {
     expect(mockPaymentService.initializePayment).not.toHaveBeenCalled();
   });
 
+  test('cancels a confirmed order when payment initialization fails', async () => {
+    setAuthUser({ id: 10, type: 'Customer', role: 'Customer' });
+
+    const order = { OrderID: 1, CustomerID: 10, Status: 'CONFIRMED' };
+    const existingPayment = { PaymentID: 103, Method: 'CARD', Status: 'PENDING' };
+
+    mockOrder.findByPk.mockResolvedValue(order);
+    mockPayment.findOne.mockResolvedValue(existingPayment);
+    mockCustomer.findByPk.mockResolvedValue({ CustomerID: 10, Name: 'Customer', Email: 'user@example.com' });
+    mockPaymentService.initializePayment.mockRejectedValue(new Error('Card payments are not configured'));
+    mockOrderService.cancelOrder.mockResolvedValue({ ...order, Status: 'CANCELLED' });
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const response = await request(app)
+        .post('/api/v1/payments/initiate')
+        .send({ orderId: 1, paymentMethod: 'CARD' });
+
+      expect(response.status).toBe(500);
+      expect(mockOrderService.cancelOrder).toHaveBeenCalledWith(
+        1,
+        'Payment initialization failed: Card payments are not configured',
+        null,
+        'SYSTEM'
+      );
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
   test('rejects PayHere webhooks with missing required fields', async () => {
     const response = await request(app)
       .post('/api/v1/payments/webhook/payhere')
@@ -200,6 +235,70 @@ describe('payment routes', () => {
       TransactionID: 'PH-TXN-1',
       GatewayStatus: 'SUCCESS'
     }));
+    expect(mockOrderService.cancelOrder).not.toHaveBeenCalled();
+  });
+
+  test('cancels a confirmed order when PayHere reports payment failure', async () => {
+    process.env.PAYHERE_MERCHANT_SECRET = 'merchant-secret';
+
+    const order = {
+      OrderID: 502,
+      OrderNumber: 'ORD-502',
+      FinalAmount: 1500,
+      Status: 'CONFIRMED'
+    };
+    const payment = {
+      PaymentID: 9002,
+      Status: 'PENDING',
+      update: jest.fn().mockResolvedValue(true)
+    };
+
+    mockOrder.findOne.mockResolvedValue(order);
+    mockPayment.findOne
+      .mockResolvedValueOnce(payment)
+      .mockResolvedValueOnce(null);
+    mockOrderService.cancelOrder.mockResolvedValue({ ...order, Status: 'CANCELLED' });
+
+    const payload = {
+      merchant_id: 'MID123',
+      order_id: 'ORD-502',
+      payment_id: 'PH-TXN-2',
+      status_code: '-2',
+      payhere_amount: '1500.00',
+      payhere_currency: 'LKR'
+    };
+
+    const hashedSecret = crypto
+      .createHash('md5')
+      .update(process.env.PAYHERE_MERCHANT_SECRET)
+      .digest('hex')
+      .toUpperCase();
+
+    payload.md5sig = crypto
+      .createHash('md5')
+      .update(
+        `${payload.merchant_id}${payload.order_id}${payload.payhere_amount}${payload.payhere_currency}${payload.status_code}${hashedSecret}`
+      )
+      .digest('hex')
+      .toUpperCase();
+
+    const response = await request(app)
+      .post('/api/v1/payments/webhook/payhere')
+      .send(payload);
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(payment.update).toHaveBeenCalledWith(expect.objectContaining({
+      Status: 'FAILED',
+      TransactionID: 'PH-TXN-2',
+      GatewayStatus: 'FAILED_2'
+    }));
+    expect(mockOrderService.cancelOrder).toHaveBeenCalledWith(
+      502,
+      'PayHere payment failed with status code: -2',
+      null,
+      'SYSTEM'
+    );
   });
 
   test('rejects PayHere webhook when signature is invalid', async () => {

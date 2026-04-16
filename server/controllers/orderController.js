@@ -127,9 +127,8 @@ exports.getAllOrders = async (req, res) => {
                 }
             ],
             order: [
-                // Prioritize action-required statuses: Orders are auto-confirmed, prioritize by status
-                // PENDING (rare), CONFIRMED, PREPARING, READY, then others
-                sequelize.literal("CASE WHEN `Order`.Status = 'PENDING' THEN 0 WHEN `Order`.Status = 'CONFIRMED' THEN 1 WHEN `Order`.Status = 'PREPARING' THEN 2 WHEN `Order`.Status = 'READY' THEN 3 ELSE 4 END"),
+                // Prioritize action-required statuses.
+                sequelize.literal("CASE WHEN `Order`.Status = 'CONFIRMED' THEN 0 WHEN `Order`.Status = 'PREPARING' THEN 1 WHEN `Order`.Status = 'READY' THEN 2 ELSE 3 END"),
                 // Then show newest orders first
                 ['created_at', 'DESC']
             ],
@@ -278,9 +277,16 @@ exports.updateOrderStatus = async (req, res) => {
 
     } catch (error) {
         console.error('Update order status error:', error);
-        res.status(500).json({
+        const message = error.message || 'Failed to update order status';
+        const statusCode = /order not found/i.test(message)
+            ? 404
+            : /invalid status transition/i.test(message)
+                ? 400
+                : 500;
+
+        res.status(statusCode).json({
             success: false,
-            message: 'Failed to update order status'
+            message: statusCode === 500 ? 'Failed to update order status' : message
         });
     }
 };

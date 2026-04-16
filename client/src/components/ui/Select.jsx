@@ -14,21 +14,28 @@ const Select = ({
     className = '',
     ...props
 }) => {
+    const selectId = props.id || name;
+    const errorId = selectId && error ? `${selectId}-error` : null;
+    const helperId = selectId && helperText && !error ? `${selectId}-description` : null;
+    const describedBy = [errorId, helperId].filter(Boolean).join(' ') || undefined;
+
     return (
         <div className="w-full">
             {label && (
-                <label htmlFor={name} className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor={selectId} className="block text-sm font-medium text-gray-700 mb-1">
                     {label}
                     {required && <span className="text-red-500 ml-1">*</span>}
                 </label>
             )}
             <select
-                id={name}
+                id={selectId}
                 name={name}
                 value={value}
                 onChange={onChange}
                 disabled={disabled}
                 required={required}
+                aria-invalid={error ? 'true' : undefined}
+                aria-describedby={describedBy}
                 className={`
           block w-full px-3 py-2 border rounded-md shadow-sm
           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
@@ -49,8 +56,8 @@ const Select = ({
                     </option>
                 ))}
             </select>
-            {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-            {helperText && !error && <p className="mt-1 text-sm text-gray-500">{helperText}</p>}
+            {error && <p id={errorId || undefined} className="mt-1 text-sm text-red-600">{error}</p>}
+            {helperText && !error && <p id={helperId || undefined} className="mt-1 text-sm text-gray-500">{helperText}</p>}
         </div>
     );
 };

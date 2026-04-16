@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const paymentService = require('../utils/paymentService');
 const { Order, Customer, Payment } = require('../models');
 const appNotificationService = require('../services/appNotificationService');
+const orderService = require('../services/orderService');
 
 const PAYHERE_SUCCESS = '2';
 const PAYHERE_PENDING = '0';
@@ -35,6 +36,19 @@ function buildGatewayStatus(status, detail) {
     .slice(0, 50);
 }
 
+async function cancelOrderAfterPaymentFailure(order, reason) {
+  if (!order || ['CANCELLED', 'DELIVERED'].includes(order.Status)) {
+    return;
+  }
+
+  await orderService.cancelOrder(
+    order.OrderID,
+    reason || 'Payment failed',
+    null,
+    'SYSTEM'
+  );
+}
+
 async function notifyPaymentUpdate(order, payment, nextStatus) {
   try {
     if (!order || !payment) {
@@ -47,7 +61,7 @@ async function notifyPaymentUpdate(order, payment, nextStatus) {
     const customerMessageByStatus = {
       PAID: `Payment received for order #${orderNumber}.`,
       FAILED: `Payment failed for order #${orderNumber}. Please try again.`,
-      PENDING: `Payment for order #${orderNumber} is pending confirmation.`
+      PENDING: `Payment for order #${orderNumber} is pending settlement.`
     };
 
     const staffMessageByStatus = {
@@ -156,9 +170,12 @@ function verifyPayHereSignature(payload) {
 }
 
 exports.initiatePayment = async (req, res) => {
+  let order = null;
+  let paymentMethod = '';
+
   try {
     const { orderId } = req.body;
-    const paymentMethod = normalizePaymentMethod(req.body.paymentMethod);
+    paymentMethod = normalizePaymentMethod(req.body.paymentMethod);
 
     if (!orderId || !paymentMethod) {
       return res.status(400).json({ error: 'orderId and paymentMethod are required' });
@@ -172,7 +189,7 @@ exports.initiatePayment = async (req, res) => {
       return res.status(403).json({ error: 'Only customers can initiate payments' });
     }
 
-    const order = await Order.findByPk(orderId);
+    order = await Order.findByPk(orderId);
     if (!order) {
       return res.status(404).json({ error: 'Order not found' });
     }
@@ -208,6 +225,13 @@ exports.initiatePayment = async (req, res) => {
     return res.json({ success: true, data: paymentData });
   } catch (error) {
     console.error('Initiate payment error:', error);
+    if (order && ['CARD', 'ONLINE'].includes(paymentMethod)) {
+      try {
+        await cancelOrderAfterPaymentFailure(order, `Payment initialization failed: ${error.message || 'Unknown error'}`);
+      } catch (cancelError) {
+        console.error('Failed to cancel order after payment initialization error:', cancelError.message || cancelError);
+      }
+    }
     return res.status(500).json({ error: 'Failed to initiate payment' });
   }
 };
@@ -275,6 +299,18 @@ exports.confirmCardPayment = async (req, res) => {
     }
 
     if (intent.status !== 'succeeded') {
+      if (['requires_payment_method', 'canceled'].includes(intent.status)) {
+        await payment.update({
+          Status: 'FAILED',
+          PaidAt: null,
+          TransactionID: intent.id,
+          GatewayStatus: buildGatewayStatus('FAILED', intent.status)
+        });
+
+        await notifyPaymentUpdate(order, payment, 'FAILED');
+        await cancelOrderAfterPaymentFailure(order, `Card payment failed with status: ${intent.status}`);
+      }
+
       return res.status(400).json({ error: `Payment is not completed yet (status: ${intent.status})` });
     }
 
@@ -362,6 +398,10 @@ exports.payHereWebhook = async (req, res) => {
     }
 
     if (existingTransaction && existingTransaction.PaymentID === payment.PaymentID) {
+      if (existingTransaction.Status === 'FAILED') {
+        await cancelOrderAfterPaymentFailure(order, `PayHere payment failed: ${existingTransaction.GatewayStatus || 'FAILED'}`);
+      }
+
       return res.json({ success: true, duplicate: true });
     }
 
@@ -374,6 +414,7 @@ exports.payHereWebhook = async (req, res) => {
 
     const isPaid = payload.status_code === PAYHERE_SUCCESS;
     const isPending = payload.status_code === PAYHERE_PENDING;
+    const isFailed = !isPaid && !isPending;
 
     await payment.update({
       Status: isPaid ? 'PAID' : isPending ? 'PENDING' : 'FAILED',
@@ -383,6 +424,10 @@ exports.payHereWebhook = async (req, res) => {
     });
 
     await notifyPaymentUpdate(order, payment, isPaid ? 'PAID' : isPending ? 'PENDING' : 'FAILED');
+
+    if (isFailed) {
+      await cancelOrderAfterPaymentFailure(order, `PayHere payment failed with status code: ${payload.status_code}`);
+    }
 
     return res.json({ success: true });
   } catch (error) {
@@ -468,16 +513,19 @@ exports.stripeWebhook = async (req, res) => {
     }
 
     if (event.type === 'payment_intent.payment_failed' || event.type === 'payment_intent.canceled') {
+      const failureReason = event.type === 'payment_intent.canceled' ? 'canceled' : 'failed';
+
       await payment.update({
         Status: 'FAILED',
         PaidAt: null,
         GatewayStatus: buildGatewayStatus(
-          event.type === 'payment_intent.canceled' ? 'CANCELED' : 'FAILED',
+          failureReason === 'canceled' ? 'CANCELED' : 'FAILED',
           intent.last_payment_error?.code || intent.status
         )
       });
 
       await notifyPaymentUpdate(order, payment, 'FAILED');
+      await cancelOrderAfterPaymentFailure(order, `Stripe payment ${failureReason}: ${intent.last_payment_error?.code || intent.status || intent.id}`);
     }
 
     if (event.type === 'payment_intent.processing') {

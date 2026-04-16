@@ -20,7 +20,6 @@ Voleena Foods is a full-stack online ordering platform with separate frontend an
 |- server/      # Node.js + Express backend
 |- database/    # SQL schema and seed/sync scripts
 |- scripts/     # Deployment and utility scripts
-|- reports/     # Testing and submission reports
 |- docker-compose.yml
 ```
 
@@ -58,7 +57,7 @@ chmod +x install.sh
 Then update environment variables as needed:
 
 - `server/.env` (database, API keys, mail settings)
-- `client/.env` (frontend API base URL, Google Maps key)
+- `client/.env` (public `VITE_*` build-time values only)
 
 ### Option 2: Manual setup
 
@@ -84,6 +83,7 @@ VITE_GOOGLE_MAPS_API_KEY=your_google_maps_browser_key
 ```
 
 Note: Vite injects `VITE_*` variables at build/dev start time. If you change `VITE_GOOGLE_MAPS_API_KEY`, restart the frontend (`npm run dev`) or rebuild the frontend image.
+Do not put server secrets such as Cloudinary API secrets, database credentials, JWT secrets, or payment secret keys in `client/.env`.
 
 Set up the database:
 
@@ -184,7 +184,6 @@ npm run test:a11y
 - CI automation:
   - `.github/workflows/api-smoke-newman.yml` runs Postman/Newman smoke checks.
   - `.github/workflows/frontend-a11y-lighthouse.yml` runs frontend Lighthouse accessibility checks.
-- Additional testing summary is available in `reports/testing-submission-report.md`.
 
 ## Maintainer
 

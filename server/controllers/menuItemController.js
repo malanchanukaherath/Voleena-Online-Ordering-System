@@ -111,7 +111,7 @@ const getAllMenuItems = async (req, res) => {
         });
     } catch (error) {
         console.error('Get menu items error:', error);
-        res.status(500).json({ error: 'Failed to fetch menu items', details: error.message });
+        res.status(500).json({ error: 'Failed to fetch menu items' });
     }
 };
 
@@ -137,7 +137,7 @@ const getMenuItem = async (req, res) => {
         });
     } catch (error) {
         console.error('Get menu item error:', error);
-        res.status(500).json({ error: 'Failed to fetch menu item', details: error.message });
+        res.status(500).json({ error: 'Failed to fetch menu item' });
     }
 };
 

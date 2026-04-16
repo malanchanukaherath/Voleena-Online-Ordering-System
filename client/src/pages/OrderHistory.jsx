@@ -55,8 +55,9 @@ const OrderHistory = () => {
 
     const statusOptions = [
         { value: '', label: 'All Orders' },
-        { value: 'PENDING', label: 'Pending' },
+        { value: 'CONFIRMED', label: 'Confirmed' },
         { value: 'PREPARING', label: 'Preparing' },
+        { value: 'READY', label: 'Ready' },
         { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
         { value: 'DELIVERED', label: 'Delivered' },
         { value: 'CANCELLED', label: 'Cancelled' },

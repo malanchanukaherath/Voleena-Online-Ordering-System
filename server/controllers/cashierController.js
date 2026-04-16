@@ -226,10 +226,7 @@ exports.getDashboardStats = async (req, res) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Pending orders
-    const pendingOrders = await Order.count({
-      where: { Status: 'PENDING' }
-    });
+    const pendingOrders = 0;
 
     // Today's orders
     const todayOrders = await Order.count({
@@ -505,9 +502,8 @@ exports.getAllOrders = async (req, res) => {
         }
       ],
       order: [
-        // Prioritize action-required statuses: Show newest orders first
-        // (Orders are auto-confirmed now, so PENDING status rarely occurs)
-        sequelize.literal("CASE WHEN `Order`.Status = 'PENDING' THEN 0 WHEN `Order`.Status = 'CONFIRMED' THEN 1 ELSE 2 END"),
+        // Prioritize action-required statuses.
+        sequelize.literal("CASE WHEN `Order`.Status = 'CONFIRMED' THEN 0 ELSE 1 END"),
         // Then show newest orders first
         ['created_at', 'DESC']
       ],
@@ -668,23 +664,12 @@ exports.cancelOrder = async (req, res) => {
     }
 
     const previousStatus = order.Status;
-
-    await order.update({
-      Status: 'CANCELLED',
-      CancellationReason: reason || 'Cancelled by cashier',
-      CancelledBy: 'CASHIER',
-      CancelledAt: new Date()
-    });
-
-    await OrderStatusHistory.create({
-      OrderID: orderId,
-      OldStatus: previousStatus,
-      NewStatus: 'CANCELLED',
-      ChangedBy: staffId,
-      ChangedByType: 'STAFF',
-      Notes: reason || 'Cancelled by cashier',
-      CreatedAt: new Date()
-    });
+    const cancelledOrder = await orderService.cancelOrder(
+      orderId,
+      reason || 'Cancelled by cashier',
+      staffId,
+      'CASHIER'
+    );
 
     await notifyCashierOrderStatusChange(order, 'CANCELLED', {
       oldStatus: previousStatus,
@@ -694,7 +679,7 @@ exports.cancelOrder = async (req, res) => {
     return res.json({
       success: true,
       message: 'Order cancelled successfully',
-      data: order
+      data: cancelledOrder
     });
   } catch (error) {
     console.error('Cancel order error:', error);

@@ -6,7 +6,6 @@ import {
     FaClipboardList,
     FaLayerGroup,
     FaMoneyBillWave,
-    FaExclamationCircle,
     FaUsers,
     FaSearch,
     FaPrint,
@@ -14,7 +13,6 @@ import {
     FaExpand,
     FaCompress
 } from 'react-icons/fa';
-import Button from '../components/ui/Button';
 import StatusBadge from '../components/ui/StatusBadge';
 import { cashierService } from '../services/dashboardService';
 import authService from '../services/authService';
@@ -685,8 +683,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                 customer: order.customer?.Name || 'Unknown',
                 total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
                 status: order.Status,
-                orderType: order.OrderType,
-                isPending: order.Status === 'PENDING'
+                orderType: order.OrderType
             }));
             setRecentOrders(mappedOrders);
         } else {
@@ -1114,28 +1111,15 @@ const CashierDashboard = ({ posOnly = false }) => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-white rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center">
-                        {recentOrders.some(o => o.isPending) && (
-                            <FaExclamationCircle className="text-red-600 mr-2" />
-                        )}
                         Recent Orders
                     </h3>
-                    {recentOrders.some(o => o.isPending) && (
-                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 mb-3">
-                            <p className="text-xs text-yellow-700">
-                                Unusual: Pending order detected (orders are normally auto-confirmed)
-                            </p>
-                        </div>
-                    )}
                     <div className="space-y-3">
                         {recentOrders.length === 0 ? (
                             <div className="text-sm text-gray-500">No recent orders.</div>
                         ) : recentOrders.map(order => (
                             <div
                                 key={order.id}
-                                className={`flex justify-between items-center p-3 rounded border-2 ${order.isPending
-                                    ? 'border-red-300 bg-red-50'
-                                    : 'border-gray-200 bg-gray-50'
-                                    }`}
+                                className="flex justify-between items-center p-3 rounded border-2 border-gray-200 bg-gray-50"
                             >
                                 <div className="flex-1">
                                     <p className="font-medium">{order.orderNumber}</p>

@@ -10,6 +10,33 @@ import backendApi from '../services/backendApi';
 import { getOrders } from '../services/orderApi';
 import useDelayedStatusUpdate from '../hooks/useDelayedStatusUpdate';
 
+const statusOptions = [
+    { value: '', label: 'All Statuses' },
+    { value: 'CONFIRMED', label: 'Confirmed' },
+    { value: 'PREPARING', label: 'Preparing' },
+    { value: 'READY', label: 'Ready' },
+    { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
+    { value: 'DELIVERED', label: 'Delivered' },
+    { value: 'CANCELLED', label: 'Cancelled' },
+];
+
+const orderStatusOptions = statusOptions.filter((option) => option.value);
+
+const validStatusTransitions = {
+    PENDING: ['CONFIRMED', 'CANCELLED'],
+    CONFIRMED: ['PREPARING', 'CANCELLED'],
+    PREPARING: ['READY', 'CANCELLED'],
+    READY: ['OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'],
+    OUT_FOR_DELIVERY: ['DELIVERED', 'CANCELLED'],
+    DELIVERED: [],
+    CANCELLED: [],
+};
+
+const getStatusOptionsForOrder = (status) => {
+    const allowedStatuses = new Set([status, ...(validStatusTransitions[status] || [])]);
+    return orderStatusOptions.filter((option) => allowedStatuses.has(option.value));
+};
+
 const OrderManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
@@ -66,17 +93,6 @@ const OrderManagement = () => {
             isMounted = false;
         };
     }, []);
-
-    const statusOptions = [
-        { value: '', label: 'All Statuses' },
-        { value: 'PENDING', label: 'Pending' },
-        { value: 'CONFIRMED', label: 'Confirmed' },
-        { value: 'PREPARING', label: 'Preparing' },
-        { value: 'READY', label: 'Ready' },
-        { value: 'OUT_FOR_DELIVERY', label: 'Out for Delivery' },
-        { value: 'DELIVERED', label: 'Delivered' },
-        { value: 'CANCELLED', label: 'Cancelled' },
-    ];
 
     const filteredOrders = useMemo(() => {
         return orders
@@ -204,6 +220,12 @@ const OrderManagement = () => {
                 </div>
             </div>
 
+            {error && (
+                <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+                    {error}
+                </div>
+            )}
+
             {/* Orders Table */}
             {loading ? (
                 <LoadingSkeleton type="table" rows={10} />
@@ -257,7 +279,7 @@ const OrderManagement = () => {
                                                 <Select
                                                     value={getSelectedStatus(order)}
                                                     onChange={(e) => handleDraftStatusChange(order.id, e.target.value)}
-                                                    options={statusOptions.slice(1)}
+                                                    options={getStatusOptionsForOrder(order.status)}
                                                     className="text-xs"
                                                     disabled={!!getPendingUpdate(order.id)}
                                                 />

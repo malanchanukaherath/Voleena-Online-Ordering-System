@@ -3,6 +3,7 @@ const { ComboPack, DailyStock, MenuItem, Order, TokenBlacklist, sequelize } = re
 const { Op } = require('sequelize');
 const stockService = require('../services/stockService');
 const systemSettingsService = require('../services/systemSettingsService');
+const orderService = require('../services/orderService');
 
 /**
  * Automated Jobs Service
@@ -52,10 +53,10 @@ class AutomatedJobsService {
             })
         );
 
-        // Job 4: Auto-cancel unconfirmed orders
+        // Job 4: Repair legacy pending orders
         this.jobs.push(
             cron.schedule('*/10 * * * *', async () => {
-                await this.autoCancelUnconfirmedOrders();
+                await this.autoConfirmPendingOrders();
             })
         );
 
@@ -70,7 +71,7 @@ class AutomatedJobsService {
         console.log(`   - Daily stock creation: 12:00 AM (${configuredTimezone})`);
         console.log('   - Combo pack schedules: 12:00 AM');
         console.log('   - Out-of-stock check: Every 15 minutes');
-        console.log('   - Order timeout: Every 10 minutes');
+        console.log('   - Pending order repair: Every 10 minutes');
         console.log('   - Token cleanup: Every 6 hours');
     }
 
@@ -146,51 +147,32 @@ class AutomatedJobsService {
     }
 
     /**
-     * Auto-cancel unconfirmed orders
+     * Auto-confirm any legacy pending orders.
      */
-    async autoCancelUnconfirmedOrders() {
+    async autoConfirmPendingOrders() {
         try {
-            const runtimeSettings = await systemSettingsService.getRuntimeSettings();
-            const timeoutMinutes = Number(runtimeSettings.orderTimeout)
-                || parseInt(process.env.ORDER_AUTO_CANCEL_MINUTES)
-                || 30;
-            const cutoffTime = new Date(Date.now() - timeoutMinutes * 60 * 1000);
-
-            const ordersToCancel = await Order.findAll({
+            const pendingOrders = await Order.findAll({
                 where: {
-                    Status: 'PENDING',
-                    created_at: {
-                        [Op.lt]: cutoffTime
-                    }
+                    Status: 'PENDING'
                 }
             });
 
-            for (const order of ordersToCancel) {
-                await order.update({
-                    Status: 'CANCELLED',
-                    CancelledAt: new Date(),
-                    CancellationReason: `Auto-cancelled after ${timeoutMinutes} minutes without confirmation`,
-                    CancelledBy: 'SYSTEM'
-                });
+            let confirmedCount = 0;
 
-                // Log status history
-                const { OrderStatusHistory } = require('../models');
-                await OrderStatusHistory.create({
-                    OrderID: order.OrderID,
-                    OldStatus: 'PENDING',
-                    NewStatus: 'CANCELLED',
-                    ChangedBy: null,
-                    ChangedByType: 'SYSTEM',
-                    Notes: 'Auto-cancelled due to timeout',
-                    CreatedAt: new Date()
-                });
+            for (const order of pendingOrders) {
+                try {
+                    await orderService.confirmOrder(order.OrderID, null);
+                    confirmedCount += 1;
+                } catch (confirmError) {
+                    console.error(`❌ Error auto-confirming pending order ${order.OrderID}:`, confirmError.message);
+                }
             }
 
-            if (ordersToCancel.length > 0) {
-                console.log(`✅ Auto-cancelled ${ordersToCancel.length} unconfirmed orders`);
+            if (confirmedCount > 0) {
+                console.log(`✅ Auto-confirmed ${confirmedCount} legacy pending orders`);
             }
         } catch (error) {
-            console.error('❌ Error auto-cancelling orders:', error);
+            console.error('❌ Error repairing pending orders:', error);
         }
     }
 

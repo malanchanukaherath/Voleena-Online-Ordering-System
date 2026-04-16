@@ -156,10 +156,7 @@ exports.getDashboardStats = async (req, res) => {
       where: { IsActive: true }
     });
 
-    // Pending orders (should be minimal now with auto-confirmation)
-    const pendingOrders = await Order.count({
-      where: { Status: 'PENDING' }
-    });
+    const pendingOrders = 0;
 
     // Active orders (confirmed/preparing)
     const activeOrders = await Order.count({

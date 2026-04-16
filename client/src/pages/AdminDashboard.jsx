@@ -104,8 +104,6 @@ const AdminDashboard = () => {
 
     const getStatusIcon = (status) => {
         switch (status) {
-            case 'PENDING':
-                return <FaClipboardList className="text-yellow-500" />;
             case 'PREPARING':
                 return <FaShoppingBag className="text-orange-500" />;
             case 'OUT_FOR_DELIVERY':
@@ -243,8 +241,8 @@ const AdminDashboard = () => {
                         <p className="text-3xl font-bold">LKR {(statsData?.todayRevenue ?? 0).toLocaleString()}</p>
                     </div>
                     <div>
-                        <p className="text-primary-200 text-sm">Pending Orders</p>
-                        <p className="text-3xl font-bold">{statsData?.pendingOrders ?? 0}</p>
+                        <p className="text-primary-200 text-sm">Active Orders</p>
+                        <p className="text-3xl font-bold">{statsData?.activeOrders ?? 0}</p>
                     </div>
                 </div>
             </div>

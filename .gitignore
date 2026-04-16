@@ -1,12 +1,3 @@
-node_modules
-
-# Environment variables
-.env
-.env.*
-!.env.example
-server/.env
-client/.env
-
 # OS/editor
 .DS_Store
 Thumbs.db
@@ -35,17 +26,13 @@ yarn-error.log*
 client/dist/
 coverage/
 
-# Env files
+# Environment variables
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example
-server/.env
-client/.env
-server/.env.local
-client/.env.local
-.env.example
-.env.local
-.env
+!**/.env.example
 
 # AWS Keys
 *.pem

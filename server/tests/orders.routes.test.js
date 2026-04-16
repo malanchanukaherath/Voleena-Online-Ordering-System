@@ -150,6 +150,25 @@ describe('order routes', () => {
     expect(response.status).toBe(403);
   });
 
+  test('reports invalid staff status transitions as client errors', async () => {
+    setAuthUser({ id: 9, type: 'Staff', role: 'Admin' });
+    mockOrderService.updateOrderStatus.mockRejectedValue(new Error('Invalid status transition from PENDING to DELIVERED'));
+    const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      const response = await request(app)
+        .patch('/api/v1/orders/11/status')
+        .send({ status: 'DELIVERED' });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Invalid status transition from PENDING to DELIVERED');
+      expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('11', 'DELIVERED', 9, undefined);
+    } finally {
+      consoleErrorSpy.mockRestore();
+    }
+  });
+
   test('validates cancellation requests before hitting the service', async () => {
     setAuthUser({ id: 4, type: 'Customer', role: 'Customer' });
     validationState.mode = 'invalid';

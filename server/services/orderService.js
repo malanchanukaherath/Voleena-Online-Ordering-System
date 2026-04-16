@@ -336,9 +336,9 @@ class OrderService {
 
             // Generate order number
             const orderNumber = await this.generateOrderNumber();
-            const shouldAutoConfirm = Boolean(runtimeSettings.autoConfirmOrders);
+            // Orders are accepted immediately; payment status separately gates preparation.
+            const confirmedAt = new Date();
 
-            // Create order status based on admin-configured confirmation mode.
             const order = await Order.create({
                 OrderNumber: orderNumber,
                 CustomerID: customerId,
@@ -346,10 +346,10 @@ class OrderService {
                 PromotionID: promotionId || null,
                 DiscountAmount: discountAmount,
                 DeliveryFee: deliveryFee,
-                Status: shouldAutoConfirm ? 'CONFIRMED' : 'PENDING',
+                Status: 'CONFIRMED',
                 OrderType: orderType,
                 SpecialInstructions: specialInstructions,
-                ConfirmedAt: shouldAutoConfirm ? new Date() : null,
+                ConfirmedAt: confirmedAt,
                 ConfirmedBy: null
             }, { transaction });
 
@@ -380,7 +380,7 @@ class OrderService {
                     Status: 'PENDING',
                     DistanceKm: deliveryDistance,
                     EstimatedDeliveryTime: calculateEstimatedDeliveryTime({
-                        stage: shouldAutoConfirm ? 'CONFIRMED' : 'PENDING',
+                        stage: 'CONFIRMED',
                         durationSeconds: deliveryDurationSeconds,
                         distanceKm: deliveryDistance,
                         baseTime: new Date()
@@ -388,65 +388,57 @@ class OrderService {
                 }, { transaction });
             }
 
-            if (shouldAutoConfirm) {
-                const stockDate = new Date().toISOString().split('T')[0];
-                const stockItems = await this.buildStockItemsFromOrderItems(orderItems, transaction);
+            const stockDate = new Date().toISOString().split('T')[0];
+            const stockItems = await this.buildStockItemsFromOrderItems(orderItems, transaction);
 
-                if (stockItems.length > 0) {
-                    await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
-                    await stockService.deductStock(order.OrderID, stockItems, stockDate, null, transaction);
-                }
+            if (stockItems.length > 0) {
+                await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
+                await stockService.deductStock(order.OrderID, stockItems, stockDate, null, transaction);
             }
 
             // Log initial status history.
             await OrderStatusHistory.create({
                 OrderID: order.OrderID,
                 OldStatus: null,
-                NewStatus: shouldAutoConfirm ? 'CONFIRMED' : 'PENDING',
+                NewStatus: 'CONFIRMED',
                 ChangedBy: null,
                 ChangedByType: 'SYSTEM',
-                Notes: shouldAutoConfirm
-                    ? 'Order created and auto-confirmed'
-                    : 'Order created and pending staff confirmation',
+                Notes: 'Order created and auto-confirmed',
                 CreatedAt: new Date()
             }, { transaction });
 
             await transaction.commit();
 
-            // Send confirmation notifications only when order was auto-confirmed.
-            if (shouldAutoConfirm) {
-                try {
-                    const customer = await Customer.findByPk(customerId);
-                    if (customer && orderType !== 'WALK_IN') {
-                        if (runtimeSettings.emailNotifications && runtimeSettings.orderConfirmation && customer.Email) {
-                            await sendOrderConfirmationEmail(order, customer);
-                        }
-                        if (runtimeSettings.smsNotifications && runtimeSettings.orderConfirmation && customer.Phone) {
-                            await sendOrderConfirmationSMS(customer.Phone, orderNumber);
-                        }
+            try {
+                const customer = await Customer.findByPk(customerId);
+                if (customer && orderType !== 'WALK_IN') {
+                    if (runtimeSettings.emailNotifications && runtimeSettings.orderConfirmation && customer.Email) {
+                        await sendOrderConfirmationEmail(order, customer);
                     }
-                } catch (notifError) {
-                    console.error('Notification error after order creation:', notifError);
-                    // Don't fail the order if notification fails
+                    if (runtimeSettings.smsNotifications && runtimeSettings.orderConfirmation && customer.Phone) {
+                        await sendOrderConfirmationSMS(customer.Phone, orderNumber);
+                    }
                 }
+            } catch (notifError) {
+                console.error('Notification error after order creation:', notifError);
+                // Don't fail the order if notification fails
             }
 
-            const statusLabel = shouldAutoConfirm ? 'confirmed' : 'pending confirmation';
-            const eventType = shouldAutoConfirm ? 'ORDER_CONFIRMED' : 'ORDER_CREATED';
+            const eventType = 'ORDER_CONFIRMED';
             const creationRecipientRoles = ['Kitchen', 'Admin'];
 
             await notifySafely(async () => {
                 await appNotificationService.notifyStaffRoles(creationRecipientRoles, {
                     eventType,
                     title: `Order #${orderNumber}`,
-                    message: `New ${orderType.toLowerCase()} order #${orderNumber} is ${statusLabel}.`,
-                    priority: shouldAutoConfirm ? 'MEDIUM' : 'HIGH',
+                    message: `New ${orderType.toLowerCase()} order #${orderNumber} is confirmed.`,
+                    priority: 'MEDIUM',
                     relatedOrderId: order.OrderID,
                     payload: {
                         orderId: order.OrderID,
                         orderNumber,
                         orderType,
-                        status: shouldAutoConfirm ? 'CONFIRMED' : 'PENDING'
+                        status: 'CONFIRMED'
                     },
                     dedupeKey: `${eventType}:STAFF:${order.OrderID}`
                 });
@@ -457,16 +449,14 @@ class OrderService {
                     await appNotificationService.notifyCustomer(customerId, {
                         eventType,
                         title: `Order #${orderNumber}`,
-                        message: shouldAutoConfirm
-                            ? `Your order #${orderNumber} has been confirmed.`
-                            : `Your order #${orderNumber} is pending confirmation.`,
+                        message: `Your order #${orderNumber} has been confirmed.`,
                         priority: 'MEDIUM',
                         relatedOrderId: order.OrderID,
                         payload: {
                             orderId: order.OrderID,
                             orderNumber,
                             orderType,
-                            status: shouldAutoConfirm ? 'CONFIRMED' : 'PENDING'
+                            status: 'CONFIRMED'
                         },
                         dedupeKey: `${eventType}:CUSTOMER:${customerId}:${order.OrderID}`
                     });
@@ -510,13 +500,6 @@ class OrderService {
 
             if (order.Status !== 'PENDING') {
                 throw new Error(`Order cannot be confirmed. Current status: ${order.Status}`);
-            }
-
-            // Verify payment if online payment
-            if (order.payment && order.payment.Method === 'ONLINE') {
-                if (order.payment.Status !== 'PAID') {
-                    throw new Error('Payment not completed. Cannot confirm order.');
-                }
             }
 
             // Validate and reserve stock
@@ -755,8 +738,8 @@ class OrderService {
         });
 
         try {
-            if (!['CUSTOMER', 'CASHIER', 'ADMIN'].includes(cancelledByType)) {
-                throw new Error('Access denied. Only customers, cashiers, or admins can cancel orders');
+            if (!['CUSTOMER', 'CASHIER', 'ADMIN', 'SYSTEM'].includes(cancelledByType)) {
+                throw new Error('Access denied. Only customers, cashiers, admins, or the system can cancel orders');
             }
 
             console.log(`[ORDER_CANCEL] Starting cancellation - OrderID: ${orderId}, CancelledBy: ${cancelledBy}, Type: ${cancelledByType}`);

@@ -63,6 +63,7 @@ const mergeSettings = (incoming = {}) => {
     return {
         ...DEFAULT_SETTINGS,
         ...incoming,
+        autoConfirmOrders: true,
         businessHours
     };
 };
@@ -391,16 +392,8 @@ const Settings = () => {
                                     />
                                 </div>
 
-                                <div className="md:col-span-2">
-                                    <label className="flex items-center gap-2">
-                                        <input
-                                            type="checkbox"
-                                            checked={settings.autoConfirmOrders}
-                                            onChange={(e) => handleInputChange('autoConfirmOrders', e.target.checked)}
-                                            className="rounded text-orange-600 focus:ring-orange-500"
-                                        />
-                                        <span className="text-sm font-medium">Auto-confirm orders (no manual confirmation required)</span>
-                                    </label>
+                                <div className="md:col-span-2 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                                    Orders are confirmed automatically.
                                 </div>
                             </div>
                         </div>

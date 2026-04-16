@@ -134,7 +134,7 @@ function normalizeSettings(rawSettings) {
         minOrderAmount: normalizeNumber(source.minOrderAmount, defaults.minOrderAmount, { min: 0 }),
         maxOrderAmount: normalizeNumber(source.maxOrderAmount, defaults.maxOrderAmount, { min: 0 }),
         orderTimeout: normalizeNumber(source.orderTimeout, defaults.orderTimeout, { min: 1, max: 240, isInteger: true }),
-        autoConfirmOrders: normalizeBoolean(source.autoConfirmOrders, defaults.autoConfirmOrders),
+        autoConfirmOrders: true,
         deliveryFee: normalizeNumber(source.deliveryFee, defaults.deliveryFee, { min: 0 }),
         freeDeliveryThreshold: normalizeNumber(source.freeDeliveryThreshold, defaults.freeDeliveryThreshold, { min: 0 }),
         maxDeliveryDistance: normalizeNumber(source.maxDeliveryDistance, defaults.maxDeliveryDistance, { min: 1 }),
@@ -176,7 +176,7 @@ function getPublicSettingsFromAdminSettings(settings) {
             prefix: settings.orderPrefix,
             minOrderAmount: settings.minOrderAmount,
             maxOrderAmount: settings.maxOrderAmount,
-            autoConfirmOrders: settings.autoConfirmOrders,
+            autoConfirmOrders: true,
             timeoutMinutes: settings.orderTimeout
         },
         delivery: {

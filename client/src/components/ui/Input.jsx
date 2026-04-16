@@ -12,6 +12,9 @@ const Input = ({
   const iconIsElement = React.isValidElement(icon);
   const Icon = !iconIsElement && typeof icon === 'function' ? icon : null;
   const inputId = props.id || props.name;
+  const errorId = inputId && error ? `${inputId}-error` : null;
+  const helperId = inputId && helperText && !error ? `${inputId}-description` : null;
+  const describedBy = [errorId, helperId].filter(Boolean).join(' ') || undefined;
   const inputClasses = `
     block w-full ${Icon ? 'pl-10 pr-3' : 'px-3'} py-2 border rounded-md shadow-sm placeholder-gray-400 
     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
@@ -35,14 +38,16 @@ const Input = ({
         <input
           id={inputId}
           className={inputClasses}
+          aria-invalid={error ? 'true' : undefined}
+          aria-describedby={describedBy}
           {...props}
         />
       </div>
       {error && (
-        <p className="mt-1 text-sm text-red-600 break-words">{error}</p>
+        <p id={errorId || undefined} className="mt-1 text-sm text-red-600 break-words">{error}</p>
       )}
       {helperText && !error && (
-        <p className="mt-1 text-sm text-gray-500 break-words">{helperText}</p>
+        <p id={helperId || undefined} className="mt-1 text-sm text-gray-500 break-words">{helperText}</p>
       )}
     </div>
   );
