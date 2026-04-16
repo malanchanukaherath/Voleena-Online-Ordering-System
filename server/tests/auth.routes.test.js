@@ -326,7 +326,7 @@ describe('auth routes', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.success).toBe(true);
-    expect(response.body.message).toMatch(/OTP sent/i);
+    expect(response.body.message).toMatch(/OTP\s+has\s+been\s+sent/i);
     expect(response.body._dev_otp).toBeUndefined();
 
     const [insertSql, insertOptions] = mockSequelize.query.mock.calls[0];

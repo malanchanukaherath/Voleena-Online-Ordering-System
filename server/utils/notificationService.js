@@ -16,6 +16,14 @@ class NotificationService {
         this.hasLoggedEmailFallbackWarning = false;
     }
 
+    getAuditableMessage(message, containsSensitiveContent = false) {
+        if (containsSensitiveContent) {
+            return '[REDACTED] Sensitive notification content';
+        }
+
+        return message;
+    }
+
     /**
      * Create email transporter using SMTP
      */
@@ -39,8 +47,9 @@ class NotificationService {
     /**
      * Send email notification
      */
-    async sendEmail({ to, subject, htmlBody, textBody, relatedOrderID = null }) {
+    async sendEmail({ to, subject, htmlBody, textBody, relatedOrderID = null, containsSensitiveContent = false }) {
         let notification;
+        const auditableMessage = this.getAuditableMessage(textBody || htmlBody, containsSensitiveContent);
         try {
             // Log notification to database
             notification = await Notification.create({
@@ -48,7 +57,7 @@ class NotificationService {
                 RecipientID: null, // Will be set if we have customer context
                 NotificationType: 'EMAIL',
                 Subject: subject,
-                Message: textBody || htmlBody,
+                Message: auditableMessage,
                 Status: 'PENDING',
                 RelatedOrderID: relatedOrderID
             });
@@ -59,19 +68,18 @@ class NotificationService {
                     this.hasLoggedEmailFallbackWarning = true;
                 }
 
-                // Fallback: Log to console in development
-                console.log('\n📧 ===== EMAIL NOTIFICATION =====');
-                console.log(`To: ${to}`);
-                console.log(`Subject: ${subject}`);
-                console.log(`Body:\n${textBody || 'See HTML body'}`);
-                console.log('================================\n');
+                console.log('📧 Email skipped (provider not configured):', to, subject);
 
                 await notification.update({
-                    Status: 'SENT',
-                    SentAt: new Date()
+                    Status: 'FAILED',
+                    ErrorMessage: 'Email provider not configured'
                 });
 
-                return { success: true, method: 'console' };
+                return {
+                    success: false,
+                    skipped: true,
+                    reason: 'Email provider not configured'
+                };
             }
 
             // Send actual email
@@ -108,15 +116,17 @@ class NotificationService {
     /**
      * Send SMS notification
      */
-    async sendSMS({ to, message, relatedOrderID = null }) {
+    async sendSMS({ to, message, relatedOrderID = null, containsSensitiveContent = false }) {
         try {
+            const auditableMessage = this.getAuditableMessage(message, containsSensitiveContent);
+
             // Log notification to database
             const notification = await Notification.create({
                 RecipientType: 'CUSTOMER',
                 RecipientID: null,
                 NotificationType: 'SMS',
                 Subject: null,
-                Message: message,
+                Message: auditableMessage,
                 Status: 'PENDING',
                 RelatedOrderID: relatedOrderID
             });
@@ -142,17 +152,18 @@ class NotificationService {
                 return { success: true, sid: sms.sid };
             } else {
                 // Fallback: Console logging
-                console.log('\n📱 ===== SMS NOTIFICATION =====');
-                console.log(`To: ${to}`);
-                console.log(`Message: ${message}`);
-                console.log('==============================\n');
+                console.log('📱 SMS skipped (provider not configured):', to, containsSensitiveContent ? '[REDACTED]' : message);
 
                 await notification.update({
-                    Status: 'SENT',
-                    SentAt: new Date()
+                    Status: 'FAILED',
+                    ErrorMessage: 'SMS provider not configured'
                 });
 
-                return { success: true, method: 'console' };
+                return {
+                    success: false,
+                    skipped: true,
+                    reason: 'SMS provider not configured'
+                };
             }
 
         } catch (error) {
@@ -249,9 +260,10 @@ class NotificationService {
 
             await this.sendEmail({
                 to: email,
-                subject: `Your Verification Code: ${otpCode}`,
+                subject: 'Your Verification Code',
                 htmlBody,
-                textBody: `Your verification code is: ${otpCode}. Valid for 15 minutes.`
+                textBody: `Your verification code is: ${otpCode}. Valid for 15 minutes.`,
+                containsSensitiveContent: true
             });
         }
 
@@ -259,7 +271,8 @@ class NotificationService {
         if (phone) {
             await this.sendSMS({
                 to: phone,
-                message: `Voleena Foods: Your verification code is ${otpCode}. Valid for 15 minutes. Do not share this code.`
+                message: `Voleena Foods: Your verification code is ${otpCode}. Valid for 15 minutes. Do not share this code.`,
+                containsSensitiveContent: true
             });
         }
     }

@@ -48,7 +48,9 @@ if (isEmailConfigured()) {
 /**
  * Send email and log notification
  */
-async function sendEmail(to, subject, html, relatedOrderId = null) {
+async function sendEmail(to, subject, html, relatedOrderId = null, options = {}) {
+  const messageForAudit = options.logMessage || html;
+
   // Skip if email service not configured
   if (!transporter || !isEmailConfigured()) {
     warnEmailNotConfiguredOnce();
@@ -74,7 +76,7 @@ async function sendEmail(to, subject, html, relatedOrderId = null) {
       RecipientID: null, // Set based on context
       NotificationType: 'EMAIL',
       Subject: subject,
-      Message: html,
+      Message: messageForAudit,
       Status: 'SENT',
       SentAt: new Date(),
       RelatedOrderID: relatedOrderId
@@ -94,7 +96,7 @@ async function sendEmail(to, subject, html, relatedOrderId = null) {
         RecipientID: null,
         NotificationType: 'EMAIL',
         Subject: subject,
-        Message: html,
+        Message: messageForAudit,
         Status: 'FAILED',
         ErrorMessage: error.message,
         RelatedOrderID: relatedOrderId
@@ -263,7 +265,9 @@ async function sendOTPEmail(email, otp, purpose) {
     </html>
   `;
 
-  return sendEmail(email, subject, html);
+  return sendEmail(email, subject, html, null, {
+    logMessage: '[REDACTED] Sensitive OTP email content'
+  });
 }
 
 /**
@@ -309,7 +313,9 @@ async function sendPasswordResetEmail(email, resetToken) {
     </html>
   `;
 
-  return sendEmail(email, subject, html);
+  return sendEmail(email, subject, html, null, {
+    logMessage: '[REDACTED] Sensitive password reset email content'
+  });
 }
 
 /**

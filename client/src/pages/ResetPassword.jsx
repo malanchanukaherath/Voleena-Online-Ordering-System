@@ -10,7 +10,7 @@ import authService from '../services/authService';
 const ResetPassword = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const { identifier, method, userType } = location.state || {};
+    const { identifier, userType } = location.state || {};
 
     const [step, setStep] = useState(1); // 1: Enter OTP, 2: Set new password
     const [formData, setFormData] = useState({
@@ -55,7 +55,9 @@ const ResetPassword = () => {
         const email = identifier?.trim();
         if (!email) return;
         authService.requestPasswordReset(email, userType || 'Customer').then((result) => {
-            setToastMessage(result.success ? `New OTP sent to your ${method || 'email'}!` : (result.error || 'Failed to resend OTP'));
+            setToastMessage(result.success
+                ? (result.message || 'If the account exists, a new OTP has been sent to your registered contact methods.')
+                : (result.error || 'Failed to resend OTP'));
             setToastType(result.success ? 'success' : 'error');
             setShowToast(true);
         });
@@ -138,7 +140,7 @@ const ResetPassword = () => {
                 <div className="text-center mb-8">
                     <h1 className="text-2xl font-bold mb-2">Reset Password</h1>
                     <p className="text-gray-600 text-sm">
-                        {step === 1 ? `OTP sent to ${identifier}` : 'Create a new password'}
+                        {step === 1 ? 'Enter the OTP sent to your registered contact method' : 'Create a new password'}
                     </p>
                 </div>
 

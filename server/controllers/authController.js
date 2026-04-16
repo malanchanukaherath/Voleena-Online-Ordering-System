@@ -159,6 +159,10 @@ const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
  */
 const isValidPassword = (password) => password && password.length >= 8;
 
+const isSuccessfulDeliveryResult = (deliveryResult) => {
+  return Boolean(deliveryResult && deliveryResult.success === true && deliveryResult.skipped !== true);
+};
+
 const isPasswordResetTableMissingError = (error) => {
   const mysqlCode = error?.original?.code || error?.parent?.code;
   const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -739,6 +743,7 @@ exports.resendEmailVerification = async (req, res) => {
 exports.requestPasswordReset = async (req, res) => {
   try {
     const { email, userType } = req.body; // userType: 'Customer' or 'Staff'
+    const genericMessage = 'If the email exists, an OTP has been sent to your registered contact methods.';
 
     if (!email || !userType) {
       return res.status(400).json({ error: 'Email and user type are required' });
@@ -766,7 +771,7 @@ exports.requestPasswordReset = async (req, res) => {
       // Don't reveal if user exists for security
       return res.json({
         success: true,
-        message: 'If the email exists, an OTP has been sent'
+        message: genericMessage
       });
     }
 
@@ -788,23 +793,54 @@ exports.requestPasswordReset = async (req, res) => {
     const deliveryTasks = [];
 
     if (user?.Phone) {
-      deliveryTasks.push(
-        sendOTPSMS(user.Phone, otpCode, 'PASSWORD_RESET')
-      );
+      deliveryTasks.push({
+        channel: 'SMS',
+        task: sendOTPSMS(user.Phone, otpCode, 'PASSWORD_RESET')
+      });
     }
 
     if (user?.Email) {
-      deliveryTasks.push(
-        sendOTPEmail(user.Email, otpCode, 'PASSWORD_RESET')
-      );
+      deliveryTasks.push({
+        channel: 'EMAIL',
+        task: sendOTPEmail(user.Email, otpCode, 'PASSWORD_RESET')
+      });
     }
 
     if (deliveryTasks.length > 0) {
-      const deliveryResults = await Promise.allSettled(deliveryTasks);
-      const failedDeliveries = deliveryResults.filter((result) => result.status === 'rejected');
+      const deliveryResults = await Promise.allSettled(deliveryTasks.map((entry) => entry.task));
+      const successfulChannels = [];
+      const skippedChannels = [];
+      const failedDeliveries = [];
+
+      deliveryResults.forEach((result, index) => {
+        const channel = deliveryTasks[index]?.channel || 'UNKNOWN';
+
+        if (result.status === 'rejected') {
+          failedDeliveries.push({
+            channel,
+            reason: result.reason?.message || result.reason
+          });
+          return;
+        }
+
+        if (isSuccessfulDeliveryResult(result.value)) {
+          successfulChannels.push(channel);
+          return;
+        }
+
+        skippedChannels.push(channel);
+      });
 
       if (failedDeliveries.length > 0) {
-        console.error('Password reset OTP delivery had failures:', failedDeliveries.map((result) => result.reason?.message || result.reason));
+        console.error('Password reset OTP delivery had failures:', failedDeliveries);
+      }
+
+      if (skippedChannels.length > 0) {
+        console.warn('Password reset OTP delivery skipped channels:', skippedChannels);
+      }
+
+      if (successfulChannels.length === 0) {
+        console.error('Password reset OTP was generated but no delivery channel reported success for:', normalizedEmail);
       }
     }
 
@@ -814,7 +850,7 @@ exports.requestPasswordReset = async (req, res) => {
 
     return res.json({
       success: true,
-      message: 'OTP sent to your email',
+      message: genericMessage,
       // For development only - remove in production
       _dev_otp: process.env.NODE_ENV === 'development' ? otpCode : undefined
     });

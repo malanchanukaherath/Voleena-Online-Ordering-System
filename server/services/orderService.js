@@ -56,6 +56,33 @@ const notifySafely = async (action, context) => {
     }
 };
 
+const normalizeNotificationPreference = (preference) => {
+    const normalized = String(preference || 'BOTH').trim().toUpperCase();
+    if (['EMAIL', 'SMS', 'BOTH'].includes(normalized)) {
+        return normalized;
+    }
+
+    return 'BOTH';
+};
+
+const canSendOrderEmail = (runtimeSettings, customer, eventSettingKey) => {
+    if (!runtimeSettings?.emailNotifications || !runtimeSettings?.[eventSettingKey] || !customer?.Email) {
+        return false;
+    }
+
+    const preference = normalizeNotificationPreference(customer.PreferredNotification);
+    return preference === 'EMAIL' || preference === 'BOTH';
+};
+
+const canSendOrderSMS = (runtimeSettings, customer, eventSettingKey) => {
+    if (!runtimeSettings?.smsNotifications || !runtimeSettings?.[eventSettingKey] || !customer?.Phone) {
+        return false;
+    }
+
+    const preference = normalizeNotificationPreference(customer.PreferredNotification);
+    return preference === 'SMS' || preference === 'BOTH';
+};
+
 /**
  * Order Management Service
  * Implements complete order lifecycle with atomic operations
@@ -412,10 +439,10 @@ class OrderService {
             try {
                 const customer = await Customer.findByPk(customerId);
                 if (customer && orderType !== 'WALK_IN') {
-                    if (runtimeSettings.emailNotifications && runtimeSettings.orderConfirmation && customer.Email) {
+                    if (canSendOrderEmail(runtimeSettings, customer, 'orderConfirmation')) {
                         await sendOrderConfirmationEmail(order, customer);
                     }
-                    if (runtimeSettings.smsNotifications && runtimeSettings.orderConfirmation && customer.Phone) {
+                    if (canSendOrderSMS(runtimeSettings, customer, 'orderConfirmation')) {
                         await sendOrderConfirmationSMS(customer.Phone, orderNumber);
                     }
                 }
@@ -534,10 +561,10 @@ class OrderService {
             try {
                 const runtimeSettings = await systemSettingsService.getRuntimeSettings();
 
-                if (runtimeSettings.emailNotifications && runtimeSettings.orderConfirmation && order.customer.Email) {
+                if (canSendOrderEmail(runtimeSettings, order.customer, 'orderConfirmation')) {
                     await sendOrderConfirmationEmail(order, order.customer);
                 }
-                if (runtimeSettings.smsNotifications && runtimeSettings.orderConfirmation && order.customer.Phone) {
+                if (canSendOrderSMS(runtimeSettings, order.customer, 'orderConfirmation')) {
                     await sendOrderConfirmationSMS(order.customer.Phone, order.OrderNumber);
                 }
             } catch (notifError) {
@@ -646,10 +673,10 @@ class OrderService {
         try {
             const runtimeSettings = await systemSettingsService.getRuntimeSettings();
 
-            if (runtimeSettings.orderStatusUpdates && runtimeSettings.emailNotifications && order.OrderType !== 'WALK_IN' && order.customer.Email) {
+            if (order.OrderType !== 'WALK_IN' && canSendOrderEmail(runtimeSettings, order.customer, 'orderStatusUpdates')) {
                 await sendOrderStatusUpdateEmail(order, order.customer, newStatus);
             }
-            if (runtimeSettings.orderStatusUpdates && runtimeSettings.smsNotifications && order.OrderType !== 'WALK_IN' && order.customer.Phone) {
+            if (order.OrderType !== 'WALK_IN' && canSendOrderSMS(runtimeSettings, order.customer, 'orderStatusUpdates')) {
                 await sendOrderStatusUpdateSMS(order.customer.Phone, order.OrderNumber, newStatus);
             }
         } catch (notifError) {

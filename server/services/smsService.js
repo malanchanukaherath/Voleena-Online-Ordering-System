@@ -30,6 +30,14 @@ if (shouldUseTwilio && (hasApiKeyCredentials || hasLegacyCredentials)) {
 
 const normalizePhone = (phone) => String(phone || '').trim();
 
+const buildAuditableMessage = (message, containsSensitiveContent) => {
+    if (containsSensitiveContent) {
+        return '[REDACTED] Sensitive SMS content';
+    }
+
+    return message;
+};
+
 async function logNotification(payload) {
     if (!Notification || typeof Notification.create !== 'function') {
         return;
@@ -41,9 +49,11 @@ async function logNotification(payload) {
 /**
  * Send SMS message
  */
-async function sendSMS(to, message, relatedOrderId = null) {
+async function sendSMS(to, message, relatedOrderId = null, options = {}) {
     try {
         const normalizedTo = normalizePhone(to);
+        const containsSensitiveContent = Boolean(options.containsSensitiveContent);
+        const auditableMessage = buildAuditableMessage(message, containsSensitiveContent);
 
         if (!normalizedTo) {
             throw new Error('Recipient phone number is required for SMS');
@@ -75,7 +85,7 @@ async function sendSMS(to, message, relatedOrderId = null) {
                 RecipientID: null,
                 NotificationType: 'SMS',
                 Subject: null,
-                Message: message,
+                Message: auditableMessage,
                 Status: 'SENT',
                 SentAt: new Date(),
                 RelatedOrderID: relatedOrderId
@@ -88,27 +98,31 @@ async function sendSMS(to, message, relatedOrderId = null) {
         }
 
         if (!hasLoggedSmsFallbackWarning) {
-            console.warn('⚠️  SMS service is not configured. SMS will be logged to console.');
+            console.warn('⚠️  SMS service is not configured. SMS delivery will be skipped.');
             hasLoggedSmsFallbackWarning = true;
         }
 
-        console.log('📱 SMS (Console):', normalizedTo, message);
+        console.log(
+            '📱 SMS skipped (provider not configured):',
+            normalizedTo,
+            containsSensitiveContent ? '[REDACTED]' : message
+        );
 
         await logNotification({
             RecipientType: 'CUSTOMER',
             RecipientID: null,
             NotificationType: 'SMS',
             Subject: null,
-            Message: message,
-            Status: 'SENT',
-            ErrorMessage: 'SMS provider not configured - logged to console',
-            SentAt: new Date(),
+            Message: auditableMessage,
+            Status: 'FAILED',
+            ErrorMessage: 'SMS provider not configured',
             RelatedOrderID: relatedOrderId
         });
 
         return {
-            success: true,
-            messageId: `console-${Date.now()}`
+            success: false,
+            skipped: true,
+            reason: 'SMS provider not configured'
         };
     } catch (error) {
         try {
@@ -117,7 +131,7 @@ async function sendSMS(to, message, relatedOrderId = null) {
                 RecipientID: null,
                 NotificationType: 'SMS',
                 Subject: null,
-                Message: message,
+                Message: buildAuditableMessage(message, Boolean(options.containsSensitiveContent)),
                 Status: 'FAILED',
                 ErrorMessage: error.message,
                 RelatedOrderID: relatedOrderId
@@ -143,7 +157,7 @@ async function sendOTPSMS(phone, otp, purpose) {
 
     const message = `Your Voleena Foods ${purposeMessages[purpose] || 'verification'} code is: ${otp}. Valid for 10 minutes.`;
 
-    return sendSMS(phone, message);
+    return sendSMS(phone, message, null, { containsSensitiveContent: true });
 }
 
 /**

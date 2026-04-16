@@ -48,6 +48,17 @@ const OrderConfirmation = () => {
     const subtotal = items.reduce((sum, item) => sum + (item.UnitPrice || item.menuItem?.Price || 0) * (item.Quantity || 0), 0);
     const total = order?.FinalAmount ?? order?.TotalAmount ?? subtotal;
     const deliveryAddress = order?.delivery?.address;
+    const hasEmail = Boolean(order?.customer?.Email);
+    const hasPhone = Boolean(order?.customer?.Phone);
+
+    let updateChannelText = 'Order updates are always available in your tracking page.';
+    if (hasEmail && hasPhone) {
+        updateChannelText = 'Order updates will be sent to your registered email and phone when those channels are enabled.';
+    } else if (hasEmail) {
+        updateChannelText = 'Order updates will be sent to your registered email when that channel is enabled.';
+    } else if (hasPhone) {
+        updateChannelText = 'Order updates will be sent to your registered phone when that channel is enabled.';
+    }
 
     if (loading) {
         return (
@@ -160,10 +171,9 @@ const OrderConfirmation = () => {
                 </Link>
             </div>
 
-            {/* Email Notification */}
+            {/* Notification Info */}
             <div className="mt-8 text-center text-sm text-gray-500">
-                <p>A confirmation email has been sent to {order?.customer?.Email || 'your email'}</p>
-                <p>You will receive updates about your order status via email and SMS</p>
+                <p>{updateChannelText}</p>
             </div>
         </div>
     );

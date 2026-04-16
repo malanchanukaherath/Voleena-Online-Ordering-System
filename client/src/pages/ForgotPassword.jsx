@@ -8,10 +8,9 @@ import authService from '../services/authService';
 
 const ForgotPassword = () => {
     const navigate = useNavigate();
-    const [step, setStep] = useState(1); // 1: Enter email, 2: Confirm email delivery
+    const [step, setStep] = useState(1); // 1: Enter email, 2: Confirm and send code
     const [formData, setFormData] = useState({
-        identifier: '',
-        method: 'email'
+        identifier: ''
     });
     const [errors, setErrors] = useState({});
     const [showToast, setShowToast] = useState(false);
@@ -57,7 +56,7 @@ const ForgotPassword = () => {
             return;
         }
 
-        setToastMessage(`OTP sent to your ${formData.method === 'email' ? 'email' : 'phone'}!`);
+        setToastMessage(result.message || 'If the account exists, an OTP has been sent to your registered contact methods.');
         setToastType('success');
         setShowToast(true);
 
@@ -65,7 +64,6 @@ const ForgotPassword = () => {
             navigate('/reset-password', {
                 state: {
                     identifier: email,
-                    method: formData.method,
                     userType: 'Customer'
                 }
             });
@@ -78,7 +76,7 @@ const ForgotPassword = () => {
                 <div className="text-center mb-8">
                     <h1 className="text-2xl font-bold mb-2">Forgot Password?</h1>
                     <p className="text-gray-600 text-sm">
-                        {step === 1 ? 'Enter your email address' : 'Confirm email delivery'}
+                        {step === 1 ? 'Enter your email address' : 'Confirm and send reset code'}
                     </p>
                 </div>
 
@@ -109,23 +107,9 @@ const ForgotPassword = () => {
                     <div className="space-y-6">
                         <div className="bg-gray-50 rounded-lg p-4 mb-4">
                             <p className="text-sm text-gray-700">
-                                We'll send a verification code to:
+                                We'll send a verification code to the available registered contact methods for:
                             </p>
                             <p className="font-semibold mt-1">{formData.identifier}</p>
-                        </div>
-
-                        <div className="space-y-3">
-                            <p className="text-sm font-medium text-gray-700">Verification method:</p>
-
-                            <div className="flex items-center p-4 border-2 rounded-lg border-primary-500 bg-primary-50">
-                                <span className="flex h-4 w-4 items-center justify-center rounded-full border border-primary-600" aria-hidden="true">
-                                    <span className="h-2 w-2 rounded-full bg-primary-600" />
-                                </span>
-                                <div className="ml-3">
-                                    <p className="font-medium">Email Verification</p>
-                                    <p className="text-sm text-gray-500">Receive OTP via email</p>
-                                </div>
-                            </div>
                         </div>
 
                         <div className="flex gap-3">
