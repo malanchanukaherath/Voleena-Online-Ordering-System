@@ -31,6 +31,23 @@ const markAddressUnavailableError = (error) => {
 
 const CUSTOMER_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
 
+const isUsableCoordinatePair = (latitude, longitude) => {
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+        return false;
+    }
+
+    if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+        return false;
+    }
+
+    // 0,0 is commonly used as a placeholder and should not be treated as a valid delivery point.
+    if (Math.abs(latitude) < 0.000001 && Math.abs(longitude) < 0.000001) {
+        return false;
+    }
+
+    return true;
+};
+
 const notifySafely = async (action, context) => {
     try {
         await action();
@@ -185,12 +202,12 @@ class OrderService {
 
                 const payloadLatitude = Number(orderData?.deliveryCoordinates?.latitude);
                 const payloadLongitude = Number(orderData?.deliveryCoordinates?.longitude);
-                const hasPayloadCoordinates = Number.isFinite(payloadLatitude) && Number.isFinite(payloadLongitude);
+                const hasPayloadCoordinates = isUsableCoordinatePair(payloadLatitude, payloadLongitude);
 
                 let deliveryLatitude = Number(address.Latitude);
                 let deliveryLongitude = Number(address.Longitude);
 
-                if (!Number.isFinite(deliveryLatitude) || !Number.isFinite(deliveryLongitude)) {
+                if (!isUsableCoordinatePair(deliveryLatitude, deliveryLongitude)) {
                     if (hasPayloadCoordinates) {
                         deliveryLatitude = payloadLatitude;
                         deliveryLongitude = payloadLongitude;
@@ -208,7 +225,7 @@ class OrderService {
                     }
                 }
 
-                if (!Number.isFinite(deliveryLatitude) || !Number.isFinite(deliveryLongitude)) {
+                if (!isUsableCoordinatePair(deliveryLatitude, deliveryLongitude)) {
                     throw new Error('Address coordinates are required for delivery validation');
                 }
 

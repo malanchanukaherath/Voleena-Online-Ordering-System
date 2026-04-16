@@ -19,6 +19,10 @@ const RESTAURANT_LOCATION = {
 
 const DELIVERY_MAP_LIBRARIES = ['places'];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const DELIVERY_LOCATION_MODES = {
+    ADDRESS: 'ADDRESS',
+    PIN: 'PIN',
+};
 
 const mapSavedAddress = (address = {}) => ({
     id: address.AddressID ?? address.address_id ?? address.id ?? null,
@@ -111,10 +115,10 @@ const Checkout = () => {
     ), [savedAddresses]);
 
     useEffect(() => {
-        if (formData.orderType === 'DELIVERY' && !deliveryAddressMethod && googleMapsApiKey) {
-            setDeliveryAddressMethod('GPS');
+        if (formData.orderType === 'DELIVERY' && !deliveryAddressMethod) {
+            setDeliveryAddressMethod(DELIVERY_LOCATION_MODES.ADDRESS);
         }
-    }, [deliveryAddressMethod, formData.orderType, googleMapsApiKey]);
+    }, [deliveryAddressMethod, formData.orderType]);
 
     useEffect(() => {
         const baseDeliveryFee = Number(publicSettings.delivery?.baseFee);
@@ -171,7 +175,7 @@ const Checkout = () => {
                         city: defaultAddress.city,
                         postalCode: defaultAddress.postalCode,
                     }));
-                    setDeliveryAddressMethod('MANUAL');
+                    setDeliveryAddressMethod(DELIVERY_LOCATION_MODES.ADDRESS);
                     setCurrentLocation(null);
                     setMapCenter(RESTAURANT_LOCATION);
                     setMapSearchValue('');
@@ -384,7 +388,7 @@ const Checkout = () => {
             postalCode: nextAddress.postalCode
         }));
 
-        if (formData.orderType === 'DELIVERY' && deliveryAddressMethod === 'MANUAL') {
+        if (formData.orderType === 'DELIVERY' && deliveryAddressMethod === DELIVERY_LOCATION_MODES.ADDRESS) {
             setDistanceInfo(null);
             setDeliveryFee(Number(publicSettings.delivery?.baseFee) || 100);
             setDeliveryFeeBreakdown('');
@@ -401,7 +405,7 @@ const Checkout = () => {
         setDeliveryFeeBreakdown('');
         setLocationError('');
 
-        if (method === 'MANUAL') {
+        if (method === DELIVERY_LOCATION_MODES.ADDRESS) {
             setCurrentLocation(null);
             setMapCenter(RESTAURANT_LOCATION);
             setGpsDetectedAddress('');
@@ -684,7 +688,7 @@ const Checkout = () => {
 
             if (!deliveryAddressMethod) {
                 newErrors.deliveryAddressMethod = 'Please choose one delivery address method';
-            } else if (deliveryAddressMethod === 'GPS') {
+            } else if (deliveryAddressMethod === DELIVERY_LOCATION_MODES.PIN) {
                 if (!currentLocation) newErrors.location = 'Please pin your delivery location or use your current location';
             }
         }
@@ -762,7 +766,7 @@ const Checkout = () => {
                 // Validate delivery distance before placing order
                 let distanceValidation;
 
-                if (deliveryAddressMethod === 'GPS') {
+                if (deliveryAddressMethod === DELIVERY_LOCATION_MODES.PIN) {
                     if (!currentLocation) {
                         throw new Error('Please pin your delivery location or use your current location');
                     }
@@ -896,7 +900,11 @@ const Checkout = () => {
         deliveryFee: formData.orderType === 'DELIVERY' ? (hasFreeDeliveryByOrderValue ? 0 : deliveryFee) : 0,
     };
     cartSummary.total = cartSummary.subtotal + cartSummary.deliveryFee;
-    const needsDeliveryLocation = formData.orderType === 'DELIVERY' && !distanceInfo?.isValid;
+    const needsDeliveryLocation = formData.orderType === 'DELIVERY' && (
+        !deliveryAddressMethod
+        || (deliveryAddressMethod === DELIVERY_LOCATION_MODES.PIN && (!currentLocation || !distanceInfo?.isValid))
+        || (deliveryAddressMethod === DELIVERY_LOCATION_MODES.ADDRESS && !distanceInfo?.isValid)
+    );
 
     return (
         <div className="max-w-7xl mx-auto">
@@ -981,57 +989,9 @@ const Checkout = () => {
                                     We use your location to confirm you are in our delivery area and calculate the final delivery fee.
                                 </p>
                                 
-                                {/* Two Options Box */}
-                                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                    <p className="text-sm font-medium text-gray-700 mb-3">Choose the easiest way to set your delivery point:</p>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleDeliveryAddressMethodChange('GPS')}
-                                            className={`text-left flex items-start space-x-3 p-3 bg-white rounded border-2 transition-colors ${deliveryAddressMethod === 'GPS'
-                                                ? 'border-blue-500 bg-blue-50'
-                                                : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                        >
-                                            <div className="flex-shrink-0 mt-0.5">
-                                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                                    <FaMapMarkerAlt className="text-blue-600" />
-                                                </div>
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900">Pin delivery location</p>
-                                                <p className="text-xs text-gray-600 mt-1">Use the map, search, or current location</p>
-                                            </div>
-                                        </button>
-
-                                        <button
-                                            type="button"
-                                            onClick={() => handleDeliveryAddressMethodChange('MANUAL')}
-                                            className={`text-left flex items-start space-x-3 p-3 bg-white rounded border-2 transition-colors ${deliveryAddressMethod === 'MANUAL'
-                                                ? 'border-green-500 bg-green-50'
-                                                : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                        >
-                                            <div className="flex-shrink-0 mt-0.5">
-                                                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                                                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
-                                                </div>
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-sm font-medium text-gray-900">Use saved profile address</p>
-                                                <p className="text-xs text-gray-600 mt-1">Select from your saved addresses (max 3)</p>
-                                            </div>
-                                        </button>
-                                    </div>
-
-                                    {errors.deliveryAddressMethod && (
-                                        <p className="text-sm text-red-600 mt-3">{errors.deliveryAddressMethod}</p>
-                                    )}
-                                </div>
-
+                                {/* Step 1: Select saved address */}
                                 <div className="mb-6 p-4 bg-white border border-gray-200 rounded-lg">
+                                    <p className="text-sm font-semibold text-gray-900 mb-3">Step 1: Select saved delivery address</p>
                                     {savedAddressOptions.length > 0 ? (
                                         <>
                                             <Select
@@ -1041,7 +1001,7 @@ const Checkout = () => {
                                                 onChange={handleSavedAddressChange}
                                                 options={savedAddressOptions}
                                                 error={errors.savedAddressId}
-                                                helperText="Checkout uses your first saved address as default. Manage addresses from your profile."
+                                                helperText="We use this saved address as your official delivery address for the order."
                                                 required
                                             />
 
@@ -1071,8 +1031,63 @@ const Checkout = () => {
                                     )}
                                 </div>
 
-                                {deliveryAddressMethod === 'GPS' && (
+                                {/* Step 2: Choose validation method */}
+                                <div className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <p className="text-sm font-semibold text-gray-900 mb-3">Step 2: Confirm delivery location</p>
+                                    <p className="text-xs text-gray-600 mb-3">Pick one method to verify delivery distance and fee.</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeliveryAddressMethodChange(DELIVERY_LOCATION_MODES.ADDRESS)}
+                                            className={`text-left flex items-start space-x-3 p-3 bg-white rounded border-2 transition-colors ${deliveryAddressMethod === DELIVERY_LOCATION_MODES.ADDRESS
+                                                ? 'border-green-500 bg-green-50'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            <div className="flex-shrink-0 mt-0.5">
+                                                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-900">Use selected address</p>
+                                                <p className="text-xs text-gray-600 mt-1">Quick and simple validation from your saved address</p>
+                                            </div>
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDeliveryAddressMethodChange(DELIVERY_LOCATION_MODES.PIN)}
+                                            className={`text-left flex items-start space-x-3 p-3 bg-white rounded border-2 transition-colors ${deliveryAddressMethod === DELIVERY_LOCATION_MODES.PIN
+                                                ? 'border-blue-500 bg-blue-50'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            <div className="flex-shrink-0 mt-0.5">
+                                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                    <FaMapMarkerAlt className="text-blue-600" />
+                                                </div>
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-sm font-medium text-gray-900">Pin exact location (recommended)</p>
+                                                <p className="text-xs text-gray-600 mt-1">Best accuracy for roads and delivery routing</p>
+                                            </div>
+                                        </button>
+                                    </div>
+
+                                    {errors.deliveryAddressMethod && (
+                                        <p className="text-sm text-red-600 mt-3">{errors.deliveryAddressMethod}</p>
+                                    )}
+                                </div>
+
+                                {deliveryAddressMethod === DELIVERY_LOCATION_MODES.PIN && (
                                     <>
+                                        <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+                                            Your selected saved address is still used for the order record. Map pin is used only for accurate delivery distance validation.
+                                        </div>
+
                                         <div className="mb-4">
                                             <button
                                                 type="button"
@@ -1181,9 +1196,9 @@ const Checkout = () => {
                                     </>
                                 )}
 
-                                {deliveryAddressMethod === 'MANUAL' && (
+                                {deliveryAddressMethod === DELIVERY_LOCATION_MODES.ADDRESS && (
                                     <div className="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800">
-                                        Delivery distance validation will use the selected saved profile address above.
+                                        Distance validation uses your selected saved address. Choose map pin mode if you want more precise road-based validation.
                                     </div>
                                 )}
 
@@ -1231,7 +1246,7 @@ const Checkout = () => {
                                                         <button
                                                             type="button"
                                                             onClick={() => {
-                                                                handleDeliveryAddressMethodChange('GPS');
+                                                                handleDeliveryAddressMethodChange(DELIVERY_LOCATION_MODES.PIN);
                                                                 handleUseCurrentLocation();
                                                             }}
                                                             className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
