@@ -10,6 +10,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_db_sync:
+        description: Apply safe schema sync on EC2 before restarting app
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ec2-production-deploy
@@ -69,6 +74,7 @@ jobs:
           DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
           IMAGE_TAG: sha-${{ github.sha }}
           RUN_ACCOUNT_SEED: ${{ github.event.inputs.seed_accounts || 'false' }}
+          RUN_DB_SYNC: ${{ github.event.inputs.run_db_sync || 'false' }}
           TARGET_BRANCH: main
         run: |
           set -euo pipefail
