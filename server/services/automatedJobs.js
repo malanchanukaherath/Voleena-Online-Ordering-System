@@ -1,5 +1,5 @@
 const cron = require('node-cron');
-const { ComboPack, DailyStock, MenuItem, Order, TokenBlacklist, sequelize } = require('../models');
+const { ComboPack, DailyStock, MenuItem, Order, Delivery, TokenBlacklist, sequelize } = require('../models');
 const { Op } = require('sequelize');
 const stockService = require('../services/stockService');
 const systemSettingsService = require('../services/systemSettingsService');
@@ -67,12 +67,20 @@ class AutomatedJobsService {
             })
         );
 
+        // Job 6: Retry delivery auto-assignment for READY orders
+        this.jobs.push(
+            cron.schedule('*/2 * * * *', async () => {
+                await this.retryPendingDeliveryAssignments();
+            })
+        );
+
         console.log('✅ Automated jobs started');
         console.log(`   - Daily stock creation: 12:00 AM (${configuredTimezone})`);
         console.log('   - Combo pack schedules: 12:00 AM');
         console.log('   - Out-of-stock check: Every 15 minutes');
         console.log('   - Pending order repair: Every 10 minutes');
         console.log('   - Token cleanup: Every 6 hours');
+        console.log('   - Delivery assignment retry: Every 2 minutes');
     }
 
     /**
@@ -173,6 +181,60 @@ class AutomatedJobsService {
             }
         } catch (error) {
             console.error('❌ Error repairing pending orders:', error);
+        }
+    }
+
+    /**
+     * Retry auto-assignment for delivery orders that are READY but still unassigned.
+     * This protects the flow when no delivery staff was available at the exact
+     * moment kitchen moved an order to READY.
+     */
+    async retryPendingDeliveryAssignments() {
+        try {
+            const pendingDeliveries = await Delivery.findAll({
+                where: {
+                    Status: 'PENDING',
+                    DeliveryStaffID: null
+                },
+                include: [{
+                    model: Order,
+                    as: 'order',
+                    attributes: ['OrderID', 'OrderNumber', 'OrderType', 'Status']
+                }],
+                order: [['updated_at', 'ASC']],
+                limit: 50
+            });
+
+            let attempted = 0;
+            let assigned = 0;
+
+            for (const delivery of pendingDeliveries) {
+                const order = delivery.order;
+
+                if (!order || order.OrderType !== 'DELIVERY' || order.Status !== 'READY') {
+                    continue;
+                }
+
+                attempted += 1;
+
+                try {
+                    const staffId = await orderService.autoAssignDeliveryStaff(order.OrderID);
+                    if (staffId) {
+                        assigned += 1;
+                    }
+                } catch (assignmentError) {
+                    console.error(
+                        `❌ Retry assignment failed for order ${order.OrderID} (${order.OrderNumber || 'N/A'}):`,
+                        assignmentError.message
+                    );
+                }
+            }
+
+            if (attempted > 0) {
+                console.log(`✅ Delivery assignment retry: attempted ${attempted}, assigned ${assigned}`);
+            }
+        } catch (error) {
+            console.error('❌ Error retrying pending delivery assignments:', error.message);
         }
     }
 
