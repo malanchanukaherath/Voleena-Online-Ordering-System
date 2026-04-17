@@ -59,6 +59,9 @@ const OrderManagement = () => {
                     ? order.items.reduce((sum, item) => sum + (item.Quantity || 0), 0)
                     : 0;
 
+                const createdAt = order.CreatedAt || order.createdAt || order.created_at || null;
+                const updatedAt = order.UpdatedAt || order.updatedAt || order.updated_at || createdAt;
+
                 return {
                     id: order.OrderID,
                     orderNumber: order.OrderNumber,
@@ -68,7 +71,8 @@ const OrderManagement = () => {
                     status: order.Status,
                     total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
                     items: itemCount,
-                    createdAt: order.CreatedAt,
+                    createdAt,
+                    updatedAt,
                 };
             });
 
@@ -261,7 +265,7 @@ const OrderManagement = () => {
                                         Total
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Time
+                                        Last Updated
                                     </th>
                                 </tr>
                             </thead>
@@ -342,7 +346,7 @@ const OrderManagement = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-500">
-                                                {order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}
+                                                {order.updatedAt ? new Date(order.updatedAt).toLocaleString() : order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}
                                             </div>
                                         </td>
                                     </tr>
