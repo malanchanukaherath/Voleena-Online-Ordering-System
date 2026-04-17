@@ -8,6 +8,23 @@ function hasConfiguredStripeValue(value, prefix) {
     return typeof value === 'string' && value.trim().startsWith(prefix) && !value.includes('your_');
 }
 
+function hasConfiguredPayHereValue(value) {
+    return typeof value === 'string' && value.trim().length > 0 && !value.includes('your_');
+}
+
+function isValidHttpUrl(value) {
+    if (typeof value !== 'string' || !value.trim()) {
+        return false;
+    }
+
+    try {
+        const parsed = new URL(value);
+        return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+    } catch (error) {
+        return false;
+    }
+}
+
 function toMinorUnits(amount) {
     const numericAmount = Number(amount);
 
@@ -133,23 +150,47 @@ class PaymentService {
      * Initialize PayHere payment
      */
     async initializeOnlinePayment(order, customer, payment) {
-        // PayHere integration
-        if (!this.payHereConfig.merchantId || !this.payHereConfig.merchantSecret || !process.env.FRONTEND_URL || !process.env.BACKEND_URL) {
-            throw new Error('Online payments are not configured');
-        }
-
         const frontendBase = String(process.env.FRONTEND_URL || '').replace(/\/+$/, '');
         const backendBase = String(process.env.BACKEND_URL || '').replace(/\/+$/, '');
-        const configuredReturnUrl = process.env.PAYHERE_RETURN_URL;
-        const configuredCancelUrl = process.env.PAYHERE_CANCEL_URL;
-        const configuredNotifyUrl = process.env.PAYHERE_NOTIFY_URL;
+        const configuredReturnUrl = String(process.env.PAYHERE_RETURN_URL || '').trim();
+        const configuredCancelUrl = String(process.env.PAYHERE_CANCEL_URL || '').trim();
+        const configuredNotifyUrl = String(process.env.PAYHERE_NOTIFY_URL || '').trim();
+
+        const merchantId = String(this.payHereConfig.merchantId || '').trim();
+        const merchantSecret = String(this.payHereConfig.merchantSecret || '').trim();
 
         const returnUrl = configuredReturnUrl || `${frontendBase}/order-confirmation/${order.OrderID}`;
         const cancelUrl = configuredCancelUrl || `${frontendBase}/checkout`;
         const notifyUrl = configuredNotifyUrl || `${backendBase}/api/v1/payments/webhook/payhere`;
 
+        const missingOrInvalid = [];
+
+        if (!hasConfiguredPayHereValue(merchantId)) {
+            missingOrInvalid.push('PAYHERE_MERCHANT_ID');
+        }
+
+        if (!hasConfiguredPayHereValue(merchantSecret)) {
+            missingOrInvalid.push('PAYHERE_MERCHANT_SECRET');
+        }
+
+        if (!isValidHttpUrl(returnUrl)) {
+            missingOrInvalid.push('PAYHERE_RETURN_URL or FRONTEND_URL');
+        }
+
+        if (!isValidHttpUrl(cancelUrl)) {
+            missingOrInvalid.push('PAYHERE_CANCEL_URL or FRONTEND_URL');
+        }
+
+        if (!isValidHttpUrl(notifyUrl)) {
+            missingOrInvalid.push('PAYHERE_NOTIFY_URL or BACKEND_URL');
+        }
+
+        if (missingOrInvalid.length > 0) {
+            throw new Error(`Online payments are not configured: missing or invalid ${missingOrInvalid.join(', ')}`);
+        }
+
         const hash = this.generatePayHereHash(
-            this.payHereConfig.merchantId,
+            merchantId,
             order.OrderNumber,
             order.FinalAmount,
             'LKR'
@@ -165,7 +206,7 @@ class PaymentService {
             gateway: 'PayHere',
             paymentUrl: `https://${payHereHost}.payhere.lk/pay/checkout`,
             paymentData: {
-                merchant_id: this.payHereConfig.merchantId,
+                merchant_id: merchantId,
                 return_url: returnUrl,
                 cancel_url: cancelUrl,
                 notify_url: notifyUrl,

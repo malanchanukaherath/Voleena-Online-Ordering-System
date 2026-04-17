@@ -124,7 +124,7 @@ const OrderTracking = () => {
 
         fetchOrder();
 
-        const interval = setInterval(fetchOrder, 30000);
+        const interval = setInterval(fetchOrder, 5000);
         return () => clearInterval(interval);
     }, [orderId]);
 

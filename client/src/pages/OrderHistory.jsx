@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaEye, FaRedo, FaComments } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -15,43 +15,66 @@ const OrderHistory = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    useEffect(() => {
-        const fetchOrders = async () => {
-            try {
+    const fetchOrders = useCallback(async ({ showLoading = false } = {}) => {
+        try {
+            if (showLoading) {
                 setLoading(true);
-                const response = await getOrders();
-                const mapped = (response.data?.data || []).map((order) => {
-                    // Handle both CreatedAt (PascalCase) and createdAt (camelCase) for compatibility
-                    const createdAtValue = order.CreatedAt || order.createdAt || order.created_at;
-                    const createdAt = createdAtValue ? new Date(createdAtValue) : new Date();
-                    const isValidDate = createdAt && !isNaN(createdAt.getTime());
+            }
 
-                    return {
-                        id: order.OrderID,
-                        orderNumber: order.OrderNumber,
-                        date: isValidDate ? createdAt.toLocaleDateString() : 'N/A',
-                        time: isValidDate ? createdAt.toLocaleTimeString() : 'N/A',
-                        items: (order.items || []).map((item) => ({
-                            name: item.menuItem?.Name || item.combo?.Name || 'Item',
-                            quantity: item.Quantity
-                        })),
-                        total: parseFloat(order.FinalAmount || order.TotalAmount || 0),
-                        status: order.Status,
-                        orderType: order.OrderType
-                    };
-                });
-                setOrders(mapped);
-                setError(null);
-            } catch (err) {
-                console.error('Failed to load orders:', err);
-                setError('Failed to load orders');
-            } finally {
+            const response = await getOrders();
+            const mapped = (response.data?.data || []).map((order) => {
+                // Handle both CreatedAt (PascalCase) and createdAt (camelCase) for compatibility
+                const createdAtValue = order.CreatedAt || order.createdAt || order.created_at;
+                const createdAt = createdAtValue ? new Date(createdAtValue) : new Date();
+                const isValidDate = createdAt && !isNaN(createdAt.getTime());
+
+                return {
+                    id: order.OrderID,
+                    orderNumber: order.OrderNumber,
+                    date: isValidDate ? createdAt.toLocaleDateString() : 'N/A',
+                    time: isValidDate ? createdAt.toLocaleTimeString() : 'N/A',
+                    items: (order.items || []).map((item) => ({
+                        name: item.menuItem?.Name || item.combo?.Name || 'Item',
+                        quantity: item.Quantity
+                    })),
+                    total: parseFloat(order.FinalAmount || order.TotalAmount || 0),
+                    status: order.Status,
+                    orderType: order.OrderType
+                };
+            });
+
+            setOrders(mapped);
+            setError(null);
+        } catch (err) {
+            console.error('Failed to load orders:', err);
+            setError('Failed to load orders');
+        } finally {
+            if (showLoading) {
                 setLoading(false);
             }
+        }
+    }, []);
+
+    useEffect(() => {
+        let isActive = true;
+
+        const fetchOrdersSafely = async (options = {}) => {
+            if (!isActive) return;
+            await fetchOrders(options);
         };
 
-        fetchOrders();
-    }, []);
+        fetchOrdersSafely({ showLoading: true });
+
+        // Keep customer history synced with status changes from kitchen/delivery.
+        const intervalId = setInterval(() => {
+            fetchOrdersSafely();
+        }, 5000);
+
+        return () => {
+            isActive = false;
+            clearInterval(intervalId);
+        };
+    }, [fetchOrders]);
 
     const statusOptions = [
         { value: '', label: 'All Orders' },

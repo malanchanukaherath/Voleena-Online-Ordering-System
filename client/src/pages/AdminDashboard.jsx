@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../services/dashboardService';
 import { getOrders } from '../services/orderApi';
@@ -20,52 +20,56 @@ const AdminDashboard = () => {
     const [statsData, setStatsData] = useState(null);
     const [recentOrders, setRecentOrders] = useState([]);
 
+    const loadDashboard = useCallback(async () => {
+        try {
+            const [statsResponse, ordersResponse] = await Promise.all([
+                adminService.getDashboardStats(),
+                getOrders()
+            ]);
+
+            const stats = statsResponse?.stats || statsResponse?.data?.stats || statsResponse?.data || {};
+            const apiOrders = ordersResponse.data?.data || ordersResponse.data || [];
+            const mappedOrders = apiOrders
+                .map((order) => ({
+                    id: order.OrderID,
+                    orderNumber: order.OrderNumber,
+                    customer: order.customer?.Name || 'Unknown',
+                    total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
+                    status: order.Status,
+                    time: order.CreatedAt || order.createdAt || order.created_at
+                }))
+                .sort((a, b) => {
+                    const aTime = new Date(a.time || 0).getTime();
+                    const bTime = new Date(b.time || 0).getTime();
+                    return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
+                })
+                .slice(0, 4);
+
+            setStatsData(stats);
+            setRecentOrders(mappedOrders);
+        } catch {
+            // Keep current dashboard data if a refresh attempt fails.
+        }
+    }, []);
+
     useEffect(() => {
-        let isMounted = true;
+        let isActive = true;
 
-        const loadDashboard = async () => {
-            try {
-                const [statsResponse, ordersResponse] = await Promise.all([
-                    adminService.getDashboardStats(),
-                    getOrders()
-                ]);
-
-                const stats = statsResponse?.stats || statsResponse?.data?.stats || statsResponse?.data || {};
-                const apiOrders = ordersResponse.data?.data || ordersResponse.data || [];
-                const mappedOrders = apiOrders
-                    .map((order) => ({
-                        id: order.OrderID,
-                        orderNumber: order.OrderNumber,
-                        customer: order.customer?.Name || 'Unknown',
-                        total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
-                        status: order.Status,
-                        time: order.CreatedAt || order.createdAt || order.created_at
-                    }))
-                    .sort((a, b) => {
-                        const aTime = new Date(a.time || 0).getTime();
-                        const bTime = new Date(b.time || 0).getTime();
-                        return (Number.isNaN(bTime) ? 0 : bTime) - (Number.isNaN(aTime) ? 0 : aTime);
-                    })
-                    .slice(0, 4);
-
-                if (isMounted) {
-                    setStatsData(stats);
-                    setRecentOrders(mappedOrders);
-                }
-            } catch {
-                if (isMounted) {
-                    setStatsData(null);
-                    setRecentOrders([]);
-                }
-            }
+        const loadDashboardSafely = async () => {
+            if (!isActive) return;
+            await loadDashboard();
         };
 
-        loadDashboard();
+        loadDashboardSafely();
+
+        // Keep dashboard KPIs and recent order statuses in sync.
+        const intervalId = setInterval(loadDashboardSafely, 5000);
 
         return () => {
-            isMounted = false;
+            isActive = false;
+            clearInterval(intervalId);
         };
-    }, []);
+    }, [loadDashboard]);
 
     const stats = useMemo(() => ([
         {

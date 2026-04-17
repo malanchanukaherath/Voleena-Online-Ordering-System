@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
@@ -45,54 +45,64 @@ const OrderManagement = () => {
     const [draftStatuses, setDraftStatuses] = useState({});
     const [error, setError] = useState('');
 
-    useEffect(() => {
-        let isMounted = true;
-
-        const loadOrders = async () => {
-            try {
+    const loadOrders = useCallback(async ({ showLoading = false } = {}) => {
+        try {
+            if (showLoading) {
                 setLoading(true);
-                const response = await getOrders();
-                const apiOrders = response.data?.data || response.data || [];
-
-                const mappedOrders = apiOrders.map((order) => {
-                    const itemCount = Array.isArray(order.items)
-                        ? order.items.reduce((sum, item) => sum + (item.Quantity || 0), 0)
-                        : 0;
-
-                    return {
-                        id: order.OrderID,
-                        orderNumber: order.OrderNumber,
-                        customerName: order.customer?.Name || 'Unknown',
-                        customerPhone: order.customer?.Phone || 'N/A',
-                        orderType: order.OrderType,
-                        status: order.Status,
-                        total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
-                        items: itemCount,
-                        createdAt: order.CreatedAt,
-                    };
-                });
-
-                if (isMounted) {
-                    setOrders(mappedOrders);
-                    setError('');
-                }
-            } catch (err) {
-                if (isMounted) {
-                    setError(err.message || 'Failed to load orders');
-                }
-            } finally {
-                if (isMounted) {
-                    setLoading(false);
-                }
             }
+
+            const response = await getOrders();
+            const apiOrders = response.data?.data || response.data || [];
+
+            const mappedOrders = apiOrders.map((order) => {
+                const itemCount = Array.isArray(order.items)
+                    ? order.items.reduce((sum, item) => sum + (item.Quantity || 0), 0)
+                    : 0;
+
+                return {
+                    id: order.OrderID,
+                    orderNumber: order.OrderNumber,
+                    customerName: order.customer?.Name || 'Unknown',
+                    customerPhone: order.customer?.Phone || 'N/A',
+                    orderType: order.OrderType,
+                    status: order.Status,
+                    total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
+                    items: itemCount,
+                    createdAt: order.CreatedAt,
+                };
+            });
+
+            setOrders(mappedOrders);
+            setError('');
+        } catch (err) {
+            setError(err.message || 'Failed to load orders');
+        } finally {
+            if (showLoading) {
+                setLoading(false);
+            }
+        }
+    }, []);
+
+    useEffect(() => {
+        let isActive = true;
+
+        const loadOrdersSafely = async (options = {}) => {
+            if (!isActive) return;
+            await loadOrders(options);
         };
 
-        loadOrders();
+        loadOrdersSafely({ showLoading: true });
+
+        // Keep admin order status in sync with kitchen/delivery updates.
+        const intervalId = setInterval(() => {
+            loadOrdersSafely();
+        }, 5000);
 
         return () => {
-            isMounted = false;
+            isActive = false;
+            clearInterval(intervalId);
         };
-    }, []);
+    }, [loadOrders]);
 
     const filteredOrders = useMemo(() => {
         return orders
