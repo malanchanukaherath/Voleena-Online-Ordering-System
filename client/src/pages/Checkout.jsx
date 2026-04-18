@@ -944,6 +944,15 @@ const Checkout = () => {
 
                         <div className="bg-white rounded-lg shadow p-6">
                             <h2 className="text-xl font-semibold mb-4">Schedule</h2>
+                            <div className="mb-4 rounded border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-800">
+                                <p className="font-semibold">Preorder and Bulk Orders</p>
+                                <p className="mt-1">
+                                    Planning ahead or ordering in larger quantities? Use preorder scheduling and add your bulk details in Special Instructions.
+                                </p>
+                                <p className="mt-1">
+                                    If current stock is not enough for immediate processing, you can still place it as a preorder request.
+                                </p>
+                            </div>
                             <label className="flex items-center gap-3 mb-4">
                                 <input
                                     type="checkbox"
@@ -1323,6 +1332,9 @@ const Checkout = () => {
                         {/* Special Instructions */}
                         <div className="bg-white rounded-lg shadow p-6">
                             <h2 className="text-xl font-semibold mb-4">Special Instructions</h2>
+                            <p className="text-sm text-gray-500 mb-3">
+                                For bulk or special-event preorders, include preferred packaging, quantity notes, and timing details here.
+                            </p>
                             <Textarea
                                 name="specialInstructions"
                                 value={formData.specialInstructions}

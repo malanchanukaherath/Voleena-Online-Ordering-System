@@ -564,6 +564,10 @@ const OrderTracking = () => {
             return null;
         }
 
+        if (order.isPreorder && order.scheduledDatetime && order.status === 'CONFIRMED') {
+            return `Preorder scheduled for ${new Date(order.scheduledDatetime).toLocaleString()}`;
+        }
+
         if (order.status === 'PREORDER_PENDING') {
             return order.scheduledDatetime
                 ? `Preorder awaiting approval for ${new Date(order.scheduledDatetime).toLocaleString()}`
@@ -677,7 +681,7 @@ const OrderTracking = () => {
         }
     };
 
-    const isPreorderFlow = Boolean(order?.isPreorder);
+    const isPreorderFlow = Boolean(order?.isPreorder) && ['PREORDER_PENDING', 'PREORDER_CONFIRMED'].includes(order?.status);
 
     const trackingSteps = [
         {
@@ -713,7 +717,7 @@ const OrderTracking = () => {
     trackingSteps.push(
         {
             status: 'CONFIRMED',
-            label: 'Order Confirmed',
+            label: order?.isPreorder ? 'Preorder Confirmed' : 'Order Confirmed',
             time: getTimelineTime('CONFIRMED'),
             completed: ['CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'READY'].includes(order?.status),
             icon: FaCheckCircle,
@@ -852,6 +856,7 @@ const OrderTracking = () => {
                                     {order.status === 'CANCELLED' ? 'Your order has been cancelled' :
                                         order.status === 'PREORDER_PENDING' ? 'Your preorder is awaiting staff approval' :
                                             order.status === 'PREORDER_CONFIRMED' ? 'Your preorder is approved and scheduled' :
+                                        order.isPreorder && order.status === 'CONFIRMED' ? 'Your preorder is confirmed and scheduled' :
                                         order.status === 'CONFIRMED' ? 'Your order is confirmed!' :
                                             order.status === 'PREPARING' ? 'Your order is being prepared' :
                                                 order.status === 'READY' ? (order.orderType === 'TAKEAWAY' ? 'Your order is ready for pickup!' : 'Your order is ready!') :

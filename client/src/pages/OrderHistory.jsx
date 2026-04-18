@@ -39,7 +39,9 @@ const OrderHistory = () => {
                     })),
                     total: parseFloat(order.FinalAmount || order.TotalAmount || 0),
                     status: order.Status,
-                    orderType: order.OrderType
+                    orderType: order.OrderType,
+                    isPreorder: Boolean(order.IsPreorder || order.isPreorder),
+                    scheduledDatetime: order.ScheduledDatetime || order.scheduledDatetime || null
                 };
             });
 
@@ -109,6 +111,15 @@ const OrderHistory = () => {
                 <p className="text-gray-600">View your past orders and reorder your favorites</p>
             </div>
 
+            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6">
+                <p className="text-sm text-indigo-800">
+                    <span className="font-semibold">Need advance or bulk ordering?</span> Use preorder at checkout and add quantity/event notes in Special Instructions.
+                </p>
+                <p className="text-xs text-indigo-700 mt-1">
+                    If immediate stock is unavailable for your requested quantity, place it as a preorder request.
+                </p>
+            </div>
+
             {/* Filter */}
             <div className="bg-white rounded-lg shadow p-4 mb-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end">
@@ -143,6 +154,11 @@ const OrderHistory = () => {
                                         <p className="text-sm text-gray-600">
                                             {order.date} at {order.time} · {order.orderType}
                                         </p>
+                                        {order.isPreorder && order.scheduledDatetime && (
+                                            <p className="text-xs text-indigo-700 mt-1">
+                                                Scheduled for {new Date(order.scheduledDatetime).toLocaleString()}
+                                            </p>
+                                        )}
                                     </div>
                                     <div className="mt-4 md:mt-0">
                                         <p className="text-2xl font-bold text-primary-600">

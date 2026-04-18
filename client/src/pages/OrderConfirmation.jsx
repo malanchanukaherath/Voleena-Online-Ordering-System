@@ -86,7 +86,7 @@ const OrderConfirmation = () => {
                 <h1 className="text-3xl font-bold text-green-700 mb-2">Order Placed Successfully!</h1>
                 <p className="text-lg text-green-600 mb-4">
                     {isPreorder
-                        ? 'Thank you for your preorder. It is now pending staff approval.'
+                        ? 'Thank you for your preorder. It is confirmed and scheduled.'
                         : "Thank you for your order. We've received your order and will start preparing it shortly."}
                 </p>
                 {isPreorder && hasValidSchedule && (
@@ -116,7 +116,7 @@ const OrderConfirmation = () => {
                     {/* Delivery Info */}
                     <div>
                         <h3 className="font-semibold mb-2">
-                            {order.orderType === 'DELIVERY' ? 'Delivery Information' : 'Pickup Information'}
+                            {order?.OrderType === 'DELIVERY' ? 'Delivery Information' : 'Pickup Information'}
                         </h3>
                         {order?.OrderType === 'DELIVERY' ? (
                             <div className="text-sm text-gray-600">

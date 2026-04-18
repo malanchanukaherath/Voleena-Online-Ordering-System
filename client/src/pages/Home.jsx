@@ -166,6 +166,32 @@ const Home = () => {
                 </div>
             </section>
 
+            <section className="py-10 bg-indigo-50 border-b border-indigo-100">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="bg-white rounded-xl shadow p-6 md:p-8 border border-indigo-100">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900">Preorder and Bulk Ordering Available</h2>
+                                <p className="text-gray-700 mt-2">
+                                    Need food in advance or for larger groups? You can place scheduled preorders and include bulk quantity notes.
+                                </p>
+                                <p className="text-sm text-indigo-700 mt-2">
+                                    If an item is low on immediate stock, submit it as a preorder request with your preferred date and details.
+                                </p>
+                            </div>
+                            <div className="flex gap-3">
+                                <Link to="/menu">
+                                    <Button variant="outline">Browse Menu</Button>
+                                </Link>
+                                <Link to="/checkout">
+                                    <Button>Place a Preorder</Button>
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             {/* Combo Specials Section */}
             {(isLoadingCombos || comboSpecials.length > 0) && (
                 <section className="py-12 bg-gradient-to-r from-orange-50 to-yellow-50">

@@ -62,8 +62,11 @@ const KitchenDashboard = () => {
 
         loadDashboard();
 
+        const intervalId = setInterval(loadDashboard, 5000);
+
         return () => {
             isMounted = false;
+            clearInterval(intervalId);
         };
     }, []);
 

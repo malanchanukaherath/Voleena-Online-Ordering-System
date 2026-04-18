@@ -190,7 +190,7 @@ const CashierOrders = () => {
             </div>
             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
                 <p className="text-sm text-blue-700">
-                    <strong>Note:</strong> Standard orders auto-confirm, while preorders remain pending until staff approves them.
+                    <strong>Note:</strong> All orders, including preorders, are auto-confirmed when placed.
                 </p>
             </div>
             <div className="bg-white rounded-lg shadow p-4 mb-4">

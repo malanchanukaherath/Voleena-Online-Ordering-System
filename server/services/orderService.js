@@ -421,9 +421,10 @@ class OrderService {
 
             // Generate order number
             const orderNumber = await this.generateOrderNumber();
-            const initialStatus = isPreorder ? 'PREORDER_PENDING' : 'CONFIRMED';
-            const initialApprovalStatus = isPreorder ? 'PENDING' : 'NOT_REQUIRED';
+            const initialStatus = isPreorder ? 'PREORDER_CONFIRMED' : 'CONFIRMED';
+            const initialApprovalStatus = isPreorder ? 'APPROVED' : 'NOT_REQUIRED';
             const confirmedAt = isPreorder ? null : new Date();
+            const approvedAt = isPreorder ? new Date() : null;
 
             const order = await Order.create({
                 OrderNumber: orderNumber,
@@ -439,6 +440,7 @@ class OrderService {
                 IsPreorder: isPreorder,
                 ScheduledDatetime: scheduledDatetime,
                 ApprovalStatus: initialApprovalStatus,
+                ApprovedAt: approvedAt,
                 SpecialInstructions: specialInstructions,
                 ConfirmedAt: confirmedAt,
                 ConfirmedBy: null
@@ -484,7 +486,14 @@ class OrderService {
                 const stockItems = await this.buildStockItemsFromOrderItems(orderItems, transaction);
 
                 if (stockItems.length > 0) {
-                    await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
+                    try {
+                        await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
+                    } catch (stockError) {
+                        if (/insufficient|stock|out of stock/i.test(stockError.message || '')) {
+                            throw new Error('Requested quantity exceeds current stock. You can place this as a preorder and include details in Special Instructions.');
+                        }
+                        throw stockError;
+                    }
                     await stockService.deductStock(order.OrderID, stockItems, stockDate, null, transaction);
                 }
             }
@@ -497,7 +506,7 @@ class OrderService {
                 ChangedBy: null,
                 ChangedByType: 'SYSTEM',
                 Notes: isPreorder
-                    ? 'Preorder created and pending staff approval'
+                    ? 'Preorder created and auto-confirmed as scheduled'
                     : 'Order created and auto-confirmed',
                 CreatedAt: new Date()
             }, { transaction });
@@ -506,7 +515,7 @@ class OrderService {
 
             try {
                 const customer = customerProfile;
-                if (customer && orderType !== 'WALK_IN' && !isPreorder) {
+                if (customer && orderType !== 'WALK_IN') {
                     if (canSendOrderEmail(runtimeSettings, customer, 'orderConfirmation')) {
                         await sendOrderConfirmationEmail(order, customer);
                     }
@@ -523,15 +532,15 @@ class OrderService {
                 // Don't fail the order if notification fails
             }
 
-            const eventType = isPreorder ? 'PREORDER_PENDING_APPROVAL' : 'ORDER_CONFIRMED';
-            const creationRecipientRoles = isPreorder ? ['Cashier', 'Admin'] : ['Kitchen', 'Admin'];
+            const eventType = isPreorder ? 'PREORDER_CONFIRMED' : 'ORDER_CONFIRMED';
+            const creationRecipientRoles = isPreorder ? ['Kitchen', 'Admin'] : ['Kitchen', 'Admin'];
 
             await notifySafely(async () => {
                 await appNotificationService.notifyStaffRoles(creationRecipientRoles, {
                     eventType,
                     title: `Order #${orderNumber}`,
                     message: isPreorder
-                        ? `New ${orderType.toLowerCase()} preorder #${orderNumber} requires review.`
+                        ? `New ${orderType.toLowerCase()} preorder #${orderNumber} is confirmed and scheduled.`
                         : `New ${orderType.toLowerCase()} order #${orderNumber} is confirmed.`,
                     priority: 'MEDIUM',
                     relatedOrderId: order.OrderID,
@@ -552,7 +561,7 @@ class OrderService {
                         eventType,
                         title: `Order #${orderNumber}`,
                         message: isPreorder
-                            ? `Your preorder #${orderNumber} is pending staff approval.`
+                            ? `Your preorder #${orderNumber} is confirmed${scheduledDatetime ? ` for ${scheduledDatetime.toLocaleString()}` : ''}.`
                             : `Your order #${orderNumber} has been confirmed.`,
                         priority: 'MEDIUM',
                         relatedOrderId: order.OrderID,
@@ -1067,9 +1076,14 @@ class OrderService {
             const oldStatus = order.Status;
             console.log(`[ORDER_CANCEL] Order found - Status: ${oldStatus}, Items: ${order.items.length}`);
 
-            // Step 1: Return stock if order was confirmed (stock was deducted)
-            if (order.Status !== 'PENDING' && order.ConfirmedAt) {
-                const stockDate = order.ConfirmedAt.toISOString().split('T')[0];
+            // Step 1: Return stock only when stock was actually deducted.
+            const shouldReturnStock = order.IsPreorder
+                ? Boolean(order.PreparingAt)
+                : order.Status !== 'PENDING' && Boolean(order.ConfirmedAt);
+
+            if (shouldReturnStock) {
+                const stockAnchorDate = order.ConfirmedAt || order.PreparingAt || new Date();
+                const stockDate = stockAnchorDate.toISOString().split('T')[0];
                 const stockItems = await this.buildStockItemsFromOrderItems(order.items, transaction);
 
                 if (stockItems.length > 0) {

@@ -724,10 +724,19 @@ const CashierDashboard = ({ posOnly = false }) => {
 
         loadDashboardData();
 
+        if (posOnly) {
+            return () => {
+                isMounted = false;
+            };
+        }
+
+        const intervalId = setInterval(loadDashboardData, 5000);
+
         return () => {
             isMounted = false;
+            clearInterval(intervalId);
         };
-    }, [loadData]);
+    }, [loadData, posOnly]);
 
     useEffect(() => {
         if (!posOnly) {
