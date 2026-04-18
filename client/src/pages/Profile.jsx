@@ -59,6 +59,8 @@ const Profile = () => {
         phone: user?.phone || '',
         preferredNotification: user?.preferredNotification || 'BOTH'
     });
+    const [originalEmail, setOriginalEmail] = useState((user?.email || '').trim().toLowerCase());
+    const [currentPasswordForEmail, setCurrentPasswordForEmail] = useState('');
 
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
@@ -112,6 +114,9 @@ const Profile = () => {
 
     const validateProfileForm = () => {
         const newErrors = {};
+        const normalizedCurrentEmail = String(originalEmail || '').trim().toLowerCase();
+        const normalizedFormEmail = formData.email.trim().toLowerCase();
+        const isEmailChangeRequested = normalizedFormEmail !== normalizedCurrentEmail;
 
         if (!formData.name.trim()) {
             newErrors.name = 'Name is required';
@@ -133,6 +138,10 @@ const Profile = () => {
 
         if (!NOTIFICATION_OPTIONS.includes(formData.preferredNotification)) {
             newErrors.preferredNotification = 'Please select a valid notification preference';
+        }
+
+        if (isEmailChangeRequested && !currentPasswordForEmail.trim()) {
+            newErrors.currentPasswordForEmail = 'Current password is required to change email';
         }
 
         setErrors(newErrors);
@@ -304,11 +313,15 @@ const Profile = () => {
         setIsProfileSaving(true);
 
         try {
+            const normalizedCurrentEmail = String(originalEmail || '').trim().toLowerCase();
+            const normalizedFormEmail = formData.email.trim().toLowerCase();
+            const isEmailChangeRequested = normalizedFormEmail !== normalizedCurrentEmail;
             const payload = {
                 name: formData.name.trim(),
                 email: formData.email.trim(),
                 phone: formData.phone.trim(),
-                preferredNotification: formData.preferredNotification
+                preferredNotification: formData.preferredNotification,
+                ...(isEmailChangeRequested ? { currentPassword: currentPasswordForEmail } : {})
             };
 
             const response = await updateCustomerProfile(payload);
@@ -331,6 +344,9 @@ const Profile = () => {
                     ...(mappedProfile.createdAt ? { createdAt: mappedProfile.createdAt } : {})
                 });
             }
+
+            setCurrentPasswordForEmail('');
+            setOriginalEmail(String(mappedProfile.email || '').trim().toLowerCase());
 
             setToastMessage(response.data?.message || 'Profile updated successfully!');
             setToastType('success');
@@ -384,6 +400,7 @@ const Profile = () => {
             phone: localUserProfile.phone,
             preferredNotification: localUserProfile.preferredNotification
         }));
+        setOriginalEmail(String(localUserProfile.email || '').trim().toLowerCase());
     }, [user]);
 
     useEffect(() => {
@@ -404,6 +421,7 @@ const Profile = () => {
                     phone: profile.phone,
                     preferredNotification: profile.preferredNotification
                 }));
+                setOriginalEmail(String(profile.email || '').trim().toLowerCase());
 
                 if (updateUser) {
                     updateUser({
@@ -523,6 +541,24 @@ const Profile = () => {
                             icon={FaEnvelope}
                             required
                         />
+                        {formData.email.trim().toLowerCase() !== String(originalEmail || '').trim().toLowerCase() && (
+                            <Input
+                                label="Current Password (required for email change)"
+                                type="password"
+                                name="currentPasswordForEmail"
+                                value={currentPasswordForEmail}
+                                onChange={(e) => {
+                                    setCurrentPasswordForEmail(e.target.value);
+                                    if (errors.currentPasswordForEmail) {
+                                        setErrors((prev) => ({ ...prev, currentPasswordForEmail: '' }));
+                                    }
+                                }}
+                                error={errors.currentPasswordForEmail}
+                                icon={FaLock}
+                                helperText="Your new email will only update after verification from the new inbox."
+                                required
+                            />
+                        )}
                         <Input
                             label="Phone Number"
                             type="tel"

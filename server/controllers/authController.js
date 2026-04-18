@@ -18,6 +18,8 @@ const refreshTokenFallbackSecret = process.env.JWT_REFRESH_SECRET;
 const EMAIL_VERIFICATION_TTL_MINUTES = parseInt(process.env.EMAIL_VERIFICATION_TTL_MINUTES || '30', 10);
 const EMAIL_RESEND_COOLDOWN_SECONDS = parseInt(process.env.EMAIL_RESEND_COOLDOWN_SECONDS || '60', 10);
 const VERIFICATION_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
+const EMAIL_CHANGE_TOKEN_SECRET = process.env.EMAIL_CHANGE_TOKEN_SECRET || accessTokenFallbackSecret;
+const EMAIL_CHANGE_TOKEN_PURPOSE = 'CUSTOMER_EMAIL_CHANGE';
 const PASSWORD_RESET_TOKEN_TTL_MINUTES = parseInt(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || '15', 10);
 const PASSWORD_RESET_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
 
@@ -161,6 +163,207 @@ const isValidPassword = (password) => password && password.length >= 8;
 
 const isSuccessfulDeliveryResult = (deliveryResult) => {
   return Boolean(deliveryResult && deliveryResult.success === true && deliveryResult.skipped !== true);
+};
+
+const verifyRegistrationEmailToken = async (rawToken, res) => {
+  const transaction = await sequelize.transaction();
+
+  try {
+    const tokenHash = hashVerificationToken(rawToken);
+
+    const [record] = await sequelize.query(
+      `SELECT
+         evt.email_verification_token_id,
+         evt.customer_id,
+         evt.expires_at,
+         evt.used_at,
+         c.is_email_verified
+       FROM email_verification_token evt
+       INNER JOIN customer c ON c.customer_id = evt.customer_id
+       WHERE evt.token_hash = ?
+       ORDER BY evt.created_at DESC
+       LIMIT 1
+       FOR UPDATE`,
+      {
+        replacements: [tokenHash],
+        type: sequelize.QueryTypes.SELECT,
+        transaction
+      }
+    );
+
+    if (!record) {
+      await transaction.rollback();
+      return res.status(400).json({
+        error: 'Invalid verification link',
+        code: 'INVALID_VERIFICATION_TOKEN'
+      });
+    }
+
+    if (record.used_at) {
+      await transaction.rollback();
+      return res.status(400).json({
+        error: 'Verification link was already used',
+        code: 'VERIFICATION_TOKEN_USED'
+      });
+    }
+
+    if (new Date(record.expires_at) <= new Date()) {
+      await sequelize.query(
+        `UPDATE email_verification_token
+         SET used_at = NOW()
+         WHERE email_verification_token_id = ?`,
+        {
+          replacements: [record.email_verification_token_id],
+          type: sequelize.QueryTypes.UPDATE,
+          transaction
+        }
+      );
+
+      await transaction.commit();
+      return res.status(400).json({
+        error: 'Verification link expired. Request a new verification email.',
+        code: 'VERIFICATION_TOKEN_EXPIRED'
+      });
+    }
+
+    if (!record.is_email_verified) {
+      await sequelize.query(
+        `UPDATE customer
+         SET is_email_verified = 1
+         WHERE customer_id = ?`,
+        {
+          replacements: [record.customer_id],
+          type: sequelize.QueryTypes.UPDATE,
+          transaction
+        }
+      );
+    }
+
+    await sequelize.query(
+      `UPDATE email_verification_token
+       SET used_at = NOW()
+       WHERE email_verification_token_id = ?`,
+      {
+        replacements: [record.email_verification_token_id],
+        type: sequelize.QueryTypes.UPDATE,
+        transaction
+      }
+    );
+
+    await transaction.commit();
+
+    return res.json({
+      success: true,
+      message: 'Email verified successfully. You can now log in.'
+    });
+  } catch (error) {
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
+    console.error('Email verification error:', error);
+    return res.status(500).json({ error: 'Email verification failed' });
+  }
+};
+
+const verifyCustomerEmailChangeToken = async (rawToken, res) => {
+  let decoded;
+
+  try {
+    decoded = jwt.verify(rawToken, EMAIL_CHANGE_TOKEN_SECRET);
+  } catch (error) {
+    if (error?.name === 'TokenExpiredError') {
+      return res.status(400).json({
+        error: 'Email change link expired. Request a new email change from your profile settings.',
+        code: 'EMAIL_CHANGE_TOKEN_EXPIRED'
+      });
+    }
+
+    return res.status(400).json({
+      error: 'Invalid verification link',
+      code: 'INVALID_VERIFICATION_TOKEN'
+    });
+  }
+
+  const tokenPurpose = decoded?.purpose;
+  const customerId = Number(decoded?.customerId);
+  const currentEmail = String(decoded?.currentEmail || '').trim().toLowerCase();
+  const newEmail = String(decoded?.newEmail || '').trim().toLowerCase();
+
+  if (tokenPurpose !== EMAIL_CHANGE_TOKEN_PURPOSE || !Number.isInteger(customerId) || !newEmail || !isValidEmail(newEmail)) {
+    return res.status(400).json({
+      error: 'Invalid verification link',
+      code: 'INVALID_VERIFICATION_TOKEN'
+    });
+  }
+
+  const transaction = await sequelize.transaction();
+
+  try {
+    const customer = await Customer.findByPk(customerId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+
+    if (!customer || customer.AccountStatus !== 'ACTIVE' || !customer.IsActive) {
+      await transaction.rollback();
+      return res.status(400).json({
+        error: 'Invalid verification link',
+        code: 'INVALID_VERIFICATION_TOKEN'
+      });
+    }
+
+    const currentDbEmail = String(customer.Email || '').trim().toLowerCase();
+
+    if (currentDbEmail !== currentEmail) {
+      if (currentDbEmail === newEmail) {
+        await transaction.rollback();
+        return res.json({
+          success: true,
+          message: 'Email is already updated and verified. You can continue using your account.'
+        });
+      }
+
+      await transaction.rollback();
+      return res.status(400).json({
+        error: 'This email change link is no longer valid. Request a new email change from profile settings.',
+        code: 'EMAIL_CHANGE_TOKEN_STALE'
+      });
+    }
+
+    const duplicateCustomer = await Customer.findOne({
+      where: {
+        Email: newEmail,
+        CustomerID: { [sequelize.Sequelize.Op.ne]: customer.CustomerID }
+      },
+      transaction,
+      lock: transaction.LOCK.UPDATE
+    });
+
+    if (duplicateCustomer) {
+      await transaction.rollback();
+      return res.status(409).json({
+        error: 'Email is already used by another customer',
+        code: 'EMAIL_CHANGE_CONFLICT'
+      });
+    }
+
+    customer.Email = newEmail;
+    customer.IsEmailVerified = true;
+    await customer.save({ transaction });
+
+    await transaction.commit();
+
+    return res.json({
+      success: true,
+      message: 'Email address updated and verified successfully. You can continue using your account.'
+    });
+  } catch (error) {
+    if (!transaction.finished) {
+      await transaction.rollback();
+    }
+    console.error('Email change verification error:', error);
+    return res.status(500).json({ error: 'Email verification failed' });
+  }
 };
 
 const isPasswordResetTableMissingError = (error) => {
@@ -584,110 +787,18 @@ exports.verifyToken = async (req, res) => {
 exports.verifyEmail = async (req, res) => {
   const rawToken = (req.body?.token || '').trim();
 
-  if (!rawToken || !VERIFICATION_TOKEN_PATTERN.test(rawToken)) {
+  if (!rawToken) {
     return res.status(400).json({
       error: 'Invalid verification link',
       code: 'INVALID_VERIFICATION_TOKEN'
     });
   }
 
-  const transaction = await sequelize.transaction();
-
-  try {
-    const tokenHash = hashVerificationToken(rawToken);
-
-    const [record] = await sequelize.query(
-      `SELECT
-         evt.email_verification_token_id,
-         evt.customer_id,
-         evt.expires_at,
-         evt.used_at,
-         c.is_email_verified
-       FROM email_verification_token evt
-       INNER JOIN customer c ON c.customer_id = evt.customer_id
-       WHERE evt.token_hash = ?
-       ORDER BY evt.created_at DESC
-       LIMIT 1
-       FOR UPDATE`,
-      {
-        replacements: [tokenHash],
-        type: sequelize.QueryTypes.SELECT,
-        transaction
-      }
-    );
-
-    if (!record) {
-      await transaction.rollback();
-      return res.status(400).json({
-        error: 'Invalid verification link',
-        code: 'INVALID_VERIFICATION_TOKEN'
-      });
-    }
-
-    if (record.used_at) {
-      await transaction.rollback();
-      return res.status(400).json({
-        error: 'Verification link was already used',
-        code: 'VERIFICATION_TOKEN_USED'
-      });
-    }
-
-    if (new Date(record.expires_at) <= new Date()) {
-      await sequelize.query(
-        `UPDATE email_verification_token
-         SET used_at = NOW()
-         WHERE email_verification_token_id = ?`,
-        {
-          replacements: [record.email_verification_token_id],
-          type: sequelize.QueryTypes.UPDATE,
-          transaction
-        }
-      );
-
-      await transaction.commit();
-      return res.status(400).json({
-        error: 'Verification link expired. Request a new verification email.',
-        code: 'VERIFICATION_TOKEN_EXPIRED'
-      });
-    }
-
-    if (!record.is_email_verified) {
-      await sequelize.query(
-        `UPDATE customer
-         SET is_email_verified = 1
-         WHERE customer_id = ?`,
-        {
-          replacements: [record.customer_id],
-          type: sequelize.QueryTypes.UPDATE,
-          transaction
-        }
-      );
-    }
-
-    await sequelize.query(
-      `UPDATE email_verification_token
-       SET used_at = NOW()
-       WHERE email_verification_token_id = ?`,
-      {
-        replacements: [record.email_verification_token_id],
-        type: sequelize.QueryTypes.UPDATE,
-        transaction
-      }
-    );
-
-    await transaction.commit();
-
-    return res.json({
-      success: true,
-      message: 'Email verified successfully. You can now log in.'
-    });
-  } catch (error) {
-    if (!transaction.finished) {
-      await transaction.rollback();
-    }
-    console.error('Email verification error:', error);
-    return res.status(500).json({ error: 'Email verification failed' });
+  if (VERIFICATION_TOKEN_PATTERN.test(rawToken)) {
+    return verifyRegistrationEmailToken(rawToken, res);
   }
+
+  return verifyCustomerEmailChangeToken(rawToken, res);
 };
 
 /**

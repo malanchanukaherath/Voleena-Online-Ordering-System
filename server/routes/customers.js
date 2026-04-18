@@ -2,10 +2,12 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const { Customer, Address } = require('../models');
 const { requireAdmin, requireCashier, requireCustomer } = require('../middleware/auth');
 const { logCustomerCreation } = require('../utils/auditLogger');
+const { sendEmailVerificationLink } = require('../services/verificationEmailService');
 
 const normalizeOptionalEmail = (email) => {
     if (email === undefined || email === null) {
@@ -24,6 +26,30 @@ const isValidProfilePhone = (phone) => /^[+]?[0-9]{9,15}$/.test(phone);
 const isValidNotificationPreference = (value) => ['EMAIL', 'SMS', 'BOTH'].includes(value);
 const MAX_ADDRESSES_PER_CUSTOMER = 3;
 const MIN_ADDRESSES_PER_CUSTOMER = 1;
+const EMAIL_CHANGE_TOKEN_SECRET = process.env.EMAIL_CHANGE_TOKEN_SECRET || process.env.JWT_SECRET;
+const EMAIL_CHANGE_TOKEN_TTL_MINUTES = parseInt(
+    process.env.EMAIL_CHANGE_TOKEN_TTL_MINUTES || process.env.EMAIL_VERIFICATION_TTL_MINUTES || '30',
+    10
+);
+const EMAIL_CHANGE_TOKEN_PURPOSE = 'CUSTOMER_EMAIL_CHANGE';
+
+const buildEmailChangeVerificationUrl = (token) => {
+    const frontendBase = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+    return `${frontendBase}/verify-email?token=${encodeURIComponent(token)}`;
+};
+
+const buildCustomerEmailChangeToken = ({ customerId, currentEmail, newEmail }) => {
+    return jwt.sign(
+        {
+            purpose: EMAIL_CHANGE_TOKEN_PURPOSE,
+            customerId,
+            currentEmail,
+            newEmail
+        },
+        EMAIL_CHANGE_TOKEN_SECRET,
+        { expiresIn: `${EMAIL_CHANGE_TOKEN_TTL_MINUTES}m` }
+    );
+};
 
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
@@ -363,7 +389,7 @@ router.get('/me', requireCustomer, async (req, res) => {
  */
 router.put('/me', requireCustomer, async (req, res) => {
     try {
-        const { name, email, phone, preferredNotification, profileImageUrl, ProfileImageURL } = req.body;
+        const { name, email, phone, preferredNotification, currentPassword, profileImageUrl, ProfileImageURL } = req.body;
 
         const customer = await Customer.findByPk(req.user.id);
 
@@ -377,6 +403,8 @@ router.put('/me', requireCustomer, async (req, res) => {
         const normalizedPreferredNotification = preferredNotification
             ? String(preferredNotification).trim().toUpperCase()
             : customer.PreferredNotification;
+        const currentEmail = normalizeOptionalEmail(customer.Email);
+        const isEmailChangeRequested = normalizedEmail !== currentEmail;
 
         if (!isValidProfileName(normalizedName)) {
             return res.status(400).json({ error: 'Name must be at least 2 characters' });
@@ -414,8 +442,22 @@ router.put('/me', requireCustomer, async (req, res) => {
             }
         }
 
+        if (isEmailChangeRequested) {
+            if (!currentPassword || !String(currentPassword).trim()) {
+                return res.status(400).json({
+                    error: 'Current password is required to change email address'
+                });
+            }
+
+            const passwordMatches = await bcrypt.compare(String(currentPassword), customer.Password);
+            if (!passwordMatches) {
+                return res.status(400).json({
+                    error: 'Current password is incorrect'
+                });
+            }
+        }
+
         customer.Name = normalizedName;
-        customer.Email = normalizedEmail;
         customer.Phone = normalizedPhone;
         customer.PreferredNotification = normalizedPreferredNotification;
 
@@ -423,11 +465,28 @@ router.put('/me', requireCustomer, async (req, res) => {
             customer.ProfileImageURL = profileImageUrl || ProfileImageURL || null;
         }
 
+        let pendingEmail = null;
+        if (isEmailChangeRequested) {
+            pendingEmail = normalizedEmail;
+            const token = buildCustomerEmailChangeToken({
+                customerId: customer.CustomerID,
+                currentEmail,
+                newEmail: pendingEmail
+            });
+            const verificationUrl = buildEmailChangeVerificationUrl(token);
+            await sendEmailVerificationLink(pendingEmail, customer.Name, verificationUrl);
+        } else {
+            customer.Email = normalizedEmail;
+        }
+
         await customer.save();
 
         return res.json({
             success: true,
-            message: 'Profile updated successfully',
+            message: isEmailChangeRequested
+                ? 'Profile updated. Check your new email and verify it to complete the email change.'
+                : 'Profile updated successfully',
+            ...(isEmailChangeRequested ? { emailChangePending: true, pendingEmail } : {}),
             data: customer.toJSON()
         });
     } catch (error) {

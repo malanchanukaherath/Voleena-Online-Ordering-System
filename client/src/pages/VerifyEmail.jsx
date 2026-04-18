@@ -9,7 +9,10 @@ const verificationMessages = {
   INVALID_VERIFICATION_TOKEN: 'This verification link is invalid.',
   VERIFICATION_TOKEN_USED: 'This verification link has already been used.',
   VERIFICATION_TOKEN_EXPIRED: 'This verification link has expired. Enter your email below to request a new one.',
-  VERIFICATION_EMAIL_COOLDOWN: 'A verification email was sent recently. Please wait before requesting another.'
+  VERIFICATION_EMAIL_COOLDOWN: 'A verification email was sent recently. Please wait before requesting another.',
+  EMAIL_CHANGE_TOKEN_EXPIRED: 'This email-change link has expired. Start a new email change from profile settings.',
+  EMAIL_CHANGE_TOKEN_STALE: 'This email-change link is no longer valid. Start a new email change from profile settings.',
+  EMAIL_CHANGE_CONFLICT: 'This email is already used by another account.'
 };
 
 const VerifyEmail = () => {

@@ -19,11 +19,15 @@ jest.mock('../middleware/auth', () => require('./helpers/mockAuth'));
 jest.mock('../utils/auditLogger', () => ({
   logCustomerCreation: jest.fn().mockResolvedValue(undefined)
 }));
+jest.mock('../services/verificationEmailService', () => ({
+  sendEmailVerificationLink: jest.fn().mockResolvedValue({ success: true, provider: 'console' })
+}));
 jest.mock('../services/distanceValidation', () => ({
   geocodeAddress: jest.fn()
 }));
 
 const { logCustomerCreation } = require('../utils/auditLogger');
+const { sendEmailVerificationLink } = require('../services/verificationEmailService');
 const { geocodeAddress } = require('../services/distanceValidation');
 const { resetAuthState, setAuthMode, setAuthUser } = require('./helpers/mockAuth');
 const createTestApp = require('./helpers/createTestApp');
@@ -141,16 +145,19 @@ describe('customer routes', () => {
       Name: 'Old Name',
       Email: 'old@example.com',
       Phone: '+94770000000',
+      Password: await bcrypt.hash('CurrentPass123', 10),
       PreferredNotification: 'BOTH',
       ProfileImageURL: null,
       save,
-      toJSON: jest.fn(() => ({
-        CustomerID: 5,
-        Name: 'Updated Name',
-        Email: 'updated@example.com',
-        Phone: '+94771112233',
-        PreferredNotification: 'SMS'
-      }))
+      toJSON: jest.fn(function toJSON() {
+        return {
+          CustomerID: this.CustomerID,
+          Name: this.Name,
+          Email: this.Email,
+          Phone: this.Phone,
+          PreferredNotification: this.PreferredNotification
+        };
+      })
     };
 
     mockCustomer.findByPk.mockResolvedValue(customerRecord);
@@ -160,7 +167,7 @@ describe('customer routes', () => {
       .put('/api/v1/customers/me')
       .send({
         name: 'Updated Name',
-        email: 'updated@example.com',
+        email: 'old@example.com',
         phone: '+94771112233',
         preferredNotification: 'SMS'
       });
@@ -170,6 +177,86 @@ describe('customer routes', () => {
     expect(save).toHaveBeenCalled();
     expect(customerRecord.Name).toBe('Updated Name');
     expect(customerRecord.PreferredNotification).toBe('SMS');
+    expect(customerRecord.Email).toBe('old@example.com');
+    expect(sendEmailVerificationLink).not.toHaveBeenCalled();
+  });
+
+  test('rejects email change when current password is missing', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+
+    mockCustomer.findByPk.mockResolvedValue({
+      CustomerID: 5,
+      Name: 'Old Name',
+      Email: 'old@example.com',
+      Phone: '+94770000000',
+      PreferredNotification: 'BOTH',
+      Password: await bcrypt.hash('CurrentPass123', 10),
+      save: jest.fn(),
+      toJSON: jest.fn()
+    });
+    mockCustomer.findOne.mockResolvedValue(null);
+
+    const response = await request(app)
+      .put('/api/v1/customers/me')
+      .send({
+        name: 'Updated Name',
+        email: 'new@example.com',
+        phone: '+94771112233',
+        preferredNotification: 'SMS'
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toMatch(/Current password is required/i);
+    expect(sendEmailVerificationLink).not.toHaveBeenCalled();
+  });
+
+  test('requests email verification when changing customer email', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    const save = jest.fn().mockResolvedValue(undefined);
+
+    const customerRecord = {
+      CustomerID: 5,
+      Name: 'Old Name',
+      Email: 'old@example.com',
+      Phone: '+94770000000',
+      PreferredNotification: 'BOTH',
+      Password: await bcrypt.hash('CurrentPass123', 10),
+      save,
+      toJSON: jest.fn(function toJSON() {
+        return {
+          CustomerID: this.CustomerID,
+          Name: this.Name,
+          Email: this.Email,
+          Phone: this.Phone,
+          PreferredNotification: this.PreferredNotification
+        };
+      })
+    };
+
+    mockCustomer.findByPk.mockResolvedValue(customerRecord);
+    mockCustomer.findOne.mockResolvedValue(null);
+
+    const response = await request(app)
+      .put('/api/v1/customers/me')
+      .send({
+        name: 'Updated Name',
+        email: 'new@example.com',
+        phone: '+94771112233',
+        preferredNotification: 'SMS',
+        currentPassword: 'CurrentPass123'
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.emailChangePending).toBe(true);
+    expect(response.body.pendingEmail).toBe('new@example.com');
+    expect(customerRecord.Email).toBe('old@example.com');
+    expect(save).toHaveBeenCalled();
+    expect(sendEmailVerificationLink).toHaveBeenCalledWith(
+      'new@example.com',
+      'Updated Name',
+      expect.stringContaining('/verify-email?token=')
+    );
   });
 
   test('rejects profile update when email belongs to another customer', async () => {
