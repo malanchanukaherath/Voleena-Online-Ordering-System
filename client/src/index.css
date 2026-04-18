@@ -129,7 +129,7 @@
   }
 
   .panel {
-    @apply bg-white/96 border border-gray-200/70 rounded-2xl backdrop-blur-sm
+    @apply bg-white/95 border border-gray-200/70 rounded-2xl backdrop-blur-sm
            dark:bg-slate-800/95 dark:border-slate-700;
     box-shadow: var(--shadow-card);
   }

@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 const Modal = ({ 
   isOpen, 
@@ -38,15 +39,17 @@ const Modal = ({
   };
   const titleId = title ? 'modal-title' : undefined;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
+  // Render into document.body via portal so the modal is never trapped inside
+  // a parent stacking context created by backdrop-filter (sticky header, etc.)
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] overflow-y-auto">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-slate-900/50 backdrop-blur-[3px] animate-modal-backdrop-in motion-reduce:animate-none"
         onClick={onClose}
       />
       
-      {/* Modal */}
+      {/* Modal panel */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div className={`relative w-full min-w-0 ${sizeClasses[size]} ${className}`}>
           <div
@@ -84,7 +87,8 @@ const Modal = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
