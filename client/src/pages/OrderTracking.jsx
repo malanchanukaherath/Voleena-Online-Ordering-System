@@ -863,46 +863,51 @@ const OrderTracking = () => {
                                 const selectedAddOns = item.selectedAddOns || [];
 
                                 return (
-                                    <div key={item.orderItemId} className="border border-gray-200 rounded-lg p-3">
-                                        <div className="flex gap-3">
+                                    <div key={item.orderItemId} className="flex gap-3 rounded-xl border border-gray-100 dark:border-slate-700 bg-gray-50/60 dark:bg-slate-700/30 p-3">
+                                        {/* Thumbnail */}
+                                        <button
+                                            type="button"
+                                            onClick={() => openItemPreview(item)}
+                                            className="w-14 h-14 shrink-0 rounded-lg bg-gray-200 dark:bg-slate-600 overflow-hidden"
+                                            title="View item details"
+                                        >
+                                            {item.image ? (
+                                                <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <span className="flex h-full items-center justify-center text-[10px] text-gray-400">No image</span>
+                                            )}
+                                        </button>
+
+                                        {/* Name + description + add-ons */}
+                                        <div className="flex-1 min-w-0 overflow-hidden">
                                             <button
                                                 type="button"
                                                 onClick={() => openItemPreview(item)}
-                                                className="w-16 h-16 bg-gray-100 rounded overflow-hidden shrink-0"
-                                                title="View item details"
+                                                className="block w-full text-left text-sm font-semibold text-gray-900 dark:text-slate-100 hover:text-primary-600 dark:hover:text-primary-400 break-words leading-snug"
                                             >
-                                                {item.image ? (
-                                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <span className="text-[10px] text-gray-400">No image</span>
-                                                )}
+                                                {item.quantity}x {item.name}
                                             </button>
+                                            <p className="mt-0.5 text-xs text-gray-500 dark:text-slate-400 line-clamp-1 break-words">{item.description}</p>
 
-                                            <div className="flex-1 min-w-0">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => openItemPreview(item)}
-                                                    className="text-left font-medium text-gray-900 hover:text-primary-600"
-                                                >
-                                                    {item.quantity}x {item.name}
-                                                </button>
-                                                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
+                                            {selectedAddOns.length > 0 && (
+                                                <div className="flex flex-wrap gap-1 mt-1.5">
+                                                    {selectedAddOns.map((entry) => (
+                                                        <span key={`${item.orderItemId}-${entry.id}`} className="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800/60 text-blue-700 dark:text-blue-300 text-[10px] font-medium">
+                                                            +{entry.quantity} {entry.name || entry.id}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
 
-                                                {selectedAddOns.length > 0 && (
-                                                    <div className="flex flex-wrap gap-1 mt-2">
-                                                        {selectedAddOns.map((entry) => (
-                                                            <span key={`${item.orderItemId}-${entry.id}`} className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[11px]">
-                                                                + {entry.quantity} {entry.name || entry.id}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="text-right">
-                                                <p className="font-semibold">LKR {item.lineTotal.toFixed(2)}</p>
-                                                <p className="text-xs text-gray-500">LKR {item.price.toFixed(2)} each</p>
-                                            </div>
+                                        {/* Price — fixed width so it never overlaps */}
+                                        <div className="shrink-0 min-w-[80px] text-right">
+                                            <p className="text-sm font-bold tabular-nums text-gray-900 dark:text-slate-100">
+                                                LKR {item.lineTotal.toFixed(2)}
+                                            </p>
+                                            <p className="mt-0.5 text-[11px] text-gray-400 dark:text-slate-500 tabular-nums">
+                                                @ {item.price.toFixed(2)} ea
+                                            </p>
                                         </div>
                                     </div>
                                 );

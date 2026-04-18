@@ -226,19 +226,19 @@ const Cart = () => {
     return (
         <div className="mx-auto max-w-7xl px-4 sm:px-0">
             <div className="mb-8">
-                <h1 className="mb-2 text-2xl font-bold sm:text-3xl">Shopping Cart</h1>
-                <p className="text-gray-600 dark:text-slate-400">Review your items before checkout</p>
+                <h1 className="mb-1.5 text-2xl font-bold tracking-tight sm:text-3xl">Shopping Cart</h1>
+                <p className="text-sm text-gray-500 dark:text-slate-400">Review your items before checkout</p>
             </div>
 
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
                 {/* Cart Items */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow">
-                        <div className="border-b dark:border-slate-700 p-4 sm:p-6">
-                            <h2 className="text-lg font-semibold sm:text-xl">Cart Items ({cartItems.length})</h2>
+                    <div className="card">
+                        <div className="border-b border-gray-100/80 dark:border-slate-700 p-4 sm:p-6">
+                            <h2 className="text-lg font-semibold tracking-tight sm:text-xl">Cart Items <span className="ml-1 text-base font-normal text-gray-400 dark:text-slate-500">({cartItems.length})</span></h2>
                         </div>
-                        <div className="divide-y">
+                        <div className="divide-y divide-gray-100/80 dark:divide-slate-700/70">
                             {cartItems.map((item) => {
                                 const isUnavailable = item.isAvailable === false || isOutOfStock(item);
                                 const isOverStock = isQuantityOverStock(item);
@@ -253,15 +253,15 @@ const Cart = () => {
                                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                                             <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
                                                 {/* Image */}
-                                                <div className="relative flex h-20 w-20 flex-shrink-0 items-center justify-center rounded bg-gray-200 dark:bg-slate-700 sm:h-24 sm:w-24">
+                                                <div className="relative flex h-20 w-20 flex-shrink-0 items-center justify-center rounded-xl bg-gray-100 dark:bg-slate-700 sm:h-24 sm:w-24 overflow-hidden">
                                                     {item.image ? (
-                                                        <img src={item.image} alt={item.name} className="h-full w-full rounded object-cover" />
+                                                        <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
                                                     ) : (
                                                         <span className="text-xs text-gray-400 dark:text-slate-500">No image</span>
                                                     )}
                                                     {isUnavailable && (
-                                                        <div className="absolute inset-0 flex items-center justify-center rounded bg-black bg-opacity-50">
-                                                            <span className="text-xs font-bold text-white">Out of Stock</span>
+                                                        <div className="absolute inset-0 flex items-center justify-center bg-black/55">
+                                                            <span className="text-[10px] font-bold text-white tracking-wide uppercase">Out of Stock</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -269,12 +269,12 @@ const Cart = () => {
                                                 {/* Details */}
                                                 <div className="min-w-0 flex-1">
                                                     <div className="mb-1 flex flex-wrap items-center gap-2">
-                                                        <h3 className="break-words text-base font-semibold sm:text-lg">{item.name}</h3>
+                                                        <h3 className="break-words text-base font-semibold tracking-tight sm:text-lg">{item.name}</h3>
                                                         {isUnavailable && (
-                                                            <span className="rounded bg-red-500 px-2 py-1 text-xs text-white">Unavailable</span>
+                                                            <span className="inline-flex items-center rounded-full bg-red-100 dark:bg-red-900/40 border border-red-200 dark:border-red-800/60 px-2 py-0.5 text-[11px] font-semibold text-red-700 dark:text-red-300">Unavailable</span>
                                                         )}
                                                         {!isUnavailable && isOverStock && (
-                                                            <span className="rounded bg-red-500 px-2 py-1 text-xs text-white">Exceeds Stock</span>
+                                                            <span className="inline-flex items-center rounded-full bg-amber-100 dark:bg-amber-900/40 border border-amber-200 dark:border-amber-800/60 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-300">Exceeds Stock</span>
                                                         )}
                                                     </div>
                                                     <p className="mb-2 font-medium text-primary-600">
@@ -305,30 +305,33 @@ const Cart = () => {
 
                                                     {/* Quantity Controls */}
                                                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                                                        <div className="flex items-center rounded border dark:border-slate-600">
+                                                        <div className="inline-flex items-center rounded-xl border border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800/60 overflow-hidden">
                                                             <button
                                                                 onClick={() => updateQuantity(item.id, item.type, -1, item.cartItemKey)}
-                                                                className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-slate-700"
+                                                                className="flex items-center justify-center w-8 h-8 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-slate-100 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                                                                 disabled={item.quantity <= 1}
+                                                                aria-label="Decrease quantity"
                                                             >
-                                                                <FaMinus className="h-3 w-3" />
+                                                                <FaMinus className="h-2.5 w-2.5" />
                                                             </button>
-                                                            <span className="border-x dark:border-slate-600 px-3 py-1 sm:px-4">{item.quantity}</span>
+                                                            <span className="min-w-[2rem] text-center text-sm font-semibold px-1">{item.quantity}</span>
                                                             <button
                                                                 onClick={() => updateQuantity(item.id, item.type, 1, item.cartItemKey)}
-                                                                className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                className="flex items-center justify-center w-8 h-8 text-gray-500 hover:bg-gray-100 dark:hover:bg-slate-700 hover:text-gray-900 dark:hover:text-slate-100 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                                                                 disabled={disableIncrease}
                                                                 title={disableIncrease ? 'Maximum available stock reached' : 'Increase quantity'}
+                                                                aria-label="Increase quantity"
                                                             >
-                                                                <FaPlus className="h-3 w-3" />
+                                                                <FaPlus className="h-2.5 w-2.5" />
                                                             </button>
                                                         </div>
                                                         <button
                                                             onClick={() => removeItem(item.id, item.type, item.cartItemKey)}
-                                                            className="flex items-center gap-2 text-red-600 hover:text-red-800"
+                                                            className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-red-600 dark:text-slate-600 dark:hover:text-red-400 transition-colors"
+                                                            aria-label={`Remove ${item.name} from cart`}
                                                         >
-                                                            <FaTrash />
-                                                            Remove
+                                                            <FaTrash className="h-3 w-3" />
+                                                            <span>Remove</span>
                                                         </button>
                                                     </div>
                                                 </div>
@@ -336,8 +339,11 @@ const Cart = () => {
 
                                             {/* Item Total */}
                                             <div className="sm:min-w-[120px] sm:text-right">
-                                                <p className="text-base font-semibold sm:text-lg">
+                                                <p className="text-base font-bold tabular-nums sm:text-lg">
                                                     LKR {(item.price * item.quantity).toFixed(2)}
+                                                </p>
+                                                <p className="text-xs text-gray-400 dark:text-slate-500 sm:text-right">
+                                                    @ {item.price.toFixed(2)} each
                                                 </p>
                                             </div>
                                         </div>
@@ -357,28 +363,28 @@ const Cart = () => {
 
                 {/* Order Summary */}
                 <div className="lg:col-span-1">
-                    <div className="rounded-lg bg-white dark:bg-slate-800 p-4 shadow sm:p-6 lg:sticky lg:top-6">
-                        <h2 className="mb-4 text-lg font-semibold sm:text-xl">Order Summary</h2>
+                    <div className="card p-4 sm:p-6 lg:sticky lg:top-24">
+                        <h2 className="mb-4 text-lg font-semibold tracking-tight sm:text-xl">Order Summary</h2>
                         {showLoginPrompt && (
                             <div className="mb-4 rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-800 dark:text-amber-300">
                                 Sign in before checkout to place your order.
                             </div>
                         )}
-                        <div className="space-y-3 mb-6">
+                        <div className="space-y-2.5 mb-6">
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-slate-400">Subtotal</span>
-                                <span className="font-medium">LKR {subtotal.toFixed(2)}</span>
+                                <span className="text-gray-500 dark:text-slate-400">Subtotal</span>
+                                <span className="font-medium tabular-nums">LKR {subtotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-600 dark:text-slate-400">Estimated Delivery Fee (base)</span>
-                                <span className="font-medium">LKR {deliveryFee.toFixed(2)}</span>
+                                <span className="text-gray-500 dark:text-slate-400">Est. Delivery Fee</span>
+                                <span className="font-medium tabular-nums">LKR {deliveryFee.toFixed(2)}</span>
                             </div>
-                            <div className="text-xs text-gray-500 dark:text-slate-500">
-                                Final delivery fee is confirmed at checkout after we validate your delivery distance.
-                            </div>
-                            <div className="border-t dark:border-slate-700 pt-3 flex justify-between">
-                                <span className="font-semibold text-lg">Total</span>
-                                <span className="font-bold text-lg text-primary-600">
+                            <p className="rounded-lg bg-gray-50 dark:bg-slate-700/40 px-3 py-2 text-xs text-gray-500 dark:text-slate-400 leading-relaxed">
+                                Final delivery fee confirmed at checkout after validating your delivery distance.
+                            </p>
+                            <div className="border-t border-gray-100 dark:border-slate-700 pt-3 flex justify-between items-center">
+                                <span className="font-semibold text-base">Total</span>
+                                <span className="font-bold text-lg tabular-nums text-primary-600">
                                     LKR {total.toFixed(2)}
                                 </span>
                             </div>

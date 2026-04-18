@@ -15,6 +15,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_v27_addon_migration:
+        description: Apply v2.7 add-on safety migration on EC2 before restarting app
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ec2-production-deploy
@@ -67,6 +72,16 @@ jobs:
     needs: build
     timeout-minutes: 30
     steps:
+      - name: Runner preflight checks
+        run: |
+          set -euo pipefail
+          whoami
+          docker --version
+          docker ps >/dev/null
+          test -d ~/Voleena-Online-Ordering-System
+          test -f ~/Voleena-Online-Ordering-System/scripts/deploy-ec2.sh
+          chmod +x ~/Voleena-Online-Ordering-System/deploy-ec2.sh ~/Voleena-Online-Ordering-System/scripts/deploy-ec2.sh
+
       - name: Deploy locally on EC2
         env:
           DEPLOY_STRATEGY: pull
@@ -75,6 +90,7 @@ jobs:
           IMAGE_TAG: sha-${{ github.sha }}
           RUN_ACCOUNT_SEED: ${{ github.event.inputs.seed_accounts || 'false' }}
           RUN_DB_SYNC: ${{ github.event.inputs.run_db_sync || 'false' }}
+          RUN_DB_MIGRATION_V27: ${{ github.event.inputs.run_v27_addon_migration || 'false' }}
           TARGET_BRANCH: main
         run: |
           set -euo pipefail

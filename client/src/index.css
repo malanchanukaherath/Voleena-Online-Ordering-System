@@ -56,6 +56,7 @@
       radial-gradient(circle at bottom left, rgba(22, 163, 74, 0.04), transparent 35%);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
     transition: background-color var(--motion-duration-fast) var(--motion-ease-standard),
                 color var(--motion-duration-fast) var(--motion-ease-standard);
   }
@@ -158,9 +159,9 @@
   .skeleton {
     background: linear-gradient(
       90deg,
-      #f0f0f0 25%,
-      #e0e0e0 50%,
-      #f0f0f0 75%
+      var(--surface-muted) 25%,
+      var(--border-soft) 50%,
+      var(--surface-muted) 75%
     );
     background-size: 200% 100%;
     animation: shimmerSlide 1.6s linear infinite;
@@ -175,6 +176,28 @@
       #1e293b 75%
     );
     background-size: 200% 100%;
+  }
+
+  /* ── Page section heading (reusable across all dashboard pages) ── */
+  .section-heading {
+    @apply text-base font-semibold tracking-tight text-gray-900 dark:text-slate-100;
+  }
+
+  /* ── Stat card with left accent rule ── */
+  .stat-card {
+    @apply card p-6;
+  }
+
+  .stat-label {
+    @apply text-[11px] font-semibold uppercase tracking-widest text-gray-400 dark:text-slate-500 mb-1;
+  }
+
+  .stat-value {
+    @apply text-2xl font-bold tabular-nums;
+  }
+
+  .stat-hint {
+    @apply mt-1.5 text-xs text-gray-400 dark:text-slate-500;
   }
 }
 

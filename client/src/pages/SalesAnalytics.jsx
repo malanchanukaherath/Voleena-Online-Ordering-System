@@ -466,7 +466,8 @@ const SalesAnalytics = () => {
                 </div>
             )}
 
-            <div className="mb-8 rounded-lg bg-white dark:bg-slate-800 p-4 shadow">
+            {/* Filter Bar */}
+            <div className="mb-8 card p-5">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <Select
                         label="Time Period"
@@ -478,72 +479,74 @@ const SalesAnalytics = () => {
                     {dateRange === 'custom' && (
                         <>
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Start Date & Time</label>
+                                <label className="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-slate-300">Start Date & Time</label>
                                 <input
                                     type="datetime-local"
                                     value={customStart}
                                     onChange={(e) => setCustomStart(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 focus:border-primary-500 focus:outline-none"
+                                    className="w-full rounded-xl border border-gray-200 dark:border-slate-600 dark:bg-slate-700/60 dark:text-slate-100 px-3 py-2.5 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:outline-none transition-colors"
                                 />
                             </div>
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">End Date & Time</label>
+                                <label className="mb-1.5 block text-sm font-semibold text-gray-700 dark:text-slate-300">End Date & Time</label>
                                 <input
                                     type="datetime-local"
                                     value={customEnd}
                                     onChange={(e) => setCustomEnd(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 focus:border-primary-500 focus:outline-none"
+                                    className="w-full rounded-xl border border-gray-200 dark:border-slate-600 dark:bg-slate-700/60 dark:text-slate-100 px-3 py-2.5 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500 focus:outline-none transition-colors"
                                 />
                             </div>
                         </>
                     )}
                 </div>
-                <div className="mt-4 rounded-lg bg-gray-50 dark:bg-slate-700/50 px-4 py-3 text-sm text-gray-600 dark:text-slate-400">
-                    <span className="font-medium text-gray-900 dark:text-slate-200">Report period:</span>{' '}
+                <div className="mt-4 rounded-xl bg-gray-50 dark:bg-slate-700/40 border border-gray-100 dark:border-slate-700 px-4 py-2.5 text-sm text-gray-600 dark:text-slate-400">
+                    <span className="font-semibold text-gray-900 dark:text-slate-200">Report period:</span>{' '}
                     {loading ? 'Loading report...' : reportData.range.label || 'Selected period'}
                 </div>
             </div>
 
-            <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-6">
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow xl:col-span-2">
+            {/* Summary cards */}
+            <div className="mb-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-6">
+                <div className="card p-6 xl:col-span-2 border-l-4 border-l-primary-500">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="mb-1 text-sm text-gray-600 dark:text-slate-400">Total Revenue</p>
-                            <p className="text-2xl font-bold text-primary-600">{formatCurrency(reportData.summary.totalRevenue)}</p>
-                            <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">{loading ? 'Loading...' : 'Captured from paid and completed orders'}</p>
+                            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">Total Revenue</p>
+                            <p className="text-2xl font-bold tabular-nums text-primary-600">{formatCurrency(reportData.summary.totalRevenue)}</p>
+                            <p className="mt-1.5 text-xs text-gray-400 dark:text-slate-500">{loading ? 'Loading...' : 'From paid & completed orders'}</p>
                         </div>
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
-                            <FaChartLine className="h-6 w-6 text-primary-600" />
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30 shrink-0">
+                            <FaChartLine className="h-5 w-5 text-primary-600" />
                         </div>
                     </div>
                 </div>
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <p className="mb-1 text-sm text-gray-600 dark:text-slate-400">Total Orders</p>
-                    <p className="text-2xl font-bold">{reportData.summary.totalOrders}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">Delivered: {reportData.summary.deliveredOrders}</p>
+                <div className="card p-6">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">Total Orders</p>
+                    <p className="text-2xl font-bold tabular-nums">{reportData.summary.totalOrders}</p>
+                    <p className="mt-1.5 text-xs text-gray-400 dark:text-slate-500">Delivered: {reportData.summary.deliveredOrders}</p>
                 </div>
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <p className="mb-1 text-sm text-gray-600 dark:text-slate-400">Avg Order Value</p>
-                    <p className="text-2xl font-bold">{formatCurrency(reportData.summary.avgOrderValue)}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">Cancellation rate: {formatPercent(reportData.summary.cancellationRate)}</p>
+                <div className="card p-6">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">Avg Order Value</p>
+                    <p className="text-2xl font-bold tabular-nums">{formatCurrency(reportData.summary.avgOrderValue)}</p>
+                    <p className="mt-1.5 text-xs text-gray-400 dark:text-slate-500">Cancel rate: {formatPercent(reportData.summary.cancellationRate)}</p>
                 </div>
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <p className="mb-1 text-sm text-gray-600 dark:text-slate-400">Customer Retention</p>
-                    <p className="text-2xl font-bold">{formatPercent(reportData.customerRetention.retentionRate)}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">
-                        {reportData.customerRetention.retainedCustomers} of {reportData.customerRetention.totalCustomers} customers placed 2+ delivered orders
+                <div className="card p-6">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">Customer Retention</p>
+                    <p className="text-2xl font-bold tabular-nums">{formatPercent(reportData.customerRetention.retentionRate)}</p>
+                    <p className="mt-1.5 text-xs text-gray-400 dark:text-slate-500">
+                        {reportData.customerRetention.retainedCustomers} of {reportData.customerRetention.totalCustomers} placed 2+ orders
                     </p>
                 </div>
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <p className="mb-1 text-sm text-gray-600 dark:text-slate-400">New Customers</p>
-                    <p className="text-2xl font-bold">{reportData.summary.newCustomers}</p>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">Unique ordering customers: {reportData.summary.uniqueCustomers}</p>
+                <div className="card p-6">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-slate-400">New Customers</p>
+                    <p className="text-2xl font-bold tabular-nums">{reportData.summary.newCustomers}</p>
+                    <p className="mt-1.5 text-xs text-gray-400 dark:text-slate-500">Unique ordering: {reportData.summary.uniqueCustomers}</p>
                 </div>
             </div>
 
-            <div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <h3 className="mb-4 text-lg font-semibold">Revenue Trend</h3>
+            {/* Charts row 1 */}
+            <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="card p-6">
+                    <h3 className="mb-4 text-base font-semibold tracking-tight">Revenue Trend</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={reportData.revenueTrend}>
                             <CartesianGrid strokeDasharray="3 3" />
@@ -556,8 +559,8 @@ const SalesAnalytics = () => {
                     </ResponsiveContainer>
                 </div>
 
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <h3 className="mb-4 text-lg font-semibold">Order Volume</h3>
+                <div className="card p-6">
+                    <h3 className="mb-4 text-base font-semibold tracking-tight">Order Volume</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={reportData.revenueTrend}>
                             <CartesianGrid strokeDasharray="3 3" />
@@ -571,9 +574,10 @@ const SalesAnalytics = () => {
                 </div>
             </div>
 
-            <div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <h3 className="mb-4 text-lg font-semibold">Sales by Category</h3>
+            {/* Charts row 2 */}
+            <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="card p-6">
+                    <h3 className="mb-4 text-base font-semibold tracking-tight">Sales by Category</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
                             <Pie
@@ -594,24 +598,24 @@ const SalesAnalytics = () => {
                     </ResponsiveContainer>
                 </div>
 
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <h3 className="mb-4 text-lg font-semibold">Top Selling Items</h3>
-                    <div className="space-y-3">
+                <div className="card p-6">
+                    <h3 className="mb-4 text-base font-semibold tracking-tight">Top Selling Items</h3>
+                    <div className="space-y-2">
                         {topItems.length === 0 ? (
-                            <div className="text-sm text-gray-500 dark:text-slate-500">No sales data available for this range.</div>
+                            <div className="text-sm text-gray-400 dark:text-slate-500">No sales data available for this range.</div>
                         ) : topItems.map((item, index) => (
-                            <div key={`${item.name}-${index}`} className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
-                                <div className="flex items-center">
-                                    <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
-                                        <span className="text-sm font-semibold text-primary-600">{index + 1}</span>
+                            <div key={`${item.name}-${index}`} className="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-slate-700/40 border border-gray-100/80 dark:border-slate-700 p-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30 text-[11px] font-bold text-primary-600">
+                                        {index + 1}
                                     </div>
                                     <div>
-                                        <p className="font-medium">{item.name}</p>
-                                        <p className="text-xs text-gray-500 dark:text-slate-500">{item.category || 'Uncategorized'} • {item.orders} sold</p>
+                                        <p className="text-sm font-medium">{item.name}</p>
+                                        <p className="text-xs text-gray-400 dark:text-slate-500">{item.category || 'Uncategorized'} &bull; {item.orders} sold</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="font-semibold text-primary-600">{formatCurrency(item.revenue)}</p>
+                                    <p className="text-sm font-semibold tabular-nums text-primary-600">{formatCurrency(item.revenue)}</p>
                                 </div>
                             </div>
                         ))}
@@ -619,11 +623,14 @@ const SalesAnalytics = () => {
                 </div>
             </div>
 
-            <div className="mb-8 grid grid-cols-1 gap-8 xl:grid-cols-3">
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <div className="mb-4 flex items-center gap-3">
-                        <FaClipboardList className="text-primary-600" />
-                        <h3 className="text-lg font-semibold">Order Mix</h3>
+            {/* Operational metrics */}
+            <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-3">
+                <div className="card p-6">
+                    <div className="mb-4 flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                            <FaClipboardList className="h-4 w-4 text-primary-600" />
+                        </div>
+                        <h3 className="text-base font-semibold tracking-tight">Order Mix</h3>
                     </div>
                     <div className="space-y-3">
                         {reportData.orderTypeBreakdown.map((item) => (
@@ -656,10 +663,12 @@ const SalesAnalytics = () => {
                     </div>
                 </div>
 
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <div className="mb-4 flex items-center gap-3">
-                        <FaMoneyBillWave className="text-primary-600" />
-                        <h3 className="text-lg font-semibold">Payment Reconciliation</h3>
+                <div className="card p-6">
+                    <div className="mb-4 flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                            <FaMoneyBillWave className="h-4 w-4 text-primary-600" />
+                        </div>
+                        <h3 className="text-base font-semibold tracking-tight">Payment Reconciliation</h3>
                     </div>
                     <div className="space-y-3">
                         {reportData.paymentBreakdown.length === 0 ? (
@@ -679,10 +688,12 @@ const SalesAnalytics = () => {
                     </div>
                 </div>
 
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <div className="mb-4 flex items-center gap-3">
-                        <FaTruck className="text-primary-600" />
-                        <h3 className="text-lg font-semibold">Delivery Performance</h3>
+                <div className="card p-6">
+                    <div className="mb-4 flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                            <FaTruck className="h-4 w-4 text-primary-600" />
+                        </div>
+                        <h3 className="text-base font-semibold tracking-tight">Delivery Performance</h3>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
                         <div className="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
@@ -705,9 +716,10 @@ const SalesAnalytics = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <h3 className="mb-4 text-lg font-semibold">Order Status Snapshot</h3>
+            {/* Bottom row */}
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+                <div className="card p-6">
+                    <h3 className="mb-4 text-base font-semibold tracking-tight">Order Status Snapshot</h3>
                     <div className="space-y-3">
                         {reportData.orderStatusBreakdown.map((item) => (
                             <div key={item.status} className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-slate-700/50 px-4 py-3">
@@ -718,10 +730,12 @@ const SalesAnalytics = () => {
                     </div>
                 </div>
 
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <div className="mb-4 flex items-center gap-3">
-                        <FaCommentDots className="text-primary-600" />
-                        <h3 className="text-lg font-semibold">Feedback Summary</h3>
+                <div className="card p-6">
+                    <div className="mb-4 flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
+                            <FaCommentDots className="h-4 w-4 text-primary-600" />
+                        </div>
+                        <h3 className="text-base font-semibold tracking-tight">Feedback Summary</h3>
                     </div>
                     <div className="mb-4 grid grid-cols-2 gap-3 text-sm">
                         <div className="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
@@ -752,8 +766,8 @@ const SalesAnalytics = () => {
                     </div>
                 </div>
 
-                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
-                    <h3 className="mb-4 text-lg font-semibold">Stock Movements</h3>
+                <div className="card p-6">
+                    <h3 className="mb-4 text-base font-semibold tracking-tight">Stock Movements</h3>
                     <div className="space-y-3">
                         {reportData.stockMovementBreakdown.length === 0 ? (
                             <p className="text-sm text-gray-500 dark:text-slate-500">No stock movements found for this range.</p>
