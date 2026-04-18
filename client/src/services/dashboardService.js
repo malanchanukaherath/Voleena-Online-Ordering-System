@@ -183,14 +183,21 @@ class CashierService {
   }
 
   async getAllOrders(filters = {}) {
-    let url = `${API_BASE_URL}/api/v1/cashier/orders?`;
-    if (filters.status) url += `status=${filters.status}&`;
-    if (filters.limit) url += `limit=${filters.limit}&`;
+    const query = new URLSearchParams();
+
+    if (filters.status) query.set('status', String(filters.status));
+    if (filters.limit != null) query.set('limit', String(filters.limit));
+    if (filters.offset != null) query.set('offset', String(filters.offset));
+    if (filters.page != null) query.set('page', String(filters.page));
+    if (filters.search) query.set('search', String(filters.search));
+    if (filters.includeItems != null) query.set('includeItems', String(filters.includeItems));
     if (filters.startDate && filters.endDate) {
-      url += `startDate=${filters.startDate}&endDate=${filters.endDate}`;
+      query.set('startDate', String(filters.startDate));
+      query.set('endDate', String(filters.endDate));
     }
 
-    const response = await fetch(url, { headers: getAuthHeaders() });
+    const suffix = query.toString() ? `?${query.toString()}` : '';
+    const response = await fetch(`${API_BASE_URL}/api/v1/cashier/orders${suffix}`, { headers: getAuthHeaders() });
     return handleResponse(response);
   }
 

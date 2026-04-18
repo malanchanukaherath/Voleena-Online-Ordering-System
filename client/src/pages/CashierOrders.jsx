@@ -7,6 +7,9 @@ import { buildReceiptFromOrder, openReceiptPrintWindow } from '../utils/posRecei
 const CashierOrders = () => {
     const [orders, setOrders] = useState([]);
     const [error, setError] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchMeta, setSearchMeta] = useState(null);
     const [reprintOrderId, setReprintOrderId] = useState('');
     const [reprintStatus, setReprintStatus] = useState('');
     const [reprintError, setReprintError] = useState('');
@@ -57,12 +60,53 @@ const CashierOrders = () => {
 
     const loadOrders = useCallback(async () => {
         try {
-            const response = await cashierService.getAllOrders();
-            const data = response.data || response?.data?.data || [];
+            let response;
+            let data = [];
+
+            if (searchQuery) {
+                const combined = [];
+                let currentPage = 1;
+                let hasMore = true;
+                let lastMeta = null;
+                const maxPages = 30;
+
+                while (hasMore && currentPage <= maxPages) {
+                    response = await cashierService.getAllOrders({
+                        search: searchQuery,
+                        page: currentPage,
+                        limit: 200,
+                        includeItems: false
+                    });
+
+                    const pageData = response.data || response?.data?.data || [];
+                    combined.push(...pageData);
+
+                    lastMeta = response.meta || null;
+                    hasMore = Boolean(lastMeta?.hasMore);
+                    currentPage += 1;
+                }
+
+                data = combined;
+                setSearchMeta(lastMeta ? {
+                    ...lastMeta,
+                    returnedCount: combined.length,
+                    hasMore: Boolean(lastMeta.hasMore)
+                } : null);
+            } else {
+                response = await cashierService.getAllOrders({
+                    limit: 50,
+                    includeItems: false
+                });
+                data = response.data || response?.data?.data || [];
+                setSearchMeta(response.meta || null);
+            }
+
             const mapped = data.map((order) => ({
                 id: order.OrderID,
                 orderNumber: order.OrderNumber,
                 customer: order.customer?.Name || 'Unknown',
+                customerEmail: order.customer?.Email || '-',
+                customerPhone: order.customer?.Phone || '-',
                 total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
                 status: order.Status,
                 orderType: order.OrderType
@@ -71,9 +115,20 @@ const CashierOrders = () => {
             setOrders(mapped);
             setError('');
         } catch (err) {
+            setSearchMeta(null);
             setError(err.message || 'Failed to load orders');
         }
-    }, []);
+    }, [searchQuery]);
+
+    useEffect(() => {
+        const timeoutId = window.setTimeout(() => {
+            setSearchQuery(searchInput.trim());
+        }, 300);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [searchInput]);
 
     useEffect(() => {
         let isActive = true;
@@ -84,6 +139,12 @@ const CashierOrders = () => {
         };
 
         loadOrdersSafely();
+
+        if (searchQuery) {
+            return () => {
+                isActive = false;
+            };
+        }
 
         // Poll periodically so customer-created orders appear without manual refresh.
         const intervalId = setInterval(loadOrdersSafely, 5000);
@@ -125,6 +186,31 @@ const CashierOrders = () => {
                     <strong>Note:</strong> Orders are now automatically confirmed when created and sent directly to the kitchen to prevent delays.
                 </p>
             </div>
+            <div className="bg-white rounded-lg shadow p-4 mb-4">
+                <h2 className="text-lg font-semibold mb-3">Search Orders</h2>
+                <div className="flex flex-col md:flex-row gap-3 md:items-center">
+                    <input
+                        type="text"
+                        value={searchInput}
+                        onChange={(event) => setSearchInput(event.target.value)}
+                        placeholder="Search by customer name, email, or phone"
+                        className="border rounded px-3 py-2 text-sm md:w-[28rem]"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => setSearchInput('')}
+                        disabled={!searchInput}
+                        className="px-4 py-2 border rounded text-sm hover:bg-gray-100 disabled:opacity-50"
+                    >
+                        Clear
+                    </button>
+                </div>
+                {searchQuery && (
+                    <p className="text-sm text-gray-600 mt-2">
+                        Showing {orders.length} matching orders{searchMeta?.totalCount != null ? ` out of ${searchMeta.totalCount}` : ''}.
+                    </p>
+                )}
+            </div>
             <div className="bg-white rounded-lg shadow">
                 <div className="overflow-x-auto">
                     <table className="min-w-full">
@@ -133,6 +219,8 @@ const CashierOrders = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order #</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Order ID</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
@@ -142,7 +230,7 @@ const CashierOrders = () => {
                         <tbody className="divide-y">
                             {orders.length === 0 ? (
                                 <tr>
-                                    <td className="px-6 py-4 text-sm text-gray-500" colSpan={7}>
+                                    <td className="px-6 py-4 text-sm text-gray-500" colSpan={9}>
                                         {error || 'No orders available.'}
                                     </td>
                                 </tr>
@@ -151,6 +239,8 @@ const CashierOrders = () => {
                                     <td className="px-6 py-4 font-medium">{order.orderNumber}</td>
                                     <td className="px-6 py-4">{order.id}</td>
                                     <td className="px-6 py-4">{order.customer}</td>
+                                    <td className="px-6 py-4">{order.customerEmail}</td>
+                                    <td className="px-6 py-4">{order.customerPhone}</td>
                                     <td className="px-6 py-4">{order.orderType}</td>
                                     <td className="px-6 py-4">LKR {order.total.toFixed(2)}</td>
                                     <td className="px-6 py-4"><StatusBadge status={order.status} /></td>

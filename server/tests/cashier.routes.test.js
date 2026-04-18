@@ -257,4 +257,53 @@ describe('cashier routes', () => {
     expect(response.body.receipt.items).toHaveLength(1);
     expect(response.body.receipt.payment.method).toBe('CASH');
   });
+
+  test('returns cashier orders with search metadata', async () => {
+    mockOrder.count.mockResolvedValue(1);
+    mockOrder.findAll.mockResolvedValue([
+      {
+        OrderID: 12,
+        OrderNumber: 'ORD2604180012',
+        Status: 'CONFIRMED',
+        OrderType: 'DELIVERY',
+        FinalAmount: 1640,
+        customer: {
+          CustomerID: 4,
+          Name: 'Senitha',
+          Email: 'senitha@example.com',
+          Phone: '0771234567'
+        }
+      }
+    ]);
+
+    const response = await request(app)
+      .get('/api/v1/cashier/orders?search=senitha&includeItems=false');
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(response.body.data).toHaveLength(1);
+    expect(response.body.meta).toMatchObject({
+      totalCount: 1,
+      returnedCount: 1,
+      search: 'senitha'
+    });
+  });
+
+  test('omits order items include when includeItems is false', async () => {
+    mockOrder.count.mockResolvedValue(0);
+    mockOrder.findAll.mockResolvedValue([]);
+
+    const response = await request(app)
+      .get('/api/v1/cashier/orders?includeItems=false');
+
+    expect(response.status).toBe(200);
+    expect(mockOrder.findAll).toHaveBeenCalled();
+
+    const findAllArgs = mockOrder.findAll.mock.calls[0][0];
+    const includeAliases = (findAllArgs.include || []).map((entry) => entry.as);
+
+    expect(includeAliases).toContain('customer');
+    expect(includeAliases).toContain('payment');
+    expect(includeAliases).not.toContain('items');
+  });
 });

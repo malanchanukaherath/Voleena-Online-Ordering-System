@@ -659,7 +659,7 @@ const CashierDashboard = ({ posOnly = false }) => {
     const loadData = useCallback(async () => {
         const [statsResult, ordersResult, menuResult, comboResult] = await Promise.allSettled([
             cashierService.getDashboardStats(),
-            cashierService.getAllOrders({ limit: 5 }),
+            cashierService.getAllOrders({ limit: 5, includeItems: false }),
             cashierService.getMenuItemsForPos(),
             cashierService.getComboPacksForPos()
         ]);

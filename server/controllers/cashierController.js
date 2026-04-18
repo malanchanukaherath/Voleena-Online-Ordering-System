@@ -458,61 +458,134 @@ exports.createWalkInOrder = async (req, res) => {
  */
 exports.getAllOrders = async (req, res) => {
   try {
-    const { status, startDate, endDate, limit = 50 } = req.query;
-    const parsedLimit = Number.parseInt(limit, 10);
-    const safeLimit = Number.isNaN(parsedLimit) ? 50 : Math.min(Math.max(parsedLimit, 1), 200);
+    const { status, startDate, endDate, limit, offset, page, search = '', includeItems = 'true' } = req.query;
+    const { Op } = sequelize.Sequelize;
+    const normalizedSearch = String(search || '').trim();
 
-    const where = {};
+    const defaultLimit = normalizedSearch ? 500 : 50;
+    const parsedLimit = Number.parseInt(limit, 10);
+    const maxLimit = normalizedSearch ? 1000 : 200;
+    const safeLimit = Number.isNaN(parsedLimit)
+      ? defaultLimit
+      : Math.min(Math.max(parsedLimit, 1), maxLimit);
+
+    const parsedOffset = Number.parseInt(offset, 10);
+    const parsedPage = Number.parseInt(page, 10);
+    const safePage = Number.isNaN(parsedPage) ? 1 : Math.max(parsedPage, 1);
+    const safeOffset = Number.isNaN(parsedOffset)
+      ? (safePage - 1) * safeLimit
+      : Math.max(parsedOffset, 0);
+
+    const shouldIncludeItems = String(includeItems).toLowerCase() !== 'false';
+
+    const whereClauses = [];
 
     if (status) {
-      where.Status = status;
+      whereClauses.push({ Status: status });
     }
 
     if (startDate && endDate) {
-      where.created_at = {
-        [sequelize.Sequelize.Op.between]: [startDate, endDate]
-      };
+      whereClauses.push({
+        created_at: {
+          [Op.between]: [startDate, endDate]
+        }
+      });
     }
 
-    const orders = await Order.findAll({
+    if (normalizedSearch) {
+      const likePattern = `%${normalizedSearch}%`;
+      const digitsOnlySearch = normalizedSearch.replace(/\D/g, '');
+
+      const searchFilters = [
+        { OrderNumber: { [Op.like]: likePattern } },
+        { '$customer.Name$': { [Op.like]: likePattern } },
+        { '$customer.Email$': { [Op.like]: likePattern } },
+        { '$customer.Phone$': { [Op.like]: likePattern } }
+      ];
+
+      if (digitsOnlySearch) {
+        searchFilters.push({ '$customer.Phone$': { [Op.like]: `%${digitsOnlySearch}%` } });
+      }
+
+      const exactOrderId = Number.parseInt(normalizedSearch, 10);
+      if (Number.isInteger(exactOrderId) && exactOrderId > 0) {
+        searchFilters.push({ OrderID: exactOrderId });
+      }
+
+      whereClauses.push({
+        [Op.or]: searchFilters
+      });
+    }
+
+    const where = whereClauses.length > 0
+      ? { [Op.and]: whereClauses }
+      : {};
+
+    const orderIncludes = [
+      {
+        model: Customer,
+        as: 'customer',
+        attributes: ['CustomerID', 'Name', 'Email', 'Phone']
+      },
+      {
+        model: Payment,
+        as: 'payment',
+        attributes: ['PaymentID', 'Method', 'Status', 'Amount', 'PaidAt']
+      }
+    ];
+
+    if (shouldIncludeItems) {
+      orderIncludes.push({
+        model: OrderItem,
+        as: 'items',
+        include: [{
+          model: MenuItem,
+          as: 'menuItem',
+          attributes: ['MenuItemID', 'Name', 'Price']
+        }, {
+          model: ComboPack,
+          as: 'combo',
+          attributes: ['ComboID', 'Name', 'Price']
+        }]
+      });
+    }
+
+    const totalCount = await Order.count({
       where,
       include: [
         {
           model: Customer,
           as: 'customer',
-          attributes: ['CustomerID', 'Name', 'Email', 'Phone']
-        },
-        {
-          model: OrderItem,
-          as: 'items',
-          include: [{
-            model: MenuItem,
-            as: 'menuItem',
-            attributes: ['MenuItemID', 'Name', 'Price']
-          }, {
-            model: ComboPack,
-            as: 'combo',
-            attributes: ['ComboID', 'Name', 'Price']
-          }]
-        },
-        {
-          model: Payment,
-          as: 'payment',
-          attributes: ['PaymentID', 'Method', 'Status', 'Amount', 'PaidAt']
+          attributes: []
         }
-      ],
+      ]
+    });
+
+    const orders = await Order.findAll({
+      where,
+      include: orderIncludes,
       order: [
         // Prioritize action-required statuses.
         sequelize.literal("CASE WHEN `Order`.Status = 'CONFIRMED' THEN 0 ELSE 1 END"),
         // Then show newest orders first
         ['created_at', 'DESC']
       ],
-      limit: safeLimit
+      limit: safeLimit,
+      offset: safeOffset
     });
 
     return res.json({
       success: true,
-      data: orders
+      data: orders,
+      meta: {
+        totalCount,
+        returnedCount: orders.length,
+        limit: safeLimit,
+        offset: safeOffset,
+        page: safePage,
+        hasMore: safeOffset + orders.length < totalCount,
+        search: normalizedSearch || null
+      }
     });
   } catch (error) {
     console.error('Get all orders error:', error);
