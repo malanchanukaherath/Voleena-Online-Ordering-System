@@ -113,19 +113,19 @@ const ActiveDeliveries = () => {
 
     return (
         <div className="p-4 sm:p-6">
-            <h1 className="mb-6 text-xl font-bold sm:text-2xl">My Active Deliveries</h1>
+            <h1 className="mb-6 text-xl font-bold sm:text-2xl text-gray-900 dark:text-slate-100">My Active Deliveries</h1>
             <div className="space-y-4">
                 {deliveries.length === 0 ? (
-                    <div className="rounded-lg bg-white p-4 text-sm text-gray-500 shadow sm:p-6">
+                    <div className="rounded-lg bg-white dark:bg-slate-800 p-4 text-sm text-gray-500 dark:text-slate-400 shadow sm:p-6">
                         {error || 'No active deliveries.'}
                     </div>
                 ) : deliveries.map(delivery => (
-                    <div key={delivery.id} className="rounded-lg bg-white p-4 shadow sm:p-6">
+                    <div key={delivery.id} className="rounded-lg bg-white dark:bg-slate-800 p-4 shadow sm:p-6">
                         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                             <div className="min-w-0">
-                                <h3 className="break-words text-lg font-bold">{delivery.orderNumber}</h3>
-                                <p className="text-gray-700">{delivery.customer}</p>
-                                <p className="mt-1 flex items-center text-sm text-gray-500 break-all sm:break-normal">
+                                <h3 className="break-words text-lg font-bold text-gray-900 dark:text-slate-100">{delivery.orderNumber}</h3>
+                                <p className="text-gray-700 dark:text-slate-300">{delivery.customer}</p>
+                                <p className="mt-1 flex items-center text-sm text-gray-500 dark:text-slate-400 break-all sm:break-normal">
                                     <FaPhone className="mr-2" />{delivery.phone || 'Phone not available'}
                                 </p>
                             </div>
@@ -134,26 +134,26 @@ const ActiveDeliveries = () => {
                             </div>
                         </div>
                         <div className="mb-4">
-                            <p className="flex items-center text-sm text-gray-600 break-words">
+                            <p className="flex items-center text-sm text-gray-600 dark:text-slate-400 break-words">
                                 <FaMapMarkedAlt className="mr-2" />{delivery.address}
                             </p>
                             {Number.isFinite(delivery.lat) && Number.isFinite(delivery.lng) && (
-                                <p className="text-xs text-gray-500 mt-2 flex items-center">
+                                <p className="text-xs text-gray-500 dark:text-slate-500 mt-2 flex items-center">
                                     <FaMapMarkerAlt className="mr-2" />
                                     GPS: {delivery.lat}, {delivery.lng}
                                 </p>
                             )}
                             {delivery.specialInstructions && (
-                                <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2 py-1.5">
-                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800">Special Instructions</p>
-                                    <p className="mt-1 text-xs text-amber-900 whitespace-pre-wrap break-words">{delivery.specialInstructions}</p>
+                                <div className="mt-2 rounded border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-2 py-1.5">
+                                    <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-400">Special Instructions</p>
+                                    <p className="mt-1 text-xs text-amber-900 dark:text-amber-300 whitespace-pre-wrap break-words">{delivery.specialInstructions}</p>
                                 </div>
                             )}
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {getPendingUpdate(delivery.id) ? (
                                 <>
-                                    <div className="flex w-full items-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700 sm:w-auto">
+                                    <div className="flex w-full items-center rounded border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-2 py-1 text-xs text-amber-700 dark:text-amber-400 sm:w-auto">
                                         Changing to {getPendingUpdate(delivery.id).toStatus}
                                     </div>
                                     <Button
@@ -191,7 +191,7 @@ const ActiveDeliveries = () => {
                                     href={getGoogleMapsNavigationUrl(delivery)}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="inline-flex w-full items-center justify-center rounded-md border border-blue-600 px-3 py-2 text-sm text-blue-600 transition hover:bg-blue-50 sm:w-auto"
+                                    className="inline-flex w-full items-center justify-center rounded-md border border-blue-600 dark:border-blue-700 px-3 py-2 text-sm text-blue-600 dark:text-blue-400 transition hover:bg-blue-50 dark:hover:bg-blue-950/30 sm:w-auto"
                                 >
                                     <FaExternalLinkAlt className="mr-2" /> Navigate
                                 </a>

@@ -72,28 +72,28 @@ const KitchenDashboard = () => {
 
     return (
         <div className="p-6">
-            <h1 className="text-3xl font-bold mb-8">Kitchen Dashboard</h1>
+            <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-slate-100">Kitchen Dashboard</h1>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white rounded-lg shadow p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                     <FaClipboardList className="w-8 h-8 text-blue-600 mb-2" />
-                    <p className="text-sm text-gray-600">Active Orders</p>
-                    <p className="text-3xl font-bold">{stats.activeOrders}</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Active Orders</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">{stats.activeOrders}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                     <FaClock className="w-8 h-8 text-orange-600 mb-2" />
-                    <p className="text-sm text-gray-600">Preparing</p>
-                    <p className="text-3xl font-bold">{stats.preparingOrders}</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Preparing</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">{stats.preparingOrders}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                     <FaBoxes className="w-8 h-8 text-green-600 mb-2" />
-                    <p className="text-sm text-gray-600">Ready</p>
-                    <p className="text-3xl font-bold">{stats.readyOrders}</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Ready</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">{stats.readyOrders}</p>
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center text-gray-900 dark:text-slate-100">
                     {activeOrders.some(o => o.priority === 'high') && (
                         <>
                             <FaExclamationTriangle className="text-red-600 mr-2 animate-pulse" />
@@ -104,9 +104,9 @@ const KitchenDashboard = () => {
                 </h3>
                 <div className="space-y-3">
                     {activeOrders.length === 0 ? (
-                        <div className="text-sm text-gray-500">No active kitchen orders.</div>
+                        <div className="text-sm text-gray-500 dark:text-slate-400">No active kitchen orders.</div>
                     ) : activeOrders.map(order => (
-                        <div key={order.id} className={`p-4 rounded-lg border-2 ${order.priority === 'high' ? 'border-red-400 bg-red-50' : 'border-gray-200 bg-gray-50'
+                        <div key={order.id} className={`p-4 rounded-lg border-2 ${order.priority === 'high' ? 'border-red-400 bg-red-50 dark:bg-red-950/30 dark:border-red-900/60' : 'border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-700/50'
                             }`}>
                             <div className="flex justify-between items-center">
                                 <div>
@@ -114,18 +114,18 @@ const KitchenDashboard = () => {
                                         {order.priority === 'high' && (
                                             <FaExclamationTriangle className="text-red-600" />
                                         )}
-                                        <p className="font-bold">{order.orderNumber}</p>
+                                        <p className="font-bold text-gray-900 dark:text-slate-100">{order.orderNumber}</p>
                                         {order.orderType === 'WALK_IN' && (
-                                            <span className="text-xs font-semibold bg-orange-100 text-orange-700 px-2 py-1 rounded">
+                                            <span className="text-xs font-semibold bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400 px-2 py-1 rounded">
                                                 WALK-IN
                                             </span>
                                         )}
                                     </div>
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 dark:text-slate-400">
                                         {order.items} items • {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
                                     </p>
                                     {order.specialInstructions && (
-                                        <p className="mt-1 text-xs text-amber-800 break-words">
+                                        <p className="mt-1 text-xs text-amber-800 dark:text-amber-400 break-words">
                                             <span className="font-semibold">Instructions:</span> {order.specialInstructions}
                                         </p>
                                     )}
@@ -135,7 +135,7 @@ const KitchenDashboard = () => {
                         </div>
                     ))}
                 </div>
-                <Link to="/kitchen/orders" className="block mt-4 text-primary-600 hover:text-primary-700">
+                <Link to="/kitchen/orders" className="block mt-4 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
                     View All Orders →
                 </Link>
             </div>

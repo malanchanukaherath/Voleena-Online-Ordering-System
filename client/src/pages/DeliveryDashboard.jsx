@@ -282,7 +282,7 @@ const DeliveryDashboard = () => {
     return (
         <div className="p-4 sm:p-6">
             <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <h1 className="text-2xl font-bold sm:text-3xl">Delivery Dashboard</h1>
+                <h1 className="text-2xl font-bold sm:text-3xl text-gray-900 dark:text-slate-100">Delivery Dashboard</h1>
 
                 <div className="flex w-full flex-col items-stretch gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 lg:w-auto">
                     {/* Availability Toggle */}
@@ -308,7 +308,7 @@ const DeliveryDashboard = () => {
                     </button>
 
                     {/* Location Status Indicator */}
-                    <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-white px-4 py-2 shadow sm:w-auto sm:justify-start">
+                    <div className="flex w-full items-center justify-center gap-2 rounded-lg bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 px-4 py-2 shadow sm:w-auto sm:justify-start">
                         <FaMapMarkerAlt className={`
                         ${locationPermission === 'granted' ? 'text-green-600' :
                                 locationPermission === 'denied' ? 'text-red-600' : 'text-yellow-600'}
@@ -331,42 +331,42 @@ const DeliveryDashboard = () => {
             </div>
 
             {locationTrackingError && (
-                <div className="mb-6 rounded border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <div className="mb-6 rounded border border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 px-4 py-3 text-sm text-amber-800 dark:text-amber-400">
                     {locationTrackingError}
                 </div>
             )}
 
             <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-6">
-                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-4 shadow sm:p-6">
                     <FaTruck className="w-8 h-8 text-blue-600 mb-2" />
-                    <p className="text-sm text-gray-600">Active Deliveries</p>
-                    <p className="text-3xl font-bold">{stats.activeDeliveries}</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Active Deliveries</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">{stats.activeDeliveries}</p>
                 </div>
-                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-4 shadow sm:p-6">
                     <FaClock className="w-8 h-8 text-orange-600 mb-2" />
-                    <p className="text-sm text-gray-600">Pending Pickup</p>
-                    <p className="text-3xl font-bold">{stats.pendingPickup}</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Pending Pickup</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">{stats.pendingPickup}</p>
                 </div>
-                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-4 shadow sm:p-6">
                     <FaCheckCircle className="w-8 h-8 text-green-600 mb-2" />
-                    <p className="text-sm text-gray-600">Completed Today</p>
-                    <p className="text-3xl font-bold">{stats.completedToday}</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Completed Today</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-slate-100">{stats.completedToday}</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
-                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
-                    <h3 className="text-lg font-semibold mb-4">Active Deliveries</h3>
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-4 shadow sm:p-6">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-slate-100">Active Deliveries</h3>
 
                     {/* Availability Warning */}
                     {availability && !availability.IsAvailable && (
-                        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                            <p className="text-sm text-yellow-800">
+                        <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-900/50 rounded-lg">
+                            <p className="text-sm text-yellow-800 dark:text-yellow-400">
                                 You are marked as unavailable. You will not receive new delivery assignments.
                             </p>
                             <button
                                 onClick={toggleAvailability}
-                                className="mt-2 text-xs text-yellow-900 underline hover:text-yellow-700"
+                                className="mt-2 text-xs text-yellow-900 dark:text-yellow-500 underline hover:text-yellow-700 dark:hover:text-yellow-400"
                             >
                                 Click here to become available
                             </button>
@@ -375,8 +375,8 @@ const DeliveryDashboard = () => {
 
                     {/* Loading Error */}
                     {loadingError && (
-                        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-sm text-red-800">
+                        <div className="mb-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-lg">
+                            <p className="text-sm text-red-800 dark:text-red-400">
                                 Error loading deliveries: {loadingError}
                             </p>
                         </div>
@@ -384,41 +384,41 @@ const DeliveryDashboard = () => {
 
                     <div className="space-y-3">
                         {activeDeliveries.length === 0 ? (
-                            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                <p className="text-sm text-blue-800 font-medium mb-2">
+                            <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/50 rounded-lg">
+                                <p className="text-sm text-blue-800 dark:text-blue-400 font-medium mb-2">
                                     No active deliveries
                                 </p>
-                                <p className="text-xs text-blue-700">
+                                <p className="text-xs text-blue-700 dark:text-blue-400">
                                     {availability && !availability.IsAvailable
                                         ? 'Set your status to available to receive delivery assignments.'
                                         : 'New deliveries will appear here when orders are ready for pickup.'}
                                 </p>
                             </div>
                         ) : activeDeliveries.map(delivery => (
-                            <div key={delivery.id} className="rounded-lg bg-gray-50 p-3 sm:p-4">
+                            <div key={delivery.id} className="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3 sm:p-4">
                                 <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                                     <div className="min-w-0">
-                                        <p className="font-bold break-words">{delivery.orderNumber}</p>
-                                        <p className="text-sm text-gray-600">{delivery.customer}</p>
+                                        <p className="font-bold break-words text-gray-900 dark:text-slate-100">{delivery.orderNumber}</p>
+                                        <p className="text-sm text-gray-600 dark:text-slate-400">{delivery.customer}</p>
                                         {delivery.contactPhone && (
-                                            <p className="text-xs text-gray-600">Checkout phone: {delivery.contactPhone}</p>
+                                            <p className="text-xs text-gray-600 dark:text-slate-400">Checkout phone: {delivery.contactPhone}</p>
                                         )}
                                         {delivery.verifiedPhone && (
-                                            <p className="text-xs text-green-700">Verified profile phone: {delivery.verifiedPhone}</p>
+                                            <p className="text-xs text-green-700 dark:text-green-400">Verified profile phone: {delivery.verifiedPhone}</p>
                                         )}
                                         {!delivery.verifiedPhone && (
-                                            <p className="text-xs text-amber-700">Verified profile phone is not available for this customer.</p>
+                                            <p className="text-xs text-amber-700 dark:text-amber-400">Verified profile phone is not available for this customer.</p>
                                         )}
-                                        <p className="text-xs text-gray-500 break-words">{delivery.address}</p>
+                                        <p className="text-xs text-gray-500 dark:text-slate-400 break-words">{delivery.address}</p>
                                         {Number.isFinite(delivery.lat) && Number.isFinite(delivery.lng) && (
-                                            <p className="text-xs text-gray-400 mt-1">
+                                            <p className="text-xs text-gray-400 dark:text-slate-500 mt-1">
                                                 GPS: {delivery.lat}, {delivery.lng}
                                             </p>
                                         )}
                                         {delivery.specialInstructions && (
-                                            <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2 py-1.5">
-                                                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800">Special Instructions</p>
-                                                <p className="mt-1 text-xs text-amber-900 whitespace-pre-wrap break-words">{delivery.specialInstructions}</p>
+                                            <div className="mt-2 rounded border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-2 py-1.5">
+                                                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-400">Special Instructions</p>
+                                                <p className="mt-1 text-xs text-amber-900 dark:text-amber-300 whitespace-pre-wrap break-words">{delivery.specialInstructions}</p>
                                             </div>
                                         )}
                                     </div>
@@ -430,7 +430,7 @@ const DeliveryDashboard = () => {
                                 <div className="flex flex-wrap gap-2 mt-3">
                                     {getPendingUpdate(delivery.id) ? (
                                         <>
-                                            <div className="flex w-full items-center rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700 sm:w-auto">
+                                            <div className="flex w-full items-center rounded border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/30 px-2 py-1 text-xs text-amber-700 dark:text-amber-400 sm:w-auto">
                                                 Changing to {getPendingUpdate(delivery.id).toStatus}
                                             </div>
                                             <Button
@@ -490,21 +490,21 @@ const DeliveryDashboard = () => {
                             </div>
                         ))}
                     </div>
-                    <Link to="/delivery/active" className="block mt-4 text-primary-600 hover:text-primary-700">
+                    <Link to="/delivery/active" className="block mt-4 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
                         View All →
                     </Link>
                 </div>
 
-                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
-                    <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-4 shadow sm:p-6">
+                    <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-slate-100">Quick Actions</h3>
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
-                        <Link to="/delivery/active" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
-                            <FaTruck className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                            <p className="font-medium">My Deliveries</p>
+                        <Link to="/delivery/active" className="p-4 border-2 dark:border-slate-700 rounded-lg hover:border-primary-500 dark:hover:border-primary-700 text-center dark:text-slate-100">
+                            <FaTruck className="w-8 h-8 mx-auto mb-2 text-primary-600 dark:text-primary-400" />
+                            <p className="font-medium text-gray-900 dark:text-slate-100">My Deliveries</p>
                         </Link>
-                        <Link to="/delivery/map" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
-                            <FaMapMarkedAlt className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                            <p className="font-medium">View Map</p>
+                        <Link to="/delivery/map" className="p-4 border-2 dark:border-slate-700 rounded-lg hover:border-primary-500 dark:hover:border-primary-700 text-center dark:text-slate-100">
+                            <FaMapMarkedAlt className="w-8 h-8 mx-auto mb-2 text-primary-600 dark:text-primary-400" />
+                            <p className="font-medium text-gray-900 dark:text-slate-100">View Map</p>
                         </Link>
                     </div>
                 </div>
