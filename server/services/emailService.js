@@ -1,7 +1,9 @@
 const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const { Notification } = require('../models');
 
 let hasLoggedEmailNotConfiguredWarning = false;
+let hasLoggedResendNotConfiguredWarning = false;
 
 const warnEmailNotConfiguredOnce = () => {
   if (hasLoggedEmailNotConfiguredWarning) {
@@ -10,6 +12,23 @@ const warnEmailNotConfiguredOnce = () => {
 
   console.warn('⚠️  Email SMTP is not configured. Legacy email notifications will be skipped.');
   hasLoggedEmailNotConfiguredWarning = true;
+};
+
+const warnResendNotConfiguredOnce = () => {
+  if (hasLoggedResendNotConfiguredWarning) {
+    return;
+  }
+
+  console.warn('⚠️  Resend is selected as email provider but RESEND_API_KEY is missing.');
+  hasLoggedResendNotConfiguredWarning = true;
+};
+
+const getPreferredEmailProvider = () => {
+  return String(process.env.EMAIL_PROVIDER || 'smtp').trim().toLowerCase();
+};
+
+const isResendConfigured = () => {
+  return Boolean(process.env.RESEND_API_KEY);
 };
 
 // Check if email service is properly configured
@@ -45,11 +64,70 @@ if (isEmailConfigured()) {
   });
 }
 
+const resend = isResendConfigured() ? new Resend(process.env.RESEND_API_KEY) : null;
+
+const getEmailFromAddress = () => {
+  return process.env.EMAIL_FROM || process.env.SMTP_FROM || 'onboarding@resend.dev';
+};
+
+async function sendViaResend(to, subject, html) {
+  if (!resend || !isResendConfigured()) {
+    throw new Error('Resend provider is not configured');
+  }
+
+  const response = await resend.emails.send({
+    from: getEmailFromAddress(),
+    to,
+    subject,
+    html
+  });
+
+  if (response?.error) {
+    throw new Error(response.error.message || 'Resend failed to send email');
+  }
+
+  return {
+    success: true,
+    provider: 'resend',
+    messageId: response?.data?.id || null
+  };
+}
+
 /**
  * Send email and log notification
  */
 async function sendEmail(to, subject, html, relatedOrderId = null, options = {}) {
   const messageForAudit = options.logMessage || html;
+  const preferredProvider = getPreferredEmailProvider();
+
+  if (preferredProvider === 'resend') {
+    if (!isResendConfigured()) {
+      warnResendNotConfiguredOnce();
+    } else {
+      try {
+        const resendResult = await sendViaResend(to, subject, html);
+
+        await Notification.create({
+          RecipientType: 'CUSTOMER',
+          RecipientID: null,
+          NotificationType: 'EMAIL',
+          Subject: subject,
+          Message: messageForAudit,
+          Status: 'SENT',
+          SentAt: new Date(),
+          RelatedOrderID: relatedOrderId
+        });
+
+        return resendResult;
+      } catch (error) {
+        console.error(`Resend send error: ${error.message}`);
+
+        if (!isEmailConfigured() || !transporter) {
+          throw error;
+        }
+      }
+    }
+  }
 
   // Skip if email service not configured
   if (!transporter || !isEmailConfigured()) {
