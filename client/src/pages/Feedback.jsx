@@ -127,7 +127,7 @@ const Feedback = () => {
     const renderOrderItems = () => {
         const items = Array.isArray(order?.items) ? order.items : [];
         if (items.length === 0) {
-            return <p className="text-sm text-gray-500">No item details found.</p>;
+            return <p className="text-sm text-gray-500 dark:text-slate-400">No item details found.</p>;
         }
 
         return (
@@ -135,7 +135,7 @@ const Feedback = () => {
                 {items.map((item) => {
                     const label = item.menuItem?.Name || item.combo?.Name || 'Item';
                     return (
-                        <span key={item.OrderItemID || `${label}-${item.Quantity}`} className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700">
+                        <span key={item.OrderItemID || `${label}-${item.Quantity}`} className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 dark:bg-slate-700 dark:text-slate-300">
                             {item.Quantity}x {label}
                         </span>
                     );
@@ -165,26 +165,26 @@ const Feedback = () => {
         <div className="max-w-3xl mx-auto">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold mb-2">Share Feedback</h1>
-                <p className="text-gray-600">Your feedback is linked to this delivered order.</p>
+                <p className="text-gray-600 dark:text-slate-400">Your feedback is linked to this delivered order.</p>
             </div>
 
             {isLoadingOrder ? (
-                <div className="bg-white rounded-lg shadow p-6">Loading order details...</div>
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:text-slate-300">Loading order details...</div>
             ) : orderError ? (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-                    <p className="text-red-700 mb-4">{orderError}</p>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-6 dark:bg-red-950/40 dark:border-red-800">
+                    <p className="text-red-700 mb-4 dark:text-red-400">{orderError}</p>
                     <Button variant="outline" onClick={() => navigate('/orders')}>Back to Orders</Button>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6">
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                        <h2 className="text-lg font-semibold text-gray-900">Order Context</h2>
-                        <p className="text-sm text-gray-600 mt-1">Order ID: #{order.OrderID} · {new Date(order.CreatedAt).toLocaleString()}</p>
+                <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:bg-slate-700 dark:border-slate-600">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-200">Order Context</h2>
+                        <p className="text-sm text-gray-600 mt-1 dark:text-slate-400">Order ID: #{order.OrderID} · {new Date(order.CreatedAt).toLocaleString()}</p>
                         {renderOrderItems()}
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">
                             ⭐ Rate your order <span className="text-red-500">*</span>
                         </label>
                         <div className="flex items-center gap-2">
@@ -217,10 +217,10 @@ const Feedback = () => {
                     />
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">👍 What did you like? (optional)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">👍 What did you like? (optional)</label>
                         <div className="flex flex-wrap gap-2">
                             {POSITIVE_TAGS.map((tag) => (
-                                <label key={tag} className="inline-flex items-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm">
+                                <label key={tag} className="inline-flex items-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm dark:border-slate-600 dark:text-slate-300">
                                     <input
                                         type="checkbox"
                                         checked={formData.positiveTags.includes(tag)}
@@ -233,10 +233,10 @@ const Feedback = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">👎 Issues? (optional)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">👎 Issues? (optional)</label>
                         <div className="flex flex-wrap gap-2">
                             {ISSUE_TAGS.map((tag) => (
-                                <label key={tag} className="inline-flex items-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm">
+                                <label key={tag} className="inline-flex items-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm dark:border-slate-600 dark:text-slate-300">
                                     <input
                                         type="checkbox"
                                         checked={formData.issueTags.includes(tag)}

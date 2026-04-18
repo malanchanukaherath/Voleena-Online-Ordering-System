@@ -162,49 +162,50 @@ const Settings = () => {
     return (
         <div className="p-6">
             <div className="mb-6">
-                <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-slate-100 flex items-center gap-3">
                     <FaCog className="text-orange-600" />
                     System Settings
                 </h1>
-                <p className="text-gray-600 mt-2">Configure your restaurant system settings</p>
+                <p className="text-gray-600 dark:text-slate-400 mt-2">Configure your restaurant system settings</p>
             </div>
 
             {loadError && (
-                <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <div className="mb-4 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
                     {loadError}
                 </div>
             )}
 
             {saveError && (
-                <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="mb-4 rounded-lg border border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-400">
                     {saveError}
                 </div>
             )}
 
             {saveSuccess && (
-                <div className="mb-4 rounded-lg border border-green-300 bg-green-50 px-4 py-3 text-sm text-green-700">
+                <div className="mb-4 rounded-lg border border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-900/20 px-4 py-3 text-sm text-green-700 dark:text-green-400">
                     {saveSuccess}
                 </div>
             )}
 
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md overflow-hidden">
                 {isLoading && (
-                    <div className="border-b border-blue-200 bg-blue-50 px-6 py-3 text-sm text-blue-700">
+                    <div className="border-b border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 px-6 py-3 text-sm text-blue-700 dark:text-blue-400">
                         Loading settings...
                     </div>
                 )}
 
                 {/* Tabs */}
-                <div className="border-b border-gray-200">
+                <div className="border-b border-gray-200 dark:border-slate-700">
                     <div className="flex overflow-x-auto">
                         {tabs.map(tab => (
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id)}
-                                className={`px-6 py-4 flex items-center gap-2 font-medium whitespace-nowrap transition-colors ${activeTab === tab.id
-                                        ? 'border-b-2 border-orange-600 text-orange-600'
-                                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                                    }`}
+                                className={`px-6 py-4 flex items-center gap-2 font-medium whitespace-nowrap transition-colors ${
+                                    activeTab === tab.id
+                                        ? 'border-b-2 border-orange-600 text-orange-600 dark:text-orange-400'
+                                        : 'text-gray-600 dark:text-slate-400 hover:text-gray-900 dark:hover:text-slate-200 hover:bg-gray-50 dark:hover:bg-slate-700'
+                                }`}
                             >
                                 <tab.icon />
                                 {tab.label}
@@ -215,72 +216,58 @@ const Settings = () => {
 
                 {/* Tab Content */}
                 <div className="p-6">
+
                     {/* General Settings */}
                     {activeTab === 'general' && (
                         <div className="space-y-6">
                             <h2 className="text-xl font-semibold mb-4">General Information</h2>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Restaurant Name
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Restaurant Name</label>
                                     <input
                                         type="text"
                                         value={settings.restaurantName}
                                         onChange={(e) => handleInputChange('restaurantName', e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Email Address
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Email Address</label>
                                     <input
                                         type="email"
                                         value={settings.email}
                                         onChange={(e) => handleInputChange('email', e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Phone Number
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Phone Number</label>
                                     <input
                                         type="tel"
                                         value={settings.phone}
                                         onChange={(e) => handleInputChange('phone', e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Timezone
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Timezone</label>
                                     <select
                                         value={settings.timezone}
                                         onChange={(e) => handleInputChange('timezone', e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     >
                                         <option value="Asia/Colombo">Asia/Colombo (GMT+5:30)</option>
                                         <option value="Asia/Kolkata">Asia/Kolkata (GMT+5:30)</option>
                                         <option value="Asia/Dubai">Asia/Dubai (GMT+4:00)</option>
                                     </select>
                                 </div>
-
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Address
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Address</label>
                                     <textarea
                                         value={settings.address}
                                         onChange={(e) => handleInputChange('address', e.target.value)}
                                         rows={3}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
                             </div>
@@ -291,14 +278,12 @@ const Settings = () => {
                     {activeTab === 'hours' && (
                         <div className="space-y-6">
                             <h2 className="text-xl font-semibold mb-4">Business Hours</h2>
-
                             <div className="space-y-4">
                                 {Object.keys(settings.businessHours).map(day => (
-                                    <div key={day} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
+                                    <div key={day} className="flex flex-wrap items-center gap-4 p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
                                         <div className="w-32">
                                             <span className="font-medium capitalize">{day}</span>
                                         </div>
-
                                         <label className="flex items-center gap-2">
                                             <input
                                                 type="checkbox"
@@ -308,26 +293,24 @@ const Settings = () => {
                                             />
                                             <span className="text-sm">Closed</span>
                                         </label>
-
                                         {!settings.businessHours[day].closed && (
                                             <>
                                                 <div className="flex items-center gap-2">
-                                                    <label className="text-sm text-gray-600">Open:</label>
+                                                    <label className="text-sm text-gray-600 dark:text-slate-400">Open:</label>
                                                     <input
                                                         type="time"
                                                         value={settings.businessHours[day].open}
                                                         onChange={(e) => handleBusinessHoursChange(day, 'open', e.target.value)}
-                                                        className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
+                                                        className="px-3 py-1 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded focus:ring-2 focus:ring-orange-500"
                                                     />
                                                 </div>
-
                                                 <div className="flex items-center gap-2">
-                                                    <label className="text-sm text-gray-600">Close:</label>
+                                                    <label className="text-sm text-gray-600 dark:text-slate-400">Close:</label>
                                                     <input
                                                         type="time"
                                                         value={settings.businessHours[day].close}
                                                         onChange={(e) => handleBusinessHoursChange(day, 'close', e.target.value)}
-                                                        className="px-3 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-orange-500"
+                                                        className="px-3 py-1 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded focus:ring-2 focus:ring-orange-500"
                                                     />
                                                 </div>
                                             </>
@@ -342,57 +325,44 @@ const Settings = () => {
                     {activeTab === 'orders' && (
                         <div className="space-y-6">
                             <h2 className="text-xl font-semibold mb-4">Order Configuration</h2>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Order Number Prefix
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Order Number Prefix</label>
                                     <input
                                         type="text"
                                         value={settings.orderPrefix}
                                         onChange={(e) => handleInputChange('orderPrefix', e.target.value)}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Minimum Order Amount (LKR)
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Minimum Order Amount (LKR)</label>
                                     <input
                                         type="number"
                                         value={settings.minOrderAmount}
                                         onChange={(e) => handleInputChange('minOrderAmount', parseFloat(e.target.value))}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Maximum Order Amount (LKR)
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Maximum Order Amount (LKR)</label>
                                     <input
                                         type="number"
                                         value={settings.maxOrderAmount}
                                         onChange={(e) => handleInputChange('maxOrderAmount', parseFloat(e.target.value))}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Order Timeout (minutes)
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Order Timeout (minutes)</label>
                                     <input
                                         type="number"
                                         value={settings.orderTimeout}
                                         onChange={(e) => handleInputChange('orderTimeout', parseInt(e.target.value))}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
-
-                                <div className="md:col-span-2 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                                <div className="md:col-span-2 rounded-md border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20 px-4 py-3 text-sm text-green-700 dark:text-green-400">
                                     Orders are confirmed automatically.
                                 </div>
                             </div>
@@ -403,53 +373,41 @@ const Settings = () => {
                     {activeTab === 'delivery' && (
                         <div className="space-y-6">
                             <h2 className="text-xl font-semibold mb-4">Delivery Configuration</h2>
-
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Delivery Fee (LKR)
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Delivery Fee (LKR)</label>
                                     <input
                                         type="number"
                                         value={settings.deliveryFee}
                                         onChange={(e) => handleInputChange('deliveryFee', parseFloat(e.target.value))}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Free Delivery Threshold (LKR)
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Free Delivery Threshold (LKR)</label>
                                     <input
                                         type="number"
                                         value={settings.freeDeliveryThreshold}
                                         onChange={(e) => handleInputChange('freeDeliveryThreshold', parseFloat(e.target.value))}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Maximum Delivery Distance (km)
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Maximum Delivery Distance (km)</label>
                                     <input
                                         type="number"
                                         value={settings.maxDeliveryDistance}
                                         onChange={(e) => handleInputChange('maxDeliveryDistance', parseFloat(e.target.value))}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Estimated Delivery Time (minutes)
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">Estimated Delivery Time (minutes)</label>
                                     <input
                                         type="number"
                                         value={settings.estimatedDeliveryTime}
                                         onChange={(e) => handleInputChange('estimatedDeliveryTime', parseInt(e.target.value))}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
                                 </div>
                             </div>
@@ -460,9 +418,8 @@ const Settings = () => {
                     {activeTab === 'notifications' && (
                         <div className="space-y-6">
                             <h2 className="text-xl font-semibold mb-4">Notification Preferences</h2>
-
                             <div className="space-y-4">
-                                <div className="p-4 bg-gray-50 rounded-lg">
+                                <div className="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
                                     <h3 className="font-medium mb-3">Notification Channels</h3>
                                     <div className="space-y-2">
                                         <label className="flex items-center gap-2">
@@ -474,7 +431,6 @@ const Settings = () => {
                                             />
                                             <span className="text-sm">Email Notifications</span>
                                         </label>
-
                                         <label className="flex items-center gap-2">
                                             <input
                                                 type="checkbox"
@@ -486,8 +442,7 @@ const Settings = () => {
                                         </label>
                                     </div>
                                 </div>
-
-                                <div className="p-4 bg-gray-50 rounded-lg">
+                                <div className="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
                                     <h3 className="font-medium mb-3">Order Notifications</h3>
                                     <div className="space-y-2">
                                         <label className="flex items-center gap-2">
@@ -499,7 +454,6 @@ const Settings = () => {
                                             />
                                             <span className="text-sm">Order Confirmation</span>
                                         </label>
-
                                         <label className="flex items-center gap-2">
                                             <input
                                                 type="checkbox"
@@ -511,8 +465,7 @@ const Settings = () => {
                                         </label>
                                     </div>
                                 </div>
-
-                                <div className="p-4 bg-gray-50 rounded-lg">
+                                <div className="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
                                     <h3 className="font-medium mb-3">Marketing</h3>
                                     <div className="space-y-2">
                                         <label className="flex items-center gap-2">
@@ -534,9 +487,8 @@ const Settings = () => {
                     {activeTab === 'payments' && (
                         <div className="space-y-6">
                             <h2 className="text-xl font-semibold mb-4">Payment Methods</h2>
-
                             <div className="space-y-4">
-                                <div className="p-4 bg-gray-50 rounded-lg">
+                                <div className="p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg">
                                     <h3 className="font-medium mb-3">Accepted Payment Methods</h3>
                                     <div className="space-y-2">
                                         <label className="flex items-center gap-2">
@@ -548,7 +500,6 @@ const Settings = () => {
                                             />
                                             <span className="text-sm">Cash on Delivery</span>
                                         </label>
-
                                         <label className="flex items-center gap-2">
                                             <input
                                                 type="checkbox"
@@ -558,7 +509,6 @@ const Settings = () => {
                                             />
                                             <span className="text-sm">Online Payment</span>
                                         </label>
-
                                         <label className="flex items-center gap-2">
                                             <input
                                                 type="checkbox"
@@ -570,32 +520,32 @@ const Settings = () => {
                                         </label>
                                     </div>
                                 </div>
-
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-2">
                                         Minimum Cash Change Available (LKR)
                                     </label>
                                     <input
                                         type="number"
                                         value={settings.minimumCashChange}
                                         onChange={(e) => handleInputChange('minimumCashChange', parseFloat(e.target.value))}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                                        className="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                                     />
-                                    <p className="text-sm text-gray-500 mt-1">
+                                    <p className="text-sm text-gray-500 dark:text-slate-500 mt-1">
                                         Delivery staff should carry at least this amount in change
                                     </p>
                                 </div>
                             </div>
                         </div>
                     )}
+
                 </div>
 
                 {/* Save Button */}
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end">
+                <div className="px-6 py-4 bg-gray-50 dark:bg-slate-700/50 border-t border-gray-200 dark:border-slate-700 flex justify-end">
                     <button
                         onClick={handleSave}
                         disabled={isSaving || isLoading}
-                        className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
+                        className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:bg-gray-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
                     >
                         <FaSave />
                         {isSaving ? 'Saving...' : 'Save Settings'}

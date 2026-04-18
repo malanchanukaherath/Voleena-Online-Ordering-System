@@ -208,11 +208,11 @@ const OrderManagement = () => {
         <div className="p-6">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold mb-2">Order Management</h1>
-                <p className="text-gray-600">View and manage all customer orders</p>
+                <p className="text-gray-600 dark:text-slate-400">View and manage all customer orders</p>
             </div>
 
             {/* Search and Filter Bar */}
-            <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="bg-white rounded-lg shadow p-4 mb-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div className="md:col-span-2">
                         <Input
@@ -239,7 +239,7 @@ const OrderManagement = () => {
             </div>
 
             {error && (
-                <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+                <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:border-red-800 dark:text-red-400" role="alert">
                     {error}
                 </div>
             )}
@@ -248,41 +248,41 @@ const OrderManagement = () => {
             {loading ? (
                 <LoadingSkeleton type="table" rows={10} />
             ) : filteredOrders.length > 0 ? (
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="bg-white rounded-lg shadow overflow-hidden dark:bg-slate-800 dark:shadow-slate-900/50">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                            <thead className="bg-gray-50 dark:bg-slate-700/50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Order #
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Customer
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Type
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Status
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Total
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Last Updated
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white divide-y divide-gray-200 dark:bg-slate-800 dark:divide-slate-700">
                                 {filteredOrders.map((order) => (
-                                    <tr key={order.id} className="hover:bg-gray-50">
+                                    <tr key={order.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">{order.orderNumber}</div>
-                                            <div className="text-xs text-gray-500">{order.items} items</div>
+                                            <div className="text-sm font-medium text-gray-900 dark:text-slate-200">{order.orderNumber}</div>
+                                            <div className="text-xs text-gray-500 dark:text-slate-400">{order.items} items</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">{order.customerName}</div>
-                                            <div className="text-xs text-gray-500">{order.customerPhone}</div>
+                                            <div className="text-sm text-gray-900 dark:text-slate-200">{order.customerName}</div>
+                                            <div className="text-xs text-gray-500 dark:text-slate-400">{order.customerPhone}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`inline-flex px-2 py-1 text-xs rounded-full ${order.orderType === 'DELIVERY'
@@ -303,7 +303,7 @@ const OrderManagement = () => {
                                                 />
                                                 {getPendingUpdate(order.id) ? (
                                                     <div className="flex flex-wrap gap-2 items-center">
-                                                        <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                                                        <span className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 dark:text-amber-300 dark:bg-amber-950/40 dark:border-amber-800">
                                                             Applying
                                                         </span>
                                                         <Button
@@ -344,12 +344,12 @@ const OrderManagement = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">
+                                            <div className="text-sm font-medium text-gray-900 dark:text-slate-200">
                                                 LKR {order.total.toFixed(2)}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-500">
+                                            <div className="text-sm text-gray-500 dark:text-slate-400">
                                                 {order.updatedAt ? new Date(order.updatedAt).toLocaleString() : order.createdAt ? new Date(order.createdAt).toLocaleString() : 'N/A'}
                                             </div>
                                         </td>

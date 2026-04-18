@@ -273,7 +273,7 @@ const StockManagement = () => {
             <div className="mb-8 flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold mb-2">Daily Stock</h1>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-slate-400">
                         {canEditStock ? 'Monitor and update stock levels' : 'View current stock levels'}
                     </p>
                 </div>
@@ -283,17 +283,17 @@ const StockManagement = () => {
             </div>
 
             {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-                    <FaExclamationTriangle className="text-red-600 mt-0.5 flex-shrink-0" />
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3 dark:bg-red-950/40 dark:border-red-800">
+                    <FaExclamationTriangle className="text-red-600 mt-0.5 flex-shrink-0 dark:text-red-400" />
                     <div>
-                        <h3 className="font-semibold text-red-900">Error Loading Stock</h3>
-                        <p className="text-sm text-red-800">{error}</p>
+                        <h3 className="font-semibold text-red-900 dark:text-red-300">Error Loading Stock</h3>
+                        <p className="text-sm text-red-800 dark:text-red-400">{error}</p>
                     </div>
                 </div>
             )}
 
             {canEditStock && (
-                <div className="bg-white rounded-lg shadow p-6 mb-6">
+                <div className="bg-white rounded-lg shadow p-6 mb-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                     <h2 className="text-lg font-semibold mb-4">Add Item to Today&apos;s Stock</h2>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                         <Select
@@ -320,35 +320,35 @@ const StockManagement = () => {
                         </Button>
                     </div>
                     {availableMenuOptions.length === 0 && (
-                        <p className="text-sm text-gray-500 mt-2">All active items already have stock records for today.</p>
+                        <p className="text-sm text-gray-500 mt-2 dark:text-slate-400">All active items already have stock records for today.</p>
                     )}
                 </div>
             )}
 
             {stock.length === 0 ? (
-                <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <p className="text-gray-500">No stock data available for today</p>
+                <div className="bg-white rounded-lg shadow p-8 text-center dark:bg-slate-800">
+                    <p className="text-gray-500 dark:text-slate-400">No stock data available for today</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="bg-white rounded-lg shadow overflow-hidden dark:bg-slate-800 dark:shadow-slate-900/50">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                            <thead className="bg-gray-50 dark:bg-slate-700/50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item Name</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-slate-400">Item Name</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Opening</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Sold</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Adjusted</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase text-center">Closing</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-slate-400">Status</th>
                                     {canEditStock && (
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-slate-400">Actions</th>
                                     )}
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200">
+                            <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                                 {stock.map(item => (
-                                    <tr key={item.StockID} className={item.IsLowStock ? 'bg-yellow-50 hover:bg-yellow-100' : 'hover:bg-gray-50'}>
+                                    <tr key={item.StockID} className={item.IsLowStock ? 'bg-yellow-50 hover:bg-yellow-100 dark:bg-yellow-950/30 dark:hover:bg-yellow-950/50' : 'hover:bg-gray-50 dark:hover:bg-slate-700/50'}>
                                         <td className="px-6 py-4 font-medium">{item.menuItem?.Name || 'Unknown Item'}</td>
                                         <td className="px-6 py-4 text-center">
                                             {canEditStock ? (

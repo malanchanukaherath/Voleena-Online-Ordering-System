@@ -126,7 +126,7 @@ const StaffManagement = () => {
                 <div className="flex justify-between items-center">
                     <div>
                         <h1 className="text-3xl font-bold mb-2">Staff Management</h1>
-                        <p className="text-gray-600">Manage staff members and their roles</p>
+                        <p className="text-gray-600 dark:text-slate-400">Manage staff members and their roles</p>
                     </div>
                     <Button onClick={() => setIsAddModalOpen(true)}>
                         <FaUserPlus className="inline mr-2" />
@@ -136,13 +136,13 @@ const StaffManagement = () => {
             </div>
 
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 dark:bg-red-950/40 dark:border-red-800 dark:text-red-400">
                     {error}
                 </div>
             )}
 
             {/* Search and Filter Bar */}
-            <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="bg-white rounded-lg shadow p-4 mb-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div className="md:col-span-2">
                         <Input
@@ -170,24 +170,24 @@ const StaffManagement = () => {
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white rounded-lg shadow p-6">
-                    <p className="text-sm text-gray-600 mb-1">Total Staff</p>
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                    <p className="text-sm text-gray-600 mb-1 dark:text-slate-400">Total Staff</p>
                     <p className="text-3xl font-bold text-primary-600">{staff.length}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
-                    <p className="text-sm text-gray-600 mb-1">Active</p>
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                    <p className="text-sm text-gray-600 mb-1 dark:text-slate-400">Active</p>
                     <p className="text-3xl font-bold text-green-600">
                         {staff.filter(s => s.IsActive).length}
                     </p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
-                    <p className="text-sm text-gray-600 mb-1">Admins</p>
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                    <p className="text-sm text-gray-600 mb-1 dark:text-slate-400">Admins</p>
                     <p className="text-3xl font-bold text-purple-600">
                         {staff.filter(s => s.role?.RoleName === 'Admin').length}
                     </p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
-                    <p className="text-sm text-gray-600 mb-1">Delivery Staff</p>
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                    <p className="text-sm text-gray-600 mb-1 dark:text-slate-400">Delivery Staff</p>
                     <p className="text-3xl font-bold text-blue-600">
                         {staff.filter(s => s.role?.RoleName === 'Delivery').length}
                     </p>
@@ -198,49 +198,49 @@ const StaffManagement = () => {
             {loading ? (
                 <LoadingSkeleton type="table" rows={10} />
             ) : filteredStaff.length > 0 ? (
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="bg-white rounded-lg shadow overflow-hidden dark:bg-slate-800 dark:shadow-slate-900/50">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                            <thead className="bg-gray-50 dark:bg-slate-700/50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Staff Member
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Contact
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Role
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Created
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Status
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white divide-y divide-gray-200 dark:bg-slate-800 dark:divide-slate-700">
                                 {filteredStaff.map((member) => (
-                                    <tr key={member.StaffID} className="hover:bg-gray-50">
+                                    <tr key={member.StaffID} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
-                                                <div className="flex-shrink-0 h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center">
+                                                <div className="flex-shrink-0 h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center dark:bg-primary-900/40">
                                                     <span className="text-primary-600 font-semibold">
                                                         {member.Name?.split(' ').map(n => n[0]).join('').toUpperCase()}
                                                     </span>
                                                 </div>
                                                 <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900">{member.Name}</div>
+                                                    <div className="text-sm font-medium text-gray-900 dark:text-slate-200">{member.Name}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">{member.Email}</div>
-                                            <div className="text-xs text-gray-500">{member.Phone}</div>
+                                            <div className="text-sm text-gray-900 dark:text-slate-200">{member.Email}</div>
+                                            <div className="text-xs text-gray-500 dark:text-slate-400">{member.Phone}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`inline-flex px-2 py-1 text-xs rounded-full ${getRoleBadgeColor(member.role?.RoleName)}`}>
@@ -248,7 +248,7 @@ const StaffManagement = () => {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-500">{formatDate(member.createdAt || member.CreatedAt || member.created_at)}</div>
+                                            <div className="text-sm text-gray-500 dark:text-slate-400">{formatDate(member.createdAt || member.CreatedAt || member.created_at)}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {member.IsActive ? (

@@ -204,10 +204,10 @@ const MenuManagement = () => {
         <div className="p-6">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold mb-2">Menu Management</h1>
-                <p className="text-gray-600">Manage your menu items</p>
+                <p className="text-gray-600 dark:text-slate-400">Manage your menu items</p>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
                     <div className="lg:col-span-2">
                         <Input
@@ -257,18 +257,18 @@ const MenuManagement = () => {
             {loading ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[1, 2, 3].map(i => (
-                        <div key={i} className="bg-white rounded-lg shadow-sm p-6">
+                        <div key={i} className="bg-white rounded-lg shadow-sm p-6 dark:bg-slate-800">
                             <div className="animate-pulse">
-                                <div className="h-48 bg-gray-200 rounded mb-4"></div>
-                                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                                <div className="h-48 bg-gray-200 rounded mb-4 dark:bg-slate-700"></div>
+                                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 dark:bg-slate-700"></div>
+                                <div className="h-4 bg-gray-200 rounded w-1/2 dark:bg-slate-700"></div>
                             </div>
                         </div>
                     ))}
                 </div>
             ) : filteredItems.length === 0 ? (
-                <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-                    <p className="text-gray-500">No menu items found</p>
+                <div className="bg-white rounded-lg shadow-sm p-12 text-center dark:bg-slate-800">
+                    <p className="text-gray-500 dark:text-slate-400">No menu items found</p>
                     <Button onClick={() => handleOpenModal()} className="mt-4">
                         <FaPlus className="mr-2" /> Add First Menu Item
                     </Button>
@@ -276,7 +276,7 @@ const MenuManagement = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredItems.map(item => (
-                        <div key={item.MenuItemID} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div key={item.MenuItemID} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow dark:bg-slate-800 dark:shadow-slate-900/50">
                             {(item.ImageURL || item.Image_URL) ? (
                                 <img
                                     src={resolveAssetUrl(item.ImageURL || item.Image_URL)}
@@ -284,8 +284,8 @@ const MenuManagement = () => {
                                     className="w-full h-48 object-cover"
                                 />
                             ) : (
-                                <div className="w-full h-48 bg-gray-200 flex items-center justify-center">
-                                    <span className="text-gray-400">No Image</span>
+                                <div className="w-full h-48 bg-gray-200 flex items-center justify-center dark:bg-slate-700">
+                                    <span className="text-gray-400 dark:text-slate-500">No Image</span>
                                 </div>
                             )}
                             <div className="p-4">
@@ -298,11 +298,11 @@ const MenuManagement = () => {
                                         {item.IsActive ? <FaToggleOn /> : <FaToggleOff />}
                                     </button>
                                 </div>
-                                <p className="text-sm text-gray-600 mb-2">{item.Description}</p>
+                                <p className="text-sm text-gray-600 mb-2 dark:text-slate-400">{item.Description}</p>
                                 <p className="text-xl font-bold text-primary-600 mb-2">
                                     LKR {parseFloat(item.Price).toFixed(2)}
                                 </p>
-                                <p className="text-sm text-gray-500 mb-4">
+                                <p className="text-sm text-gray-500 mb-4 dark:text-slate-400">
                                     {item.category?.Name || 'Uncategorized'}
                                 </p>
                                 <div className="flex gap-2">
@@ -345,14 +345,14 @@ const MenuManagement = () => {
                     />
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">
                             Description
                         </label>
                         <textarea
                             name="Description"
                             value={formData.Description}
                             onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200"
                             rows="3"
                         />
                     </div>
@@ -395,7 +395,7 @@ const MenuManagement = () => {
                             onChange={handleChange}
                             className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
                         />
-                        <label className="ml-2 text-sm text-gray-700">
+                        <label className="ml-2 text-sm text-gray-700 dark:text-slate-300">
                             Active
                         </label>
                     </div>

@@ -218,15 +218,15 @@ const Cart = () => {
         <div className="mx-auto max-w-7xl px-4 sm:px-0">
             <div className="mb-8">
                 <h1 className="mb-2 text-2xl font-bold sm:text-3xl">Shopping Cart</h1>
-                <p className="text-gray-600">Review your items before checkout</p>
+                <p className="text-gray-600 dark:text-slate-400">Review your items before checkout</p>
             </div>
 
 
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
                 {/* Cart Items */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-lg shadow">
-                        <div className="border-b p-4 sm:p-6">
+                    <div className="bg-white dark:bg-slate-800 rounded-lg shadow">
+                        <div className="border-b dark:border-slate-700 p-4 sm:p-6">
                             <h2 className="text-lg font-semibold sm:text-xl">Cart Items ({cartItems.length})</h2>
                         </div>
                         <div className="divide-y">
@@ -239,16 +239,16 @@ const Cart = () => {
                                 return (
                                     <div
                                         key={`${item.type}-${item.id}`}
-                                        className={`p-4 sm:p-6 ${isStockIssue ? 'bg-red-50 border-l-4 border-red-500' : ''}`}
+                                        className={`p-4 sm:p-6 ${isStockIssue ? 'bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500' : ''}`}
                                     >
                                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                                             <div className="flex min-w-0 flex-1 items-start gap-3 sm:gap-4">
                                                 {/* Image */}
-                                                <div className="relative flex h-20 w-20 flex-shrink-0 items-center justify-center rounded bg-gray-200 sm:h-24 sm:w-24">
+                                                <div className="relative flex h-20 w-20 flex-shrink-0 items-center justify-center rounded bg-gray-200 dark:bg-slate-700 sm:h-24 sm:w-24">
                                                     {item.image ? (
                                                         <img src={item.image} alt={item.name} className="h-full w-full rounded object-cover" />
                                                     ) : (
-                                                        <span className="text-xs text-gray-400">No image</span>
+                                                        <span className="text-xs text-gray-400 dark:text-slate-500">No image</span>
                                                     )}
                                                     {isUnavailable && (
                                                         <div className="absolute inset-0 flex items-center justify-center rounded bg-black bg-opacity-50">
@@ -286,18 +286,18 @@ const Cart = () => {
 
                                                     {/* Quantity Controls */}
                                                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                                                        <div className="flex items-center rounded border">
+                                                        <div className="flex items-center rounded border dark:border-slate-600">
                                                             <button
                                                                 onClick={() => updateQuantity(item.id, item.type, -1)}
-                                                                className="px-3 py-1 hover:bg-gray-100"
+                                                                className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-slate-700"
                                                                 disabled={item.quantity <= 1}
                                                             >
                                                                 <FaMinus className="h-3 w-3" />
                                                             </button>
-                                                            <span className="border-x px-3 py-1 sm:px-4">{item.quantity}</span>
+                                                            <span className="border-x dark:border-slate-600 px-3 py-1 sm:px-4">{item.quantity}</span>
                                                             <button
                                                                 onClick={() => updateQuantity(item.id, item.type, 1)}
-                                                                className="px-3 py-1 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                                                className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
                                                                 disabled={disableIncrease}
                                                                 title={disableIncrease ? 'Maximum available stock reached' : 'Increase quantity'}
                                                             >
@@ -338,26 +338,26 @@ const Cart = () => {
 
                 {/* Order Summary */}
                 <div className="lg:col-span-1">
-                    <div className="rounded-lg bg-white p-4 shadow sm:p-6 lg:sticky lg:top-6">
+                    <div className="rounded-lg bg-white dark:bg-slate-800 p-4 shadow sm:p-6 lg:sticky lg:top-6">
                         <h2 className="mb-4 text-lg font-semibold sm:text-xl">Order Summary</h2>
                         {showLoginPrompt && (
-                            <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                            <div className="mb-4 rounded-md border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-3 text-sm text-amber-800 dark:text-amber-300">
                                 Sign in before checkout to place your order.
                             </div>
                         )}
                         <div className="space-y-3 mb-6">
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Subtotal</span>
+                                <span className="text-gray-600 dark:text-slate-400">Subtotal</span>
                                 <span className="font-medium">LKR {subtotal.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between text-sm">
-                                <span className="text-gray-600">Estimated Delivery Fee (base)</span>
+                                <span className="text-gray-600 dark:text-slate-400">Estimated Delivery Fee (base)</span>
                                 <span className="font-medium">LKR {deliveryFee.toFixed(2)}</span>
                             </div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-xs text-gray-500 dark:text-slate-500">
                                 Final delivery fee is confirmed at checkout after we validate your delivery distance.
                             </div>
-                            <div className="border-t pt-3 flex justify-between">
+                            <div className="border-t dark:border-slate-700 pt-3 flex justify-between">
                                 <span className="font-semibold text-lg">Total</span>
                                 <span className="font-bold text-lg text-primary-600">
                                     LKR {total.toFixed(2)}
@@ -382,7 +382,7 @@ const Cart = () => {
                         )}
 
                         {showLoginPrompt && !hasStockIssues() && !validatingStock && (
-                            <p className="text-xs text-gray-500 mt-2 text-center">
+                            <p className="text-xs text-gray-500 dark:text-slate-400 mt-2 text-center">
                                 You can add items as a guest, but checkout requires a customer login.
                             </p>
                         )}

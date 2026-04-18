@@ -1072,18 +1072,18 @@ const CashierDashboard = ({ posOnly = false }) => {
     };
 
     return (
-        <div className={posOnly ? 'min-h-screen bg-gray-50 p-4 md:p-6' : 'p-6'}>
+        <div className={posOnly ? 'min-h-screen bg-gray-50 dark:bg-slate-900 p-4 md:p-6' : 'p-6'}>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-8">
                 <h1 className="text-3xl font-bold">{posOnly ? 'Cashier POS' : 'Cashier Dashboard'}</h1>
                 {posOnly && (
                     <div className="flex flex-wrap gap-2">
-                        <Link to="/cashier/dashboard" className="px-4 py-2 border rounded hover:bg-gray-100 text-sm font-medium">
+                        <Link to="/cashier/dashboard" className="px-4 py-2 border dark:border-slate-600 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-sm font-medium">
                             Back to Dashboard
                         </Link>
                         <button
                             type="button"
                             onClick={togglePosFullscreen}
-                            className="px-4 py-2 border rounded hover:bg-gray-100 text-sm font-medium inline-flex items-center gap-2"
+                            className="px-4 py-2 border dark:border-slate-600 rounded hover:bg-gray-100 dark:hover:bg-slate-700 text-sm font-medium inline-flex items-center gap-2"
                         >
                             {isPosFullscreen ? <FaCompress className="h-4 w-4" /> : <FaExpand className="h-4 w-4" />}
                             {isPosFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
@@ -1095,45 +1095,45 @@ const CashierDashboard = ({ posOnly = false }) => {
             {!posOnly && (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                     <FaClipboardList className="w-8 h-8 text-blue-600 mb-2" />
-                    <p className="text-sm text-gray-600">Today's Orders</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Today's Orders</p>
                     <p className="text-3xl font-bold">{stats.todayOrders}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                     <FaMoneyBillWave className="w-8 h-8 text-green-600 mb-2" />
-                    <p className="text-sm text-gray-600">Today's Revenue</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Today's Revenue</p>
                     <p className="text-3xl font-bold">LKR {Number(stats.todayRevenue || 0).toFixed(2)}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                     <FaCashRegister className="w-8 h-8 text-orange-600 mb-2" />
-                    <p className="text-sm text-gray-600">Walk-in Orders</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Walk-in Orders</p>
                     <p className="text-3xl font-bold">{stats.walkInOrders}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                     <FaUsers className="w-8 h-8 text-purple-600 mb-2" />
-                    <p className="text-sm text-gray-600">Online Orders</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Online Orders</p>
                     <p className="text-3xl font-bold">{stats.onlineOrders}</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center">
                         Recent Orders
                     </h3>
                     <div className="space-y-3">
                         {recentOrders.length === 0 ? (
-                            <div className="text-sm text-gray-500">No recent orders.</div>
+                            <div className="text-sm text-gray-500 dark:text-slate-400">No recent orders.</div>
                         ) : recentOrders.map(order => (
                             <div
                                 key={order.id}
-                                className="flex justify-between items-center p-3 rounded border-2 border-gray-200 bg-gray-50"
+                                className="flex justify-between items-center p-3 rounded border-2 border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-700/50"
                             >
                                 <div className="flex-1">
                                     <p className="font-medium">{order.orderNumber}</p>
-                                        <p className="text-sm text-gray-600">{order.customer}</p>
-                                        <p className="text-xs text-gray-500 mt-1">Type: {order.orderType}</p>
+                                        <p className="text-sm text-gray-600 dark:text-slate-400">{order.customer}</p>
+                                        <p className="text-xs text-gray-500 dark:text-slate-500 mt-1">Type: {order.orderType}</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <StatusBadge status={order.status} type="order" />
@@ -1147,18 +1147,18 @@ const CashierDashboard = ({ posOnly = false }) => {
                     </Link>
                 </div>
 
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
                     <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <Link to="/cashier/orders" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
+                        <Link to="/cashier/orders" className="p-4 border-2 dark:border-slate-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-500 text-center">
                             <FaClipboardList className="w-8 h-8 mx-auto mb-2 text-primary-600" />
                             <p className="font-medium">Manage Orders</p>
                         </Link>
-                        <Link to="/cashier/pos" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
+                        <Link to="/cashier/pos" className="p-4 border-2 dark:border-slate-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-500 text-center">
                             <FaCashRegister className="w-8 h-8 mx-auto mb-2 text-primary-600" />
                             <p className="font-medium">Open POS Full View</p>
                         </Link>
-                        <Link to="/cashier/customers/new" className="p-4 border-2 rounded-lg hover:border-primary-500 text-center">
+                        <Link to="/cashier/customers/new" className="p-4 border-2 dark:border-slate-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-500 text-center">
                             <FaUsers className="w-8 h-8 mx-auto mb-2 text-primary-600" />
                             <p className="font-medium">New Customer</p>
                         </Link>
@@ -1169,15 +1169,15 @@ const CashierDashboard = ({ posOnly = false }) => {
             )}
 
             {posOnly && (
-                <div className="mt-6 bg-white rounded-lg shadow p-3 sm:p-4 xl:p-6">
+                <div className="mt-6 bg-white dark:bg-slate-800 rounded-lg shadow p-3 sm:p-4 xl:p-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                         <h3 className="text-lg font-semibold">Walk-In POS</h3>
                         <div className="flex items-center gap-3">
-                            <label className="text-sm text-gray-600">Payment Method</label>
+                            <label className="text-sm text-gray-600 dark:text-slate-400">Payment Method</label>
                             <select
                                 value={walkInPaymentMethod}
                                 onChange={(e) => setWalkInPaymentMethod(e.target.value)}
-                                className="border rounded px-3 py-2 text-sm"
+                                className="border dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded px-3 py-2 text-sm"
                             >
                                 <option value="CASH">CASH</option>
                                 <option value="CARD">CARD</option>
@@ -1190,7 +1190,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                     {walkInPaymentMethod === 'CASH' && (
                         <div className="mb-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div>
-                                <label className="text-sm text-gray-600">Amount Received</label>
+                                <label className="text-sm text-gray-600 dark:text-slate-400">Amount Received</label>
                                 <input
                                     type="text"
                                     inputMode="decimal"

@@ -357,34 +357,34 @@ const ComboManagement = () => {
             <div className="mb-8 flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold mb-2">Combo Pack Management</h1>
-                    <p className="text-gray-600">Manage special combo offers and packages</p>
+                    <p className="text-gray-600 dark:text-slate-400">Manage special combo offers and packages</p>
                 </div>
                 <Button onClick={handleOpenCreate}>
                     <FaPlus className="inline mr-2" />Create Combo
                 </Button>
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
+            <div className="bg-white rounded-lg shadow overflow-hidden dark:bg-slate-800 dark:shadow-slate-900/50">
                 {isLoading ? (
-                    <div className="p-6 text-gray-600">Loading combo packs...</div>
+                    <div className="p-6 text-gray-600 dark:text-slate-400">Loading combo packs...</div>
                 ) : combos.length === 0 ? (
-                    <div className="p-6 text-gray-600">No combo packs found.</div>
+                    <div className="p-6 text-gray-600 dark:text-slate-400">No combo packs found.</div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                            <thead className="bg-gray-50 dark:bg-slate-700/50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Combo Name</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Discount</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Schedule</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-slate-400">Combo Name</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-slate-400">Price</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-slate-400">Discount</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-slate-400">Schedule</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-slate-400">Status</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase dark:text-slate-400">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200">
+                            <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
                                 {combos.map(combo => (
-                                    <tr key={combo.id} className="hover:bg-gray-50">
+                                    <tr key={combo.id} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
                                         <td className="px-6 py-4">
                                             <div className="flex items-center">
                                                 {combo.image && (
@@ -392,7 +392,7 @@ const ComboManagement = () => {
                                                 )}
                                                 <div>
                                                     <div className="font-medium">{combo.name}</div>
-                                                    <div className="text-sm text-gray-500">{combo.description}</div>
+                                                    <div className="text-sm text-gray-500 dark:text-slate-400">{combo.description}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -400,11 +400,11 @@ const ComboManagement = () => {
                                         <td className="px-6 py-4">{combo.discount > 0 ? `${combo.discount.toFixed(2)}%` : '0%'}</td>
                                         <td className="px-6 py-4">
                                             <div className="text-sm">
-                                                <div className="flex items-center text-gray-600">
+                                                <div className="flex items-center text-gray-600 dark:text-slate-400">
                                                     <FaCalendar className="mr-1" />
                                                     {combo.startDate}
                                                 </div>
-                                                <div className="text-xs text-gray-500">to {combo.endDate}</div>
+                                                <div className="text-xs text-gray-500 dark:text-slate-500">to {combo.endDate}</div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
@@ -511,7 +511,7 @@ const ComboManagement = () => {
 
                         <div>
                             <div className="flex items-center justify-between mb-2">
-                                <label className="block text-sm font-medium text-gray-700">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300">
                                     Combo Items
                                 </label>
                                 <Button type="button" variant="outline" onClick={handleAddItemRow}>
@@ -599,7 +599,7 @@ const ComboManagement = () => {
                                 onChange={handleChange}
                                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                             />
-                            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+                            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900 dark:text-slate-200">
                                 Active (visible to customers)
                             </label>
                         </div>

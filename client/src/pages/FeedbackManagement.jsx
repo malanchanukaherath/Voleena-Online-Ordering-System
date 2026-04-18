@@ -74,44 +74,44 @@ const FeedbackManagement = () => {
         <div className="p-6">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold mb-2">Feedback Management</h1>
-                <p className="text-gray-600">View and respond to delivered order feedback</p>
+                <p className="text-gray-600 dark:text-slate-400">View and respond to delivered order feedback</p>
             </div>
 
             {errorMessage && (
-                <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:border-red-800 dark:text-red-400">
                     {errorMessage}
                 </div>
             )}
 
             <div className="space-y-4">
                 {isLoading && (
-                    <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500">
+                    <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500 dark:bg-slate-800 dark:text-slate-400">
                         Loading feedback records...
                     </div>
                 )}
 
                 {filteredFeedback.length === 0 ? (
-                    <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500">
+                    <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500 dark:bg-slate-800 dark:text-slate-400">
                         No feedback records available yet.
                     </div>
                 ) : !isLoading && filteredFeedback.map(feedback => (
-                    <div key={feedback.FeedbackID} className={`bg-white rounded-lg shadow p-6 ${!feedback.AdminResponse ? 'border-l-4 border-yellow-400' : ''}`}>
+                    <div key={feedback.FeedbackID} className={`bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50 ${!feedback.AdminResponse ? 'border-l-4 border-yellow-400' : ''}`}>
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <div className="flex items-center gap-3 mb-2">
                                     <h3 className="font-semibold">{feedback.customer?.Name || 'Unknown Customer'}</h3>
-                                    <span className="text-xs px-2 py-1 bg-gray-100 rounded">{feedback.FeedbackType}</span>
-                                    {feedback.order?.OrderNumber && <span className="text-xs text-gray-500">#{feedback.order.OrderNumber}</span>}
+                                    <span className="text-xs px-2 py-1 bg-gray-100 rounded dark:bg-slate-700 dark:text-slate-300">{feedback.FeedbackType}</span>
+                                    {feedback.order?.OrderNumber && <span className="text-xs text-gray-500 dark:text-slate-400">#{feedback.order.OrderNumber}</span>}
                                 </div>
-                                <p className="text-xs text-gray-500 mb-2">
+                                <p className="text-xs text-gray-500 mb-2 dark:text-slate-400">
                                     {feedback.customer?.Phone || 'No phone'} {feedback.customer?.Email ? `| ${feedback.customer.Email}` : ''}
                                 </p>
                                 <div className="flex items-center gap-2">
                                     {renderStars(feedback.Rating)}
-                                    <span className="text-sm text-gray-500">{formatFeedbackDate(feedback.created_at)}</span>
+                                    <span className="text-sm text-gray-500 dark:text-slate-400">{formatFeedbackDate(feedback.created_at)}</span>
                                 </div>
                                 {feedback.order && (
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-xs text-gray-500 mt-1 dark:text-slate-400">
                                         Order: {feedback.order.OrderType} | Status: {feedback.order.Status}
                                     </p>
                                 )}
@@ -127,7 +127,7 @@ const FeedbackManagement = () => {
                                 )}
                             </div>
                         </div>
-                        <p className="text-gray-700">{feedback.Comment || 'No comment provided.'}</p>
+                        <p className="text-gray-700 dark:text-slate-300">{feedback.Comment || 'No comment provided.'}</p>
 
                         {(feedback.PositiveTags?.length > 0 || feedback.IssueTags?.length > 0) && (
                             <div className="mt-3 space-y-2">
@@ -186,10 +186,10 @@ const FeedbackManagement = () => {
                         )}
 
                         {feedback.AdminResponse && (
-                            <div className="mt-4 pl-4 border-l-2 border-gray-200">
-                                <p className="text-sm text-gray-600"><strong>Admin Reply:</strong> {feedback.AdminResponse}</p>
+                            <div className="mt-4 pl-4 border-l-2 border-gray-200 dark:border-slate-600">
+                                <p className="text-sm text-gray-600 dark:text-slate-400"><strong>Admin Reply:</strong> {feedback.AdminResponse}</p>
                                 {feedback.responder?.Name && (
-                                    <p className="text-xs text-gray-500 mt-1">
+                                    <p className="text-xs text-gray-500 mt-1 dark:text-slate-500">
                                         Responded by {feedback.responder.Name} on {formatFeedbackDate(feedback.RespondedAt)}
                                     </p>
                                 )}

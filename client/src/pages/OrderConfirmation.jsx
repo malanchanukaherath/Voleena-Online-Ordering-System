@@ -68,47 +68,47 @@ const OrderConfirmation = () => {
 
     if (loading) {
         return (
-            <div className="max-w-3xl mx-auto p-6 text-sm text-gray-500">Loading order details...</div>
+            <div className="max-w-3xl mx-auto p-6 text-sm text-gray-500 dark:text-slate-400">Loading order details...</div>
         );
     }
 
     if (error) {
         return (
-            <div className="max-w-3xl mx-auto p-6 text-sm text-red-600">{error}</div>
+            <div className="max-w-3xl mx-auto p-6 text-sm text-red-600 dark:text-red-400">{error}</div>
         );
     }
 
     return (
         <div className="max-w-3xl mx-auto">
             {/* Success Message */}
-            <div className="bg-green-50 border-2 border-green-500 rounded-lg p-8 mb-8 text-center">
+            <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-500 dark:border-green-700 rounded-lg p-8 mb-8 text-center">
                 <FaCheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                <h1 className="text-3xl font-bold text-green-700 mb-2">Order Placed Successfully!</h1>
-                <p className="text-lg text-green-600 mb-4">
+                <h1 className="text-3xl font-bold text-green-700 dark:text-green-400 mb-2">Order Placed Successfully!</h1>
+                <p className="text-lg text-green-600 dark:text-green-400 mb-4">
                     {isPreorder
                         ? 'Thank you for your preorder. It is confirmed and scheduled.'
                         : "Thank you for your order. We've received your order and will start preparing it shortly."}
                 </p>
                 {isPreorder && hasValidSchedule && (
-                    <p className="text-sm text-green-700 mb-3">
+                    <p className="text-sm text-green-700 dark:text-green-400 mb-3">
                         Scheduled for: <span className="font-semibold">{scheduledDatetime.toLocaleString()}</span>
                     </p>
                 )}
-                <p className="text-sm text-gray-600">
-                    Order Number: <span className="font-bold text-gray-900">{order?.OrderNumber || '—'}</span>
+                <p className="text-sm text-gray-600 dark:text-slate-400">
+                    Order Number: <span className="font-bold text-gray-900 dark:text-slate-100">{order?.OrderNumber || '—'}</span>
                 </p>
             </div>
 
             {paymentSyncWarning && (
-                <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-8 text-sm text-amber-900">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 rounded-lg p-4 mb-8 text-sm text-amber-900 dark:text-amber-300">
                     Card payment succeeded, but final server confirmation is still syncing. Do not retry payment.
                     If this message remains for more than a few minutes, contact support with your order number.
                 </div>
             )}
 
             {/* Order Details */}
-            <div className="bg-white rounded-lg shadow mb-8">
-                <div className="p-6 border-b">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow mb-8">
+                <div className="p-6 border-b dark:border-slate-700">
                     <h2 className="text-xl font-semibold">Order Details</h2>
                 </div>
 
@@ -119,16 +119,16 @@ const OrderConfirmation = () => {
                             {order?.OrderType === 'DELIVERY' ? 'Delivery Information' : 'Pickup Information'}
                         </h3>
                         {order?.OrderType === 'DELIVERY' ? (
-                            <div className="text-sm text-gray-600">
+                            <div className="text-sm text-gray-600 dark:text-slate-400">
                                 <p>{deliveryAddress?.AddressLine1 || 'N/A'}</p>
                                 {deliveryAddress?.AddressLine2 && <p>{deliveryAddress.AddressLine2}</p>}
                                 <p>{deliveryAddress?.City}{deliveryAddress?.PostalCode ? `, ${deliveryAddress.PostalCode}` : ''}</p>
-                                <p className="mt-2 font-medium text-gray-900">
+                                <p className="mt-2 font-medium text-gray-900 dark:text-slate-200">
                                     Estimated Delivery: 30-45 minutes
                                 </p>
                             </div>
                         ) : (
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-slate-400">
                                 Your order will be ready for pickup at our location in {order.estimatedDeliveryTime}
                             </p>
                         )}
@@ -137,7 +137,7 @@ const OrderConfirmation = () => {
                     {/* Contact Info */}
                     <div>
                         <h3 className="font-semibold mb-2">Contact Information</h3>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 dark:text-slate-400">
                             <p>{order?.customer?.Name || 'N/A'}</p>
                             <p>{order?.customer?.Email || 'N/A'}</p>
                             <p>{order?.customer?.Phone || 'N/A'}</p>
@@ -150,7 +150,7 @@ const OrderConfirmation = () => {
                         <div className="space-y-2">
                             {items.map((item) => (
                                 <div key={item.OrderItemID || `${item.MenuItemID || item.ComboID}-${item.Quantity}`} className="flex justify-between text-sm">
-                                    <span className="text-gray-600">
+                                    <span className="text-gray-600 dark:text-slate-400">
                                         {item.Quantity}x {item.menuItem?.Name || item.combo?.Name || 'Item'}
                                     </span>
                                     <span className="font-medium">LKR {((item.UnitPrice || item.menuItem?.Price || 0) * item.Quantity).toFixed(2)}</span>
@@ -160,13 +160,13 @@ const OrderConfirmation = () => {
                     </div>
 
                     {/* Order Summary */}
-                    <div className="border-t pt-4">
+                    <div className="border-t dark:border-slate-700 pt-4">
                         <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                                <span className="text-gray-600">Subtotal</span>
+                                <span className="text-gray-600 dark:text-slate-400">Subtotal</span>
                                 <span>LKR {subtotal.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between text-lg font-bold border-t pt-2">
+                            <div className="flex justify-between text-lg font-bold border-t dark:border-slate-700 pt-2">
                                 <span>Total</span>
                                 <span className="text-primary-600">LKR {parseFloat(total).toFixed(2)}</span>
                             </div>
@@ -192,7 +192,7 @@ const OrderConfirmation = () => {
             </div>
 
             {/* Notification Info */}
-            <div className="mt-8 text-center text-sm text-gray-500">
+            <div className="mt-8 text-center text-sm text-gray-500 dark:text-slate-400">
                 <p>{updateChannelText}</p>
             </div>
         </div>

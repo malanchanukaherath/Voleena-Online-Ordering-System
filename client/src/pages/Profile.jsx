@@ -569,34 +569,34 @@ const Profile = () => {
         <div className="max-w-4xl mx-auto">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold mb-2">My Profile</h1>
-                <p className="text-gray-600">Manage your account information and preferences</p>
+                <p className="text-gray-600 dark:text-slate-400">Manage your account information and preferences</p>
             </div>
 
             {/* Account Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                     <FaClipboardList className="w-8 h-8 text-primary-600 mb-2" />
-                    <p className="text-sm text-gray-600">Total Orders</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Total Orders</p>
                     <p className="text-2xl font-bold">{stats.totalOrders}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                     <FaUser className="w-8 h-8 text-primary-600 mb-2" />
-                    <p className="text-sm text-gray-600">Total Spent</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Total Spent</p>
                     <p className="text-2xl font-bold">LKR {stats.totalSpent.toFixed(2)}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                     <FaUser className="w-8 h-8 text-primary-600 mb-2" />
-                    <p className="text-sm text-gray-600">Member Since</p>
+                    <p className="text-sm text-gray-600 dark:text-slate-400">Member Since</p>
                     <p className="text-2xl font-bold">{stats.memberSince}</p>
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Profile Information */}
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                     <h2 className="text-xl font-semibold mb-6">Profile Information</h2>
                     {isProfileLoading && (
-                        <p className="text-sm text-gray-500 mb-4">Loading profile...</p>
+                        <p className="text-sm text-gray-500 mb-4 dark:text-slate-400">Loading profile...</p>
                     )}
                     <form onSubmit={handleProfileSubmit} className="space-y-4">
                         <Input
@@ -651,11 +651,11 @@ const Profile = () => {
                                 Your phone number is verified.
                             </div>
                         ) : (
-                            <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
-                                <p className="text-sm font-medium text-amber-800">
+                            <div className="rounded-md border border-amber-200 bg-amber-50 p-3 dark:bg-amber-950/40 dark:border-amber-800">
+                                <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
                                     Phone number is not verified.
                                 </p>
-                                <p className="mt-1 text-xs text-amber-700">
+                                <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
                                     Verify your profile phone so delivery staff always has a trusted fallback number.
                                 </p>
                                 <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -675,7 +675,7 @@ const Profile = () => {
                                         value={phoneVerificationOtp}
                                         onChange={(e) => setPhoneVerificationOtp(e.target.value.replace(/\D/g, ''))}
                                         placeholder="Enter 6-digit OTP"
-                                        className="w-full rounded-md border border-amber-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 sm:max-w-[220px]"
+                                        className="w-full rounded-md border border-amber-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 sm:max-w-[220px] dark:bg-slate-700 dark:border-amber-700 dark:text-slate-200 dark:placeholder-slate-400"
                                     />
                                     <Button
                                         type="button"
@@ -689,7 +689,7 @@ const Profile = () => {
                             </div>
                         )}
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Notification</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-slate-300">Preferred Notification</label>
                             <select
                                 name="preferredNotification"
                                 value={formData.preferredNotification}
@@ -698,6 +698,7 @@ const Profile = () => {
                                     block w-full px-3 py-2 border rounded-md shadow-sm
                                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
                                     ${errors.preferredNotification ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'}
+                                    bg-white text-gray-900 dark:bg-slate-700 dark:border-slate-600 dark:text-slate-200
                                 `}
                             >
                                 <option value="BOTH">Email and SMS</option>
@@ -720,7 +721,7 @@ const Profile = () => {
                 </div>
 
                 {/* Change Password */}
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                     <h2 className="text-xl font-semibold mb-6">Change Password</h2>
                     <form onSubmit={handlePasswordSubmit} className="space-y-4">
                         <Input
@@ -761,33 +762,33 @@ const Profile = () => {
                 </div>
             </div>
 
-            <div className="mt-8 bg-white rounded-lg shadow p-6">
+            <div className="mt-8 bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold flex items-center gap-2">
                         <FaMapMarkedAlt className="text-primary-600" />
                         Saved Addresses
                     </h2>
-                    <span className="text-xs text-gray-500">Maximum 3 addresses</span>
+                    <span className="text-xs text-gray-500 dark:text-slate-400">Maximum 3 addresses</span>
                 </div>
 
                 {isAddressLoading ? (
-                    <p className="text-sm text-gray-500 mb-4">Loading addresses...</p>
+                    <p className="text-sm text-gray-500 mb-4 dark:text-slate-400">Loading addresses...</p>
                 ) : addresses.length === 0 ? (
-                    <p className="text-sm text-gray-500 mb-4">No saved addresses yet.</p>
+                    <p className="text-sm text-gray-500 mb-4 dark:text-slate-400">No saved addresses yet.</p>
                 ) : (
                     <div className="space-y-3 mb-6">
                         {addresses.map((address, index) => (
-                            <div key={address.id || `${address.addressLine1}-${address.city}`} className="border border-gray-200 rounded-md p-4">
+                            <div key={address.id || `${address.addressLine1}-${address.city}`} className="border border-gray-200 rounded-md p-4 dark:border-slate-600">
                                 <div className="flex items-start justify-between gap-3">
-                                    <p className="font-medium text-gray-800">{address.addressLine1}</p>
+                                    <p className="font-medium text-gray-800 dark:text-slate-200">{address.addressLine1}</p>
                                     {index === 0 && (
                                         <span className="text-xs font-semibold uppercase tracking-wide px-2 py-1 rounded bg-green-100 text-green-700">
                                             Default
                                         </span>
                                     )}
                                 </div>
-                                {address.addressLine2 && <p className="text-sm text-gray-600">{address.addressLine2}</p>}
-                                <p className="text-sm text-gray-600">
+                                {address.addressLine2 && <p className="text-sm text-gray-600 dark:text-slate-400">{address.addressLine2}</p>}
+                                <p className="text-sm text-gray-600 dark:text-slate-400">
                                     {[address.city, address.district, address.postalCode].filter(Boolean).join(', ')}
                                 </p>
                                 {!!address.id && (
@@ -817,7 +818,7 @@ const Profile = () => {
                 )}
 
                 {addresses.length <= 1 && (
-                    <p className="text-xs text-amber-700 mb-4">
+                    <p className="text-xs text-amber-700 mb-4 dark:text-amber-400">
                         Keep at least one saved address. Checkout uses your first saved address as default.
                     </p>
                 )}

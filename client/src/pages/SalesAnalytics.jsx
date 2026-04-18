@@ -446,7 +446,7 @@ const SalesAnalytics = () => {
             <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                     <h1 className="mb-2 text-3xl font-bold">Analytics & Reports</h1>
-                    <p className="text-gray-600">Track sales, operations, payments, and customer performance from one admin report.</p>
+                    <p className="text-gray-600 dark:text-slate-400">Track sales, operations, payments, and customer performance from one admin report.</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
                     <Button variant="outline" onClick={handleExportCsv} disabled={loading}>
@@ -461,12 +461,12 @@ const SalesAnalytics = () => {
             </div>
 
             {errorMessage && (
-                <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                <div className="mb-4 rounded border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 px-4 py-3 text-sm text-red-700 dark:text-red-400">
                     {errorMessage}
                 </div>
             )}
 
-            <div className="mb-8 rounded-lg bg-white p-4 shadow">
+            <div className="mb-8 rounded-lg bg-white dark:bg-slate-800 p-4 shadow">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                     <Select
                         label="Time Period"
@@ -478,71 +478,71 @@ const SalesAnalytics = () => {
                     {dateRange === 'custom' && (
                         <>
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-gray-700">Start Date & Time</label>
+                                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">Start Date & Time</label>
                                 <input
                                     type="datetime-local"
                                     value={customStart}
                                     onChange={(e) => setCustomStart(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 focus:border-primary-500 focus:outline-none"
                                 />
                             </div>
                             <div>
-                                <label className="mb-1 block text-sm font-medium text-gray-700">End Date & Time</label>
+                                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-slate-300">End Date & Time</label>
                                 <input
                                     type="datetime-local"
                                     value={customEnd}
                                     onChange={(e) => setCustomEnd(e.target.value)}
-                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 px-3 py-2 focus:border-primary-500 focus:outline-none"
                                 />
                             </div>
                         </>
                     )}
                 </div>
-                <div className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-600">
-                    <span className="font-medium text-gray-900">Report period:</span>{' '}
+                <div className="mt-4 rounded-lg bg-gray-50 dark:bg-slate-700/50 px-4 py-3 text-sm text-gray-600 dark:text-slate-400">
+                    <span className="font-medium text-gray-900 dark:text-slate-200">Report period:</span>{' '}
                     {loading ? 'Loading report...' : reportData.range.label || 'Selected period'}
                 </div>
             </div>
 
             <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-6">
-                <div className="rounded-lg bg-white p-6 shadow xl:col-span-2">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow xl:col-span-2">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="mb-1 text-sm text-gray-600">Total Revenue</p>
+                            <p className="mb-1 text-sm text-gray-600 dark:text-slate-400">Total Revenue</p>
                             <p className="text-2xl font-bold text-primary-600">{formatCurrency(reportData.summary.totalRevenue)}</p>
-                            <p className="mt-1 text-xs text-gray-500">{loading ? 'Loading...' : 'Captured from paid and completed orders'}</p>
+                            <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">{loading ? 'Loading...' : 'Captured from paid and completed orders'}</p>
                         </div>
-                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-100 dark:bg-primary-900/30">
                             <FaChartLine className="h-6 w-6 text-primary-600" />
                         </div>
                     </div>
                 </div>
-                <div className="rounded-lg bg-white p-6 shadow">
-                    <p className="mb-1 text-sm text-gray-600">Total Orders</p>
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
+                    <p className="mb-1 text-sm text-gray-600 dark:text-slate-400">Total Orders</p>
                     <p className="text-2xl font-bold">{reportData.summary.totalOrders}</p>
-                    <p className="mt-1 text-xs text-gray-500">Delivered: {reportData.summary.deliveredOrders}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">Delivered: {reportData.summary.deliveredOrders}</p>
                 </div>
-                <div className="rounded-lg bg-white p-6 shadow">
-                    <p className="mb-1 text-sm text-gray-600">Avg Order Value</p>
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
+                    <p className="mb-1 text-sm text-gray-600 dark:text-slate-400">Avg Order Value</p>
                     <p className="text-2xl font-bold">{formatCurrency(reportData.summary.avgOrderValue)}</p>
-                    <p className="mt-1 text-xs text-gray-500">Cancellation rate: {formatPercent(reportData.summary.cancellationRate)}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">Cancellation rate: {formatPercent(reportData.summary.cancellationRate)}</p>
                 </div>
-                <div className="rounded-lg bg-white p-6 shadow">
-                    <p className="mb-1 text-sm text-gray-600">Customer Retention</p>
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
+                    <p className="mb-1 text-sm text-gray-600 dark:text-slate-400">Customer Retention</p>
                     <p className="text-2xl font-bold">{formatPercent(reportData.customerRetention.retentionRate)}</p>
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">
                         {reportData.customerRetention.retainedCustomers} of {reportData.customerRetention.totalCustomers} customers placed 2+ delivered orders
                     </p>
                 </div>
-                <div className="rounded-lg bg-white p-6 shadow">
-                    <p className="mb-1 text-sm text-gray-600">New Customers</p>
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
+                    <p className="mb-1 text-sm text-gray-600 dark:text-slate-400">New Customers</p>
                     <p className="text-2xl font-bold">{reportData.summary.newCustomers}</p>
-                    <p className="mt-1 text-xs text-gray-500">Unique ordering customers: {reportData.summary.uniqueCustomers}</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-slate-500">Unique ordering customers: {reportData.summary.uniqueCustomers}</p>
                 </div>
             </div>
 
             <div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-                <div className="rounded-lg bg-white p-6 shadow">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
                     <h3 className="mb-4 text-lg font-semibold">Revenue Trend</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={reportData.revenueTrend}>
@@ -556,7 +556,7 @@ const SalesAnalytics = () => {
                     </ResponsiveContainer>
                 </div>
 
-                <div className="rounded-lg bg-white p-6 shadow">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
                     <h3 className="mb-4 text-lg font-semibold">Order Volume</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <BarChart data={reportData.revenueTrend}>
@@ -572,7 +572,7 @@ const SalesAnalytics = () => {
             </div>
 
             <div className="mb-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-                <div className="rounded-lg bg-white p-6 shadow">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
                     <h3 className="mb-4 text-lg font-semibold">Sales by Category</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <PieChart>
@@ -594,20 +594,20 @@ const SalesAnalytics = () => {
                     </ResponsiveContainer>
                 </div>
 
-                <div className="rounded-lg bg-white p-6 shadow">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
                     <h3 className="mb-4 text-lg font-semibold">Top Selling Items</h3>
                     <div className="space-y-3">
                         {topItems.length === 0 ? (
-                            <div className="text-sm text-gray-500">No sales data available for this range.</div>
+                            <div className="text-sm text-gray-500 dark:text-slate-500">No sales data available for this range.</div>
                         ) : topItems.map((item, index) => (
-                            <div key={`${item.name}-${index}`} className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
+                            <div key={`${item.name}-${index}`} className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
                                 <div className="flex items-center">
-                                    <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary-100">
+                                    <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
                                         <span className="text-sm font-semibold text-primary-600">{index + 1}</span>
                                     </div>
                                     <div>
                                         <p className="font-medium">{item.name}</p>
-                                        <p className="text-xs text-gray-500">{item.category || 'Uncategorized'} • {item.orders} sold</p>
+                                        <p className="text-xs text-gray-500 dark:text-slate-500">{item.category || 'Uncategorized'} • {item.orders} sold</p>
                                     </div>
                                 </div>
                                 <div className="text-right">
@@ -620,85 +620,85 @@ const SalesAnalytics = () => {
             </div>
 
             <div className="mb-8 grid grid-cols-1 gap-8 xl:grid-cols-3">
-                <div className="rounded-lg bg-white p-6 shadow">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
                     <div className="mb-4 flex items-center gap-3">
                         <FaClipboardList className="text-primary-600" />
                         <h3 className="text-lg font-semibold">Order Mix</h3>
                     </div>
                     <div className="space-y-3">
                         {reportData.orderTypeBreakdown.map((item) => (
-                            <div key={item.orderType} className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-b-0 last:pb-0">
+                            <div key={item.orderType} className="flex items-center justify-between border-b border-gray-100 dark:border-slate-700 pb-3 last:border-b-0 last:pb-0">
                                 <div>
                                     <p className="font-medium">{item.orderType}</p>
-                                    <p className="text-xs text-gray-500">{item.orderCount} orders</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-500">{item.orderCount} orders</p>
                                 </div>
                                 <p className="font-semibold">{formatCurrency(item.revenue)}</p>
                             </div>
                         ))}
                     </div>
-                    <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-gray-50 p-3 text-sm">
+                    <div className="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3 text-sm">
                         <div>
-                            <p className="text-gray-500">Walk-in</p>
+                            <p className="text-gray-500 dark:text-slate-400">Walk-in</p>
                             <p className="font-semibold">{reportData.summary.walkInOrders}</p>
                         </div>
                         <div>
-                            <p className="text-gray-500">Online</p>
+                            <p className="text-gray-500 dark:text-slate-400">Online</p>
                             <p className="font-semibold">{reportData.summary.onlineOrders}</p>
                         </div>
                         <div>
-                            <p className="text-gray-500">Delivery</p>
+                            <p className="text-gray-500 dark:text-slate-400">Delivery</p>
                             <p className="font-semibold">{reportData.summary.deliveryOrders}</p>
                         </div>
                         <div>
-                            <p className="text-gray-500">Takeaway</p>
+                            <p className="text-gray-500 dark:text-slate-400">Takeaway</p>
                             <p className="font-semibold">{reportData.summary.takeawayOrders}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-lg bg-white p-6 shadow">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
                     <div className="mb-4 flex items-center gap-3">
                         <FaMoneyBillWave className="text-primary-600" />
                         <h3 className="text-lg font-semibold">Payment Reconciliation</h3>
                     </div>
                     <div className="space-y-3">
                         {reportData.paymentBreakdown.length === 0 ? (
-                            <p className="text-sm text-gray-500">No payment records found for this range.</p>
+                            <p className="text-sm text-gray-500 dark:text-slate-500">No payment records found for this range.</p>
                         ) : reportData.paymentBreakdown.map((payment) => (
-                            <div key={`${payment.method}-${payment.status}`} className="rounded-lg border border-gray-100 p-3">
+                            <div key={`${payment.method}-${payment.status}`} className="rounded-lg border border-gray-100 dark:border-slate-700 p-3">
                                 <div className="flex items-center justify-between">
                                     <p className="font-medium">{payment.method}</p>
-                                    <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600">{payment.status}</span>
+                                    <span className="rounded-full bg-gray-100 dark:bg-slate-700 px-2 py-1 text-xs font-medium text-gray-600 dark:text-slate-300">{payment.status}</span>
                                 </div>
-                                <div className="mt-2 flex items-center justify-between text-sm text-gray-600">
+                                <div className="mt-2 flex items-center justify-between text-sm text-gray-600 dark:text-slate-400">
                                     <span>{payment.transactionCount} transactions</span>
-                                    <span className="font-semibold text-gray-900">{formatCurrency(payment.totalAmount)}</span>
+                                    <span className="font-semibold text-gray-900 dark:text-slate-100">{formatCurrency(payment.totalAmount)}</span>
                                 </div>
                             </div>
                         ))}
                     </div>
                 </div>
 
-                <div className="rounded-lg bg-white p-6 shadow">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
                     <div className="mb-4 flex items-center gap-3">
                         <FaTruck className="text-primary-600" />
                         <h3 className="text-lg font-semibold">Delivery Performance</h3>
                     </div>
                     <div className="grid grid-cols-2 gap-3 text-sm">
-                        <div className="rounded-lg bg-gray-50 p-3">
-                            <p className="text-gray-500">Total Deliveries</p>
+                        <div className="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
+                            <p className="text-gray-500 dark:text-slate-400">Total Deliveries</p>
                             <p className="text-lg font-semibold">{reportData.deliveryPerformance.totalDeliveries}</p>
                         </div>
-                        <div className="rounded-lg bg-gray-50 p-3">
-                            <p className="text-gray-500">On Time Rate</p>
+                        <div className="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
+                            <p className="text-gray-500 dark:text-slate-400">On Time Rate</p>
                             <p className="text-lg font-semibold">{formatPercent(reportData.deliveryPerformance.onTimeRate)}</p>
                         </div>
-                        <div className="rounded-lg bg-gray-50 p-3">
-                            <p className="text-gray-500">In Progress</p>
+                        <div className="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
+                            <p className="text-gray-500 dark:text-slate-400">In Progress</p>
                             <p className="text-lg font-semibold">{reportData.deliveryPerformance.activeCount}</p>
                         </div>
-                        <div className="rounded-lg bg-gray-50 p-3">
-                            <p className="text-gray-500">Avg Minutes</p>
+                        <div className="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
+                            <p className="text-gray-500 dark:text-slate-400">Avg Minutes</p>
                             <p className="text-lg font-semibold">{reportData.deliveryPerformance.avgDeliveryMinutes.toFixed(1)}</p>
                         </div>
                     </div>
@@ -706,11 +706,11 @@ const SalesAnalytics = () => {
             </div>
 
             <div className="grid grid-cols-1 gap-8 xl:grid-cols-3">
-                <div className="rounded-lg bg-white p-6 shadow">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
                     <h3 className="mb-4 text-lg font-semibold">Order Status Snapshot</h3>
                     <div className="space-y-3">
                         {reportData.orderStatusBreakdown.map((item) => (
-                            <div key={item.status} className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
+                            <div key={item.status} className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-slate-700/50 px-4 py-3">
                                 <span className="font-medium">{item.status}</span>
                                 <span className="text-lg font-semibold">{item.orderCount}</span>
                             </div>
@@ -718,31 +718,31 @@ const SalesAnalytics = () => {
                     </div>
                 </div>
 
-                <div className="rounded-lg bg-white p-6 shadow">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
                     <div className="mb-4 flex items-center gap-3">
                         <FaCommentDots className="text-primary-600" />
                         <h3 className="text-lg font-semibold">Feedback Summary</h3>
                     </div>
                     <div className="mb-4 grid grid-cols-2 gap-3 text-sm">
-                        <div className="rounded-lg bg-gray-50 p-3">
-                            <p className="text-gray-500">Total Feedback</p>
+                        <div className="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
+                            <p className="text-gray-500 dark:text-slate-400">Total Feedback</p>
                             <p className="text-lg font-semibold">{reportData.feedbackSummary.totalFeedback}</p>
                         </div>
-                        <div className="rounded-lg bg-gray-50 p-3">
-                            <p className="text-gray-500">Average Rating</p>
+                        <div className="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
+                            <p className="text-gray-500 dark:text-slate-400">Average Rating</p>
                             <p className="text-lg font-semibold">{reportData.feedbackSummary.averageRating.toFixed(2)}</p>
                         </div>
-                        <div className="rounded-lg bg-gray-50 p-3">
-                            <p className="text-gray-500">Responded</p>
+                        <div className="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
+                            <p className="text-gray-500 dark:text-slate-400">Responded</p>
                             <p className="text-lg font-semibold">{reportData.feedbackSummary.respondedCount}</p>
                         </div>
-                        <div className="rounded-lg bg-gray-50 p-3">
-                            <p className="text-gray-500">Pending Replies</p>
+                        <div className="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
+                            <p className="text-gray-500 dark:text-slate-400">Pending Replies</p>
                             <p className="text-lg font-semibold">{reportData.feedbackSummary.pendingReplies}</p>
                         </div>
                     </div>
                     <div className="space-y-2 text-sm">
-                        <p className="font-medium text-gray-700">Top Issue Tags</p>
+                        <p className="font-medium text-gray-700 dark:text-slate-300">Top Issue Tags</p>
                         {reportData.feedbackSummary.issueTagBreakdown.slice(0, 4).map((tag) => (
                             <div key={tag.tag} className="flex items-center justify-between">
                                 <span>{tag.tag}</span>
@@ -752,16 +752,16 @@ const SalesAnalytics = () => {
                     </div>
                 </div>
 
-                <div className="rounded-lg bg-white p-6 shadow">
+                <div className="rounded-lg bg-white dark:bg-slate-800 p-6 shadow">
                     <h3 className="mb-4 text-lg font-semibold">Stock Movements</h3>
                     <div className="space-y-3">
                         {reportData.stockMovementBreakdown.length === 0 ? (
-                            <p className="text-sm text-gray-500">No stock movements found for this range.</p>
+                            <p className="text-sm text-gray-500 dark:text-slate-500">No stock movements found for this range.</p>
                         ) : reportData.stockMovementBreakdown.map((movement) => (
-                            <div key={movement.changeType} className="flex items-center justify-between rounded-lg bg-gray-50 px-4 py-3">
+                            <div key={movement.changeType} className="flex items-center justify-between rounded-lg bg-gray-50 dark:bg-slate-700/50 px-4 py-3">
                                 <div>
                                     <p className="font-medium">{movement.changeType}</p>
-                                    <p className="text-xs text-gray-500">{movement.movementCount} movements</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-500">{movement.movementCount} movements</p>
                                 </div>
                                 <span className="font-semibold">{movement.quantityChange}</span>
                             </div>

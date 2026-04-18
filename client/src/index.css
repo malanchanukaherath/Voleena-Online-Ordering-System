@@ -362,6 +362,101 @@
 }
 
 /* ============================================
+   Global Dark Mode Surface Overrides
+   These rules safely apply dark-mode styling to common
+   Tailwind surface patterns (bg-white, bg-gray-50, etc.)
+   across ALL pages without touching any JSX files.
+   ============================================ */
+html.dark .bg-white {
+  background-color: #1e293b !important;
+}
+
+html.dark .bg-gray-50 {
+  background-color: #0f172a !important;
+}
+
+html.dark .bg-gray-100 {
+  background-color: #1e293b !important;
+}
+
+html.dark .bg-gray-200 {
+  background-color: #334155 !important;
+}
+
+/* Border colors */
+html.dark .border-gray-100,
+html.dark .border-gray-200 {
+  border-color: #334155 !important;
+}
+
+html.dark .border-gray-300 {
+  border-color: #475569 !important;
+}
+
+/* Text colors */
+html.dark .text-gray-900 {
+  color: #f1f5f9 !important;
+}
+
+html.dark .text-gray-800 {
+  color: #e2e8f0 !important;
+}
+
+html.dark .text-gray-700 {
+  color: #cbd5e1 !important;
+}
+
+html.dark .text-gray-600 {
+  color: #94a3b8 !important;
+}
+
+html.dark .text-gray-500 {
+  color: #64748b !important;
+}
+
+html.dark .text-gray-400 {
+  color: #475569 !important;
+}
+
+/* Divide colors */
+html.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]),
+html.dark .divide-y > :not([hidden]) ~ :not([hidden]) {
+  border-color: #334155 !important;
+}
+
+/* Table borders */
+html.dark .border-b {
+  border-color: #334155 !important;
+}
+
+/* Input backgrounds in forms without .input-field class */
+html.dark input:not([class*="bg-"]),
+html.dark select:not([class*="bg-"]),
+html.dark textarea:not([class*="bg-"]) {
+  background-color: #1e293b;
+  color: #f1f5f9;
+  border-color: #475569;
+}
+
+/* Status/info alert backgrounds */
+html.dark .bg-green-50 {
+  background-color: rgba(22, 163, 74, 0.12) !important;
+}
+
+html.dark .bg-red-50 {
+  background-color: rgba(220, 38, 38, 0.12) !important;
+}
+
+html.dark .bg-amber-50,
+html.dark .bg-yellow-50 {
+  background-color: rgba(217, 119, 6, 0.12) !important;
+}
+
+html.dark .bg-blue-50 {
+  background-color: rgba(37, 99, 235, 0.12) !important;
+}
+
+/* ============================================
    Custom Scrollbar
    ============================================ */
 .custom-scrollbar::-webkit-scrollbar {

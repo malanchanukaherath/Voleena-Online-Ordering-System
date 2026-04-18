@@ -126,12 +126,12 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center p-6 border-b">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center p-6 border-b dark:border-slate-700">
                     <h2 className="text-2xl font-bold">Register New Customer</h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
                         disabled={loading}
                     >
                         <FaTimes size={24} />
@@ -144,7 +144,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                         <h3 className="text-lg font-semibold mb-4">Customer Information</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                                     Full Name *
                                 </label>
                                 <Input
@@ -158,7 +158,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                                     Phone *
                                 </label>
                                 <Input
@@ -173,7 +173,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                                     Email (Optional)
                                 </label>
                                 <Input
@@ -188,7 +188,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                                     Password (Optional)
                                 </label>
                                 <Input
@@ -199,7 +199,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                                     placeholder="Leave blank for auto-generate"
                                     disabled={loading}
                                 />
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-gray-500 dark:text-slate-400 mt-1">
                                     If not provided, a password will be auto-generated
                                 </p>
                             </div>
@@ -211,7 +211,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                         <h3 className="text-lg font-semibold mb-4">Address (Optional)</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                                     Address Line 1
                                 </label>
                                 <Input
@@ -224,7 +224,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                                     Address Line 2
                                 </label>
                                 <Input
@@ -237,7 +237,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                                     City
                                 </label>
                                 <Input
@@ -251,7 +251,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                                     District
                                 </label>
                                 <Input
@@ -264,7 +264,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                                     Postal Code
                                 </label>
                                 <Input
@@ -279,7 +279,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
                     </div>
 
                     {errors.submit && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded">
                             {errors.submit}
                         </div>
                     )}

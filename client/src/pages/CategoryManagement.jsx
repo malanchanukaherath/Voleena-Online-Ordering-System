@@ -196,7 +196,7 @@ const CategoryManagement = () => {
             <div className="mb-8 flex justify-between items-center">
                 <div>
                     <h1 className="text-3xl font-bold mb-2">Category Management</h1>
-                    <p className="text-gray-600">Organize menu items into categories</p>
+                    <p className="text-gray-600 dark:text-slate-400">Organize menu items into categories</p>
                 </div>
                 <Button onClick={() => openModal()}>
                     <FaPlus className="inline mr-2" />Add Category
@@ -212,7 +212,7 @@ const CategoryManagement = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {categories.map(category => (
-                        <div key={category.CategoryID} className="bg-white rounded-lg shadow p-6">
+                        <div key={category.CategoryID} className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                             {(category.ImageURL || category.Image_URL) && (
                                 <img
                                     src={resolveAssetUrl(category.ImageURL || category.Image_URL)}
@@ -223,13 +223,13 @@ const CategoryManagement = () => {
                             <div className="flex items-start justify-between">
                                 <div>
                                     <h3 className="text-xl font-semibold mb-2">{category.Name}</h3>
-                                    <p className="text-sm text-gray-600 mb-4">
+                                    <p className="text-sm text-gray-600 mb-4 dark:text-slate-400">
                                         {category.Description || 'No description provided'}
                                     </p>
-                                    <p className="text-sm text-gray-500 mb-2">
+                                    <p className="text-sm text-gray-500 mb-2 dark:text-slate-400">
                                         {itemCounts.get(String(category.CategoryID)) || 0} items
                                     </p>
-                                    <p className="text-xs text-gray-400">Display order: {category.DisplayOrder ?? 0}</p>
+                                    <p className="text-xs text-gray-400 dark:text-slate-500">Display order: {category.DisplayOrder ?? 0}</p>
                                 </div>
                                 <button
                                     onClick={() => handleToggleActive(category)}
@@ -293,7 +293,7 @@ const CategoryManagement = () => {
                         error={errors.DisplayOrder}
                         placeholder="0"
                     />
-                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                    <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-slate-300">
                         <input
                             type="checkbox"
                             name="IsActive"

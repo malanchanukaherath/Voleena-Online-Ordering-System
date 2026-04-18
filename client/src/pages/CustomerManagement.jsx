@@ -340,7 +340,7 @@ const CustomerManagement = () => {
                 <div className="flex justify-between items-center">
                     <div>
                         <h1 className="text-3xl font-bold mb-2">Customer Management</h1>
-                        <p className="text-gray-600">View and manage customer accounts</p>
+                        <p className="text-gray-600 dark:text-slate-400">View and manage customer accounts</p>
                     </div>
                     <Button onClick={() => setIsAddModalOpen(true)}>
                         <FaUserPlus className="inline mr-2" />
@@ -350,13 +350,13 @@ const CustomerManagement = () => {
             </div>
 
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6 dark:bg-red-950/40 dark:border-red-800 dark:text-red-400">
                     {error}
                 </div>
             )}
 
             {/* Search Bar */}
-            <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="bg-white rounded-lg shadow p-4 mb-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end">
                     <div className="flex-1">
                         <Input
@@ -376,18 +376,18 @@ const CustomerManagement = () => {
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white rounded-lg shadow p-6">
-                    <p className="text-sm text-gray-600 mb-1">Total Customers</p>
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                    <p className="text-sm text-gray-600 mb-1 dark:text-slate-400">Total Customers</p>
                     <p className="text-3xl font-bold text-primary-600">{customers.length}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
-                    <p className="text-sm text-gray-600 mb-1">Active Customers</p>
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                    <p className="text-sm text-gray-600 mb-1 dark:text-slate-400">Active Customers</p>
                     <p className="text-3xl font-bold text-green-600">
                         {customers.filter(c => c.AccountStatus === 'ACTIVE').length}
                     </p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6">
-                    <p className="text-sm text-gray-600 mb-1">Email Verified</p>
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                    <p className="text-sm text-gray-600 mb-1 dark:text-slate-400">Email Verified</p>
                     <p className="text-3xl font-bold text-blue-600">
                         {customers.filter(c => c.IsEmailVerified).length}
                     </p>
@@ -398,49 +398,49 @@ const CustomerManagement = () => {
             {loading ? (
                 <LoadingSkeleton type="table" rows={10} />
             ) : filteredCustomers.length > 0 ? (
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="bg-white rounded-lg shadow overflow-hidden dark:bg-slate-800 dark:shadow-slate-900/50">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                            <thead className="bg-gray-50 dark:bg-slate-700/50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Customer
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Contact
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Status
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Verified
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Join Date
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-slate-400">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white divide-y divide-gray-200 dark:bg-slate-800 dark:divide-slate-700">
                                 {filteredCustomers.map((customer) => (
-                                    <tr key={customer.CustomerID} className="hover:bg-gray-50">
+                                    <tr key={customer.CustomerID} className="hover:bg-gray-50 dark:hover:bg-slate-700/50">
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex items-center">
-                                                <div className="flex-shrink-0 h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center">
+                                                <div className="flex-shrink-0 h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center dark:bg-primary-900/40">
                                                     <span className="text-primary-600 font-semibold">
                                                         {customer.Name?.split(' ').map(n => n[0]).join('').toUpperCase()}
                                                     </span>
                                                 </div>
                                                 <div className="ml-4">
-                                                    <div className="text-sm font-medium text-gray-900">{customer.Name}</div>
+                                                    <div className="text-sm font-medium text-gray-900 dark:text-slate-200">{customer.Name}</div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">{customer.Email || 'No email'}</div>
-                                            <div className="text-xs text-gray-500">{customer.Phone}</div>
+                                            <div className="text-sm text-gray-900 dark:text-slate-200">{customer.Email || 'No email'}</div>
+                                            <div className="text-xs text-gray-500 dark:text-slate-400">{customer.Phone}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {customer.AccountStatus === 'ACTIVE' ? (
@@ -463,7 +463,7 @@ const CustomerManagement = () => {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-500">{formatDate(customer.CreatedAt || customer.createdAt || customer.created_at)}</div>
+                                            <div className="text-sm text-gray-500 dark:text-slate-400">{formatDate(customer.CreatedAt || customer.createdAt || customer.created_at)}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <button
@@ -546,19 +546,19 @@ const CustomerManagement = () => {
                                 onChange={handleEditChange}
                                 className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
                             />
-                            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+                            <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900 dark:text-slate-200">
                                 Active Customer
                             </label>
                         </div>
 
-                        <div className="border-t pt-4">
+                        <div className="border-t pt-4 dark:border-slate-600">
                             <h3 className="text-base font-semibold mb-3">Customer Addresses</h3>
 
                             <div className="space-y-3 mb-4">
                                 {customerAddresses.length === 0 ? (
-                                    <p className="text-sm text-gray-500">No saved addresses for this customer.</p>
+                                    <p className="text-sm text-gray-500 dark:text-slate-400">No saved addresses for this customer.</p>
                                 ) : customerAddresses.map((address) => (
-                                    <div key={address.AddressID} className="border rounded-md p-3 space-y-2">
+                                    <div key={address.AddressID} className="border rounded-md p-3 space-y-2 dark:border-slate-600">
                                         <Input
                                             label="Address Line 1"
                                             value={address.AddressLine1}
@@ -619,7 +619,7 @@ const CustomerManagement = () => {
                                 ))}
                             </div>
 
-                            <div className="border rounded-md p-3 space-y-2">
+                            <div className="border rounded-md p-3 space-y-2 dark:border-slate-600">
                                 <h4 className="font-medium">Add New Address</h4>
                                 <Input
                                     label="Address Line 1"
@@ -665,7 +665,7 @@ const CustomerManagement = () => {
                                     Add Address
                                 </Button>
                                 {!canAdminManageAddress && (
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-gray-500 dark:text-slate-400">
                                         Cashier can add address but cannot update or delete customer addresses.
                                     </p>
                                 )}
@@ -673,7 +673,7 @@ const CustomerManagement = () => {
                         </div>
 
                         {editErrors.submit && (
-                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded dark:bg-red-950/40 dark:border-red-800 dark:text-red-400">
                                 {editErrors.submit}
                             </div>
                         )}

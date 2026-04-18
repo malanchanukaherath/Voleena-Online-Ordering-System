@@ -108,20 +108,20 @@ const OrderHistory = () => {
         <div className="max-w-7xl mx-auto">
             <div className="mb-8">
                 <h1 className="text-3xl font-bold mb-2">Order History</h1>
-                <p className="text-gray-600">View your past orders and reorder your favorites</p>
+                <p className="text-gray-600 dark:text-slate-400">View your past orders and reorder your favorites</p>
             </div>
 
-            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-indigo-800">
+            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6 dark:bg-indigo-950/40 dark:border-indigo-800">
+                <p className="text-sm text-indigo-800 dark:text-indigo-300">
                     <span className="font-semibold">Need advance or bulk ordering?</span> Use preorder at checkout and add quantity/event notes in Special Instructions.
                 </p>
-                <p className="text-xs text-indigo-700 mt-1">
+                <p className="text-xs text-indigo-700 mt-1 dark:text-indigo-400">
                     If immediate stock is unavailable for your requested quantity, place it as a preorder request.
                 </p>
             </div>
 
             {/* Filter */}
-            <div className="bg-white rounded-lg shadow p-4 mb-6">
+            <div className="bg-white rounded-lg shadow p-4 mb-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end">
                     <div className="w-full md:max-w-xs">
                         <Select
@@ -137,13 +137,13 @@ const OrderHistory = () => {
 
             {/* Orders List */}
             {loading ? (
-                <div className="bg-white rounded-lg shadow p-6">Loading orders...</div>
+                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:text-slate-300">Loading orders...</div>
             ) : error ? (
-                <div className="bg-white rounded-lg shadow p-6 text-red-600">{error}</div>
+                <div className="bg-white rounded-lg shadow p-6 text-red-600 dark:bg-slate-800 dark:text-red-400">{error}</div>
             ) : filteredOrders.length > 0 ? (
                 <div className="space-y-4">
                     {filteredOrders.map((order) => (
-                        <div key={order.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
+                        <div key={order.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow dark:bg-slate-800 dark:shadow-slate-900/50">
                             <div className="p-6">
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                                     <div>
@@ -151,11 +151,11 @@ const OrderHistory = () => {
                                             <h3 className="text-lg font-semibold">{order.orderNumber}</h3>
                                             <StatusBadge status={order.status} type="order" />
                                         </div>
-                                        <p className="text-sm text-gray-600">
+                                        <p className="text-sm text-gray-600 dark:text-slate-400">
                                             {order.date} at {order.time} · {order.orderType}
                                         </p>
                                         {order.isPreorder && order.scheduledDatetime && (
-                                            <p className="text-xs text-indigo-700 mt-1">
+                                            <p className="text-xs text-indigo-700 mt-1 dark:text-indigo-400">
                                                 Scheduled for {new Date(order.scheduledDatetime).toLocaleString()}
                                             </p>
                                         )}
@@ -169,12 +169,12 @@ const OrderHistory = () => {
 
                                 {/* Order Items */}
                                 <div className="mb-4">
-                                    <p className="text-sm font-medium text-gray-700 mb-2">Items:</p>
+                                    <p className="text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">Items:</p>
                                     <div className="flex flex-wrap gap-2">
                                         {order.items.map((item, idx) => (
                                             <span
                                                 key={idx}
-                                                className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700"
+                                                className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300"
                                             >
                                                 {item.quantity}x {item.name}
                                             </span>
