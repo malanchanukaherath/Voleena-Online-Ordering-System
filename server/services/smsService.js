@@ -86,6 +86,14 @@ const mapProviderPhoneError = (error, rawPhone) => {
         return invalidPhoneError;
     }
 
+    if (code === '21608') {
+        const trialRestrictionError = new Error('Twilio trial account cannot send SMS to this unverified destination number.');
+        trialRestrictionError.code = 'TRIAL_UNVERIFIED_DESTINATION';
+        trialRestrictionError.providerCode = error?.code;
+        trialRestrictionError.userMessage = 'Twilio Trial restriction: this phone number is not verified in your Twilio account. Verify the recipient number in Twilio Console or upgrade the account, then retry.';
+        return trialRestrictionError;
+    }
+
     return error;
 };
 

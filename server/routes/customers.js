@@ -601,6 +601,12 @@ router.post('/me/phone-verification/request', requireCustomer, otpLimiter, async
                 error: error.userMessage || 'Phone number must include country code (for example: +94771234567).'
             });
         }
+        if (error?.code === 'TRIAL_UNVERIFIED_DESTINATION') {
+            return res.status(403).json({
+                success: false,
+                error: error.userMessage || 'Twilio Trial restriction: verify this destination number in Twilio Console or upgrade your account.'
+            });
+        }
         return res.status(500).json({ error: 'Failed to send phone verification OTP' });
     }
 });

@@ -246,6 +246,31 @@ describe('customer routes', () => {
     expect(response.body.error).toMatch(/country code/i);
   });
 
+  test('returns Twilio trial restriction message when destination number is unverified', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    mockCustomer.findByPk.mockResolvedValue({
+      CustomerID: 5,
+      Phone: '+94729888260',
+      IsPhoneVerified: false,
+      IsActive: true,
+      AccountStatus: 'ACTIVE'
+    });
+    mockOTPVerification.create.mockResolvedValue({ OTPID: 103 });
+
+    const twilioTrialError = new Error('Twilio trial account cannot send SMS to this unverified destination number.');
+    twilioTrialError.code = 'TRIAL_UNVERIFIED_DESTINATION';
+    twilioTrialError.userMessage = 'Twilio Trial restriction: this phone number is not verified in your Twilio account. Verify the recipient number in Twilio Console or upgrade the account, then retry.';
+    sendOTPSMS.mockRejectedValueOnce(twilioTrialError);
+
+    const response = await request(app)
+      .post('/api/v1/customers/me/phone-verification/request')
+      .send({});
+
+    expect(response.status).toBe(403);
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toMatch(/twilio trial/i);
+  });
+
   test('verifies profile phone using OTP', async () => {
     setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
     const save = jest.fn().mockResolvedValue(undefined);
