@@ -2,6 +2,7 @@ const { Order, OrderItem, MenuItem, ComboPack, Customer, Delivery, Address, Staf
 const orderService = require('../services/orderService');
 
 const ALLOWED_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
+const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
 
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
@@ -19,14 +20,33 @@ const isAddressTableMissingError = (error) => {
 // Create new order
 exports.createOrder = async (req, res) => {
     try {
-        const { items, orderType, addressId, specialInstructions, promotionCode, paymentMethod = 'CASH', deliveryCoordinates = null } = req.body;
+        const {
+            items,
+            orderType,
+            addressId,
+            specialInstructions,
+            promotionCode,
+            paymentMethod = 'CASH',
+            deliveryCoordinates = null,
+            contactPhone
+        } = req.body;
         const customerId = req.user.id;
         const normalizedPaymentMethod = typeof paymentMethod === 'string' ? paymentMethod.trim().toUpperCase() : '';
+        const normalizedContactPhone = contactPhone === undefined || contactPhone === null
+            ? null
+            : normalizePhone(contactPhone);
 
         if (!items || items.length === 0) {
             return res.status(400).json({
                 success: false,
                 message: 'Order must contain at least one item'
+            });
+        }
+
+        if (normalizedContactPhone && !/^[+]?[0-9]{9,15}$/.test(normalizedContactPhone)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid contact phone number format'
             });
         }
 
@@ -43,6 +63,7 @@ exports.createOrder = async (req, res) => {
             promotionId: promotionCode || null,
             paymentMethod: normalizedPaymentMethod,
             deliveryCoordinates,
+            contactPhone: normalizedContactPhone,
             items: items.map((item) => ({
                 menuItemId: item.menuItemId || null,
                 comboId: item.comboId || null,

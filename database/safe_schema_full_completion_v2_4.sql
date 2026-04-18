@@ -272,6 +272,8 @@ CREATE TABLE IF NOT EXISTS `order` (
   `order_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `order_number` VARCHAR(20) NOT NULL,
   `customer_id` INT UNSIGNED DEFAULT NULL,
+  `contact_phone` VARCHAR(20) DEFAULT NULL,
+  `verified_profile_phone` VARCHAR(20) DEFAULT NULL,
   `total_amount` DECIMAL(10, 2) NOT NULL,
   `promotion_id` INT UNSIGNED DEFAULT NULL,
   `discount_amount` DECIMAL(10, 2) NOT NULL DEFAULT 0,

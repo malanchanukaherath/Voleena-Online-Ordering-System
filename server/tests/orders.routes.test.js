@@ -85,7 +85,8 @@ describe('order routes', () => {
 
     const payload = {
       items: [{ menuItemId: 1, quantity: 2 }],
-      orderType: 'TAKEAWAY'
+      orderType: 'TAKEAWAY',
+      contactPhone: '+94775556666'
     };
 
     const response = await request(app)
@@ -95,8 +96,26 @@ describe('order routes', () => {
     expect(response.status).toBe(201);
     expect(response.body.success).toBe(true);
     expect(mockOrderService.createOrder).toHaveBeenCalledWith(25, expect.objectContaining({
-      orderType: 'TAKEAWAY'
+      orderType: 'TAKEAWAY',
+      contactPhone: '+94775556666'
     }), undefined);
+  });
+
+  test('rejects order creation with invalid contact phone', async () => {
+    setAuthUser({ id: 25, type: 'Customer', role: 'Customer' });
+
+    const response = await request(app)
+      .post('/api/v1/orders')
+      .send({
+        items: [{ menuItemId: 1, quantity: 1 }],
+        orderType: 'TAKEAWAY',
+        contactPhone: 'invalid-phone'
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toMatch(/contact phone/i);
+    expect(mockOrderService.createOrder).not.toHaveBeenCalled();
   });
 
   test('rejects order creation with unsupported payment method', async () => {

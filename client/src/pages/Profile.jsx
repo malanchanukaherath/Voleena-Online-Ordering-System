@@ -12,7 +12,9 @@ import {
     getCustomerAddresses,
     createCustomerAddress,
     updateCustomerAddress,
-    deleteCustomerAddress
+    deleteCustomerAddress,
+    requestPhoneVerificationOTP,
+    verifyPhoneVerificationOTP
 } from '../services/profileService';
 
 const NOTIFICATION_OPTIONS = ['EMAIL', 'SMS', 'BOTH'];
@@ -21,6 +23,7 @@ const mapCustomerProfile = (profile = {}) => {
     const name = profile.Name ?? profile.name ?? '';
     const email = profile.Email ?? profile.email ?? '';
     const phone = profile.Phone ?? profile.phone ?? '';
+    const isPhoneVerified = Boolean(profile.IsPhoneVerified ?? profile.isPhoneVerified ?? false);
     const preferredNotification = String(
         profile.PreferredNotification ?? profile.preferredNotification ?? 'BOTH'
     ).toUpperCase();
@@ -30,6 +33,7 @@ const mapCustomerProfile = (profile = {}) => {
         name,
         email,
         phone,
+        isPhoneVerified,
         preferredNotification: NOTIFICATION_OPTIONS.includes(preferredNotification) ? preferredNotification : 'BOTH',
         createdAt
     };
@@ -61,6 +65,10 @@ const Profile = () => {
     });
     const [originalEmail, setOriginalEmail] = useState((user?.email || '').trim().toLowerCase());
     const [currentPasswordForEmail, setCurrentPasswordForEmail] = useState('');
+    const [isPhoneVerified, setIsPhoneVerified] = useState(Boolean(user?.isPhoneVerified));
+    const [phoneVerificationOtp, setPhoneVerificationOtp] = useState('');
+    const [isRequestingPhoneOtp, setIsRequestingPhoneOtp] = useState(false);
+    const [isVerifyingPhoneOtp, setIsVerifyingPhoneOtp] = useState(false);
 
     const [passwordData, setPasswordData] = useState({
         currentPassword: '',
@@ -91,6 +99,9 @@ const Profile = () => {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+        if (name === 'phone' && value !== formData.phone) {
+            setIsPhoneVerified(false);
+        }
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
         }
@@ -306,6 +317,67 @@ const Profile = () => {
         }
     };
 
+    const handleRequestPhoneVerificationOtp = async () => {
+        if (!formData.phone.trim()) {
+            setToastMessage('Add a phone number first, then request OTP verification.');
+            setToastType('error');
+            setShowToast(true);
+            return;
+        }
+
+        setIsRequestingPhoneOtp(true);
+        try {
+            const response = await requestPhoneVerificationOTP();
+            const devOtp = response.data?._dev_otp;
+            setToastMessage(
+                devOtp
+                    ? `${response.data?.message || 'OTP sent.'} (Dev OTP: ${devOtp})`
+                    : (response.data?.message || 'OTP sent to your phone number.')
+            );
+            setToastType('success');
+            setShowToast(true);
+        } catch (error) {
+            setToastMessage(getApiErrorMessage(error, 'Failed to send phone verification OTP.'));
+            setToastType('error');
+            setShowToast(true);
+        } finally {
+            setIsRequestingPhoneOtp(false);
+        }
+    };
+
+    const handleVerifyPhoneOtp = async () => {
+        const otp = phoneVerificationOtp.trim();
+        if (!/^\d{6}$/.test(otp)) {
+            setToastMessage('Enter a valid 6-digit OTP.');
+            setToastType('error');
+            setShowToast(true);
+            return;
+        }
+
+        setIsVerifyingPhoneOtp(true);
+        try {
+            await verifyPhoneVerificationOTP(otp);
+            setIsPhoneVerified(true);
+            setPhoneVerificationOtp('');
+
+            if (updateUser) {
+                updateUser({
+                    isPhoneVerified: true
+                });
+            }
+
+            setToastMessage('Phone number verified successfully.');
+            setToastType('success');
+            setShowToast(true);
+        } catch (error) {
+            setToastMessage(getApiErrorMessage(error, 'Failed to verify phone OTP.'));
+            setToastType('error');
+            setShowToast(true);
+        } finally {
+            setIsVerifyingPhoneOtp(false);
+        }
+    };
+
     const handleProfileSubmit = async (e) => {
         e.preventDefault();
         if (!validateProfileForm()) return;
@@ -334,12 +406,14 @@ const Profile = () => {
                 phone: mappedProfile.phone,
                 preferredNotification: mappedProfile.preferredNotification
             }));
+            setIsPhoneVerified(mappedProfile.isPhoneVerified);
 
             if (updateUser) {
                 updateUser({
                     name: mappedProfile.name,
                     email: mappedProfile.email,
                     phone: mappedProfile.phone,
+                    isPhoneVerified: mappedProfile.isPhoneVerified,
                     preferredNotification: mappedProfile.preferredNotification,
                     ...(mappedProfile.createdAt ? { createdAt: mappedProfile.createdAt } : {})
                 });
@@ -400,6 +474,7 @@ const Profile = () => {
             phone: localUserProfile.phone,
             preferredNotification: localUserProfile.preferredNotification
         }));
+        setIsPhoneVerified(localUserProfile.isPhoneVerified);
         setOriginalEmail(String(localUserProfile.email || '').trim().toLowerCase());
     }, [user]);
 
@@ -421,6 +496,7 @@ const Profile = () => {
                     phone: profile.phone,
                     preferredNotification: profile.preferredNotification
                 }));
+                setIsPhoneVerified(profile.isPhoneVerified);
                 setOriginalEmail(String(profile.email || '').trim().toLowerCase());
 
                 if (updateUser) {
@@ -428,6 +504,7 @@ const Profile = () => {
                         name: profile.name,
                         email: profile.email,
                         phone: profile.phone,
+                        isPhoneVerified: profile.isPhoneVerified,
                         preferredNotification: profile.preferredNotification,
                         ...(profile.createdAt ? { createdAt: profile.createdAt } : {})
                     });
@@ -569,6 +646,48 @@ const Profile = () => {
                             icon={FaPhone}
                             required
                         />
+                        {isPhoneVerified ? (
+                            <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                                Your phone number is verified.
+                            </div>
+                        ) : (
+                            <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+                                <p className="text-sm font-medium text-amber-800">
+                                    Phone number is not verified.
+                                </p>
+                                <p className="mt-1 text-xs text-amber-700">
+                                    Verify your profile phone so delivery staff always has a trusted fallback number.
+                                </p>
+                                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        onClick={handleRequestPhoneVerificationOtp}
+                                        loading={isRequestingPhoneOtp}
+                                        disabled={isRequestingPhoneOtp || isProfileLoading || isProfileSaving}
+                                    >
+                                        Send OTP
+                                    </Button>
+                                    <input
+                                        type="text"
+                                        inputMode="numeric"
+                                        maxLength={6}
+                                        value={phoneVerificationOtp}
+                                        onChange={(e) => setPhoneVerificationOtp(e.target.value.replace(/\D/g, ''))}
+                                        placeholder="Enter 6-digit OTP"
+                                        className="w-full rounded-md border border-amber-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 sm:max-w-[220px]"
+                                    />
+                                    <Button
+                                        type="button"
+                                        onClick={handleVerifyPhoneOtp}
+                                        loading={isVerifyingPhoneOtp}
+                                        disabled={isVerifyingPhoneOtp || phoneVerificationOtp.trim().length !== 6}
+                                    >
+                                        Verify OTP
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Notification</label>
                             <select

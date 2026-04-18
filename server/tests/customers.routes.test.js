@@ -14,13 +14,26 @@ const mockAddress = {
   count: jest.fn()
 };
 
-jest.mock('../models', () => ({ Customer: mockCustomer, Address: mockAddress }));
+const mockOTPVerification = {
+  create: jest.fn(),
+  findOne: jest.fn(),
+  update: jest.fn()
+};
+
+jest.mock('../models', () => ({ Customer: mockCustomer, Address: mockAddress, OTPVerification: mockOTPVerification }));
 jest.mock('../middleware/auth', () => require('./helpers/mockAuth'));
+jest.mock('../middleware/rateLimiter', () => {
+  const passThrough = (req, res, next) => next();
+  return { otpLimiter: passThrough };
+});
 jest.mock('../utils/auditLogger', () => ({
   logCustomerCreation: jest.fn().mockResolvedValue(undefined)
 }));
 jest.mock('../services/verificationEmailService', () => ({
   sendEmailVerificationLink: jest.fn().mockResolvedValue({ success: true, provider: 'console' })
+}));
+jest.mock('../services/smsService', () => ({
+  sendOTPSMS: jest.fn().mockResolvedValue({ success: true, messageId: 'sms-test-id' })
 }));
 jest.mock('../services/distanceValidation', () => ({
   geocodeAddress: jest.fn()
@@ -28,6 +41,7 @@ jest.mock('../services/distanceValidation', () => ({
 
 const { logCustomerCreation } = require('../utils/auditLogger');
 const { sendEmailVerificationLink } = require('../services/verificationEmailService');
+const { sendOTPSMS } = require('../services/smsService');
 const { geocodeAddress } = require('../services/distanceValidation');
 const { resetAuthState, setAuthMode, setAuthUser } = require('./helpers/mockAuth');
 const createTestApp = require('./helpers/createTestApp');
@@ -40,6 +54,7 @@ describe('customer routes', () => {
     jest.clearAllMocks();
     resetAuthState();
     mockAddress.count.mockResolvedValue(0);
+    mockOTPVerification.update.mockResolvedValue([0]);
   });
 
   test('rejects customer creation when unauthenticated', async () => {
@@ -145,6 +160,7 @@ describe('customer routes', () => {
       Name: 'Old Name',
       Email: 'old@example.com',
       Phone: '+94770000000',
+      IsPhoneVerified: true,
       Password: await bcrypt.hash('CurrentPass123', 10),
       PreferredNotification: 'BOTH',
       ProfileImageURL: null,
@@ -155,6 +171,7 @@ describe('customer routes', () => {
           Name: this.Name,
           Email: this.Email,
           Phone: this.Phone,
+          IsPhoneVerified: this.IsPhoneVerified,
           PreferredNotification: this.PreferredNotification
         };
       })
@@ -178,7 +195,55 @@ describe('customer routes', () => {
     expect(customerRecord.Name).toBe('Updated Name');
     expect(customerRecord.PreferredNotification).toBe('SMS');
     expect(customerRecord.Email).toBe('old@example.com');
+    expect(customerRecord.IsPhoneVerified).toBe(false);
     expect(sendEmailVerificationLink).not.toHaveBeenCalled();
+  });
+
+  test('sends phone verification OTP for the logged-in customer', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    mockCustomer.findByPk.mockResolvedValue({
+      CustomerID: 5,
+      Phone: '+94770000000',
+      IsPhoneVerified: false,
+      IsActive: true,
+      AccountStatus: 'ACTIVE'
+    });
+    mockOTPVerification.create.mockResolvedValue({ OTPID: 101 });
+
+    const response = await request(app)
+      .post('/api/v1/customers/me/phone-verification/request')
+      .send({});
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(mockOTPVerification.update).toHaveBeenCalled();
+    expect(mockOTPVerification.create).toHaveBeenCalled();
+    expect(sendOTPSMS).toHaveBeenCalledWith('+94770000000', expect.any(String), 'PHONE_VERIFICATION');
+  });
+
+  test('verifies profile phone using OTP', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    const save = jest.fn().mockResolvedValue(undefined);
+
+    mockCustomer.findByPk.mockResolvedValue({
+      CustomerID: 5,
+      Phone: '+94770000000',
+      IsPhoneVerified: false,
+      IsActive: true,
+      AccountStatus: 'ACTIVE',
+      save
+    });
+    mockOTPVerification.findOne.mockResolvedValue({ OTPID: 333 });
+
+    const response = await request(app)
+      .post('/api/v1/customers/me/phone-verification/verify')
+      .send({ otp: '123456' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.success).toBe(true);
+    expect(mockOTPVerification.findOne).toHaveBeenCalled();
+    expect(mockOTPVerification.update).toHaveBeenCalled();
+    expect(save).toHaveBeenCalled();
   });
 
   test('rejects email change when current password is missing', async () => {

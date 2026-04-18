@@ -4,10 +4,12 @@ const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
-const { Customer, Address } = require('../models');
+const { Customer, Address, OTPVerification } = require('../models');
 const { requireAdmin, requireCashier, requireCustomer } = require('../middleware/auth');
+const { otpLimiter } = require('../middleware/rateLimiter');
 const { logCustomerCreation } = require('../utils/auditLogger');
 const { sendEmailVerificationLink } = require('../services/verificationEmailService');
+const { sendOTPSMS } = require('../services/smsService');
 
 const normalizeOptionalEmail = (email) => {
     if (email === undefined || email === null) {
@@ -19,11 +21,20 @@ const normalizeOptionalEmail = (email) => {
 };
 
 const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
+const hashOtpCode = (otpCode, phoneContext = null) => {
+    const otpPart = String(otpCode).trim();
+    const phonePart = phoneContext ? `:${normalizePhone(phoneContext)}` : '';
+    return crypto.createHash('sha256').update(`${otpPart}${phonePart}`).digest('hex');
+};
+const generatePhoneVerificationOtp = () => crypto.randomInt(100000, 1000000).toString();
 
 const isValidProfileName = (name) => typeof name === 'string' && name.trim().length >= 2;
 const isValidProfileEmail = (email) => email === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const isValidProfilePhone = (phone) => /^[+]?[0-9]{9,15}$/.test(phone);
 const isValidNotificationPreference = (value) => ['EMAIL', 'SMS', 'BOTH'].includes(value);
+const isSuccessfulOtpDelivery = (deliveryResult) => {
+    return Boolean(deliveryResult && deliveryResult.success === true && deliveryResult.skipped !== true);
+};
 const MAX_ADDRESSES_PER_CUSTOMER = 3;
 const MIN_ADDRESSES_PER_CUSTOMER = 1;
 const EMAIL_CHANGE_TOKEN_SECRET = process.env.EMAIL_CHANGE_TOKEN_SECRET || process.env.JWT_SECRET;
@@ -32,6 +43,10 @@ const EMAIL_CHANGE_TOKEN_TTL_MINUTES = parseInt(
     10
 );
 const EMAIL_CHANGE_TOKEN_PURPOSE = 'CUSTOMER_EMAIL_CHANGE';
+const PHONE_VERIFICATION_OTP_EXPIRY_MINUTES = parseInt(
+    process.env.PHONE_VERIFICATION_OTP_EXPIRY_MINUTES || '10',
+    10
+);
 
 const buildEmailChangeVerificationUrl = (token) => {
     const frontendBase = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
@@ -405,6 +420,8 @@ router.put('/me', requireCustomer, async (req, res) => {
             : customer.PreferredNotification;
         const currentEmail = normalizeOptionalEmail(customer.Email);
         const isEmailChangeRequested = normalizedEmail !== currentEmail;
+        const currentPhone = normalizePhone(customer.Phone);
+        const isPhoneChangeRequested = normalizedPhone !== currentPhone;
 
         if (!isValidProfileName(normalizedName)) {
             return res.status(400).json({ error: 'Name must be at least 2 characters' });
@@ -460,6 +477,9 @@ router.put('/me', requireCustomer, async (req, res) => {
         customer.Name = normalizedName;
         customer.Phone = normalizedPhone;
         customer.PreferredNotification = normalizedPreferredNotification;
+        if (isPhoneChangeRequested) {
+            customer.IsPhoneVerified = false;
+        }
 
         if (profileImageUrl !== undefined || ProfileImageURL !== undefined) {
             customer.ProfileImageURL = profileImageUrl || ProfileImageURL || null;
@@ -485,7 +505,9 @@ router.put('/me', requireCustomer, async (req, res) => {
             success: true,
             message: isEmailChangeRequested
                 ? 'Profile updated. Check your new email and verify it to complete the email change.'
-                : 'Profile updated successfully',
+                : (isPhoneChangeRequested
+                    ? 'Profile updated. Please verify your updated phone number from profile settings.'
+                    : 'Profile updated successfully'),
             ...(isEmailChangeRequested ? { emailChangePending: true, pendingEmail } : {}),
             data: customer.toJSON()
         });
@@ -499,6 +521,186 @@ router.put('/me', requireCustomer, async (req, res) => {
         }
 
         return res.status(500).json({ error: 'Failed to update customer profile' });
+    }
+});
+
+/**
+ * POST /api/customers/me/phone-verification/request
+ * Customer: Send OTP to the current profile phone number
+ */
+router.post('/me/phone-verification/request', requireCustomer, otpLimiter, async (req, res) => {
+    try {
+        const customer = await Customer.findByPk(req.user.id, {
+            attributes: ['CustomerID', 'Phone', 'IsPhoneVerified', 'IsActive', 'AccountStatus']
+        });
+
+        if (!customer || !customer.IsActive || customer.AccountStatus !== 'ACTIVE') {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        if (customer.IsPhoneVerified) {
+            return res.json({
+                success: true,
+                message: 'Phone number is already verified.'
+            });
+        }
+
+        const normalizedPhone = normalizePhone(customer.Phone);
+        if (!isValidProfilePhone(normalizedPhone)) {
+            return res.status(400).json({
+                error: 'A valid phone number is required in your profile before verification.'
+            });
+        }
+
+        await OTPVerification.update(
+            {
+                IsUsed: true,
+                UsedAt: new Date()
+            },
+            {
+                where: {
+                    UserType: 'CUSTOMER',
+                    UserID: customer.CustomerID,
+                    Purpose: 'PHONE_VERIFICATION',
+                    IsUsed: false
+                }
+            }
+        );
+
+        const otpCode = generatePhoneVerificationOtp();
+        const expiresAt = new Date(Date.now() + PHONE_VERIFICATION_OTP_EXPIRY_MINUTES * 60 * 1000);
+
+        await OTPVerification.create({
+            UserType: 'CUSTOMER',
+            UserID: customer.CustomerID,
+            OTPHash: hashOtpCode(otpCode, normalizedPhone),
+            Purpose: 'PHONE_VERIFICATION',
+            ExpiresAt: expiresAt,
+            IsUsed: false,
+            Attempts: 0
+        });
+
+        const deliveryResult = await sendOTPSMS(normalizedPhone, otpCode, 'PHONE_VERIFICATION');
+        if (!isSuccessfulOtpDelivery(deliveryResult) && process.env.NODE_ENV === 'production') {
+            return res.status(503).json({
+                success: false,
+                error: 'Unable to send verification OTP right now. Please try again later.'
+            });
+        }
+
+        return res.json({
+            success: true,
+            message: 'Verification OTP sent to your profile phone number.',
+            ...(process.env.NODE_ENV !== 'production' ? { _dev_otp: otpCode } : {})
+        });
+    } catch (error) {
+        console.error('Request phone verification OTP error:', error);
+        return res.status(500).json({ error: 'Failed to send phone verification OTP' });
+    }
+});
+
+/**
+ * POST /api/customers/me/phone-verification/verify
+ * Customer: Verify profile phone number using OTP
+ */
+router.post('/me/phone-verification/verify', requireCustomer, otpLimiter, async (req, res) => {
+    try {
+        const otp = String(req.body?.otp || '').trim();
+        if (!/^\d{6}$/.test(otp)) {
+            return res.status(400).json({ error: 'A valid 6-digit OTP is required' });
+        }
+
+        const customer = await Customer.findByPk(req.user.id, {
+            attributes: ['CustomerID', 'Phone', 'IsPhoneVerified', 'IsActive', 'AccountStatus']
+        });
+
+        if (!customer || !customer.IsActive || customer.AccountStatus !== 'ACTIVE') {
+            return res.status(404).json({ error: 'Customer not found' });
+        }
+
+        if (customer.IsPhoneVerified) {
+            return res.json({
+                success: true,
+                message: 'Phone number is already verified.',
+                data: {
+                    phone: customer.Phone,
+                    isPhoneVerified: true
+                }
+            });
+        }
+
+        const normalizedPhone = normalizePhone(customer.Phone);
+        if (!isValidProfilePhone(normalizedPhone)) {
+            return res.status(400).json({
+                error: 'A valid phone number is required in your profile before verification.'
+            });
+        }
+
+        const otpRecord = await OTPVerification.findOne({
+            where: {
+                UserType: 'CUSTOMER',
+                UserID: customer.CustomerID,
+                OTPHash: hashOtpCode(otp, normalizedPhone),
+                Purpose: 'PHONE_VERIFICATION',
+                IsUsed: false,
+                ExpiresAt: {
+                    [Op.gt]: new Date()
+                }
+            },
+            order: [['created_at', 'DESC']]
+        });
+
+        if (!otpRecord) {
+            return res.status(400).json({
+                error: 'Invalid or expired OTP. Please request a new verification code.'
+            });
+        }
+
+        const usedAt = new Date();
+        await OTPVerification.update(
+            {
+                IsUsed: true,
+                UsedAt: usedAt
+            },
+            {
+                where: {
+                    OTPID: otpRecord.OTPID
+                }
+            }
+        );
+
+        await OTPVerification.update(
+            {
+                IsUsed: true,
+                UsedAt: usedAt
+            },
+            {
+                where: {
+                    UserType: 'CUSTOMER',
+                    UserID: customer.CustomerID,
+                    Purpose: 'PHONE_VERIFICATION',
+                    IsUsed: false,
+                    OTPID: {
+                        [Op.ne]: otpRecord.OTPID
+                    }
+                }
+            }
+        );
+
+        customer.IsPhoneVerified = true;
+        await customer.save();
+
+        return res.json({
+            success: true,
+            message: 'Phone number verified successfully',
+            data: {
+                phone: customer.Phone,
+                isPhoneVerified: true
+            }
+        });
+    } catch (error) {
+        console.error('Verify phone OTP error:', error);
+        return res.status(500).json({ error: 'Failed to verify phone OTP' });
     }
 });
 

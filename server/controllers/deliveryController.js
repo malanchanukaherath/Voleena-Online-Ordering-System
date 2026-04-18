@@ -113,12 +113,12 @@ exports.getMyDeliveries = async (req, res) => {
         {
           model: Order,
           as: 'order',
-          attributes: ['OrderID', 'OrderNumber', 'FinalAmount', 'SpecialInstructions'],
+          attributes: ['OrderID', 'OrderNumber', 'FinalAmount', 'SpecialInstructions', 'ContactPhone', 'VerifiedProfilePhone'],
           include: [
             {
               model: Customer,
               as: 'customer',
-              attributes: ['CustomerID', 'Name', 'Phone', 'Email']
+              attributes: ['CustomerID', 'Name', 'Phone', 'Email', 'IsPhoneVerified']
             },
             {
               model: OrderItem,
@@ -403,11 +403,11 @@ exports.getDeliveryHistory = async (req, res) => {
         {
           model: Order,
           as: 'order',
-          attributes: ['OrderID', 'OrderNumber', 'FinalAmount'],
+          attributes: ['OrderID', 'OrderNumber', 'FinalAmount', 'ContactPhone', 'VerifiedProfilePhone'],
           include: [{
             model: Customer,
             as: 'customer',
-            attributes: ['Name', 'Phone']
+            attributes: ['Name', 'Phone', 'IsPhoneVerified']
           }]
         },
         {

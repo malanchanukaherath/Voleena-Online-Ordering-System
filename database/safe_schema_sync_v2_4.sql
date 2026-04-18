@@ -344,6 +344,33 @@ SET @sql := CASE
 END;
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+-- Add dual order contact phone snapshots (safe, idempotent)
+SET @tbl_exists := (SELECT COUNT(*) FROM information_schema.TABLES WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'order');
+
+SET @col_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'order' AND COLUMN_NAME = 'contact_phone'
+);
+SET @sql := IF(
+  @tbl_exists = 1 AND @col_exists = 0,
+  'ALTER TABLE `order` ADD COLUMN `contact_phone` VARCHAR(20) NULL AFTER `customer_id`',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
+SET @col_exists := (
+  SELECT COUNT(*)
+  FROM information_schema.COLUMNS
+  WHERE TABLE_SCHEMA = @db AND TABLE_NAME = 'order' AND COLUMN_NAME = 'verified_profile_phone'
+);
+SET @sql := IF(
+  @tbl_exists = 1 AND @col_exists = 0,
+  'ALTER TABLE `order` ADD COLUMN `verified_profile_phone` VARCHAR(20) NULL AFTER `contact_phone`',
+  'SELECT 1'
+);
+PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
+
 -- Seed reusable walk-in customer
 INSERT INTO `customer` (
   `name`, `email`, `phone`, `password`,

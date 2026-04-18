@@ -27,3 +27,11 @@ export const updateCustomerAddress = async (addressId, payload) => {
 export const deleteCustomerAddress = async (addressId) => {
   return backendApi.delete(`/api/v1/customers/me/addresses/${addressId}`);
 };
+
+export const requestPhoneVerificationOTP = async () => {
+  return backendApi.post('/api/v1/customers/me/phone-verification/request');
+};
+
+export const verifyPhoneVerificationOTP = async (otp) => {
+  return backendApi.post('/api/v1/customers/me/phone-verification/verify', { otp });
+};

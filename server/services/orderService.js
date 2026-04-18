@@ -30,6 +30,7 @@ const markAddressUnavailableError = (error) => {
 };
 
 const CUSTOMER_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
+const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
 
 const isUsableCoordinatePair = (latitude, longitude) => {
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
@@ -178,10 +179,34 @@ class OrderService {
             const orderType = orderData.orderType || orderData.order_type;
             const specialInstructions = orderData.specialInstructions || orderData.special_instructions;
             const promotionId = orderData.promotionId || orderData.promotion_id;
+            const providedContactPhone = orderData.contactPhone || orderData.contact_phone || null;
             const normalizedPaymentMethod = typeof (orderData.paymentMethod || orderData.payment_method) === 'string'
                 ? String(orderData.paymentMethod || orderData.payment_method).trim().toUpperCase()
                 : 'CASH';
             const runtimeSettings = await systemSettingsService.getRuntimeSettings();
+            const customerProfile = await Customer.findByPk(customerId, {
+                transaction,
+                lock: transaction.LOCK.UPDATE
+            });
+
+            if (!customerProfile || !customerProfile.IsActive || customerProfile.AccountStatus !== 'ACTIVE') {
+                throw new Error('Customer account is not active');
+            }
+
+            const normalizedProvidedContactPhone = providedContactPhone
+                ? normalizePhone(providedContactPhone)
+                : null;
+            const normalizedProfilePhone = normalizePhone(customerProfile.Phone);
+            const resolvedContactPhone = normalizedProvidedContactPhone || normalizedProfilePhone || null;
+            const verifiedProfilePhone = customerProfile.IsPhoneVerified ? normalizedProfilePhone : null;
+
+            if (resolvedContactPhone && !/^[+]?[0-9]{9,15}$/.test(resolvedContactPhone)) {
+                throw new Error('Invalid contact phone number format');
+            }
+
+            if (orderType !== 'WALK_IN' && !resolvedContactPhone) {
+                throw new Error('A valid contact phone number is required for this order');
+            }
 
             if (orderType !== 'WALK_IN' && !CUSTOMER_PAYMENT_METHODS.has(normalizedPaymentMethod)) {
                 throw new Error('Unsupported payment method for order creation');
@@ -369,6 +394,8 @@ class OrderService {
             const order = await Order.create({
                 OrderNumber: orderNumber,
                 CustomerID: customerId,
+                ContactPhone: resolvedContactPhone,
+                VerifiedProfilePhone: verifiedProfilePhone,
                 TotalAmount: totalAmount,
                 PromotionID: promotionId || null,
                 DiscountAmount: discountAmount,
@@ -437,7 +464,7 @@ class OrderService {
             await transaction.commit();
 
             try {
-                const customer = await Customer.findByPk(customerId);
+                const customer = customerProfile;
                 if (customer && orderType !== 'WALK_IN') {
                     if (canSendOrderEmail(runtimeSettings, customer, 'orderConfirmation')) {
                         await sendOrderConfirmationEmail(order, customer);

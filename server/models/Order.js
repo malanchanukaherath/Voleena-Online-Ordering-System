@@ -23,6 +23,16 @@ module.exports = (sequelize) => {
             },
             field: 'customer_id'
         },
+        ContactPhone: {
+            type: DataTypes.STRING(20),
+            allowNull: true,
+            field: 'contact_phone'
+        },
+        VerifiedProfilePhone: {
+            type: DataTypes.STRING(20),
+            allowNull: true,
+            field: 'verified_profile_phone'
+        },
         TotalAmount: {
             type: DataTypes.DECIMAL(10, 2),
             allowNull: false,

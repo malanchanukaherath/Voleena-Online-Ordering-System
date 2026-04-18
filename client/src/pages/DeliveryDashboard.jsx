@@ -71,7 +71,11 @@ const DeliveryDashboard = () => {
                             id: delivery.DeliveryID,
                             orderNumber: delivery.order?.OrderNumber || 'N/A',
                             customer: delivery.order?.customer?.Name || 'Unknown',
-                            phone: delivery.order?.customer?.Phone || '',
+                            contactPhone: delivery.order?.ContactPhone || delivery.order?.contact_phone || delivery.order?.customer?.Phone || '',
+                            verifiedPhone:
+                                delivery.order?.VerifiedProfilePhone
+                                || delivery.order?.verified_profile_phone
+                                || (delivery.order?.customer?.IsPhoneVerified ? delivery.order?.customer?.Phone : ''),
                             address: delivery.address
                                 ? [delivery.address.AddressLine1, delivery.address.City, delivery.address.District].filter(Boolean).join(', ')
                                 : 'N/A',
@@ -389,6 +393,15 @@ const DeliveryDashboard = () => {
                                     <div className="min-w-0">
                                         <p className="font-bold break-words">{delivery.orderNumber}</p>
                                         <p className="text-sm text-gray-600">{delivery.customer}</p>
+                                        {delivery.contactPhone && (
+                                            <p className="text-xs text-gray-600">Checkout phone: {delivery.contactPhone}</p>
+                                        )}
+                                        {delivery.verifiedPhone && (
+                                            <p className="text-xs text-green-700">Verified profile phone: {delivery.verifiedPhone}</p>
+                                        )}
+                                        {!delivery.verifiedPhone && (
+                                            <p className="text-xs text-amber-700">Verified profile phone is not available for this customer.</p>
+                                        )}
                                         <p className="text-xs text-gray-500 break-words">{delivery.address}</p>
                                         {Number.isFinite(delivery.lat) && Number.isFinite(delivery.lng) && (
                                             <p className="text-xs text-gray-400 mt-1">
@@ -434,12 +447,20 @@ const DeliveryDashboard = () => {
                                             {getActionLabel(delivery.status)}
                                         </Button>
                                     )}
-                                    {delivery.phone && (
+                                    {delivery.contactPhone && (
                                         <a
-                                            href={`tel:${delivery.phone}`}
+                                            href={`tel:${delivery.contactPhone}`}
                                             className="inline-flex w-full items-center justify-center rounded bg-primary-600 px-3 py-1.5 text-xs text-white transition hover:bg-primary-700 sm:w-auto"
                                         >
-                                            <FaPhone className="mr-1" /> Call Customer
+                                            <FaPhone className="mr-1" /> Call Checkout Number
+                                        </a>
+                                    )}
+                                    {delivery.verifiedPhone && delivery.verifiedPhone !== delivery.contactPhone && (
+                                        <a
+                                            href={`tel:${delivery.verifiedPhone}`}
+                                            className="inline-flex w-full items-center justify-center rounded bg-green-600 px-3 py-1.5 text-xs text-white transition hover:bg-green-700 sm:w-auto"
+                                        >
+                                            <FaPhone className="mr-1" /> Call Verified Number
                                         </a>
                                     )}
                                     {getGoogleMapsNavigationUrl(delivery) && (
