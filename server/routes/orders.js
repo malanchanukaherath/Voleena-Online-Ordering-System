@@ -9,6 +9,8 @@ const { validateOrderCancellation } = require('../middleware/validation');
 router.post('/', requireCustomer, orderLimiter, orderController.createOrder);
 router.get('/', authenticateToken, orderController.getAllOrders); // Role-filtered in controller
 router.get('/:id', authenticateToken, orderController.getOrderById); // Role-filtered in controller
+router.get('/:id/addons/options', requireCustomer, orderController.getOrderAddOnOptions);
+router.patch('/:id/items/:orderItemId/addons', requireCustomer, orderController.updateOrderItemAddOns);
 
 // Staff routes - order management
 // CRITICAL: confirmOrderLimiter prevents rapid confirmation attempts that could cause race conditions

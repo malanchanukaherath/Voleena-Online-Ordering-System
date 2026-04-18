@@ -68,6 +68,14 @@ export const getOrderById = async (orderId) => {
   return backendApi.get(`/api/v1/orders/${orderId}`);
 };
 
+export const getOrderAddOnOptions = async (orderId) => {
+  return backendApi.get(`/api/v1/orders/${orderId}/addons/options`);
+};
+
+export const updateOrderItemAddOns = async (orderId, orderItemId, addOns) => {
+  return backendApi.patch(`/api/v1/orders/${orderId}/items/${orderItemId}/addons`, { addOns });
+};
+
 export const getDeliveryLocation = async (deliveryId) => {
   return backendApi.get(`/api/v1/delivery/deliveries/${deliveryId}/location`);
 };

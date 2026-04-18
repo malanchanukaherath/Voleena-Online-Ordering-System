@@ -1,11 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
 import Toast from '../components/ui/Toast';
-import { FaMapMarkerAlt, FaPhone, FaBox, FaTruck, FaCheckCircle, FaClock, FaBan, FaMoneyBillWave, FaMapMarkedAlt } from 'react-icons/fa';
-import { cancelOrder, getDeliveryLocation, getOrderById } from '../services/orderApi';
+import {
+    FaMapMarkerAlt,
+    FaPhone,
+    FaBox,
+    FaTruck,
+    FaCheckCircle,
+    FaClock,
+    FaBan,
+    FaMoneyBillWave,
+    FaMapMarkedAlt
+} from 'react-icons/fa';
+import {
+    cancelOrder,
+    getDeliveryLocation,
+    getOrderAddOnOptions,
+    getOrderById,
+    updateOrderItemAddOns
+} from '../services/orderApi';
+import { comboPackService, menuItemService } from '../services/menuService';
+import { addToCart } from '../utils/cartStorage';
+import { resolveAssetUrl } from '../config/api';
+
+const ORDER_ADDON_NOTES_PREFIX = '__VOLEENA_ADDONS__:';
+
+const toMoney = (value) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+        return 0;
+    }
+
+    return Number(parsed.toFixed(2));
+};
 
 const toFiniteNumber = (value, fallback = null) => {
     if (value === null || value === undefined || value === '') {
@@ -14,6 +44,44 @@ const toFiniteNumber = (value, fallback = null) => {
 
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const parseOrderItemAddOnsFromNotes = (rawNotes, fallbackUnitPrice) => {
+    const notes = String(rawNotes || '').trim();
+    const safeFallback = toMoney(fallbackUnitPrice);
+
+    if (!notes || !notes.startsWith(ORDER_ADDON_NOTES_PREFIX)) {
+        return {
+            baseUnitPrice: safeFallback,
+            selectedAddOns: []
+        };
+    }
+
+    try {
+        const payload = JSON.parse(notes.slice(ORDER_ADDON_NOTES_PREFIX.length));
+        const selectedAddOns = Array.isArray(payload?.addOns)
+            ? payload.addOns
+                .map((entry) => ({
+                    id: String(entry?.id || '').trim(),
+                    quantity: Math.max(1, Number.parseInt(entry?.quantity, 10) || 1)
+                }))
+                .filter((entry) => entry.id)
+            : [];
+
+        const baseUnitPrice = Number.isFinite(Number(payload?.baseUnitPrice))
+            ? toMoney(payload.baseUnitPrice)
+            : safeFallback;
+
+        return {
+            baseUnitPrice,
+            selectedAddOns
+        };
+    } catch (error) {
+        return {
+            baseUnitPrice: safeFallback,
+            selectedAddOns: []
+        };
+    }
 };
 
 const formatTimeLabel = (value) => {
@@ -51,6 +119,18 @@ const formatEtaCountdown = (value) => {
     return `About ${minutesRemaining} minutes`;
 };
 
+const paymentMethodLabel = (paymentMethod) => {
+    const normalized = String(paymentMethod || '').toUpperCase();
+    if (normalized === 'ONLINE') {
+        return 'Online Payment';
+    }
+    if (normalized === 'CARD') {
+        return 'Card Payment';
+    }
+
+    return 'Cash on Delivery';
+};
+
 const OrderTracking = () => {
     const { orderId } = useParams();
 
@@ -63,7 +143,30 @@ const OrderTracking = () => {
     const [liveLocation, setLiveLocation] = useState(null);
     const [liveLocationError, setLiveLocationError] = useState('');
 
-    const mapOrderData = (data = {}) => {
+    const [selectedItem, setSelectedItem] = useState(null);
+    const [showItemPreviewModal, setShowItemPreviewModal] = useState(false);
+    const [relatedItems, setRelatedItems] = useState([]);
+    const [loadingRelatedItems, setLoadingRelatedItems] = useState(false);
+    const [comparisonIds, setComparisonIds] = useState([]);
+
+    const [addOnContext, setAddOnContext] = useState({
+        canCustomize: false,
+        reason: null,
+        itemsByOrderItemId: {}
+    });
+    const [loadingAddOnContext, setLoadingAddOnContext] = useState(false);
+    const [showAddOnModal, setShowAddOnModal] = useState(false);
+    const [editingOrderItemId, setEditingOrderItemId] = useState(null);
+    const [editableAddOnSelections, setEditableAddOnSelections] = useState({});
+    const [isSavingAddOns, setIsSavingAddOns] = useState(false);
+
+    const openToast = useCallback((message, type = 'success') => {
+        setToastMessage(message);
+        setToastType(type);
+        setShowToast(true);
+    }, []);
+
+    const mapOrderData = useCallback((data = {}) => {
         const deliveryPerson = data.delivery?.deliveryStaff || data.delivery?.staff || null;
 
         return {
@@ -73,6 +176,10 @@ const OrderTracking = () => {
             orderType: data.OrderType,
             paymentMethod: data.payment?.Method || 'CASH',
             paymentStatus: data.payment?.Status || null,
+            subtotal: toMoney(data.TotalAmount || 0),
+            discountAmount: toMoney(data.DiscountAmount || 0),
+            deliveryFee: toMoney(data.DeliveryFee || 0),
+            finalAmount: toMoney(data.FinalAmount || data.TotalAmount || 0),
             customer: {
                 name: data.customer?.Name || 'Customer',
                 phone: data.customer?.Phone || ''
@@ -99,34 +206,287 @@ const OrderTracking = () => {
             completedAt: data.CompletedAt || data.completedAt,
             deliveredAt: data.delivery?.DeliveredAt || data.delivery?.deliveredAt,
             cancelledAt: data.CancelledAt || data.cancelledAt || null,
-            items: (data.items || []).map((item) => ({
-                name: item.menuItem?.Name || item.combo?.Name || 'Item',
-                quantity: item.Quantity,
-                price: parseFloat(item.UnitPrice || 0)
-            })),
-            total: parseFloat(data.FinalAmount || data.TotalAmount || 0)
+            items: (data.items || []).map((entry) => {
+                const unitPrice = toMoney(entry.UnitPrice || 0);
+                const parsedAddOns = parseOrderItemAddOnsFromNotes(entry.ItemNotes, unitPrice);
+
+                return {
+                    orderItemId: entry.OrderItemID,
+                    itemType: entry.MenuItemID ? 'MENU' : 'COMBO',
+                    itemId: entry.MenuItemID || entry.ComboID,
+                    menuItemId: entry.MenuItemID || null,
+                    comboId: entry.ComboID || null,
+                    name: entry.menuItem?.Name || entry.combo?.Name || 'Item',
+                    description: entry.menuItem?.Description || entry.combo?.Description || 'No description available.',
+                    categoryId: entry.menuItem?.CategoryID || null,
+                    categoryName: entry.menuItem?.category?.Name || null,
+                    quantity: Number(entry.Quantity || 0),
+                    price: unitPrice,
+                    image: resolveAssetUrl(entry.menuItem?.ImageURL || entry.combo?.ImageURL || null),
+                    selectedAddOns: parsedAddOns.selectedAddOns,
+                    baseUnitPrice: parsedAddOns.baseUnitPrice,
+                    lineTotal: toMoney(unitPrice * Number(entry.Quantity || 0))
+                };
+            })
         };
-    };
+    }, []);
+
+    const fetchOrder = useCallback(async () => {
+        try {
+            const response = await getOrderById(orderId);
+            const data = response.data?.data;
+            if (!data) {
+                return null;
+            }
+
+            const mapped = mapOrderData(data);
+            setOrder(mapped);
+            return mapped;
+        } catch (error) {
+            console.error('Failed to load order:', error);
+            return null;
+        }
+    }, [mapOrderData, orderId]);
+
+    const fetchAddOnContext = useCallback(async (resolvedOrder) => {
+        if (!resolvedOrder?.id) {
+            setAddOnContext({
+                canCustomize: false,
+                reason: null,
+                itemsByOrderItemId: {}
+            });
+            return;
+        }
+
+        try {
+            setLoadingAddOnContext(true);
+            const response = await getOrderAddOnOptions(resolvedOrder.id);
+            const payload = response.data?.data;
+
+            if (!payload) {
+                return;
+            }
+
+            const itemsByOrderItemId = (payload.items || []).reduce((accumulator, entry) => {
+                accumulator[String(entry.orderItemId)] = entry;
+                return accumulator;
+            }, {});
+
+            setAddOnContext({
+                canCustomize: Boolean(payload.canCustomize),
+                reason: payload.reason || null,
+                itemsByOrderItemId
+            });
+        } catch (error) {
+            console.error('Failed to load add-on context:', error);
+            setAddOnContext({
+                canCustomize: false,
+                reason: error?.response?.data?.message || 'Unable to load item customization options right now.',
+                itemsByOrderItemId: {}
+            });
+        } finally {
+            setLoadingAddOnContext(false);
+        }
+    }, []);
+
+    const fetchRelatedItems = useCallback(async (item) => {
+        if (!item) {
+            setRelatedItems([]);
+            return;
+        }
+
+        setLoadingRelatedItems(true);
+        try {
+            if (item.itemType === 'MENU') {
+                const response = await menuItemService.getAll({
+                    isActive: 'true',
+                    categoryId: item.categoryId || undefined,
+                    _: Date.now()
+                });
+
+                const related = (response.data || [])
+                    .map((entry) => ({
+                        id: entry.MenuItemID || entry.ItemID,
+                        type: 'menu',
+                        name: entry.Name,
+                        description: entry.Description || 'No description available.',
+                        price: toMoney(entry.Price),
+                        image: resolveAssetUrl(entry.ImageURL || entry.Image_URL || null)
+                    }))
+                    .filter((entry) => String(entry.id) !== String(item.menuItemId || item.itemId))
+                    .slice(0, 5);
+
+                setRelatedItems(related);
+            } else {
+                const response = await comboPackService.getActive({ _: Date.now() });
+                const related = (response.data || [])
+                    .map((entry) => ({
+                        id: entry.ComboID || entry.ComboPackID,
+                        type: 'combo',
+                        name: entry.Name,
+                        description: entry.Description || 'No description available.',
+                        price: toMoney(entry.Price),
+                        image: resolveAssetUrl(entry.ImageURL || entry.Image_URL || null)
+                    }))
+                    .filter((entry) => String(entry.id) !== String(item.comboId || item.itemId))
+                    .slice(0, 5);
+
+                setRelatedItems(related);
+            }
+        } catch (error) {
+            console.error('Failed to load related items:', error);
+            setRelatedItems([]);
+        } finally {
+            setLoadingRelatedItems(false);
+        }
+    }, []);
+
+    const quickAddToCart = useCallback((item) => {
+        try {
+            addToCart({
+                id: item.id,
+                type: item.type,
+                menuItemId: item.type === 'menu' ? item.id : null,
+                comboId: item.type === 'combo' ? item.id : null,
+                name: item.name,
+                price: toMoney(item.price),
+                image: item.image || null,
+                isAvailable: true
+            }, 1);
+
+            openToast(`${item.name} added to cart.`, 'success');
+        } catch (error) {
+            openToast(error.message || 'Failed to add item to cart.', 'error');
+        }
+    }, [openToast]);
+
+    const openItemPreview = useCallback((item) => {
+        setSelectedItem(item);
+        setComparisonIds([]);
+        setShowItemPreviewModal(true);
+        fetchRelatedItems(item);
+    }, [fetchRelatedItems]);
+
+    const closeItemPreview = useCallback(() => {
+        setShowItemPreviewModal(false);
+        setSelectedItem(null);
+        setRelatedItems([]);
+        setComparisonIds([]);
+    }, []);
+
+    const toggleCompareItem = useCallback((itemId) => {
+        setComparisonIds((previous) => {
+            if (previous.includes(itemId)) {
+                return previous.filter((entry) => entry !== itemId);
+            }
+
+            if (previous.length >= 2) {
+                openToast('You can compare up to 3 items including the selected item.', 'warning');
+                return previous;
+            }
+
+            return [...previous, itemId];
+        });
+    }, [openToast]);
+
+    const openAddOnEditor = useCallback((item) => {
+        const contextItem = addOnContext.itemsByOrderItemId[String(item.orderItemId)];
+        if (!contextItem) {
+            return;
+        }
+
+        const nextSelections = (contextItem.selectedAddOns || []).reduce((accumulator, entry) => {
+            accumulator[String(entry.id)] = Number(entry.quantity || 1);
+            return accumulator;
+        }, {});
+
+        setEditingOrderItemId(String(item.orderItemId));
+        setEditableAddOnSelections(nextSelections);
+        setShowAddOnModal(true);
+    }, [addOnContext.itemsByOrderItemId]);
+
+    const closeAddOnEditor = useCallback(() => {
+        setShowAddOnModal(false);
+        setEditingOrderItemId(null);
+        setEditableAddOnSelections({});
+    }, []);
+
+    const setAddOnEnabled = useCallback((addOnId, isEnabled) => {
+        setEditableAddOnSelections((previous) => {
+            const next = { ...previous };
+            if (isEnabled) {
+                next[addOnId] = next[addOnId] || 1;
+            } else {
+                delete next[addOnId];
+            }
+            return next;
+        });
+    }, []);
+
+    const adjustAddOnQuantity = useCallback((addOnId, requestedQuantity, maxQuantity) => {
+        setEditableAddOnSelections((previous) => {
+            const normalized = Math.max(1, Math.min(Number(requestedQuantity || 1), Number(maxQuantity || 1)));
+            return {
+                ...previous,
+                [addOnId]: normalized
+            };
+        });
+    }, []);
+
+    const saveAddOnSelections = useCallback(async () => {
+        if (!order || !editingOrderItemId) {
+            return;
+        }
+
+        const payload = Object.entries(editableAddOnSelections)
+            .filter(([, quantity]) => Number(quantity) > 0)
+            .map(([id, quantity]) => ({
+                id,
+                quantity: Number(quantity)
+            }));
+
+        setIsSavingAddOns(true);
+        try {
+            await updateOrderItemAddOns(order.id, editingOrderItemId, payload);
+            closeAddOnEditor();
+
+            const refreshedOrder = await fetchOrder();
+            if (refreshedOrder) {
+                await fetchAddOnContext(refreshedOrder);
+            }
+
+            openToast('Item customization saved successfully.', 'success');
+        } catch (error) {
+            openToast(error?.response?.data?.message || error.message || 'Failed to save item customization.', 'error');
+        } finally {
+            setIsSavingAddOns(false);
+        }
+    }, [closeAddOnEditor, editableAddOnSelections, editingOrderItemId, fetchAddOnContext, fetchOrder, openToast, order]);
 
     useEffect(() => {
-        const fetchOrder = async () => {
-            try {
-                const response = await getOrderById(orderId);
-                const data = response.data?.data;
-                if (!data) {
-                    return;
-                }
-                setOrder(mapOrderData(data));
-            } catch (error) {
-                console.error('Failed to load order:', error);
+        let isMounted = true;
+
+        const loadOrderState = async () => {
+            const resolvedOrder = await fetchOrder();
+            if (isMounted && resolvedOrder) {
+                await fetchAddOnContext(resolvedOrder);
             }
         };
 
-        fetchOrder();
+        loadOrderState();
 
-        const interval = setInterval(fetchOrder, 5000);
-        return () => clearInterval(interval);
-    }, [orderId]);
+        const intervalId = setInterval(async () => {
+            const resolvedOrder = await fetchOrder();
+            if (isMounted && resolvedOrder) {
+                await fetchAddOnContext(resolvedOrder);
+            }
+        }, 5000);
+
+        return () => {
+            isMounted = false;
+            clearInterval(intervalId);
+        };
+    }, [fetchAddOnContext, fetchOrder]);
 
     useEffect(() => {
         const deliveryId = order?.deliveryId;
@@ -180,18 +540,18 @@ const OrderTracking = () => {
         };
 
         fetchLiveLocation();
-        const interval = setInterval(fetchLiveLocation, 10000);
+        const intervalId = setInterval(fetchLiveLocation, 10000);
 
         return () => {
             isMounted = false;
-            clearInterval(interval);
+            clearInterval(intervalId);
         };
     }, [order?.deliveryId, order?.deliveryPerson?.name, order?.deliveryPerson?.phone, order?.orderType, order?.status]);
 
     const canCancelOrder = () => {
         const cancellableStatuses = ['CONFIRMED'];
-        const isNotCancelled = order.status !== 'CANCELLED';
-        return cancellableStatuses.includes(order.status) && isNotCancelled;
+        const isNotCancelled = order?.status !== 'CANCELLED';
+        return cancellableStatuses.includes(order?.status) && isNotCancelled;
     };
 
     const getDeliveryEtaText = () => {
@@ -262,39 +622,34 @@ const OrderTracking = () => {
                 : null;
 
     const handleCancelOrder = async () => {
+        if (!order) {
+            return;
+        }
+
         setIsCancelling(true);
         try {
             await cancelOrder(order.id, 'Cancelled by customer');
 
-            try {
-                const refreshed = await getOrderById(order.id);
-                const refreshedData = refreshed.data?.data;
-                if (refreshedData) {
-                    setOrder(mapOrderData(refreshedData));
-                } else {
-                    setOrder((prev) => ({ ...prev, status: 'CANCELLED', cancelledAt: new Date().toISOString() }));
-                }
-            } catch {
-                setOrder((prev) => ({ ...prev, status: 'CANCELLED', cancelledAt: new Date().toISOString() }));
+            const refreshedOrder = await fetchOrder();
+            if (refreshedOrder) {
+                await fetchAddOnContext(refreshedOrder);
+            } else {
+                setOrder((previous) => ({ ...previous, status: 'CANCELLED', cancelledAt: new Date().toISOString() }));
             }
 
             const isCashOnDelivery = order.paymentMethod === 'CASH';
-            setToastMessage(
+            openToast(
                 isCashOnDelivery
                     ? 'Order cancelled successfully.'
-                    : 'Order cancelled successfully. Your refund will be reviewed and processed through the payment provider.'
+                    : 'Order cancelled successfully. Your refund will be reviewed and processed through the payment provider.',
+                'success'
             );
-            setToastType('success');
-            setShowToast(true);
         } catch (error) {
             if (error?.code === 'ECONNABORTED') {
-                setToastMessage('Cancellation is taking longer than expected. Please wait a moment; status will refresh automatically.');
-                setToastType('warning');
+                openToast('Cancellation is taking longer than expected. Please wait a moment; status will refresh automatically.', 'warning');
             } else {
-                setToastMessage(error?.response?.data?.message || error.message || 'Failed to cancel order');
-                setToastType('error');
+                openToast(error?.response?.data?.message || error.message || 'Failed to cancel order', 'error');
             }
-            setShowToast(true);
         } finally {
             setIsCancelling(false);
             setShowCancelModal(false);
@@ -307,7 +662,7 @@ const OrderTracking = () => {
             label: 'Order Placed',
             time: getTimelineTime('PLACED'),
             completed: true,
-            icon: FaBox,
+            icon: FaBox
         },
         {
             status: 'CONFIRMED',
@@ -366,6 +721,60 @@ const OrderTracking = () => {
         });
     }
 
+    const comparedItems = useMemo(() => {
+        if (!selectedItem) {
+            return [];
+        }
+
+        const selectedRelated = relatedItems.filter((entry) => comparisonIds.includes(entry.id));
+        return [
+            {
+                id: selectedItem.itemId,
+                type: selectedItem.itemType === 'MENU' ? 'menu' : 'combo',
+                name: selectedItem.name,
+                description: selectedItem.description,
+                price: toMoney(selectedItem.price),
+                image: selectedItem.image
+            },
+            ...selectedRelated
+        ].slice(0, 3);
+    }, [comparisonIds, relatedItems, selectedItem]);
+
+    const editingAddOnContextItem = useMemo(() => {
+        if (!editingOrderItemId) {
+            return null;
+        }
+
+        return addOnContext.itemsByOrderItemId[String(editingOrderItemId)] || null;
+    }, [addOnContext.itemsByOrderItemId, editingOrderItemId]);
+
+    const editingOrderItem = useMemo(() => {
+        if (!editingOrderItemId) {
+            return null;
+        }
+
+        return (order?.items || []).find((entry) => String(entry.orderItemId) === String(editingOrderItemId)) || null;
+    }, [editingOrderItemId, order?.items]);
+
+    const selectedEditableAddOns = useMemo(() => {
+        const available = editingAddOnContextItem?.availableAddOns || [];
+        return available
+            .filter((entry) => Number(editableAddOnSelections[entry.id] || 0) > 0)
+            .map((entry) => ({
+                ...entry,
+                quantity: Number(editableAddOnSelections[entry.id] || 0)
+            }));
+    }, [editableAddOnSelections, editingAddOnContextItem]);
+
+    const editingBaseUnitPrice = toMoney(editingAddOnContextItem?.baseUnitPrice || editingOrderItem?.baseUnitPrice || editingOrderItem?.price || 0);
+    const editingExtrasPerUnit = toMoney(selectedEditableAddOns.reduce((sum, entry) => sum + toMoney(entry.price) * Number(entry.quantity || 0), 0));
+    const editingUpdatedUnitPrice = toMoney(editingBaseUnitPrice + editingExtrasPerUnit);
+    const editingQuantity = Number(editingOrderItem?.quantity || 1);
+    const editingLineTotal = toMoney(editingUpdatedUnitPrice * editingQuantity);
+    const currentLineTotal = toMoney(Number(editingOrderItem?.price || 0) * editingQuantity);
+    const projectedSubtotal = toMoney((order?.subtotal || 0) - currentLineTotal + editingLineTotal);
+    const projectedFinalAmount = Math.max(toMoney(projectedSubtotal - toMoney(order?.discountAmount || 0) + toMoney(order?.deliveryFee || 0)), 0);
+
     if (!order) {
         return (
             <div className="max-w-4xl mx-auto">
@@ -378,7 +787,7 @@ const OrderTracking = () => {
         <div className="max-w-4xl mx-auto">
             <div className="mb-8">
                 <Link to="/orders" className="text-primary-600 hover:text-primary-700 mb-4 inline-block">
-                    ← Back to Orders
+                    {'<'} Back to Orders
                 </Link>
                 <h1 className="text-3xl font-bold mb-2">Track Your Order</h1>
                 <p className="text-gray-600">Order #{order.orderNumber}</p>
@@ -405,7 +814,7 @@ const OrderTracking = () => {
                         </div>
                         {order.status === 'DELIVERED' && order.orderType === 'DELIVERY' && order.deliveredAt && (
                             <div className="text-sm text-green-800 bg-green-50 p-2 rounded mt-3">
-                                <p>✅ Delivered on: <span className="font-semibold">{new Date(order.deliveredAt).toLocaleString()}</span></p>
+                                <p>Delivered on: <span className="font-semibold">{new Date(order.deliveredAt).toLocaleString()}</span></p>
                             </div>
                         )}
                         {order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && order.orderType === 'DELIVERY' && (
@@ -469,7 +878,7 @@ const OrderTracking = () => {
                             ) : hasDestinationCoordinates ? (
                                 <div className="space-y-4">
                                     <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800">
-                                        <p>📍 Your order is on the way to:</p>
+                                        <p>Your order is on the way to:</p>
                                         <p className="font-medium mt-1">{order.deliveryAddress.line1}, {order.deliveryAddress.city}</p>
                                     </div>
 
@@ -512,7 +921,7 @@ const OrderTracking = () => {
                                 </div>
                             ) : (
                                 <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800">
-                                    <p>📍 Your order is on the way! GPS tracking not available for this delivery.</p>
+                                    <p>Your order is on the way. GPS tracking is not available for this delivery.</p>
                                 </div>
                             )}
                         </div>
@@ -560,23 +969,97 @@ const OrderTracking = () => {
                     <div className="bg-white rounded-lg shadow p-6">
                         <h3 className="font-semibold mb-4">Order Details</h3>
                         <div className="space-y-3 text-sm">
-                            {order.items.map((item, index) => (
-                                <div key={index} className="flex justify-between">
-                                    <span>{item.quantity}x {item.name}</span>
-                                    <span className="font-medium">LKR {(item.price * item.quantity).toFixed(2)}</span>
+                            {order.items.map((item) => {
+                                const addOnEntry = addOnContext.itemsByOrderItemId[String(item.orderItemId)];
+                                const selectedAddOns = addOnEntry?.selectedAddOns || item.selectedAddOns || [];
+                                const canCustomizeThisItem = Boolean(addOnEntry?.canCustomize);
+
+                                return (
+                                    <div key={item.orderItemId} className="border border-gray-200 rounded-lg p-3">
+                                        <div className="flex gap-3">
+                                            <button
+                                                type="button"
+                                                onClick={() => openItemPreview(item)}
+                                                className="w-16 h-16 bg-gray-100 rounded overflow-hidden shrink-0"
+                                                title="View item details"
+                                            >
+                                                {item.image ? (
+                                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <span className="text-[10px] text-gray-400">No image</span>
+                                                )}
+                                            </button>
+
+                                            <div className="flex-1 min-w-0">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openItemPreview(item)}
+                                                    className="text-left font-medium text-gray-900 hover:text-primary-600"
+                                                >
+                                                    {item.quantity}x {item.name}
+                                                </button>
+                                                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{item.description}</p>
+
+                                                {selectedAddOns.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-2">
+                                                        {selectedAddOns.map((entry) => (
+                                                            <span key={`${item.orderItemId}-${entry.id}`} className="inline-flex items-center px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-[11px]">
+                                                                + {entry.quantity} {entry.name || entry.id}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+
+                                                {canCustomizeThisItem && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openAddOnEditor(item)}
+                                                        className="mt-2 text-xs font-medium text-primary-700 hover:text-primary-800"
+                                                    >
+                                                        Customize Add-ons
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div className="text-right">
+                                                <p className="font-semibold">LKR {item.lineTotal.toFixed(2)}</p>
+                                                <p className="text-xs text-gray-500">LKR {item.price.toFixed(2)} each</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            <div className="border-t pt-3 space-y-1">
+                                <div className="flex justify-between text-xs text-gray-600">
+                                    <span>Subtotal</span>
+                                    <span>LKR {order.subtotal.toFixed(2)}</span>
                                 </div>
-                            ))}
+                                <div className="flex justify-between text-xs text-gray-600">
+                                    <span>Discount</span>
+                                    <span>- LKR {order.discountAmount.toFixed(2)}</span>
+                                </div>
+                                <div className="flex justify-between text-xs text-gray-600">
+                                    <span>Delivery Fee</span>
+                                    <span>LKR {order.deliveryFee.toFixed(2)}</span>
+                                </div>
+                            </div>
+
                             <div className="border-t pt-3 flex justify-between font-semibold">
-                                <span>Total</span>
-                                <span className="text-primary-600">LKR {order.total.toFixed(2)}</span>
+                                <span>Final Amount</span>
+                                <span className="text-primary-600">LKR {order.finalAmount.toFixed(2)}</span>
                             </div>
                             <div className="border-t pt-3">
                                 <p className="text-gray-600">Payment Method:</p>
-                                <p className="font-medium">
-                                    {order.paymentMethod === 'ONLINE' ? '💳 Online Payment' : order.paymentMethod === 'CARD' ? '💳 Card Payment' : '💵 Cash on Delivery'}
-                                </p>
+                                <p className="font-medium">{paymentMethodLabel(order.paymentMethod)}</p>
                                 {order.paymentStatus && (
                                     <p className="text-xs text-gray-500">Status: {order.paymentStatus}</p>
+                                )}
+                                {loadingAddOnContext && (
+                                    <p className="text-xs text-gray-500 mt-1">Loading item customization options...</p>
+                                )}
+                                {!loadingAddOnContext && addOnContext.reason && (
+                                    <p className="text-xs text-amber-700 mt-1">{addOnContext.reason}</p>
                                 )}
                             </div>
                         </div>
@@ -638,6 +1121,197 @@ const OrderTracking = () => {
                             </Button>
                             <Button onClick={() => setShowCancelModal(false)} variant="outline">
                                 Keep Order
+                            </Button>
+                        </div>
+                    </div>
+                </Modal>
+            )}
+
+            {showItemPreviewModal && selectedItem && (
+                <Modal
+                    isOpen={showItemPreviewModal}
+                    onClose={closeItemPreview}
+                    title={selectedItem.name}
+                    size="xl"
+                >
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="rounded-lg overflow-hidden bg-gray-100 h-64">
+                                {selectedItem.image ? (
+                                    <img src={selectedItem.image} alt={selectedItem.name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">No image available</div>
+                                )}
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500 mb-2">{selectedItem.itemType === 'MENU' ? 'Menu Item' : 'Combo Pack'}</p>
+                                <p className="text-base text-gray-700 mb-4">{selectedItem.description}</p>
+                                <p className="text-2xl font-bold text-primary-600 mb-4">LKR {toMoney(selectedItem.price).toFixed(2)}</p>
+                                <Button
+                                    onClick={() => quickAddToCart({
+                                        id: selectedItem.itemId,
+                                        type: selectedItem.itemType === 'MENU' ? 'menu' : 'combo',
+                                        name: selectedItem.name,
+                                        price: toMoney(selectedItem.price),
+                                        image: selectedItem.image
+                                    })}
+                                >
+                                    Quick Add to Cart
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 className="font-semibold mb-3">Similar Items</h4>
+                            {loadingRelatedItems ? (
+                                <p className="text-sm text-gray-500">Loading related items...</p>
+                            ) : relatedItems.length === 0 ? (
+                                <p className="text-sm text-gray-500">No related items found.</p>
+                            ) : (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {relatedItems.map((entry) => {
+                                        const isCompared = comparisonIds.includes(entry.id);
+
+                                        return (
+                                            <div key={`${entry.type}:${entry.id}`} className="border border-gray-200 rounded-lg p-3">
+                                                <div className="h-28 rounded bg-gray-100 overflow-hidden mb-2">
+                                                    {entry.image ? (
+                                                        <img src={entry.image} alt={entry.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">No image</div>
+                                                    )}
+                                                </div>
+                                                <p className="font-medium text-sm line-clamp-1">{entry.name}</p>
+                                                <p className="text-xs text-gray-500 line-clamp-2 mt-1">{entry.description}</p>
+                                                <p className="text-sm font-semibold text-primary-600 mt-2">LKR {entry.price.toFixed(2)}</p>
+
+                                                <div className="flex items-center justify-between mt-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => toggleCompareItem(entry.id)}
+                                                        className={`text-xs font-medium ${isCompared ? 'text-primary-700' : 'text-gray-600'} hover:text-primary-700`}
+                                                    >
+                                                        {isCompared ? 'Compared' : 'Compare'}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => quickAddToCart(entry)}
+                                                        className="text-xs font-medium text-primary-700 hover:text-primary-800"
+                                                    >
+                                                        Add
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
+
+                        {comparedItems.length > 1 && (
+                            <div>
+                                <h4 className="font-semibold mb-3">Quick Comparison</h4>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    {comparedItems.map((entry, index) => (
+                                        <div key={`${entry.type}:${entry.id || index}`} className="border border-gray-200 rounded-lg p-3">
+                                            <p className="font-medium text-sm">{entry.name}</p>
+                                            <p className="text-xs text-gray-500 mt-1">Price</p>
+                                            <p className="text-base font-semibold text-primary-700">LKR {toMoney(entry.price).toFixed(2)}</p>
+                                            <p className="text-xs text-gray-500 mt-2 line-clamp-3">{entry.description}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </Modal>
+            )}
+
+            {showAddOnModal && editingAddOnContextItem && editingOrderItem && (
+                <Modal
+                    isOpen={showAddOnModal}
+                    onClose={closeAddOnEditor}
+                    title={`Customize: ${editingOrderItem.name}`}
+                    size="lg"
+                >
+                    <div className="space-y-4">
+                        <p className="text-sm text-gray-600">
+                            Add extras to your item. Changes are only allowed before preparation starts.
+                        </p>
+
+                        {(editingAddOnContextItem.availableAddOns || []).map((entry) => {
+                            const currentQty = Number(editableAddOnSelections[entry.id] || 0);
+                            const enabled = currentQty > 0;
+
+                            return (
+                                <div key={entry.id} className="border border-gray-200 rounded-lg p-3">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <label className="flex items-center gap-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={enabled}
+                                                onChange={(event) => setAddOnEnabled(entry.id, event.target.checked)}
+                                            />
+                                            <span className="text-sm font-medium">{entry.name}</span>
+                                        </label>
+                                        <span className="text-sm text-gray-700">LKR {toMoney(entry.price).toFixed(2)}</span>
+                                    </div>
+
+                                    {enabled && (
+                                        <div className="mt-3 flex items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => adjustAddOnQuantity(entry.id, currentQty - 1, entry.maxQuantity)}
+                                                className="w-7 h-7 rounded border border-gray-300 text-sm"
+                                                disabled={currentQty <= 1}
+                                            >
+                                                -
+                                            </button>
+                                            <span className="text-sm min-w-[2rem] text-center">{currentQty}</span>
+                                            <button
+                                                type="button"
+                                                onClick={() => adjustAddOnQuantity(entry.id, currentQty + 1, entry.maxQuantity)}
+                                                className="w-7 h-7 rounded border border-gray-300 text-sm"
+                                                disabled={currentQty >= Number(entry.maxQuantity || 1)}
+                                            >
+                                                +
+                                            </button>
+                                            <span className="text-xs text-gray-500">max {entry.maxQuantity}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+
+                        <div className="border border-blue-200 bg-blue-50 rounded-lg p-3 text-sm">
+                            <div className="flex justify-between">
+                                <span>Base unit price</span>
+                                <span>LKR {editingBaseUnitPrice.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>Add-ons per unit</span>
+                                <span>LKR {editingExtrasPerUnit.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between font-semibold border-t border-blue-200 pt-2 mt-2">
+                                <span>Updated unit price</span>
+                                <span>LKR {editingUpdatedUnitPrice.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between mt-1">
+                                <span>Updated line total ({editingQuantity}x)</span>
+                                <span>LKR {editingLineTotal.toFixed(2)}</span>
+                            </div>
+                            <div className="flex justify-between font-semibold border-t border-blue-200 pt-2 mt-2">
+                                <span>Projected order total</span>
+                                <span>LKR {projectedFinalAmount.toFixed(2)}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 justify-end">
+                            <Button variant="outline" onClick={closeAddOnEditor} disabled={isSavingAddOns}>
+                                Cancel
+                            </Button>
+                            <Button onClick={saveAddOnSelections} disabled={isSavingAddOns}>
+                                {isSavingAddOns ? 'Saving...' : 'Save Changes'}
                             </Button>
                         </div>
                     </div>
