@@ -10,7 +10,11 @@ const Toast = ({
   const [show, setShow] = useState(isVisible);
 
   useEffect(() => {
-    if (duration > 0) {
+    setShow(isVisible);
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (duration > 0 && show) {
       const timer = setTimeout(() => {
         setShow(false);
         setTimeout(onClose, 300); // Wait for animation to complete
@@ -18,7 +22,7 @@ const Toast = ({
 
       return () => clearTimeout(timer);
     }
-  }, [duration, onClose]);
+  }, [duration, onClose, show]);
 
   const typeClasses = {
     success: 'bg-green-50 border-green-200 text-green-800',
@@ -57,10 +61,8 @@ const Toast = ({
     )
   };
 
-  if (!show) return null;
-
   return (
-    <div className={`fixed top-4 right-4 z-40 max-w-sm w-full bg-white border rounded-lg shadow-lg transform transition-all duration-300 ease-in-out ${typeClasses[type]}`}>
+    <div className={`fixed top-4 right-4 z-40 max-w-sm w-full bg-white border rounded-lg shadow-lg transform transition-all duration-300 ease-in-out motion-reduce:transition-none ${show ? 'animate-toast-in opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'} ${typeClasses[type]}`}>
       <div className="flex items-start p-4">
         <div className={`flex-shrink-0 ${iconClasses[type]}`}>
           {icons[type]}

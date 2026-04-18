@@ -141,7 +141,9 @@ const MainLayout = ({ children }) => {
                 )}
 
                 <main className={`flex-1 min-w-0 w-full py-8 transition-all duration-300 ease-in-out motion-reduce:transition-none ${showSidebar ? 'px-4 sm:px-6 lg:px-8' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}`}>
-                    {children}
+                    <div key={location.pathname} className="route-motion-shell">
+                        {children}
+                    </div>
                 </main>
             </div>
 

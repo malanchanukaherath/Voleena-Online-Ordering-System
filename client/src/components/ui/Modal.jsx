@@ -42,7 +42,7 @@ const Modal = ({
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-black bg-opacity-50 animate-modal-backdrop-in motion-reduce:animate-none"
         onClick={onClose}
       />
       
@@ -54,7 +54,7 @@ const Modal = ({
             aria-modal="true"
             aria-labelledby={titleId}
             aria-label={title ? undefined : 'Dialog'}
-            className="bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-lg shadow-xl max-h-[90vh] overflow-y-auto animate-modal-panel-in motion-reduce:animate-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}

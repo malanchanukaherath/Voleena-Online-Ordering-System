@@ -4,11 +4,12 @@ import { toast } from 'react-toastify';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import EmptyState from '../components/ui/EmptyState';
 import { addToCart } from '../utils/cartStorage';
-import { menuItemService } from '../services/menuService';
+import { comboPackService, menuItemService } from '../services/menuService';
 import { resolveAssetUrl } from '../config/api';
 
 const MenuItemDetail = () => {
-    const { itemId } = useParams();
+    const { itemId, itemType } = useParams();
+    const isComboPath = String(itemType || '').toLowerCase() === 'combo';
     const [item, setItem] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -24,12 +25,65 @@ const MenuItemDetail = () => {
         isAvailable: data.IsAvailable !== undefined ? !!data.IsAvailable : !!data.IsActive
     }), []);
 
+    const mapComboItem = useCallback((data) => ({
+        id: data.ComboID || data.ComboPackID,
+        name: data.Name,
+        description: data.Description || 'No description available',
+        price: parseFloat(data.Price),
+        originalPrice: data.OriginalPrice ? parseFloat(data.OriginalPrice) : null,
+        discount: data.DiscountPercentage ? parseFloat(data.DiscountPercentage) : 0,
+        categoryName: 'Combo Pack',
+        image: resolveAssetUrl(data.ImageURL || data.Image_URL || null),
+        stockQuantity: null,
+        isAvailable: data.IsAvailable !== undefined ? !!data.IsAvailable : true,
+        type: 'combo'
+    }), []);
+
     useEffect(() => {
         let isMounted = true;
 
         const fetchItem = async () => {
             setLoading(true);
             setError(null);
+
+            if (isComboPath) {
+                try {
+                    const comboResponse = await comboPackService.getById(itemId);
+                    if (comboResponse.success && comboResponse.data) {
+                        if (isMounted) {
+                            setItem(mapComboItem(comboResponse.data));
+                        }
+                        return;
+                    }
+                    throw new Error('Combo not found');
+                } catch {
+                    try {
+                        const fallbackCombos = await comboPackService.getActive();
+                        const foundCombo = fallbackCombos.data?.find(
+                            entry => String(entry.ComboID || entry.ComboPackID) === String(itemId)
+                        );
+
+                        if (foundCombo && isMounted) {
+                            setItem(mapComboItem(foundCombo));
+                            return;
+                        }
+                    } catch (fallbackError) {
+                        if (isMounted) {
+                            setError(fallbackError.response?.data?.error || 'Failed to load combo pack');
+                        }
+                        return;
+                    }
+
+                    if (isMounted) {
+                        setError('Combo pack not found');
+                    }
+                    return;
+                } finally {
+                    if (isMounted) {
+                        setLoading(false);
+                    }
+                }
+            }
 
             try {
                 const response = await menuItemService.getById(itemId);
@@ -72,7 +126,7 @@ const MenuItemDetail = () => {
         return () => {
             isMounted = false;
         };
-    }, [itemId, mapMenuItem]);
+    }, [isComboPath, itemId, mapComboItem, mapMenuItem]);
 
     const handleAddToCart = () => {
         if (!item?.isAvailable) {
@@ -83,9 +137,9 @@ const MenuItemDetail = () => {
         try {
             addToCart({
                 id: item.id,
-                type: 'menu',
-                menuItemId: item.id,
-                comboId: null,
+                type: item.type || 'menu',
+                menuItemId: item.type === 'combo' ? null : item.id,
+                comboId: item.type === 'combo' ? item.id : null,
                 name: item.name,
                 price: item.price,
                 image: item.image,
@@ -128,6 +182,12 @@ const MenuItemDetail = () => {
                         <span className="text-sm text-gray-500 mb-2 block">{item.categoryName}</span>
                         <h1 className="text-4xl font-bold mb-4">{item.name}</h1>
                         <p className="text-xl text-gray-700 mb-6">{item.description}</p>
+                        {item.type === 'combo' && item.originalPrice ? (
+                            <div className="mb-2">
+                                <span className="text-lg text-gray-400 line-through">LKR {item.originalPrice.toFixed(2)}</span>
+                                <span className="ml-3 text-sm font-semibold text-red-600">{item.discount || 0}% OFF</span>
+                            </div>
+                        ) : null}
                         <p className="text-3xl font-bold text-primary-600">LKR {item.price.toFixed(2)}</p>
                     </div>
                     <button

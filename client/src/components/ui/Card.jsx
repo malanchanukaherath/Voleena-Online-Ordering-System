@@ -24,7 +24,7 @@ const Card = ({
   };
   
   const classes = `
-    bg-white rounded-lg border border-gray-200 
+    bg-white rounded-lg border border-gray-200 motion-surface
     ${paddingClasses[padding]} 
     ${shadowClasses[shadow]} 
     ${className}

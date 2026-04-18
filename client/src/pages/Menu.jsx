@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaSearch, FaTimes, FaTag, FaExclamationTriangle } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
@@ -49,6 +50,7 @@ const dedupeDisplayItems = (items) => {
 };
 
 const Menu = () => {
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
     const [loading, setLoading] = useState(true);
@@ -297,6 +299,20 @@ const Menu = () => {
         }
     };
 
+    const handleOpenItemDetails = useCallback((item) => {
+        if (!item?.id) {
+            return;
+        }
+
+        const isCombo = item.isCombo || item.type === 'combo';
+        if (isCombo) {
+            navigate(`/menu/combo/${item.id}`);
+            return;
+        }
+
+        navigate(`/menu/${item.id}`);
+    }, [navigate]);
+
     return (
         <div className="max-w-7xl mx-auto">
             <div className="mb-8">
@@ -367,7 +383,16 @@ const Menu = () => {
                             <div
                                 key={`${item.type || (item.isCombo ? 'combo' : 'menu')}:${item.id}`}
                                 className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${!item.isAvailable || item.stockQuantity === 0 ? 'opacity-60' : ''
-                                    }`}
+                                    } cursor-pointer`}
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => handleOpenItemDetails(item)}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter' || event.key === ' ') {
+                                        event.preventDefault();
+                                        handleOpenItemDetails(item);
+                                    }
+                                }}
                             >
                                 <div className="h-48 bg-gray-200 flex items-center justify-center relative">
                                     {item.image ? (
@@ -436,7 +461,10 @@ const Menu = () => {
                                             size="sm"
                                             disabled={!item.isAvailable || item.stockQuantity === 0}
                                             title={item.stockQuantity === 0 ? 'Out of stock' : 'Add to cart'}
-                                            onClick={() => handleAddToCart(item)}
+                                            onClick={(event) => {
+                                                event.stopPropagation();
+                                                handleAddToCart(item);
+                                            }}
                                         >
                                             {item.stockQuantity === 0 || !item.isAvailable ? 'Unavailable' : 'Add to Cart'}
                                         </Button>

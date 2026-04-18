@@ -3,12 +3,48 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --motion-duration-fast: 160ms;
+    --motion-duration-medium: 240ms;
+    --motion-duration-slow: 360ms;
+    --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+    --motion-ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
   html {
     font-family: 'Inter', system-ui, sans-serif;
+    scroll-behavior: smooth;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
   }
   
   body {
     @apply text-gray-900 bg-gray-50;
+  }
+
+  a,
+  button,
+  [role='button'] {
+    transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+    transition-duration: var(--motion-duration-fast);
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  input,
+  select,
+  textarea {
+    transition-property: color, background-color, border-color, box-shadow, opacity;
+    transition-duration: var(--motion-duration-fast);
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  button:active,
+  [role='button']:active {
+    transform: scale(0.99);
   }
 }
 
@@ -43,9 +79,73 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  .route-motion-shell {
+    animation: routeFadeIn var(--motion-duration-medium) var(--motion-ease-emphasized) both;
+  }
+
+  .route-motion-shell > * {
+    animation: contentRise var(--motion-duration-medium) var(--motion-ease-standard) both;
+  }
+
+  .motion-surface {
+    transition-property: transform, box-shadow, background-color, border-color, opacity;
+    transition-duration: var(--motion-duration-fast);
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  .motion-surface:hover {
+    transform: translateY(-2px);
+  }
+
+  .motion-surface:active {
+    transform: translateY(0);
+  }
+
+  .motion-press {
+    transition-property: transform, box-shadow, background-color, border-color, opacity;
+    transition-duration: var(--motion-duration-fast);
+    transition-timing-function: var(--motion-ease-standard);
+  }
+
+  .motion-press:active {
+    transform: scale(0.98);
+  }
+
+  .animate-modal-backdrop-in {
+    animation: modalBackdropIn var(--motion-duration-medium) var(--motion-ease-standard) both;
+  }
+
+  .animate-modal-panel-in {
+    animation: modalPanelIn var(--motion-duration-medium) var(--motion-ease-emphasized) both;
+  }
+
+  .animate-toast-in {
+    animation: toastSlideIn var(--motion-duration-medium) var(--motion-ease-emphasized) both;
+  }
 }
 
 /* Custom animations */
+@keyframes routeFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes contentRise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -54,6 +154,37 @@
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes modalBackdropIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modalPanelIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translate3d(24px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -110,4 +241,26 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .motion-surface:hover,
+  .motion-surface:active,
+  .motion-press:active,
+  button:active,
+  [role='button']:active {
+    transform: none !important;
+  }
 }

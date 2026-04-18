@@ -44,6 +44,7 @@ const AppRoutes = () => {
       <Route path="/" element={<Home />} />
       <Route path="/menu" element={<Menu />} />
       <Route path="/menu/:itemId" element={<MenuItemDetail />} />
+      <Route path="/menu/:itemType/:itemId" element={<MenuItemDetail />} />
       <Route path="/about" element={<StaticPage page="about" />} />
       <Route path="/contact" element={<StaticPage page="contact" />} />
       <Route path="/privacy" element={<StaticPage page="privacy" />} />
