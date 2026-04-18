@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { FaCheckCircle, FaClipboardList, FaHome } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import { getOrderById } from '../services/orderApi';
 
 const OrderConfirmation = () => {
     const { orderId } = useParams();
+    const location = useLocation();
 
     const [order, setOrder] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -48,6 +49,7 @@ const OrderConfirmation = () => {
     const subtotal = items.reduce((sum, item) => sum + (item.UnitPrice || item.menuItem?.Price || 0) * (item.Quantity || 0), 0);
     const total = order?.FinalAmount ?? order?.TotalAmount ?? subtotal;
     const deliveryAddress = order?.delivery?.address;
+    const paymentSyncWarning = Boolean(location.state?.paymentSyncWarning);
     const hasEmail = Boolean(order?.customer?.Email);
     const hasPhone = Boolean(order?.customer?.Phone);
 
@@ -85,6 +87,13 @@ const OrderConfirmation = () => {
                     Order Number: <span className="font-bold text-gray-900">{order?.OrderNumber || '—'}</span>
                 </p>
             </div>
+
+            {paymentSyncWarning && (
+                <div className="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-8 text-sm text-amber-900">
+                    Card payment succeeded, but final server confirmation is still syncing. Do not retry payment.
+                    If this message remains for more than a few minutes, contact support with your order number.
+                </div>
+            )}
 
             {/* Order Details */}
             <div className="bg-white rounded-lg shadow mb-8">

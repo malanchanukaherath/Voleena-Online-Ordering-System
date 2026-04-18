@@ -1319,6 +1319,9 @@ const Checkout = () => {
                             {errors.submit && (
                                 <p className="text-sm text-red-600 mb-3">{errors.submit}</p>
                             )}
+                            {errors.payment && (
+                                <p className="text-sm text-red-600 mb-3">{errors.payment}</p>
+                            )}
                             {errors.cart && (
                                 <p className="text-sm text-red-600 mb-3">{errors.cart}</p>
                             )}
@@ -1360,6 +1363,7 @@ const Checkout = () => {
                 }}
                 onSuccess={async (paymentIntent) => {
                     const completedOrderId = currentOrderId;
+                    let paymentSyncWarning = false;
 
                     try {
                         if (completedOrderId && paymentIntent?.id) {
@@ -1367,6 +1371,7 @@ const Checkout = () => {
                         }
                     } catch (syncError) {
                         console.error('Card payment confirmation sync failed:', syncError);
+                        paymentSyncWarning = true;
                     }
 
                     setShowStripeModal(false);
@@ -1374,7 +1379,14 @@ const Checkout = () => {
                     setPaymentClientSecret(null);
                     clearCart();
                     if (completedOrderId) {
-                        navigate(`/order-confirmation/${completedOrderId}`);
+                        navigate(`/order-confirmation/${completedOrderId}`, {
+                            state: paymentSyncWarning
+                                ? {
+                                    paymentSyncWarning: true,
+                                    paymentIntentId: paymentIntent?.id || null
+                                }
+                                : null
+                        });
                     }
                 }}
                 onCancel={() => {
