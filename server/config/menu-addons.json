@@ -1,0 +1,26 @@
+{
+  "catalog": [
+    {
+      "id": "extra_chicken_piece",
+      "name": "Extra Chicken Piece",
+      "price": 350,
+      "maxQuantity": 3,
+      "isActive": true
+    },
+    {
+      "id": "add_cheese",
+      "name": "Add Cheese",
+      "price": 120,
+      "maxQuantity": 3,
+      "isActive": true
+    },
+    {
+      "id": "extra_sauce",
+      "name": "Extra Sauce",
+      "price": 80,
+      "maxQuantity": 4,
+      "isActive": true
+    }
+  ],
+  "menuAssignments": {}
+}

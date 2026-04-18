@@ -24,6 +24,51 @@ export const menuItemService = {
         return response.data;
     },
 
+    getAddOnConfig: async (id) => {
+        const response = await axios.get(`${API_BASE_URL}/menu/${id}/addons-config`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    getAddOnCatalog: async (params = {}) => {
+        const response = await axios.get(`${API_BASE_URL}/menu/addons/catalog`, {
+            headers: getAuthHeader(),
+            params
+        });
+        return response.data;
+    },
+
+    createAddOnCatalogItem: async (payload) => {
+        const response = await axios.post(`${API_BASE_URL}/menu/addons/catalog`, payload, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    updateAddOnCatalogItem: async (id, payload) => {
+        const response = await axios.put(`${API_BASE_URL}/menu/addons/catalog/${id}`, payload, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    deleteAddOnCatalogItem: async (id) => {
+        const response = await axios.delete(`${API_BASE_URL}/menu/addons/catalog/${id}`, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
+    updateAddOnConfig: async (id, addOnIds) => {
+        const response = await axios.put(`${API_BASE_URL}/menu/${id}/addons-config`, {
+            addOnIds
+        }, {
+            headers: getAuthHeader()
+        });
+        return response.data;
+    },
+
     create: async (data) => {
         const response = await axios.post(`${API_BASE_URL}/menu`, data, {
             headers: getAuthHeader()

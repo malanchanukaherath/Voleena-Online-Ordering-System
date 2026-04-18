@@ -88,8 +88,13 @@ const Cart = () => {
 
     const hasItemStockIssue = (item) => item.isAvailable === false || isOutOfStock(item) || isQuantityOverStock(item);
 
-    const updateQuantity = (id, type, delta) => {
-        const currentItem = cartItems.find((item) => item.id === id && item.type === type);
+    const updateQuantity = (id, type, delta, cartItemKey) => {
+        const currentItem = cartItems.find((item) => {
+            if (cartItemKey) {
+                return String(item.cartItemKey || '') === String(cartItemKey);
+            }
+            return item.id === id && item.type === type;
+        });
         if (!currentItem) {
             return;
         }
@@ -108,18 +113,22 @@ const Cart = () => {
 
         const nextQuantity = Math.max(1, currentItem.quantity + delta);
         const nextItems = cartItems.map((item) => {
-            if (item.id === id && item.type === type) {
+            const isTarget = cartItemKey
+                ? String(item.cartItemKey || '') === String(cartItemKey)
+                : (item.id === id && item.type === type);
+
+            if (isTarget) {
                 return { ...item, quantity: nextQuantity };
             }
             return item;
         });
 
         setCartItems(nextItems);
-        updateCartItem(id, type, { quantity: nextQuantity });
+        updateCartItem(id, type, { quantity: nextQuantity }, cartItemKey);
     };
 
-    const removeItem = (id, type) => {
-        const nextItems = removeCartItem(id, type);
+    const removeItem = (id, type, cartItemKey) => {
+        const nextItems = removeCartItem(id, type, cartItemKey);
         setCartItems(nextItems);
     };
 
@@ -238,7 +247,7 @@ const Cart = () => {
 
                                 return (
                                     <div
-                                        key={`${item.type}-${item.id}`}
+                                        key={item.cartItemKey || `${item.type}-${item.id}`}
                                         className={`p-4 sm:p-6 ${isStockIssue ? 'bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500' : ''}`}
                                     >
                                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
@@ -271,6 +280,16 @@ const Cart = () => {
                                                     <p className="mb-2 font-medium text-primary-600">
                                                         LKR {item.price.toFixed(2)}
                                                     </p>
+                                                    {Array.isArray(item.addOns) && item.addOns.length > 0 && (
+                                                        <div className="mb-2 rounded border border-gray-200 bg-gray-50 px-2 py-1.5 text-xs text-gray-600 dark:border-slate-600 dark:bg-slate-700/40 dark:text-slate-300">
+                                                            <p className="font-semibold text-gray-700 dark:text-slate-200">Selected Add-ons</p>
+                                                            {item.addOns.map((addOn) => (
+                                                                <p key={addOn.id}>
+                                                                    {addOn.name || addOn.id} x {addOn.quantity} (+LKR {(Number(addOn.unitPrice || 0) * Number(addOn.quantity || 0)).toFixed(2)})
+                                                                </p>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                     {hasFiniteStockLimit(item) && (
                                                         <p className={`mb-2 text-xs ${isStockIssue ? 'text-red-600' : 'text-gray-500'}`}>
                                                             {isOutOfStock(item)
@@ -288,7 +307,7 @@ const Cart = () => {
                                                     <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                                                         <div className="flex items-center rounded border dark:border-slate-600">
                                                             <button
-                                                                onClick={() => updateQuantity(item.id, item.type, -1)}
+                                                                onClick={() => updateQuantity(item.id, item.type, -1, item.cartItemKey)}
                                                                 className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-slate-700"
                                                                 disabled={item.quantity <= 1}
                                                             >
@@ -296,7 +315,7 @@ const Cart = () => {
                                                             </button>
                                                             <span className="border-x dark:border-slate-600 px-3 py-1 sm:px-4">{item.quantity}</span>
                                                             <button
-                                                                onClick={() => updateQuantity(item.id, item.type, 1)}
+                                                                onClick={() => updateQuantity(item.id, item.type, 1, item.cartItemKey)}
                                                                 className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
                                                                 disabled={disableIncrease}
                                                                 title={disableIncrease ? 'Maximum available stock reached' : 'Increase quantity'}
@@ -305,7 +324,7 @@ const Cart = () => {
                                                             </button>
                                                         </div>
                                                         <button
-                                                            onClick={() => removeItem(item.id, item.type)}
+                                                            onClick={() => removeItem(item.id, item.type, item.cartItemKey)}
                                                             className="flex items-center gap-2 text-red-600 hover:text-red-800"
                                                         >
                                                             <FaTrash />

@@ -12,7 +12,6 @@ const {
     getAllowedAddOnsForOrderItem,
     normalizeAddOnSelections,
     getAddOnsPerUnitTotal,
-    buildOrderItemAddOnState,
     serializeOrderItemNotes,
     toMoney
 } = require('../utils/orderAddOnUtils');
@@ -338,6 +337,8 @@ class OrderService {
             for (const item of items) {
                 const menuItemId = item.menuItemId || item.menu_item_id;
                 const comboId = item.comboId || item.combo_id;
+                const safeCustomerNotes = typeof item.notes === 'string' ? item.notes.trim() : '';
+                const requestedAddOns = Array.isArray(item.addOns) ? item.addOns : [];
 
                 if (menuItemId) {
                     const menuItem = await MenuItem.findByPk(menuItemId, { transaction });
@@ -345,26 +346,53 @@ class OrderService {
                         throw new Error(`Menu item ${menuItemId} is not available`);
                     }
 
+                    const allowedAddOns = await getAllowedAddOnsForOrderItem({ MenuItemID: menuItemId });
+                    const normalizedAddOns = normalizeAddOnSelections(requestedAddOns, allowedAddOns);
+                    const addOnsPerUnit = getAddOnsPerUnitTotal(normalizedAddOns);
+                    const baseUnitPrice = toMoney(menuItem.Price);
+                    const nextUnitPrice = toMoney(baseUnitPrice + addOnsPerUnit);
+                    const serializedItemNotes = serializeOrderItemNotes({
+                        customerNotes: safeCustomerNotes,
+                        baseUnitPrice,
+                        addOns: normalizedAddOns
+                    });
+
+                    if (serializedItemNotes && serializedItemNotes.length > 255) {
+                        throw new Error(`Item notes are too long for "${menuItem.Name}"`);
+                    }
+
                     orderItems.push({
                         MenuItemID: menuItemId,
                         Quantity: item.quantity,
-                        UnitPrice: menuItem.Price
+                        UnitPrice: nextUnitPrice,
+                        ItemNotes: serializedItemNotes
                     });
 
-                    totalAmount += menuItem.Price * item.quantity;
+                    totalAmount += nextUnitPrice * item.quantity;
                 } else if (comboId) {
                     const combo = await ComboPack.findByPk(comboId, { transaction });
                     if (!combo || !combo.IsActive) {
                         throw new Error(`Combo pack ${comboId} is not available`);
                     }
 
+                    if (requestedAddOns.length > 0) {
+                        throw new Error('Add-ons are not supported for combo packs');
+                    }
+
+                    if (safeCustomerNotes.length > 255) {
+                        throw new Error(`Item notes are too long for "${combo.Name}"`);
+                    }
+
+                    const comboUnitPrice = toMoney(combo.Price);
+
                     orderItems.push({
                         ComboID: comboId,
                         Quantity: item.quantity,
-                        UnitPrice: combo.Price
+                        UnitPrice: comboUnitPrice,
+                        ItemNotes: safeCustomerNotes || null
                     });
 
-                    totalAmount += combo.Price * item.quantity;
+                    totalAmount += comboUnitPrice * item.quantity;
                 }
             }
 
@@ -900,127 +928,6 @@ class OrderService {
         }, 'Failed to notify staff on order status update');
 
         return order;
-    }
-
-    /**
-     * Update add-ons for a customer order item.
-     * Safety rules:
-     * - customer can only edit own orders
-     * - editable only while order is CONFIRMED
-     * - editable only for CASH orders to avoid gateway amount mismatches
-     */
-    async updateOrderItemAddOns(orderId, orderItemId, customerId, addOnSelections) {
-        const transaction = await sequelize.transaction({
-            isolationLevel: Transaction.ISOLATION_LEVELS.SERIALIZABLE
-        });
-
-        try {
-            const order = await Order.findByPk(orderId, {
-                include: [
-                    {
-                        model: OrderItem,
-                        as: 'items',
-                        include: [
-                            { model: MenuItem, as: 'menuItem' },
-                            { model: ComboPack, as: 'combo' }
-                        ]
-                    },
-                    { model: Payment, as: 'payment' }
-                ],
-                transaction,
-                lock: transaction.LOCK.UPDATE
-            });
-
-            if (!order) {
-                throw new Error('Order not found');
-            }
-
-            if (order.CustomerID !== customerId) {
-                throw new Error('Access denied');
-            }
-
-            if (order.Status !== 'CONFIRMED') {
-                throw new Error('Order customization is only available before preparation starts');
-            }
-
-            const paymentMethod = String(order.payment?.Method || '').toUpperCase();
-            const paymentStatus = String(order.payment?.Status || '').toUpperCase();
-
-            if (paymentMethod !== 'CASH') {
-                throw new Error('Order customization is currently available only for cash on delivery orders');
-            }
-
-            if (paymentStatus === 'PAID') {
-                throw new Error('Order cannot be customized after payment is completed');
-            }
-
-            const targetItem = (order.items || []).find((entry) => String(entry.OrderItemID) === String(orderItemId));
-            if (!targetItem) {
-                throw new Error('Order item not found');
-            }
-
-            const allowedAddOns = getAllowedAddOnsForOrderItem(targetItem);
-            if (allowedAddOns.length === 0) {
-                throw new Error('Add-ons are not supported for this order item');
-            }
-
-            const currentState = buildOrderItemAddOnState(targetItem, allowedAddOns);
-            const normalizedSelections = normalizeAddOnSelections(addOnSelections, allowedAddOns);
-            const addOnsPerUnit = getAddOnsPerUnitTotal(normalizedSelections);
-            const nextUnitPrice = toMoney(currentState.baseUnitPrice + addOnsPerUnit);
-
-            await targetItem.update({
-                UnitPrice: nextUnitPrice,
-                ItemNotes: serializeOrderItemNotes({
-                    customerNotes: currentState.customerNotes,
-                    baseUnitPrice: currentState.baseUnitPrice,
-                    addOns: normalizedSelections
-                })
-            }, { transaction });
-
-            const recalculatedTotal = toMoney((order.items || []).reduce((sum, entry) => {
-                const unitPrice = String(entry.OrderItemID) === String(orderItemId)
-                    ? nextUnitPrice
-                    : toMoney(entry.UnitPrice);
-                return sum + unitPrice * Number(entry.Quantity || 0);
-            }, 0));
-
-            await order.update({
-                TotalAmount: recalculatedTotal
-            }, { transaction });
-
-            const discountAmount = toMoney(order.DiscountAmount || 0);
-            const deliveryFee = toMoney(order.DeliveryFee || 0);
-            const recalculatedFinalAmount = Math.max(toMoney(recalculatedTotal - discountAmount + deliveryFee), 0);
-
-            if (order.payment && paymentStatus !== 'PAID') {
-                await order.payment.update({
-                    Amount: recalculatedFinalAmount
-                }, { transaction });
-            }
-
-            await transaction.commit();
-
-            return {
-                success: true,
-                orderId: order.OrderID,
-                orderItemId: targetItem.OrderItemID,
-                baseUnitPrice: currentState.baseUnitPrice,
-                unitPrice: nextUnitPrice,
-                quantity: Number(targetItem.Quantity || 0),
-                selectedAddOns: normalizedSelections,
-                addOnsPerUnit,
-                totals: {
-                    subtotal: recalculatedTotal,
-                    discountAmount,
-                    deliveryFee,
-                    finalAmount: recalculatedFinalAmount
-                }
-            };
-        } catch (error) {
-            await transaction.rollback();
-            throw error;
-        }
     }
 
     /**

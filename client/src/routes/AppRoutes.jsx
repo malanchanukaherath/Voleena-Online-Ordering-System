@@ -21,6 +21,7 @@ import OrderManagement from '../pages/OrderManagement';
 import CustomerManagement from '../pages/CustomerManagement';
 import StaffManagement from '../pages/StaffManagement';
 import MenuManagement from '../pages/MenuManagement';
+import AddOnManagement from '../pages/AddOnManagement';
 import CategoryManagement from '../pages/CategoryManagement';
 import ComboManagement from '../pages/ComboManagement';
 import StockManagement from '../pages/StockManagement';
@@ -115,6 +116,7 @@ const AppRoutes = () => {
       <Route path="/admin/customers" element={<ProtectedRoute allowedRoles={['Admin']}><CustomerManagement /></ProtectedRoute>} />
       <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={['Admin']}><StaffManagement /></ProtectedRoute>} />
       <Route path="/admin/menu" element={<ProtectedRoute allowedRoles={['Admin']}><MenuManagement /></ProtectedRoute>} />
+      <Route path="/admin/addons" element={<ProtectedRoute allowedRoles={['Admin']}><AddOnManagement /></ProtectedRoute>} />
       <Route path="/admin/categories" element={<ProtectedRoute allowedRoles={['Admin']}><CategoryManagement /></ProtectedRoute>} />
       <Route path="/admin/combos" element={<ProtectedRoute allowedRoles={['Admin']}><ComboManagement /></ProtectedRoute>} />
       <Route path="/admin/stock" element={<ProtectedRoute allowedRoles={['Admin']}><StockManagement /></ProtectedRoute>} />

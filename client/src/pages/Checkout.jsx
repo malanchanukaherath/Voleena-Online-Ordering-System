@@ -7,9 +7,10 @@ import Input from '../components/ui/Input';
 import Select from '../components/ui/Select';
 import Textarea from '../components/ui/Textarea';
 import { StripePaymentModal } from '../components/payment/StripePaymentModal';
-import { getCart, clearCart } from '../utils/cartStorage';
+import { getCart, clearCart, updateCartItem } from '../utils/cartStorage';
 import { calculateDeliveryFeeByDistance, confirmCardPayment, createOrder, initiatePayment, validateDeliveryDistance } from '../services/orderApi';
 import { getCustomerAddresses, getCustomerProfile } from '../services/profileService';
+import { menuItemService } from '../services/menuService';
 import { usePublicSettings } from '../hooks/usePublicSettings';
 
 const RESTAURANT_LOCATION = {
@@ -36,6 +37,107 @@ const formatSavedAddressLabel = (address) => {
     const parts = [address.addressLine1, address.city, address.postalCode].filter(Boolean);
     return parts.join(', ');
 };
+
+const normalizeCheckoutAddOns = (addOns) => {
+    return (Array.isArray(addOns) ? addOns : [])
+        .map((entry) => {
+            const id = String(entry?.id || '').trim();
+            const quantityRaw = Number(entry?.quantity ?? 0);
+            const quantity = Number.isInteger(quantityRaw) ? quantityRaw : Math.floor(quantityRaw);
+
+            if (!id || quantity < 1) {
+                return null;
+            }
+
+            return { id, quantity };
+        })
+        .filter(Boolean);
+};
+
+const normalizeCheckoutAddOnOptions = (addOns) => {
+    return (Array.isArray(addOns) ? addOns : [])
+        .map((entry) => {
+            const id = String(entry?.id || '').trim();
+            if (!id) {
+                return null;
+            }
+
+            const maxQuantityRaw = Number(entry?.maxQuantity);
+
+            return {
+                id,
+                name: String(entry?.name || id),
+                price: Number(entry?.price || 0),
+                maxQuantity: Number.isFinite(maxQuantityRaw) && maxQuantityRaw > 0 ? Math.floor(maxQuantityRaw) : 1
+            };
+        })
+        .filter(Boolean)
+        .sort((left, right) => left.id.localeCompare(right.id));
+};
+
+const mapItemSelections = (item) => {
+    return normalizeCheckoutAddOns(item?.addOns).reduce((accumulator, entry) => {
+        accumulator[entry.id] = entry.quantity;
+        return accumulator;
+    }, {});
+};
+
+const sanitizeSelectionMap = (selectionMap, options) => {
+    const allowedById = new Map((options || []).map((entry) => [entry.id, entry]));
+
+    return Object.entries(selectionMap || {}).reduce((accumulator, [id, rawQuantity]) => {
+        const option = allowedById.get(String(id));
+        if (!option) {
+            return accumulator;
+        }
+
+        const numericQuantity = Number(rawQuantity);
+        const quantity = Number.isInteger(numericQuantity) ? numericQuantity : Math.floor(numericQuantity);
+        if (!Number.isInteger(quantity) || quantity < 1) {
+            return accumulator;
+        }
+
+        accumulator[option.id] = Math.min(quantity, option.maxQuantity);
+        return accumulator;
+    }, {});
+};
+
+const buildUpdatedCartItemWithAddOns = (item, selectionMap, options) => {
+    const safeOptions = normalizeCheckoutAddOnOptions(options);
+    const safeSelections = sanitizeSelectionMap(selectionMap, safeOptions);
+    const basePrice = Number.isFinite(Number(item?.basePrice))
+        ? Number(item.basePrice)
+        : Number(item?.price || 0);
+
+    const addOns = safeOptions
+        .filter((entry) => Number(safeSelections[entry.id] || 0) > 0)
+        .map((entry) => {
+            const quantity = Number(safeSelections[entry.id] || 0);
+            const unitPrice = Number(entry.price || 0);
+
+            return {
+                id: entry.id,
+                name: entry.name,
+                quantity,
+                unitPrice,
+                maxQuantity: entry.maxQuantity,
+                total: Number((unitPrice * quantity).toFixed(2))
+            };
+        });
+
+    const addOnsPerUnit = Number(addOns.reduce((sum, entry) => sum + Number(entry.total || 0), 0).toFixed(2));
+    const price = Number((basePrice + addOnsPerUnit).toFixed(2));
+
+    return {
+        ...item,
+        basePrice,
+        addOns,
+        addOnsPerUnit,
+        price
+    };
+};
+
+const getCheckoutItemLabel = (item, index) => item?.name || `Item ${index + 1}`;
 
 const Checkout = () => {
     const navigate = useNavigate();
@@ -73,7 +175,9 @@ const Checkout = () => {
     const [savedAddresses, setSavedAddresses] = useState([]);
     const [selectedAddressId, setSelectedAddressId] = useState('');
     const [gpsDetectedAddress, setGpsDetectedAddress] = useState('');
-    const cartItems = useMemo(() => getCart(), []);
+    const [cartItems, setCartItems] = useState(() => getCart());
+    const [addOnOptionsByMenuItemId, setAddOnOptionsByMenuItemId] = useState({});
+    const [editableSelectionsByCartItemKey, setEditableSelectionsByCartItemKey] = useState({});
     const { settings: publicSettings } = usePublicSettings();
     const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
     const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY?.trim();
@@ -115,6 +219,77 @@ const Checkout = () => {
                 label: formatSavedAddressLabel(address)
             }))
     ), [savedAddresses]);
+
+    useEffect(() => {
+        const syncCart = () => {
+            setCartItems(getCart());
+        };
+
+        window.addEventListener('cartUpdated', syncCart);
+        return () => window.removeEventListener('cartUpdated', syncCart);
+    }, []);
+
+    useEffect(() => {
+        const loadMenuItemAddOnOptions = async () => {
+            const menuItemIds = [...new Set(
+                cartItems
+                    .filter((item) => item.type === 'menu')
+                    .map((item) => item.menuItemId || item.id)
+                    .filter(Boolean)
+                    .map((id) => String(id))
+            )];
+
+            if (menuItemIds.length === 0) {
+                setAddOnOptionsByMenuItemId({});
+                return;
+            }
+
+            const allCached = menuItemIds.every((menuItemId) => Array.isArray(addOnOptionsByMenuItemId[String(menuItemId)]));
+            if (allCached) {
+                return;
+            }
+
+            const results = await Promise.all(
+                menuItemIds.map(async (menuItemId) => {
+                    try {
+                        const response = await menuItemService.getById(menuItemId);
+                        const payload = response?.data || {};
+                        return {
+                            menuItemId,
+                            options: normalizeCheckoutAddOnOptions(payload.AvailableAddOns)
+                        };
+                    } catch {
+                        return {
+                            menuItemId,
+                            options: []
+                        };
+                    }
+                })
+            );
+
+            const nextOptions = results.reduce((accumulator, entry) => {
+                accumulator[String(entry.menuItemId)] = entry.options;
+                return accumulator;
+            }, {});
+
+            setAddOnOptionsByMenuItemId((previous) => ({
+                ...previous,
+                ...nextOptions
+            }));
+        };
+
+        loadMenuItemAddOnOptions();
+    }, [addOnOptionsByMenuItemId, cartItems]);
+
+    useEffect(() => {
+        const nextSelections = cartItems.reduce((accumulator, item) => {
+            const key = String(item.cartItemKey || `${item.type}-${item.id}`);
+            accumulator[key] = mapItemSelections(item);
+            return accumulator;
+        }, {});
+
+        setEditableSelectionsByCartItemKey(nextSelections);
+    }, [cartItems]);
 
     const fetchDeliveryFeeByDistance = useCallback(async (distanceKm) => {
         const numericDistance = Number(distanceKm);
@@ -427,6 +602,73 @@ const Checkout = () => {
         await handlePlaceChanged();
     };
 
+    const getAvailableAddOnOptionsForItem = useCallback((item) => {
+        if (!item || item.type !== 'menu') {
+            return [];
+        }
+
+        const menuItemId = String(item.menuItemId || item.id || '');
+        return normalizeCheckoutAddOnOptions(addOnOptionsByMenuItemId[menuItemId]);
+    }, [addOnOptionsByMenuItemId]);
+
+    const applyCheckoutAddOnSelections = useCallback((item, nextSelectionMap) => {
+        if (!item || item.type !== 'menu') {
+            return;
+        }
+
+        const itemKey = String(item.cartItemKey || `${item.type}-${item.id}`);
+        const options = getAvailableAddOnOptionsForItem(item);
+        const updatedItem = buildUpdatedCartItemWithAddOns(item, nextSelectionMap, options);
+
+        setEditableSelectionsByCartItemKey((previous) => ({
+            ...previous,
+            [itemKey]: sanitizeSelectionMap(nextSelectionMap, options)
+        }));
+
+        const nextCartItems = cartItems.map((entry) => {
+            const entryKey = String(entry.cartItemKey || `${entry.type}-${entry.id}`);
+            return entryKey === itemKey ? updatedItem : entry;
+        });
+
+        setCartItems(nextCartItems);
+        updateCartItem(item.id, item.type, {
+            basePrice: updatedItem.basePrice,
+            price: updatedItem.price,
+            addOns: updatedItem.addOns,
+            addOnsPerUnit: updatedItem.addOnsPerUnit
+        }, itemKey);
+    }, [cartItems, getAvailableAddOnOptionsForItem]);
+
+    const setCheckoutAddOnEnabled = useCallback((item, addOnId, isEnabled) => {
+        if (!item || item.type !== 'menu') {
+            return;
+        }
+
+        const itemKey = String(item.cartItemKey || `${item.type}-${item.id}`);
+        const current = { ...(editableSelectionsByCartItemKey[itemKey] || {}) };
+
+        if (isEnabled) {
+            current[addOnId] = Math.max(1, Number(current[addOnId] || 1));
+        } else {
+            delete current[addOnId];
+        }
+
+        applyCheckoutAddOnSelections(item, current);
+    }, [applyCheckoutAddOnSelections, editableSelectionsByCartItemKey]);
+
+    const adjustCheckoutAddOnQuantity = useCallback((item, addOnId, requestedQuantity, maxQuantity) => {
+        if (!item || item.type !== 'menu') {
+            return;
+        }
+
+        const itemKey = String(item.cartItemKey || `${item.type}-${item.id}`);
+        const current = { ...(editableSelectionsByCartItemKey[itemKey] || {}) };
+        const nextQuantity = Math.max(1, Math.min(Number(requestedQuantity || 1), Number(maxQuantity || 1)));
+        current[addOnId] = nextQuantity;
+
+        applyCheckoutAddOnSelections(item, current);
+    }, [applyCheckoutAddOnSelections, editableSelectionsByCartItemKey]);
+
     const clearDeliveryValidationErrors = () => {
         setErrors((prev) => {
             const next = { ...prev };
@@ -709,6 +951,34 @@ const Checkout = () => {
             newErrors.cart = `Maximum order amount is LKR ${maxOrderAmount.toFixed(2)}.`;
         }
 
+        cartItems.forEach((item, index) => {
+            const selectedAddOns = normalizeCheckoutAddOns(item?.addOns);
+            if (selectedAddOns.length === 0) {
+                return;
+            }
+
+            if (item.type !== 'menu') {
+                newErrors.cart = `Add-ons are supported only for menu items. Please remove add-ons from ${getCheckoutItemLabel(item, index)}.`;
+                return;
+            }
+
+            const available = getAvailableAddOnOptionsForItem(item);
+            const allowedById = new Map(available.map((entry) => [entry.id, entry]));
+
+            for (const selectedAddOn of selectedAddOns) {
+                const allowed = allowedById.get(selectedAddOn.id);
+                if (!allowed) {
+                    newErrors.cart = `Selected add-on is invalid for ${getCheckoutItemLabel(item, index)}.`;
+                    break;
+                }
+
+                if (selectedAddOn.quantity > Number(allowed.maxQuantity || 1)) {
+                    newErrors.cart = `Add-on quantity is invalid for ${getCheckoutItemLabel(item, index)}.`;
+                    break;
+                }
+            }
+        });
+
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
@@ -807,7 +1077,8 @@ const Checkout = () => {
                     menuItemId: item.type === 'menu' ? item.menuItemId || item.id : null,
                     comboId: item.type === 'combo' ? item.comboId || item.id : null,
                     quantity: item.quantity,
-                    notes: item.notes || null
+                    notes: item.notes || null,
+                    addOns: normalizeCheckoutAddOns(item.addOns)
                 })),
                 ...(formData.orderType === 'DELIVERY' && Number.isFinite(currentLocation?.lat) && Number.isFinite(currentLocation?.lng)
                     ? {
@@ -1350,6 +1621,80 @@ const Checkout = () => {
                     <div className="lg:col-span-1">
                         <div className="bg-white rounded-lg shadow p-6 sticky top-24">
                             <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
+                            <div className="mb-4 space-y-3 border-b border-gray-200 pb-4">
+                                {cartItems.map((item, index) => {
+                                    const itemKey = String(item.cartItemKey || `${item.type}-${item.id}-${index}`);
+                                    const itemOptions = getAvailableAddOnOptionsForItem(item);
+                                    const itemSelectionMap = editableSelectionsByCartItemKey[itemKey] || mapItemSelections(item);
+
+                                    return (
+                                        <div key={itemKey} className="text-sm rounded border border-gray-200 p-3">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <p className="font-medium text-gray-800">{item.name} x {item.quantity}</p>
+                                                <p className="font-semibold">LKR {(Number(item.price || 0) * Number(item.quantity || 0)).toFixed(2)}</p>
+                                            </div>
+                                            {item.type === 'menu' && itemOptions.length > 0 && (
+                                                <div className="mt-2 space-y-2 rounded bg-gray-50 p-2">
+                                                    <p className="text-xs font-semibold text-gray-700">Choose add-ons</p>
+                                                    {itemOptions.map((entry) => {
+                                                        const currentQty = Number(itemSelectionMap[entry.id] || 0);
+                                                        const isEnabled = currentQty > 0;
+
+                                                        return (
+                                                            <div key={`${itemKey}-${entry.id}`} className="rounded border border-gray-200 bg-white px-2 py-1.5">
+                                                                <div className="flex items-center justify-between gap-2">
+                                                                    <label className="flex items-center gap-2 text-xs text-gray-700">
+                                                                        <input
+                                                                            type="checkbox"
+                                                                            checked={isEnabled}
+                                                                            onChange={(event) => setCheckoutAddOnEnabled(item, entry.id, event.target.checked)}
+                                                                        />
+                                                                        <span>{entry.name}</span>
+                                                                    </label>
+                                                                    <span className="text-xs text-gray-600">+LKR {Number(entry.price || 0).toFixed(2)}</span>
+                                                                </div>
+
+                                                                {isEnabled && (
+                                                                    <div className="mt-1 flex items-center gap-2">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => adjustCheckoutAddOnQuantity(item, entry.id, currentQty - 1, entry.maxQuantity)}
+                                                                            className="h-6 w-6 rounded border border-gray-300 text-xs"
+                                                                            disabled={currentQty <= 1}
+                                                                        >
+                                                                            -
+                                                                        </button>
+                                                                        <span className="text-xs min-w-[1.5rem] text-center">{currentQty}</span>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => adjustCheckoutAddOnQuantity(item, entry.id, currentQty + 1, entry.maxQuantity)}
+                                                                            className="h-6 w-6 rounded border border-gray-300 text-xs"
+                                                                            disabled={currentQty >= Number(entry.maxQuantity || 1)}
+                                                                        >
+                                                                            +
+                                                                        </button>
+                                                                        <span className="text-[11px] text-gray-500">max {entry.maxQuantity}</span>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
+
+                                            {Array.isArray(item.addOns) && item.addOns.length > 0 && (
+                                                <div className="mt-1 rounded bg-blue-50 p-2 text-xs text-blue-700">
+                                                    {(item.addOns || []).map((addOn) => (
+                                                        <p key={addOn.id}>
+                                                            {addOn.name || addOn.id} x {addOn.quantity}
+                                                        </p>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
                             <div className="space-y-3 mb-4">
                                 <div className="flex justify-between">
                                     <span className="text-gray-600">Subtotal</span>

@@ -1,10 +1,5 @@
 const { Order, OrderItem, MenuItem, ComboPack, Customer, Delivery, Address, Staff, sequelize } = require('../models');
 const orderService = require('../services/orderService');
-const {
-    getAllowedAddOnsForOrderItem,
-    buildOrderItemAddOnState,
-    toMoney
-} = require('../utils/orderAddOnUtils');
 
 const ALLOWED_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
 const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
@@ -77,7 +72,8 @@ exports.createOrder = async (req, res) => {
                 menuItemId: item.menuItemId || null,
                 comboId: item.comboId || null,
                 quantity: item.quantity,
-                notes: item.notes || null
+                notes: item.notes || null,
+                addOns: Array.isArray(item.addOns) ? item.addOns : []
             }))
         };
 
@@ -369,118 +365,6 @@ exports.cancelOrder = async (req, res) => {
         res.status(400).json({
             success: false,
             message: error.message || 'Failed to cancel order. Please try again.'
-        });
-    }
-};
-
-// Get add-on options for each order item (customer only)
-exports.getOrderAddOnOptions = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const order = await Order.findByPk(id, {
-            include: [
-                {
-                    model: require('../models').Payment,
-                    as: 'payment',
-                    attributes: ['Method', 'Status', 'Amount']
-                },
-                {
-                    model: OrderItem,
-                    as: 'items',
-                    include: [
-                        { model: MenuItem, as: 'menuItem' },
-                        { model: ComboPack, as: 'combo' }
-                    ]
-                }
-            ]
-        });
-
-        if (!order) {
-            return res.status(404).json({ success: false, message: 'Order not found' });
-        }
-
-        if (req.user.type !== 'Customer' || order.CustomerID !== req.user.id) {
-            return res.status(403).json({ success: false, message: 'Access denied' });
-        }
-
-        const paymentMethod = String(order.payment?.Method || '').toUpperCase();
-        const paymentStatus = String(order.payment?.Status || '').toUpperCase();
-        const canCustomize = order.Status === 'CONFIRMED' && paymentMethod === 'CASH' && paymentStatus !== 'PAID';
-
-        let reason = null;
-        if (!canCustomize) {
-            if (order.Status !== 'CONFIRMED') {
-                reason = 'Order customization is available only before preparation starts';
-            } else if (paymentMethod !== 'CASH') {
-                reason = 'Order customization is currently available only for cash on delivery orders';
-            } else if (paymentStatus === 'PAID') {
-                reason = 'Order cannot be customized after payment is completed';
-            }
-        }
-
-        const items = (order.items || []).map((entry) => {
-            const allowedAddOns = getAllowedAddOnsForOrderItem(entry);
-            const currentState = buildOrderItemAddOnState(entry, allowedAddOns);
-
-            return {
-                orderItemId: entry.OrderItemID,
-                itemType: entry.MenuItemID ? 'MENU' : 'COMBO',
-                itemId: entry.MenuItemID || entry.ComboID,
-                itemName: entry.menuItem?.Name || entry.combo?.Name || 'Item',
-                quantity: Number(entry.Quantity || 0),
-                baseUnitPrice: currentState.baseUnitPrice,
-                unitPrice: toMoney(entry.UnitPrice),
-                addOnsPerUnit: currentState.selectedAddOnsPerUnit,
-                selectedAddOns: currentState.selectedAddOns,
-                availableAddOns: allowedAddOns,
-                canCustomize: canCustomize && allowedAddOns.length > 0
-            };
-        });
-
-        return res.json({
-            success: true,
-            data: {
-                orderId: order.OrderID,
-                status: order.Status,
-                paymentMethod,
-                paymentStatus,
-                canCustomize,
-                reason,
-                items
-            }
-        });
-    } catch (error) {
-        console.error('Get order add-on options error:', error);
-        return res.status(500).json({ success: false, message: 'Failed to fetch order add-on options' });
-    }
-};
-
-// Update selected add-ons for a specific order item (customer only)
-exports.updateOrderItemAddOns = async (req, res) => {
-    try {
-        const { id, orderItemId } = req.params;
-        const addOns = Array.isArray(req.body?.addOns) ? req.body.addOns : [];
-
-        const result = await orderService.updateOrderItemAddOns(id, orderItemId, req.user.id, addOns);
-
-        return res.json({
-            success: true,
-            message: 'Order item add-ons updated successfully',
-            data: result
-        });
-    } catch (error) {
-        console.error('Update order item add-ons error:', error);
-
-        const statusCode = /not found/i.test(error.message)
-            ? 404
-            : /access denied/i.test(error.message)
-                ? 403
-                : 400;
-
-        return res.status(statusCode).json({
-            success: false,
-            message: error.message || 'Failed to update order item add-ons'
         });
     }
 };

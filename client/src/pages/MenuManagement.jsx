@@ -19,6 +19,13 @@ const MenuManagement = () => {
     const [isActiveFilter, setIsActiveFilter] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
+    const [showAddOnModal, setShowAddOnModal] = useState(false);
+    const [editingAddOnMenuItem, setEditingAddOnMenuItem] = useState(null);
+    const [addOnCatalog, setAddOnCatalog] = useState([]);
+    const [selectedAddOnIds, setSelectedAddOnIds] = useState([]);
+    const [isInheritedAddOns, setIsInheritedAddOns] = useState(false);
+    const [loadingAddOnConfig, setLoadingAddOnConfig] = useState(false);
+    const [savingAddOnConfig, setSavingAddOnConfig] = useState(false);
     const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
     const [formData, setFormData] = useState({
@@ -113,6 +120,91 @@ const MenuManagement = () => {
             IsActive: true
         });
         setErrors({});
+    };
+
+    const openAddOnModal = async (item) => {
+        setEditingAddOnMenuItem(item);
+        setShowAddOnModal(true);
+        setLoadingAddOnConfig(true);
+
+        try {
+            const response = await menuItemService.getAddOnConfig(item.MenuItemID);
+            const payload = response?.data || {};
+            const inherited = Boolean(payload.isInherited);
+            const explicitIds = Array.isArray(payload.selectedAddOnIds) ? payload.selectedAddOnIds : null;
+            const effectiveIds = explicitIds || (Array.isArray(payload.availableAddOns)
+                ? payload.availableAddOns.map((entry) => entry.id).filter(Boolean)
+                : []);
+
+            setAddOnCatalog(Array.isArray(payload.catalog) ? payload.catalog : []);
+            setSelectedAddOnIds(effectiveIds);
+            setIsInheritedAddOns(inherited);
+        } catch (error) {
+            console.error('Error loading add-on config:', error);
+            showToast(error.response?.data?.error || 'Failed to load add-on configuration', 'error');
+            setShowAddOnModal(false);
+            setEditingAddOnMenuItem(null);
+        } finally {
+            setLoadingAddOnConfig(false);
+        }
+    };
+
+    const closeAddOnModal = () => {
+        setShowAddOnModal(false);
+        setEditingAddOnMenuItem(null);
+        setAddOnCatalog([]);
+        setSelectedAddOnIds([]);
+        setIsInheritedAddOns(false);
+        setLoadingAddOnConfig(false);
+        setSavingAddOnConfig(false);
+    };
+
+    const toggleAddOnSelection = (addOnId, isSelected) => {
+        setSelectedAddOnIds((previous) => {
+            if (isSelected) {
+                return [...new Set([...previous, addOnId])];
+            }
+
+            return previous.filter((entry) => entry !== addOnId);
+        });
+    };
+
+    const saveAddOnConfig = async () => {
+        if (!editingAddOnMenuItem) {
+            return;
+        }
+
+        setSavingAddOnConfig(true);
+        try {
+            await menuItemService.updateAddOnConfig(editingAddOnMenuItem.MenuItemID, selectedAddOnIds);
+            showToast('Menu add-ons updated successfully');
+            closeAddOnModal();
+            fetchMenuItems();
+        } catch (error) {
+            console.error('Error saving add-on config:', error);
+            showToast(error.response?.data?.error || 'Failed to update add-on configuration', 'error');
+        } finally {
+            setSavingAddOnConfig(false);
+        }
+    };
+
+    const resetToInheritedAddOns = async () => {
+        if (!editingAddOnMenuItem) {
+            return;
+        }
+
+        setSavingAddOnConfig(true);
+        try {
+            await menuItemService.updateAddOnConfig(editingAddOnMenuItem.MenuItemID, null);
+            showToast('Menu add-ons reset to default assignment');
+            closeAddOnModal();
+            fetchMenuItems();
+        } catch (error) {
+            console.error('Error resetting add-on config:', error);
+            showToast(error.response?.data?.error || 'Failed to reset add-on configuration', 'error');
+        } finally {
+            setSavingAddOnConfig(false);
+        }
     };
 
     const validateForm = () => {
@@ -305,6 +397,9 @@ const MenuManagement = () => {
                                 <p className="text-sm text-gray-500 mb-4 dark:text-slate-400">
                                     {item.category?.Name || 'Uncategorized'}
                                 </p>
+                                <p className="text-xs text-gray-500 mb-3 dark:text-slate-400">
+                                    Add-ons available: {Array.isArray(item.AvailableAddOns) ? item.AvailableAddOns.length : 0}
+                                </p>
                                 <div className="flex gap-2">
                                     <Button
                                         variant="outline"
@@ -313,6 +408,14 @@ const MenuManagement = () => {
                                         className="flex-1"
                                     >
                                         <FaEdit className="mr-1" /> Edit
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => openAddOnModal(item)}
+                                        className="text-primary-700 border-primary-500 hover:bg-primary-50"
+                                    >
+                                        Add-ons
                                     </Button>
                                     <Button
                                         variant="outline"
@@ -409,6 +512,65 @@ const MenuManagement = () => {
                         </Button>
                     </div>
                 </form>
+            </Modal>
+
+            <Modal
+                isOpen={showAddOnModal}
+                onClose={closeAddOnModal}
+                title={editingAddOnMenuItem ? `Configure Add-ons: ${editingAddOnMenuItem.Name}` : 'Configure Add-ons'}
+            >
+                <div className="space-y-4">
+                    {loadingAddOnConfig ? (
+                        <p className="text-sm text-gray-500 dark:text-slate-400">Loading add-on configuration...</p>
+                    ) : (
+                        <>
+                            <div className="rounded border border-gray-200 bg-gray-50 p-3 text-xs text-gray-600 dark:border-slate-600 dark:bg-slate-700/40 dark:text-slate-300">
+                                {isInheritedAddOns
+                                    ? 'This menu item currently uses default add-on assignment.'
+                                    : 'This menu item has custom add-on assignment.'}
+                            </div>
+
+                            {addOnCatalog.length === 0 ? (
+                                <p className="text-sm text-gray-500 dark:text-slate-400">No active add-ons available.</p>
+                            ) : (
+                                <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                                    {addOnCatalog.map((entry) => {
+                                        const isSelected = selectedAddOnIds.includes(entry.id);
+
+                                        return (
+                                            <label key={entry.id} className="flex items-start gap-3 rounded border border-gray-200 p-3 dark:border-slate-600">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isSelected}
+                                                    onChange={(event) => toggleAddOnSelection(entry.id, event.target.checked)}
+                                                    className="mt-0.5"
+                                                />
+                                                <span>
+                                                    <span className="block text-sm font-medium text-gray-900 dark:text-slate-100">{entry.name}</span>
+                                                    <span className="block text-xs text-gray-600 dark:text-slate-300">
+                                                        LKR {Number(entry.price || 0).toFixed(2)} each | max {entry.maxQuantity}
+                                                    </span>
+                                                </span>
+                                            </label>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            <div className="flex flex-wrap justify-end gap-3 pt-2">
+                                <Button variant="outline" onClick={resetToInheritedAddOns} disabled={savingAddOnConfig}>
+                                    Use Default
+                                </Button>
+                                <Button variant="outline" onClick={closeAddOnModal} disabled={savingAddOnConfig}>
+                                    Cancel
+                                </Button>
+                                <Button onClick={saveAddOnConfig} disabled={savingAddOnConfig}>
+                                    {savingAddOnConfig ? 'Saving...' : 'Save Add-ons'}
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                </div>
             </Modal>
 
             {toast.show && (

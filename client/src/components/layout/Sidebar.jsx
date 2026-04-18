@@ -34,6 +34,7 @@ const Sidebar = ({ className = '', onNavigate }) => {
                     { path: '/admin/customers', label: 'Customers', icon: FaUsers, group: 'Operations' },
                     { path: '/admin/staff', label: 'Staff', icon: FaUserTie, group: 'Operations' },
                     { path: '/admin/menu', label: 'Menu', icon: FaUtensils, group: 'Menu & Inventory' },
+                    { path: '/admin/addons', label: 'Add-ons', icon: FaTags, group: 'Menu & Inventory' },
                     { path: '/admin/categories', label: 'Categories', icon: FaTags, group: 'Menu & Inventory' },
                     { path: '/admin/combos', label: 'Combo Packs', icon: FaBoxes, group: 'Menu & Inventory' },
                     { path: '/admin/stock', label: 'Stock', icon: FaBoxes, group: 'Menu & Inventory' },

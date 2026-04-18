@@ -1,6 +1,16 @@
 const { MenuItem, Category, Staff, DailyStock } = require('../models');
 const { Op, col, literal } = require('sequelize');
 const { uploadImageFile, deleteImageByUrl } = require('../services/uploadService');
+const {
+    getDefaultMenuAddOns,
+    listAddOnCatalog,
+    createAddOnCatalogEntry,
+    updateAddOnCatalogEntry,
+    deactivateAddOnCatalogEntry,
+    getAllowedAddOnsForMenuItem,
+    getConfiguredAddOnIdsForMenuItem,
+    setConfiguredAddOnIdsForMenuItem
+} = require('../utils/orderAddOnUtils');
 
 const createMenuItem = async (req, res) => {
     try {
@@ -90,7 +100,7 @@ const getAllMenuItems = async (req, res) => {
             );
         }
 
-        const enrichedMenuItems = menuItems.map(item => {
+        const enrichedMenuItems = await Promise.all(menuItems.map(async (item) => {
             const json = item.toJSON();
             const stockQuantity = stockMap.has(item.MenuItemID) ? stockMap.get(item.MenuItemID) : null;
             const effectiveAvailability = stockQuantity !== null
@@ -100,9 +110,10 @@ const getAllMenuItems = async (req, res) => {
             return {
                 ...json,
                 StockQuantity: stockQuantity,
-                IsAvailable: effectiveAvailability
+                IsAvailable: effectiveAvailability,
+                AvailableAddOns: await getAllowedAddOnsForMenuItem(item.MenuItemID)
             };
-        });
+        }));
 
         res.json({
             success: true,
@@ -133,7 +144,10 @@ const getMenuItem = async (req, res) => {
 
         res.json({
             success: true,
-            data: menuItem
+            data: {
+                ...menuItem.toJSON(),
+                AvailableAddOns: await getAllowedAddOnsForMenuItem(menuItem.MenuItemID)
+            }
         });
     } catch (error) {
         console.error('Get menu item error:', error);
@@ -266,11 +280,149 @@ const uploadImage = async (req, res) => {
     }
 };
 
+const getMenuItemAddOnConfig = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const menuItem = await MenuItem.findByPk(id, {
+            attributes: ['MenuItemID', 'Name', 'IsActive']
+        });
+
+        if (!menuItem) {
+            return res.status(404).json({ error: 'Menu item not found' });
+        }
+
+        const selectedAddOnIds = await getConfiguredAddOnIdsForMenuItem(menuItem.MenuItemID);
+
+        return res.json({
+            success: true,
+            data: {
+                menuItemId: menuItem.MenuItemID,
+                menuItemName: menuItem.Name,
+                catalog: await getDefaultMenuAddOns(),
+                selectedAddOnIds,
+                availableAddOns: await getAllowedAddOnsForMenuItem(menuItem.MenuItemID),
+                isInherited: selectedAddOnIds === null
+            }
+        });
+    } catch (error) {
+        console.error('Get menu item add-on config error:', error);
+        return res.status(500).json({ error: 'Failed to fetch add-on configuration' });
+    }
+};
+
+const updateMenuItemAddOnConfig = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const menuItem = await MenuItem.findByPk(id, {
+            attributes: ['MenuItemID', 'Name']
+        });
+
+        if (!menuItem) {
+            return res.status(404).json({ error: 'Menu item not found' });
+        }
+
+        const hasAddOnIdsField = Object.prototype.hasOwnProperty.call(req.body || {}, 'addOnIds');
+        const requestedIds = hasAddOnIdsField ? req.body.addOnIds : null;
+        const selectedAddOnIds = await setConfiguredAddOnIdsForMenuItem(menuItem.MenuItemID, requestedIds, req.user?.id || null);
+
+        return res.json({
+            success: true,
+            message: 'Menu add-ons updated successfully',
+            data: {
+                menuItemId: menuItem.MenuItemID,
+                menuItemName: menuItem.Name,
+                selectedAddOnIds,
+                availableAddOns: await getAllowedAddOnsForMenuItem(menuItem.MenuItemID),
+                isInherited: selectedAddOnIds === null
+            }
+        });
+    } catch (error) {
+        console.error('Update menu item add-on config error:', error);
+        return res.status(400).json({ error: error.message || 'Failed to update add-on configuration' });
+    }
+};
+
+const getAddOnCatalog = async (req, res) => {
+    try {
+        const includeInactive = String(req.query?.includeInactive || '').toLowerCase() === 'true';
+        const catalog = await listAddOnCatalog({ includeInactive });
+
+        return res.json({
+            success: true,
+            data: catalog,
+            count: catalog.length
+        });
+    } catch (error) {
+        console.error('Get add-on catalog error:', error);
+        return res.status(500).json({ error: 'Failed to fetch add-on catalog' });
+    }
+};
+
+const createAddOnCatalogItem = async (req, res) => {
+    try {
+        const created = await createAddOnCatalogEntry(req.body || {}, req.user?.id || null);
+
+        return res.status(201).json({
+            success: true,
+            data: created,
+            message: 'Add-on created successfully'
+        });
+    } catch (error) {
+        console.error('Create add-on catalog item error:', error);
+        const status = /already exists/i.test(error.message) ? 409 : 400;
+        return res.status(status).json({ error: error.message || 'Failed to create add-on' });
+    }
+};
+
+const updateAddOnCatalogItem = async (req, res) => {
+    try {
+        const updated = await updateAddOnCatalogEntry(req.params.id, req.body || {}, req.user?.id || null);
+
+        return res.json({
+            success: true,
+            data: updated,
+            message: 'Add-on updated successfully'
+        });
+    } catch (error) {
+        console.error('Update add-on catalog item error:', error);
+        let status = 400;
+        if (/not found/i.test(error.message)) {
+            status = 404;
+        } else if (/already exists/i.test(error.message)) {
+            status = 409;
+        }
+
+        return res.status(status).json({ error: error.message || 'Failed to update add-on' });
+    }
+};
+
+const deactivateAddOnCatalogItem = async (req, res) => {
+    try {
+        const deactivated = await deactivateAddOnCatalogEntry(req.params.id, req.user?.id || null);
+
+        return res.json({
+            success: true,
+            data: deactivated,
+            message: 'Add-on deactivated successfully'
+        });
+    } catch (error) {
+        console.error('Deactivate add-on catalog item error:', error);
+        const status = /not found/i.test(error.message) ? 404 : 400;
+        return res.status(status).json({ error: error.message || 'Failed to deactivate add-on' });
+    }
+};
+
 module.exports = {
     createMenuItem,
     getAllMenuItems,
     getMenuItem,
     updateMenuItem,
     deleteMenuItem,
-    uploadImage
+    uploadImage,
+    getAddOnCatalog,
+    createAddOnCatalogItem,
+    updateAddOnCatalogItem,
+    deactivateAddOnCatalogItem,
+    getMenuItemAddOnConfig,
+    updateMenuItemAddOnConfig
 };

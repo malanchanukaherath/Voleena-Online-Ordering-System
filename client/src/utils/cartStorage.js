@@ -8,11 +8,89 @@ const STORAGE_KEY = 'voleena_cart';
 
 const hasFiniteStockLimit = (item) => Number.isFinite(item?.stockQuantity) && item.stockQuantity >= 0;
 
+const toMoney = (value) => {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) {
+    return 0;
+  }
+
+  return Number(numeric.toFixed(2));
+};
+
+const normalizeAddOnsForCart = (addOns) => {
+  const raw = Array.isArray(addOns) ? addOns : [];
+
+  return raw
+    .map((entry) => {
+      const id = String(entry?.id || '').trim();
+      const quantityRaw = Number(entry?.quantity ?? 0);
+      const quantity = Number.isInteger(quantityRaw) ? quantityRaw : Math.floor(quantityRaw);
+
+      if (!id || quantity < 1) {
+        return null;
+      }
+
+      const unitPrice = toMoney(entry?.unitPrice ?? entry?.price ?? 0);
+      const maxQuantity = Number(entry?.maxQuantity);
+
+      return {
+        id,
+        name: String(entry?.name || '').trim(),
+        quantity,
+        unitPrice,
+        maxQuantity: Number.isFinite(maxQuantity) && maxQuantity > 0 ? Math.floor(maxQuantity) : null,
+        total: toMoney(unitPrice * quantity)
+      };
+    })
+    .filter(Boolean)
+    .sort((left, right) => left.id.localeCompare(right.id));
+};
+
+const buildAddOnSignature = (addOns) => {
+  const normalized = normalizeAddOnsForCart(addOns);
+  if (!normalized.length) {
+    return 'none';
+  }
+
+  return JSON.stringify(normalized.map((entry) => ({
+    id: entry.id,
+    quantity: entry.quantity
+  })));
+};
+
+export const buildCartItemKey = (item) => {
+  const safeType = String(item?.type || '').trim() || 'item';
+  const safeId = String(item?.id ?? '').trim() || 'unknown';
+  const signature = item?.addOnSignature || buildAddOnSignature(item?.addOns);
+  return `${safeType}:${safeId}:${signature}`;
+};
+
 const normalizeCartEntry = (entry) => {
+  const normalizedAddOns = normalizeAddOnsForCart(entry?.addOns);
+  const addOnsPerUnit = toMoney(
+    normalizedAddOns.reduce((sum, addOn) => sum + toMoney(addOn.unitPrice) * Number(addOn.quantity || 0), 0)
+  );
+  const normalizedPrice = toMoney(entry?.price);
+  const normalizedBasePrice = Number.isFinite(Number(entry?.basePrice))
+    ? toMoney(entry.basePrice)
+    : toMoney(normalizedPrice - addOnsPerUnit);
+  const addOnSignature = buildAddOnSignature(normalizedAddOns);
+
   const normalized = {
     ...entry,
+    notes: String(entry?.notes || ''),
+    quantity: Number.isInteger(Number(entry?.quantity)) && Number(entry.quantity) > 0
+      ? Number(entry.quantity)
+      : 1,
+    addOns: normalizedAddOns,
+    addOnsPerUnit,
+    basePrice: normalizedBasePrice < 0 ? 0 : normalizedBasePrice,
+    price: normalizedPrice,
+    addOnSignature,
     isAvailable: entry?.isAvailable !== false
   };
+
+  normalized.cartItemKey = String(entry?.cartItemKey || '').trim() || buildCartItemKey(normalized);
 
   if (!hasFiniteStockLimit(entry)) {
     delete normalized.stockQuantity;
@@ -36,7 +114,11 @@ export const getCart = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const items = raw ? JSON.parse(raw) : [];
-    return Array.isArray(items) ? items : [];
+    if (!Array.isArray(items)) {
+      return [];
+    }
+
+    return items.map(normalizeCartEntry);
   } catch (error) {
     console.error('Failed to read cart storage:', error);
     return [];
@@ -79,12 +161,17 @@ export const addToCart = (item, quantity = 1) => {
     throw new Error(`${item.name || 'Item'} is not available right now`);
   }
 
+  const normalizedItem = normalizeCartEntry({
+    ...item,
+    quantity: 1
+  });
+  const itemKey = buildCartItemKey(normalizedItem);
   const items = getCart();
-  const existingIndex = items.findIndex(
-    (entry) => entry.id === item.id && entry.type === item.type
-  );
+  const existingIndex = items.findIndex((entry) => {
+    const existingKey = String(entry?.cartItemKey || '').trim() || buildCartItemKey(entry);
+    return existingKey === itemKey;
+  });
 
-  const normalizedItem = normalizeCartEntry(item);
   const stockLimit = hasFiniteStockLimit(normalizedItem) ? normalizedItem.stockQuantity : null;
   const currentQuantity = existingIndex >= 0 ? items[existingIndex].quantity : 0;
 
@@ -105,16 +192,22 @@ export const addToCart = (item, quantity = 1) => {
     items[existingIndex] = {
       ...items[existingIndex],
       ...normalizedItem,
+      cartItemKey: itemKey,
       quantity: nextQuantity
     };
   } else {
     items.push({
+      cartItemKey: itemKey,
       id: normalizedItem.id,
       type: normalizedItem.type,
       menuItemId: normalizedItem.menuItemId || null,
       comboId: normalizedItem.comboId || null,
       name: normalizedItem.name,
       price: normalizedItem.price,
+      basePrice: normalizedItem.basePrice,
+      addOns: normalizedItem.addOns,
+      addOnsPerUnit: normalizedItem.addOnsPerUnit,
+      addOnSignature: normalizedItem.addOnSignature,
       image: normalizedItem.image || null,
       ...(hasFiniteStockLimit(normalizedItem) ? { stockQuantity: normalizedItem.stockQuantity } : {}),
       isAvailable: normalizedItem.isAvailable !== false,
@@ -135,9 +228,14 @@ export const addToCart = (item, quantity = 1) => {
  * @param {Object} updates - Fields to update (quantity, notes, etc.)
  * @returns {Array} Updated cart
  */
-export const updateCartItem = (id, type, updates) => {
+export const updateCartItem = (id, type, updates, cartItemKey = '') => {
+  const targetKey = String(cartItemKey || updates?.cartItemKey || '').trim();
   const items = getCart().map((item) => {
-    if (item.id === id && item.type === type) {
+    const isTargetMatch = targetKey
+      ? String(item?.cartItemKey || '').trim() === targetKey
+      : (item.id === id && item.type === type);
+
+    if (isTargetMatch) {
       const merged = normalizeCartEntry({ ...item, ...updates });
 
       if (typeof merged.quantity === 'number' && hasFiniteStockLimit(merged)) {
@@ -158,8 +256,15 @@ export const updateCartItem = (id, type, updates) => {
  * @param {string} type - Item type ('menu' or 'combo')
  * @returns {Array} Updated cart
  */
-export const removeCartItem = (id, type) => {
-  const items = getCart().filter((item) => !(item.id === id && item.type === type));
+export const removeCartItem = (id, type, cartItemKey = '') => {
+  const targetKey = String(cartItemKey || '').trim();
+  const items = getCart().filter((item) => {
+    if (targetKey) {
+      return String(item?.cartItemKey || '').trim() !== targetKey;
+    }
+
+    return !(item.id === id && item.type === type);
+  });
   setCart(items);
   return items;
 };
