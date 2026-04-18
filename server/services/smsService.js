@@ -107,10 +107,17 @@ const buildAuditableMessage = (message, containsSensitiveContent) => {
 
 async function logNotification(payload) {
     if (!Notification || typeof Notification.create !== 'function') {
-        return;
+        return false;
     }
 
-    await Notification.create(payload);
+    try {
+        await Notification.create(payload);
+        return true;
+    } catch (error) {
+        // Never fail SMS delivery flow due to local audit-log persistence errors.
+        console.error('Failed to persist SMS notification audit log:', error.message);
+        return false;
+    }
 }
 
 /**
@@ -120,6 +127,12 @@ async function sendSMS(to, message, relatedOrderId = null, options = {}) {
     try {
         const normalizedTo = normalizePhoneForSms(to);
         const containsSensitiveContent = Boolean(options.containsSensitiveContent);
+        const recipientId = Number.isInteger(options.recipientId) && options.recipientId > 0
+            ? options.recipientId
+            : null;
+        const recipientType = String(options.recipientType || 'CUSTOMER').toUpperCase() === 'STAFF'
+            ? 'STAFF'
+            : 'CUSTOMER';
         const auditableMessage = buildAuditableMessage(message, containsSensitiveContent);
 
         if (!normalizedTo) {
@@ -151,16 +164,18 @@ async function sendSMS(to, message, relatedOrderId = null, options = {}) {
 
             const result = await twilioClient.messages.create(createPayload);
 
-            await logNotification({
-                RecipientType: 'CUSTOMER',
-                RecipientID: null,
-                NotificationType: 'SMS',
-                Subject: null,
-                Message: auditableMessage,
-                Status: 'SENT',
-                SentAt: new Date(),
-                RelatedOrderID: relatedOrderId
-            });
+            if (recipientId !== null) {
+                await logNotification({
+                    RecipientType: recipientType,
+                    RecipientID: recipientId,
+                    NotificationType: 'SMS',
+                    Subject: null,
+                    Message: auditableMessage,
+                    Status: 'SENT',
+                    SentAt: new Date(),
+                    RelatedOrderID: relatedOrderId
+                });
+            }
 
             return {
                 success: true,
@@ -179,16 +194,18 @@ async function sendSMS(to, message, relatedOrderId = null, options = {}) {
             containsSensitiveContent ? '[REDACTED]' : message
         );
 
-        await logNotification({
-            RecipientType: 'CUSTOMER',
-            RecipientID: null,
-            NotificationType: 'SMS',
-            Subject: null,
-            Message: auditableMessage,
-            Status: 'FAILED',
-            ErrorMessage: 'SMS provider not configured',
-            RelatedOrderID: relatedOrderId
-        });
+        if (recipientId !== null) {
+            await logNotification({
+                RecipientType: recipientType,
+                RecipientID: recipientId,
+                NotificationType: 'SMS',
+                Subject: null,
+                Message: auditableMessage,
+                Status: 'FAILED',
+                ErrorMessage: 'SMS provider not configured',
+                RelatedOrderID: relatedOrderId
+            });
+        }
 
         return {
             success: false,
@@ -198,16 +215,18 @@ async function sendSMS(to, message, relatedOrderId = null, options = {}) {
     } catch (error) {
         const normalizedError = mapProviderPhoneError(error, to);
         try {
-            await logNotification({
-                RecipientType: 'CUSTOMER',
-                RecipientID: null,
-                NotificationType: 'SMS',
-                Subject: null,
-                Message: buildAuditableMessage(message, Boolean(options.containsSensitiveContent)),
-                Status: 'FAILED',
-                ErrorMessage: normalizedError.message,
-                RelatedOrderID: relatedOrderId
-            });
+            if (recipientId !== null) {
+                await logNotification({
+                    RecipientType: recipientType,
+                    RecipientID: recipientId,
+                    NotificationType: 'SMS',
+                    Subject: null,
+                    Message: buildAuditableMessage(message, Boolean(options.containsSensitiveContent)),
+                    Status: 'FAILED',
+                    ErrorMessage: normalizedError.message,
+                    RelatedOrderID: relatedOrderId
+                });
+            }
         } catch (notificationLogError) {
             console.error('Failed to log SMS notification status:', notificationLogError.message);
         }
@@ -219,7 +238,7 @@ async function sendSMS(to, message, relatedOrderId = null, options = {}) {
 /**
  * Send OTP via SMS (FR28)
  */
-async function sendOTPSMS(phone, otp, purpose) {
+async function sendOTPSMS(phone, otp, purpose, metadata = {}) {
     const purposeMessages = {
         EMAIL_VERIFICATION: 'email verification',
         PHONE_VERIFICATION: 'phone verification',
@@ -229,7 +248,11 @@ async function sendOTPSMS(phone, otp, purpose) {
 
     const message = `Your Voleena Foods ${purposeMessages[purpose] || 'verification'} code is: ${otp}. Valid for 10 minutes.`;
 
-    return sendSMS(phone, message, null, { containsSensitiveContent: true });
+    return sendSMS(phone, message, null, {
+        containsSensitiveContent: true,
+        recipientId: metadata.recipientId,
+        recipientType: metadata.recipientType
+    });
 }
 
 /**

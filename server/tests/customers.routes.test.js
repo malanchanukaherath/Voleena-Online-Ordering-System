@@ -218,7 +218,12 @@ describe('customer routes', () => {
     expect(response.body.success).toBe(true);
     expect(mockOTPVerification.update).toHaveBeenCalled();
     expect(mockOTPVerification.create).toHaveBeenCalled();
-    expect(sendOTPSMS).toHaveBeenCalledWith('+94770000000', expect.any(String), 'PHONE_VERIFICATION');
+    expect(sendOTPSMS).toHaveBeenCalledWith(
+      '+94770000000',
+      expect.any(String),
+      'PHONE_VERIFICATION',
+      expect.objectContaining({ recipientId: 5, recipientType: 'CUSTOMER' })
+    );
   });
 
   test('returns user-friendly error when SMS provider rejects phone format', async () => {

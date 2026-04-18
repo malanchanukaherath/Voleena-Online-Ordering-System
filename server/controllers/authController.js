@@ -906,7 +906,10 @@ exports.requestPasswordReset = async (req, res) => {
     if (user?.Phone) {
       deliveryTasks.push({
         channel: 'SMS',
-        task: sendOTPSMS(user.Phone, otpCode, 'PASSWORD_RESET')
+        task: sendOTPSMS(user.Phone, otpCode, 'PASSWORD_RESET', {
+          recipientId: userId,
+          recipientType: userType.toUpperCase()
+        })
       });
     }
 

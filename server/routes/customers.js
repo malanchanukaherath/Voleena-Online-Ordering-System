@@ -580,7 +580,10 @@ router.post('/me/phone-verification/request', requireCustomer, otpLimiter, async
             Attempts: 0
         });
 
-        const deliveryResult = await sendOTPSMS(normalizedPhone, otpCode, 'PHONE_VERIFICATION');
+        const deliveryResult = await sendOTPSMS(normalizedPhone, otpCode, 'PHONE_VERIFICATION', {
+            recipientId: customer.CustomerID,
+            recipientType: 'CUSTOMER'
+        });
         if (!isSuccessfulOtpDelivery(deliveryResult) && process.env.NODE_ENV === 'production') {
             return res.status(503).json({
                 success: false,

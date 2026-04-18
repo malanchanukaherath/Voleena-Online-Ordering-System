@@ -335,7 +335,12 @@ describe('auth routes', () => {
     expect(insertSql).not.toContain('OTPCode');
     expect(insertOptions.replacements[2]).toMatch(/^[a-f0-9]{64}$/);
     expect(insertOptions.replacements[2]).not.toContain('reset@example.com');
-    expect(mockSendOTPSMS).toHaveBeenCalledWith('+94771234567', expect.any(String), 'PASSWORD_RESET');
+    expect(mockSendOTPSMS).toHaveBeenCalledWith(
+      '+94771234567',
+      expect.any(String),
+      'PASSWORD_RESET',
+      expect.objectContaining({ recipientId: 31, recipientType: 'CUSTOMER' })
+    );
     expect(mockSendOTPEmail).toHaveBeenCalledWith('reset@example.com', expect.any(String), 'PASSWORD_RESET');
   });
 
