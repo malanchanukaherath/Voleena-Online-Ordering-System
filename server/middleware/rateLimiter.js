@@ -74,6 +74,10 @@ const authLimiter = rateLimit({
 /**
  * OTP request rate limiter
  */
+const disableOtpRateLimit = String(
+    process.env.DISABLE_OTP_RATE_LIMIT || (process.env.NODE_ENV === 'production' ? 'false' : 'true')
+).toLowerCase() === 'true';
+
 const otpLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 3, // 3 OTP requests per window
@@ -81,6 +85,8 @@ const otpLimiter = rateLimit({
         success: false,
         error: 'Too many OTP requests, please try again after 15 minutes'
     },
+    // Disable OTP throttling in non-production by default for easier local/dev testing.
+    skip: () => disableOtpRateLimit,
     store: makeRedisStore('rl:otp:')
 });
 
