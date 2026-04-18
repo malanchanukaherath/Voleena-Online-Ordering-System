@@ -188,27 +188,27 @@ const Login = () => {
       </div>
 
       {/* === Right Form Panel === */}
-      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-white lg:bg-slate-50/60">
+      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-white lg:bg-slate-50/60 dark:bg-slate-900 dark:lg:bg-slate-900">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
             <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
               <FaUtensils className="w-5 h-5 text-white" />
             </div>
-            <span className="text-gray-900 font-bold text-xl">Voleena Foods</span>
+            <span className="text-gray-900 font-bold text-xl dark:text-slate-100">Voleena Foods</span>
           </div>
 
           {/* Heading */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome back</h2>
-            <p className="mt-1.5 text-sm text-gray-500">
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight dark:text-slate-100">Welcome back</h2>
+            <p className="mt-1.5 text-sm text-gray-500 dark:text-slate-400">
               Sign in to your account to continue ordering
             </p>
           </div>
 
           {/* Notice Banner */}
           {notice && (
-            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:bg-amber-950/40 dark:border-amber-800 dark:text-amber-300">
               <p>{notice}</p>
               {(verificationEmail || formData.email.trim()) && (
                 <div className="mt-2.5">
@@ -226,7 +226,7 @@ const Login = () => {
           )}
 
           {/* Form Card */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-7" style={{ boxShadow: '0 4px 24px -4px rgba(0,0,0,0.08)' }}>
+          <div className="bg-white rounded-2xl border border-gray-100 p-7 dark:bg-slate-800 dark:border-slate-700" style={{ boxShadow: '0 4px 24px -4px rgba(0,0,0,0.08)' }}>
             <form className="space-y-5" onSubmit={handleSubmit}>
               <Input
                 label="Email address"
@@ -255,7 +255,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 focus:outline-none p-1"
+                  className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 focus:outline-none p-1 dark:text-slate-500 dark:hover:text-slate-300"
                   tabIndex={-1}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
@@ -282,9 +282,9 @@ const Login = () => {
               </Button>
             </form>
 
-            <p className="mt-5 text-center text-sm text-gray-500">
+            <p className="mt-5 text-center text-sm text-gray-500 dark:text-slate-400">
               Don't have an account?{' '}
-              <Link to="/register" className="font-semibold text-primary-600 hover:text-primary-700 transition-colors">
+              <Link to="/register" className="font-semibold text-primary-600 hover:text-primary-700 transition-colors dark:text-primary-400 dark:hover:text-primary-300">
                 Create one
               </Link>
             </p>

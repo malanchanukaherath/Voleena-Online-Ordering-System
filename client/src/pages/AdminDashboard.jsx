@@ -124,8 +124,8 @@ const AdminDashboard = () => {
     return (
         <div className="p-6">
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Admin Dashboard</h1>
-                <p className="text-gray-500 text-sm mt-1">Welcome back! Here's what's happening today.</p>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight dark:text-slate-100">Admin Dashboard</h1>
+                <p className="text-gray-500 text-sm mt-1 dark:text-slate-400">Welcome back! Here's what's happening today.</p>
             </div>
 
             {/* Stats Grid */}
@@ -140,9 +140,9 @@ const AdminDashboard = () => {
                         >
                             <div className="flex items-start justify-between">
                                 <div className="min-w-0">
-                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{stat.title}</p>
-                                    <p className="text-2xl font-bold text-gray-900 mt-1 truncate">{stat.value}</p>
-                                    <p className="text-xs text-secondary-600 mt-1 font-medium">{stat.change}</p>
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide dark:text-slate-400">{stat.title}</p>
+                                    <p className="text-2xl font-bold text-gray-900 mt-1 truncate dark:text-slate-100">{stat.value}</p>
+                                    <p className="text-xs text-secondary-600 mt-1 font-medium dark:text-secondary-400">{stat.change}</p>
                                 </div>
                                 <div className={`${stat.color} p-3 rounded-xl shrink-0 ml-3 shadow-sm`}>
                                     <Icon className="w-5 h-5 text-white" />
@@ -156,31 +156,31 @@ const AdminDashboard = () => {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Orders */}
                 <div className="card overflow-hidden">
-                    <div className="px-6 py-4 border-b border-gray-100">
+                    <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700">
                         <div className="flex justify-between items-center">
-                            <h2 className="text-base font-bold text-gray-900">Recent Orders</h2>
-                            <Link to="/admin/orders" className="text-primary-600 hover:text-primary-700 text-xs font-semibold flex items-center gap-1">
+                            <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Recent Orders</h2>
+                            <Link to="/admin/orders" className="text-primary-600 hover:text-primary-700 text-xs font-semibold flex items-center gap-1 dark:text-primary-400 dark:hover:text-primary-300">
                                 View All <FaArrowRight className="w-3 h-3" />
                             </Link>
                         </div>
                     </div>
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-gray-50 dark:divide-slate-700/60">
                         {recentOrders.length === 0 ? (
                             <div className="p-8 text-center text-sm text-gray-400">No recent orders yet.</div>
                         ) : recentOrders.map((order) => (
-                            <div key={order.id} className="px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
+                            <div key={order.id} className="px-5 py-3.5 hover:bg-slate-50/60 transition-colors dark:hover:bg-slate-700/40">
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
-                                        <div className="w-8 h-8 flex items-center justify-center bg-gray-50 rounded-xl border border-gray-100 shrink-0">
+                                        <div className="w-8 h-8 flex items-center justify-center bg-gray-50 rounded-xl border border-gray-100 shrink-0 dark:bg-slate-700 dark:border-slate-600">
                                             {getStatusIcon(order.status)}
                                         </div>
                                         <div className="min-w-0">
-                                            <p className="font-semibold text-sm text-gray-900 truncate">{order.orderNumber}</p>
-                                            <p className="text-xs text-gray-500 truncate">{order.customer}</p>
+                                            <p className="font-semibold text-sm text-gray-900 truncate dark:text-slate-100">{order.orderNumber}</p>
+                                            <p className="text-xs text-gray-500 truncate dark:text-slate-400">{order.customer}</p>
                                         </div>
                                     </div>
                                     <div className="text-right shrink-0">
-                                        <p className="font-bold text-sm text-gray-900">LKR {order.total.toFixed(2)}</p>
+                                        <p className="font-bold text-sm text-gray-900 dark:text-slate-100">LKR {order.total.toFixed(2)}</p>
                                         <StatusBadge status={order.status} />
                                     </div>
                                 </div>
@@ -191,7 +191,7 @@ const AdminDashboard = () => {
 
                 {/* Quick Actions */}
                 <div className="card p-6">
-                    <h2 className="text-base font-bold text-gray-900 mb-4">Quick Actions</h2>
+                    <h2 className="text-base font-bold text-gray-900 mb-4 dark:text-slate-100">Quick Actions</h2>
                     <div className="grid grid-cols-2 gap-3">
                         {[
                             { to: '/admin/menu', icon: FaShoppingBag, label: 'Manage Menu' },
@@ -203,12 +203,12 @@ const AdminDashboard = () => {
                             <Link
                                 key={to}
                                 to={to}
-                                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/60 transition-all duration-150 text-center group"
+                                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/60 transition-all duration-150 text-center group dark:border-slate-700 dark:hover:border-primary-800 dark:hover:bg-primary-900/20"
                             >
-                                <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center group-hover:bg-primary-100 transition-colors">
-                                    <Icon className="w-5 h-5 text-primary-600" />
+                                <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center group-hover:bg-primary-100 transition-colors dark:bg-primary-900/30 dark:group-hover:bg-primary-900/50">
+                                    <Icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                                 </div>
-                                <p className="text-xs font-semibold text-gray-700 group-hover:text-primary-700">{label}</p>
+                                <p className="text-xs font-semibold text-gray-700 group-hover:text-primary-700 dark:text-slate-300 dark:group-hover:text-primary-400">{label}</p>
                             </Link>
                         ))}
                     </div>

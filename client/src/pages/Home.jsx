@@ -178,22 +178,22 @@ const Home = () => {
                 {/* Wave divider */}
                 <div className="absolute bottom-0 left-0 right-0" aria-hidden="true">
                     <svg viewBox="0 0 1440 56" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
-                        <path d="M0 56L60 48C120 40 240 24 360 20C480 16 600 24 720 28C840 32 960 32 1080 28C1200 24 1320 16 1380 12L1440 8V56H1380C1320 56 1200 56 1080 56C960 56 840 56 720 56C600 56 480 56 360 56C240 56 120 56 60 56H0V56Z" fill="#f8fafc"/>
+                        <path d="M0 56L60 48C120 40 240 24 360 20C480 16 600 24 720 28C840 32 960 32 1080 28C1200 24 1320 16 1380 12L1440 8V56H1380C1320 56 1200 56 1080 56C960 56 840 56 720 56C600 56 480 56 360 56C240 56 120 56 60 56H0V56Z" className="fill-slate-50 dark:fill-slate-900"/>
                     </svg>
                 </div>
             </section>
 
-            <section className="py-10 bg-white border-b border-gray-100">
+            <section className="py-10 bg-white border-b border-gray-100 dark:bg-slate-900 dark:border-slate-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="card p-6 md:p-8 bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-100">
+                    <div className="card p-6 md:p-8 bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-100 dark:from-indigo-950/30 dark:to-blue-950/30 dark:border-indigo-900/50">
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                             <div>
-                                <span className="inline-block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-2">Bulk & Preorders</span>
-                                <h2 className="text-xl font-bold text-gray-900">Preorder and Bulk Ordering Available</h2>
-                                <p className="text-gray-600 mt-2 text-sm leading-relaxed">
+                                <span className="inline-block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-2 dark:text-indigo-400">Bulk &amp; Preorders</span>
+                                <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Preorder and Bulk Ordering Available</h2>
+                                <p className="text-gray-600 mt-2 text-sm leading-relaxed dark:text-slate-400">
                                     Need food in advance or for larger groups? Place scheduled preorders with bulk quantity notes.
                                 </p>
-                                <p className="text-xs text-indigo-600 mt-1.5">
+                                <p className="text-xs text-indigo-600 mt-1.5 dark:text-indigo-400">
                                     Low on stock? Submit as preorder with your preferred date.
                                 </p>
                             </div>
@@ -212,12 +212,12 @@ const Home = () => {
 
             {/* Combo Specials Section */}
             {(isLoadingCombos || comboSpecials.length > 0) && (
-                <section className="py-12 bg-gradient-to-r from-orange-50 to-yellow-50">
+                <section className="py-12 bg-gradient-to-r from-orange-50 to-yellow-50 dark:from-slate-900 dark:to-slate-900">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-8">
                             <div>
-                                <h2 className="text-3xl font-bold text-gray-900">🔥 Combo Specials</h2>
-                                <p className="text-gray-600 mt-1">Limited-time bundles at unbeatable prices</p>
+                                <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100">🔥 Combo Specials</h2>
+                                <p className="text-gray-600 mt-1 dark:text-slate-400">Limited-time bundles at unbeatable prices</p>
                             </div>
                             <Link to="/menu" className="text-orange-600 hover:text-orange-700 font-medium">
                                 View All →
@@ -226,12 +226,12 @@ const Home = () => {
                         {isLoadingCombos ? (
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {Array.from({ length: 3 }).map((_, i) => (
-                                    <div key={i} className="bg-white rounded-xl shadow-md overflow-hidden animate-pulse">
-                                        <div className="h-48 bg-orange-100" />
+                                    <div key={i} className="bg-white rounded-xl shadow-md overflow-hidden animate-pulse dark:bg-slate-800">
+                                        <div className="h-48 bg-orange-100 dark:bg-slate-700" />
                                         <div className="p-5">
-                                            <div className="h-4 bg-gray-200 rounded w-2/3 mb-3" />
-                                            <div className="h-3 bg-gray-200 rounded w-full mb-4" />
-                                            <div className="h-8 bg-gray-200 rounded" />
+                                            <div className="h-4 bg-gray-200 rounded w-2/3 mb-3 dark:bg-slate-700" />
+                                            <div className="h-3 bg-gray-200 rounded w-full mb-4 dark:bg-slate-700" />
+                                            <div className="h-8 bg-gray-200 rounded dark:bg-slate-700" />
                                         </div>
                                     </div>
                                 ))}
@@ -244,13 +244,13 @@ const Home = () => {
                                     const originalPrice = combo.OriginalPrice ? parseFloat(combo.OriginalPrice) : null;
                                     const discount = combo.DiscountPercentage ? parseFloat(combo.DiscountPercentage) : 0;
                                     return (
-                                        <div key={combo.ComboID || combo.ComboPackID} className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-orange-300 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+                                        <div key={combo.ComboID || combo.ComboPackID} className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-orange-300 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow dark:from-slate-800 dark:to-slate-800 dark:border-orange-900/50">
                                             <div className="relative">
                                                 {imageUrl ? (
                                                     <img src={imageUrl} alt={combo.Name} className="w-full h-48 object-cover" />
                                                 ) : (
-                                                    <div className="w-full h-48 bg-gradient-to-br from-orange-200 to-yellow-200 flex items-center justify-center">
-                                                        <FaTag className="text-6xl text-orange-400" />
+                                                    <div className="w-full h-48 bg-gradient-to-br from-orange-200 to-yellow-200 flex items-center justify-center dark:from-orange-900/30 dark:to-yellow-900/20">
+                                                        <FaTag className="text-6xl text-orange-400 dark:text-orange-600" />
                                                     </div>
                                                 )}
                                                 {discount > 0 && (
@@ -261,16 +261,16 @@ const Home = () => {
                                                 )}
                                             </div>
                                             <div className="p-5">
-                                                <h3 className="text-xl font-bold text-gray-900 mb-1">{combo.Name}</h3>
+                                                <h3 className="text-xl font-bold text-gray-900 mb-1 dark:text-slate-100">{combo.Name}</h3>
                                                 {combo.Description && (
-                                                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{combo.Description}</p>
+                                                    <p className="text-sm text-gray-600 mb-3 line-clamp-2 dark:text-slate-400">{combo.Description}</p>
                                                 )}
                                                 <div className="flex items-end justify-between mb-4">
                                                     <div>
                                                         {originalPrice && originalPrice > price && (
-                                                            <p className="text-sm text-gray-400 line-through">LKR {originalPrice.toFixed(2)}</p>
+                                                            <p className="text-sm text-gray-400 line-through dark:text-slate-500">LKR {originalPrice.toFixed(2)}</p>
                                                         )}
-                                                        <p className="text-2xl font-bold text-orange-600">LKR {price.toFixed(2)}</p>
+                                                        <p className="text-2xl font-bold text-orange-600 dark:text-orange-400">LKR {price.toFixed(2)}</p>
                                                     </div>
                                                 </div>
                                                 <Button
@@ -290,11 +290,11 @@ const Home = () => {
             )}
 
             {/* Features Section */}
-            <section className="py-14 bg-slate-50">
+            <section className="py-14 bg-slate-50 dark:bg-slate-900/50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-12">
-                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Order With Confidence</h2>
-                        <p className="mt-2 text-gray-500 text-sm md:text-base">Everything you need for a great dining experience</p>
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight dark:text-slate-100">Order With Confidence</h2>
+                        <p className="mt-2 text-gray-500 text-sm md:text-base dark:text-slate-400">Everything you need for a great dining experience</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {features.map((feature, index) => {
@@ -304,11 +304,11 @@ const Home = () => {
                                     key={index}
                                     className="card motion-surface p-6 text-center cursor-default"
                                 >
-                                    <div className="inline-flex items-center justify-center w-14 h-14 bg-primary-50 rounded-2xl mb-4 border border-primary-100">
-                                        <Icon className="w-7 h-7 text-primary-600" />
+                                    <div className="inline-flex items-center justify-center w-14 h-14 bg-primary-50 rounded-2xl mb-4 border border-primary-100 dark:bg-primary-900/30 dark:border-primary-900/50">
+                                        <Icon className="w-7 h-7 text-primary-600 dark:text-primary-400" />
                                     </div>
-                                    <h3 className="text-base font-bold text-gray-900 mb-1.5">{feature.title}</h3>
-                                    <p className="text-sm text-gray-500 leading-relaxed">{feature.description}</p>
+                                    <h3 className="text-base font-bold text-gray-900 mb-1.5 dark:text-slate-100">{feature.title}</h3>
+                                    <p className="text-sm text-gray-500 leading-relaxed dark:text-slate-400">{feature.description}</p>
                                 </div>
                             );
                         })}
@@ -317,14 +317,14 @@ const Home = () => {
             </section>
 
             {/* Featured Items Preview */}
-            <section className="py-14 bg-white">
+            <section className="py-14 bg-white dark:bg-slate-900">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center mb-8">
                         <div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Popular Picks</h2>
-                            <p className="mt-1 text-sm text-gray-500">Our most-loved menu items</p>
+                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight dark:text-slate-100">Popular Picks</h2>
+                            <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">Our most-loved menu items</p>
                         </div>
-                        <Link to="/menu" className="text-sm font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors">
+                        <Link to="/menu" className="text-sm font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors dark:text-primary-400 dark:hover:text-primary-300">
                             View All <span aria-hidden="true">→</span>
                         </Link>
                     </div>
@@ -349,18 +349,18 @@ const Home = () => {
                                     key={item.id}
                                     className="card overflow-hidden motion-surface cursor-default"
                                 >
-                                    <div className="h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
+                                    <div className="h-48 bg-gray-100 flex items-center justify-center overflow-hidden dark:bg-slate-700">
                                         {item.image ? (
                                             <img src={item.image} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
                                         ) : (
-                                            <span className="text-gray-400 text-sm">No image available</span>
+                                            <span className="text-gray-400 text-sm dark:text-slate-500">No image available</span>
                                         )}
                                     </div>
                                     <div className="p-4">
-                                        <h3 className="font-bold text-gray-900 mb-1 leading-snug">{item.name}</h3>
-                                        <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed">{item.description}</p>
+                                        <h3 className="font-bold text-gray-900 mb-1 leading-snug dark:text-slate-100">{item.name}</h3>
+                                        <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed dark:text-slate-400">{item.description}</p>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-base font-bold text-primary-600">LKR {item.price.toFixed(2)}</span>
+                                            <span className="text-base font-bold text-primary-600 dark:text-primary-400">LKR {item.price.toFixed(2)}</span>
                                             <Button size="sm" onClick={() => handleAddToCart(item)}>Add</Button>
                                         </div>
                                     </div>
@@ -368,7 +368,7 @@ const Home = () => {
                             ))}
                         </div>
                     ) : (
-                        <div className="card p-8 text-center text-gray-500 text-sm">
+                        <div className="card p-8 text-center text-gray-500 text-sm dark:text-slate-400">
                             No featured items yet. Check back soon!
                         </div>
                     )}

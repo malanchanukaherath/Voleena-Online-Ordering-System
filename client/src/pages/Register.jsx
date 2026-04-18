@@ -130,21 +130,21 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden dark:bg-slate-900">
       <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] sm:max-w-md">
         <div className="flex justify-center">
           <div className="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-xl">V</span>
           </div>
         </div>
-        <h2 className="mt-6 text-center text-2xl font-bold text-gray-900 break-words sm:text-3xl">
+        <h2 className="mt-6 text-center text-2xl font-bold text-gray-900 break-words sm:text-3xl dark:text-slate-100">
           Create your account
         </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
+        <p className="mt-2 text-center text-sm text-gray-600 dark:text-slate-400">
           Or{' '}
           <Link
             to="/login"
-            className="font-medium text-primary-600 hover:text-primary-500"
+            className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
           >
             sign in to your existing account
           </Link>
@@ -204,7 +204,7 @@ const Register = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 focus:outline-none"
+                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 focus:outline-none dark:text-slate-400 dark:hover:text-slate-200"
                 tabIndex={-1}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
@@ -226,7 +226,7 @@ const Register = () => {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 focus:outline-none"
+                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 focus:outline-none dark:text-slate-400 dark:hover:text-slate-200"
                 tabIndex={-1}
                 aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
               >
@@ -240,15 +240,15 @@ const Register = () => {
                 name="agree-terms"
                 type="checkbox"
                 required
-                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded dark:border-slate-600 dark:bg-slate-700"
               />
-              <label htmlFor="agree-terms" className="ml-2 block min-w-0 text-sm text-gray-900">
+              <label htmlFor="agree-terms" className="ml-2 block min-w-0 text-sm text-gray-900 dark:text-slate-300">
                 I agree to the{' '}
-                <Link to="/terms" className="text-primary-600 hover:text-primary-500">
+                <Link to="/terms" className="text-primary-600 hover:text-primary-500 dark:text-primary-400">
                   Terms of Service
                 </Link>{' '}
                 and{' '}
-                <Link to="/privacy" className="text-primary-600 hover:text-primary-500">
+                <Link to="/privacy" className="text-primary-600 hover:text-primary-500 dark:text-primary-400">
                   Privacy Policy
                 </Link>
               </label>

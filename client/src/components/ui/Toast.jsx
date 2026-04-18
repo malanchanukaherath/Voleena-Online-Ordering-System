@@ -62,7 +62,7 @@ const Toast = ({
   };
 
   return (
-    <div className={`fixed top-4 right-4 z-40 max-w-sm w-full bg-white border rounded-lg shadow-lg transform transition-all duration-300 ease-in-out motion-reduce:transition-none ${show ? 'animate-toast-in opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'} ${typeClasses[type]}`}>
+    <div className={`fixed top-4 right-4 z-40 max-w-sm w-full border rounded-lg shadow-lg transform transition-all duration-300 ease-in-out motion-reduce:transition-none ${show ? 'animate-toast-in opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'} ${typeClasses[type]}`}>
       <div className="flex items-start p-4">
         <div className={`flex-shrink-0 ${iconClasses[type]}`}>
           {icons[type]}

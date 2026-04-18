@@ -63,7 +63,7 @@ const NotificationCenter = () => {
       >
         <FaBell className="w-6 h-6" />
         {unreadCount > 0 && (
-          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center ring-2 ring-white dark:ring-slate-900">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -79,7 +79,7 @@ const NotificationCenter = () => {
         <div className="space-y-4">
           {/* Header Actions */}
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 dark:text-slate-400">
               {notifications.length} notification{notifications.length !== 1 ? 's' : ''}
             </span>
             <div className="flex gap-2">
@@ -110,10 +110,10 @@ const NotificationCenter = () => {
           {/* Notifications List */}
           {(!notifications || notifications.length === 0) ? (
             <div className="text-center py-8">
-              <svg className="w-12 h-12 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-12 h-12 text-gray-400 mx-auto mb-4 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6z" />
               </svg>
-              <p className="text-gray-500">No notifications yet</p>
+              <p className="text-gray-500 dark:text-slate-400">No notifications yet</p>
             </div>
           ) : (
             <div className="space-y-3 max-h-96 overflow-y-auto">
@@ -157,7 +157,7 @@ const NotificationCenter = () => {
                       )}
                       <button
                         onClick={() => removeNotification && removeNotification(notification.id)}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-gray-400 hover:text-gray-600 dark:text-slate-500 dark:hover:text-slate-300"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
