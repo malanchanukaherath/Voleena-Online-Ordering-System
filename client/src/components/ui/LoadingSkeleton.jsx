@@ -2,16 +2,16 @@ import React from 'react';
 
 const LoadingSkeleton = ({ type = 'card', count = 1, rows = 5 }) => {
     const renderCardSkeleton = () => (
-        <div className="bg-white rounded-lg shadow p-6 animate-pulse">
-            <div className="h-48 bg-gray-200 rounded mb-4"></div>
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 animate-pulse">
+            <div className="h-44 bg-gray-200 rounded-xl mb-4"></div>
             <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
             <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
-            <div className="h-8 bg-gray-200 rounded w-1/4"></div>
+            <div className="h-9 bg-gray-200 rounded-xl w-1/4"></div>
         </div>
     );
 
     const renderTableSkeleton = () => (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <table className="min-w-full">
                 <thead className="bg-gray-50">
                     <tr>
@@ -40,7 +40,7 @@ const LoadingSkeleton = ({ type = 'card', count = 1, rows = 5 }) => {
     const renderListSkeleton = () => (
         <div className="space-y-4">
             {Array.from({ length: rows }).map((_, i) => (
-                <div key={i} className="bg-white rounded-lg shadow p-4 animate-pulse">
+                <div key={i} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 animate-pulse">
                     <div className="flex items-center space-x-4">
                         <div className="w-12 h-12 bg-gray-200 rounded-full"></div>
                         <div className="flex-1 space-y-2">
@@ -54,7 +54,7 @@ const LoadingSkeleton = ({ type = 'card', count = 1, rows = 5 }) => {
     );
 
     const renderFormSkeleton = () => (
-        <div className="bg-white rounded-lg shadow p-6 space-y-4 animate-pulse">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4 animate-pulse">
             {Array.from({ length: rows }).map((_, i) => (
                 <div key={i}>
                     <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>

@@ -124,7 +124,7 @@ const Header = ({
     const navigationItems = getNavigationItems();
 
     return (
-        <header className="bg-white shadow-sm sticky top-0 z-30">
+        <header className="bg-white/95 backdrop-blur border-b border-gray-200/80 shadow-sm sticky top-0 z-30">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo and Sidebar Controls */}
@@ -134,7 +134,7 @@ const Header = ({
                                 <button
                                     type="button"
                                     onClick={onToggleMobileSidebar}
-                                    className="lg:hidden p-2 text-gray-700 hover:text-primary-700 hover:bg-gray-100 rounded-md"
+                                    className="lg:hidden p-2 text-gray-700 hover:text-primary-700 hover:bg-gray-100 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
                                     aria-label={isMobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
                                     title={isMobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
                                 >
@@ -144,7 +144,7 @@ const Header = ({
                                 <button
                                     type="button"
                                     onClick={onToggleSidebar}
-                                    className="hidden lg:inline-flex p-2 text-gray-700 hover:text-primary-700 hover:bg-gray-100 rounded-md"
+                                    className="hidden lg:inline-flex p-2 text-gray-700 hover:text-primary-700 hover:bg-gray-100 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
                                     aria-label={isSidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
                                     title={isSidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
                                 >
@@ -154,7 +154,7 @@ const Header = ({
                         )}
 
                         <Link to="/" className="flex items-center space-x-2">
-                            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                            <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl shadow-sm flex items-center justify-center">
                                 <span className="text-white font-bold text-xl">{(publicSettings.restaurantName || 'V').charAt(0).toUpperCase()}</span>
                             </div>
                             <span className="text-xl font-bold text-gray-900 hidden sm:block">
@@ -164,16 +164,16 @@ const Header = ({
                     </div>
 
                     {/* Desktop Navigation */}
-                    <nav className={`${showSidebarToggle ? 'hidden' : 'hidden md:flex'} space-x-1`}>
+                    <nav className={`${showSidebarToggle ? 'hidden' : 'hidden md:flex'} space-x-1 rounded-xl bg-slate-50/80 p-1 border border-slate-200/80`}>
                         {navigationItems.map((item) => {
                             const Icon = item.icon;
                             return (
                                 <Link
                                     key={item.path}
                                     to={item.path}
-                                    className={`px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1 transition-colors ${isActive(item.path)
-                                        ? 'bg-primary-100 text-primary-700'
-                                        : 'text-gray-700 hover:bg-gray-100'
+                                    className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 ${isActive(item.path)
+                                        ? 'bg-white text-primary-700 shadow-sm'
+                                        : 'text-gray-700 hover:bg-white/80'
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />
@@ -188,12 +188,12 @@ const Header = ({
                         {shouldShowCart && (
                             <Link
                                 to="/cart"
-                                className="relative text-gray-700 hover:text-primary-600"
+                                className="relative rounded-xl p-2 text-gray-700 hover:text-primary-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
                                 title="View cart"
                             >
                                 <FaShoppingCart className="w-6 h-6" />
                                 {cartCount > 0 && (
-                                    <span className="absolute -top-2 -right-2 bg-primary-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-semibold">
+                                    <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-[11px] rounded-full w-5 h-5 flex items-center justify-center font-semibold ring-2 ring-white">
                                         {cartCount}
                                     </span>
                                 )}
@@ -205,13 +205,13 @@ const Header = ({
                                 <NotificationCenter />
 
                                 <div className="flex items-center space-x-3">
-                                    <div className="hidden sm:block text-right">
+                                    <div className="hidden sm:block text-right bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/80">
                                         <p className="text-sm font-medium text-gray-900">{user?.name}</p>
                                         <p className="text-xs text-gray-500">{user?.role || user?.staffRole}</p>
                                     </div>
                                     <button
                                         onClick={logout}
-                                        className="text-gray-700 hover:text-red-600 p-2"
+                                        className="text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-xl p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
                                         title="Logout"
                                     >
                                         <FaSignOutAlt className="w-5 h-5" />
@@ -224,13 +224,13 @@ const Header = ({
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <Link
                                     to="/login"
-                                    className="text-xs sm:text-sm font-medium text-gray-700 hover:text-primary-600 whitespace-nowrap"
+                                    className="text-xs sm:text-sm font-medium text-gray-700 hover:text-primary-600 whitespace-nowrap px-2 py-1 rounded-lg hover:bg-slate-100"
                                 >
                                     Sign In
                                 </Link>
                                 <Link
                                     to="/register"
-                                    className="hidden sm:inline-flex bg-primary-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary-700 whitespace-nowrap"
+                                    className="hidden sm:inline-flex bg-primary-600 text-white px-4 py-2 rounded-xl text-sm font-medium hover:bg-primary-700 shadow-sm whitespace-nowrap"
                                 >
                                     Sign Up
                                 </Link>
@@ -248,9 +248,9 @@ const Header = ({
                                 <Link
                                     key={item.path}
                                     to={item.path}
-                                    className={`px-3 py-2 rounded-md text-xs font-medium flex items-center space-x-1 ${isActive(item.path)
-                                        ? 'bg-primary-100 text-primary-700'
-                                        : 'text-gray-700 bg-gray-100'
+                                    className={`px-3 py-2 rounded-xl text-xs font-medium flex items-center space-x-1 border transition-colors ${isActive(item.path)
+                                        ? 'bg-primary-50 border-primary-200 text-primary-700'
+                                        : 'text-gray-700 bg-white border-gray-200 hover:bg-gray-50'
                                         }`}
                                 >
                                     <Icon className="w-3 h-3" />

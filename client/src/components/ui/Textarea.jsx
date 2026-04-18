@@ -24,7 +24,7 @@ const Textarea = ({
     return (
         <div className="w-full">
             {label && (
-                <label htmlFor={textareaId} className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor={textareaId} className="block text-sm font-semibold text-gray-700 mb-1.5">
                     {label}
                     {required && <span className="text-red-500 ml-1">*</span>}
                 </label>
@@ -42,7 +42,7 @@ const Textarea = ({
                 aria-invalid={error ? 'true' : undefined}
                 aria-describedby={describedBy}
                 className={`
-          block w-full px-3 py-2 border rounded-md shadow-sm
+                block w-full px-3 py-2.5 border rounded-xl shadow-sm bg-white
           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
           disabled:bg-gray-100 disabled:cursor-not-allowed
           resize-y

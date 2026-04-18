@@ -99,7 +99,7 @@ const MainLayout = ({ children }) => {
     }
 
     return (
-        <div className="flex flex-col min-h-screen overflow-x-hidden">
+        <div className="flex flex-col min-h-screen overflow-x-hidden bg-gradient-to-b from-slate-50/80 via-white to-slate-100/70">
             <Header
                 showSidebarToggle={showSidebar}
                 isSidebarVisible={isDesktopSidebarVisible}
@@ -112,7 +112,7 @@ const MainLayout = ({ children }) => {
                 {showSidebar && (
                     <Sidebar
                         className={`hidden lg:block sticky top-16 self-start min-h-[calc(100vh-4rem)] overflow-hidden transition-all duration-300 ease-in-out motion-reduce:transition-none ${showDesktopSidebar
-                            ? 'w-64 opacity-100 translate-x-0 bg-white shadow-lg'
+                            ? 'w-64 opacity-100 translate-x-0 bg-white/95 shadow-sm border-r border-gray-200/80 backdrop-blur'
                             : 'w-0 opacity-0 -translate-x-2 bg-transparent shadow-none pointer-events-none'
                             }`}
                     />
@@ -122,7 +122,7 @@ const MainLayout = ({ children }) => {
                     <>
                         <button
                             type="button"
-                            className={`lg:hidden fixed inset-0 z-30 bg-black/40 transition-opacity duration-300 ease-out motion-reduce:transition-none ${isMobileSidebarOpen
+                            className={`lg:hidden fixed inset-0 z-30 bg-slate-900/35 backdrop-blur-[1px] transition-opacity duration-300 ease-out motion-reduce:transition-none ${isMobileSidebarOpen
                                 ? 'opacity-100 pointer-events-auto'
                                 : 'opacity-0 pointer-events-none'
                                 }`}
@@ -131,7 +131,7 @@ const MainLayout = ({ children }) => {
                         />
 
                         <Sidebar
-                            className={`lg:hidden fixed top-16 bottom-0 left-0 z-40 w-72 bg-white shadow-xl overflow-y-auto transform transition-transform duration-300 ease-out motion-reduce:transition-none ${isMobileSidebarOpen
+                            className={`lg:hidden fixed top-16 bottom-0 left-0 z-40 w-72 bg-white shadow-xl border-r border-gray-200 overflow-y-auto transform transition-transform duration-300 ease-out motion-reduce:transition-none ${isMobileSidebarOpen
                                 ? 'translate-x-0 pointer-events-auto'
                                 : '-translate-x-full pointer-events-none'
                                 }`}
@@ -140,7 +140,7 @@ const MainLayout = ({ children }) => {
                     </>
                 )}
 
-                <main className={`flex-1 min-w-0 w-full py-8 transition-all duration-300 ease-in-out motion-reduce:transition-none ${showSidebar ? 'px-4 sm:px-6 lg:px-8' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}`}>
+                <main className={`flex-1 min-w-0 w-full py-6 md:py-8 transition-all duration-300 ease-in-out motion-reduce:transition-none ${showSidebar ? 'px-4 sm:px-6 lg:px-8' : 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'}`}>
                     <div key={location.pathname} className="route-motion-shell">
                         {children}
                     </div>

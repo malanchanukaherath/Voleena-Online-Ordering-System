@@ -30,18 +30,18 @@ const Footer = () => {
     const businessHours = settings.businessHours || {};
 
     return (
-        <footer className="bg-gray-900 text-gray-300">
+        <footer className="bg-slate-900 text-slate-300 border-t border-slate-800/80">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {/* About Section */}
                     <div>
                         <div className="flex items-center space-x-2 mb-4">
-                            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
+                            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-sm">
                                 <span className="text-white font-bold text-xl">{restaurantName.charAt(0).toUpperCase()}</span>
                             </div>
                             <span className="text-xl font-bold text-white">{restaurantName}</span>
                         </div>
-                        <p className="text-sm">
+                        <p className="text-sm leading-6 text-slate-300">
                             Delicious traditional Sri Lankan meals, combo packs, and catering services delivered to your doorstep.
                         </p>
                     </div>
@@ -51,22 +51,22 @@ const Footer = () => {
                         <h3 className="text-white font-semibold mb-4">Quick Links</h3>
                         <ul className="space-y-2 text-sm">
                             <li>
-                                <Link to="/" className="hover:text-primary-400 transition-colors">
+                                <Link to="/" className="hover:text-primary-300 transition-colors">
                                     Home
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/menu" className="hover:text-primary-400 transition-colors">
+                                <Link to="/menu" className="hover:text-primary-300 transition-colors">
                                     Menu
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/about" className="hover:text-primary-400 transition-colors">
+                                <Link to="/about" className="hover:text-primary-300 transition-colors">
                                     About Us
                                 </Link>
                             </li>
                             <li>
-                                <Link to="/contact" className="hover:text-primary-400 transition-colors">
+                                <Link to="/contact" className="hover:text-primary-300 transition-colors">
                                     Contact
                                 </Link>
                             </li>
@@ -79,7 +79,7 @@ const Footer = () => {
                         <ul className="space-y-2 text-sm">
                             <li className="flex items-start space-x-2">
                                 <FaMapMarkerAlt className="w-4 h-4 mt-1 flex-shrink-0" />
-                                <span>{settings.address}</span>
+                                <span className="leading-5">{settings.address}</span>
                             </li>
                             <li className="flex items-center space-x-2">
                                 <FaPhone className="w-4 h-4" />
@@ -115,13 +115,13 @@ const Footer = () => {
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="border-t border-gray-800 mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center text-sm">
+                <div className="border-t border-slate-800 mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center text-sm gap-3">
                     <p>© {currentYear} {restaurantName}. All rights reserved.</p>
                     <div className="flex space-x-6 mt-4 sm:mt-0">
-                        <Link to="/privacy" className="hover:text-primary-400 transition-colors">
+                        <Link to="/privacy" className="hover:text-primary-300 transition-colors">
                             Privacy Policy
                         </Link>
-                        <Link to="/terms" className="hover:text-primary-400 transition-colors">
+                        <Link to="/terms" className="hover:text-primary-300 transition-colors">
                             Terms of Service
                         </Link>
                     </div>

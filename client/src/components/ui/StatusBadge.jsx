@@ -5,43 +5,43 @@ const StatusBadge = ({ status, type = 'order' }) => {
         const normalized = status?.toUpperCase().replace(/_/g, '_');
 
         const styles = {
-            PENDING: 'bg-yellow-100 text-yellow-800',
-            PREORDER_PENDING: 'bg-amber-100 text-amber-800',
-            PREORDER_CONFIRMED: 'bg-cyan-100 text-cyan-800',
-            CONFIRMED: 'bg-blue-100 text-blue-800',
-            PREPARING: 'bg-orange-100 text-orange-800',
-            READY: 'bg-purple-100 text-purple-800',
-            OUT_FOR_DELIVERY: 'bg-indigo-100 text-indigo-800',
-            DELIVERED: 'bg-green-100 text-green-800',
-            CANCELLED: 'bg-red-100 text-red-800',
-            COMPLETED: 'bg-green-100 text-green-800',
+            PENDING: 'bg-yellow-50 text-yellow-800 border border-yellow-200',
+            PREORDER_PENDING: 'bg-amber-50 text-amber-800 border border-amber-200',
+            PREORDER_CONFIRMED: 'bg-cyan-50 text-cyan-800 border border-cyan-200',
+            CONFIRMED: 'bg-blue-50 text-blue-800 border border-blue-200',
+            PREPARING: 'bg-orange-50 text-orange-800 border border-orange-200',
+            READY: 'bg-purple-50 text-purple-800 border border-purple-200',
+            OUT_FOR_DELIVERY: 'bg-indigo-50 text-indigo-800 border border-indigo-200',
+            DELIVERED: 'bg-green-50 text-green-800 border border-green-200',
+            CANCELLED: 'bg-red-50 text-red-800 border border-red-200',
+            COMPLETED: 'bg-green-50 text-green-800 border border-green-200',
         };
 
-        return styles[normalized] || 'bg-gray-100 text-gray-800';
+        return styles[normalized] || 'bg-gray-50 text-gray-700 border border-gray-200';
     };
 
     const getPaymentStatusStyles = (status) => {
         const styles = {
-            PENDING: 'bg-yellow-100 text-yellow-800',
-            PAID: 'bg-green-100 text-green-800',
-            FAILED: 'bg-red-100 text-red-800',
-            REFUNDED: 'bg-gray-100 text-gray-800',
+            PENDING: 'bg-yellow-50 text-yellow-800 border border-yellow-200',
+            PAID: 'bg-green-50 text-green-800 border border-green-200',
+            FAILED: 'bg-red-50 text-red-800 border border-red-200',
+            REFUNDED: 'bg-gray-50 text-gray-700 border border-gray-200',
         };
 
-        return styles[status?.toUpperCase()] || 'bg-gray-100 text-gray-800';
+        return styles[status?.toUpperCase()] || 'bg-gray-50 text-gray-700 border border-gray-200';
     };
 
     const getDeliveryStatusStyles = (status) => {
         const styles = {
-            PENDING: 'bg-yellow-100 text-yellow-800',
-            ASSIGNED: 'bg-blue-100 text-blue-800',
-            PICKED_UP: 'bg-orange-100 text-orange-800',
-            IN_TRANSIT: 'bg-indigo-100 text-indigo-800',
-            DELIVERED: 'bg-green-100 text-green-800',
-            FAILED: 'bg-red-100 text-red-800',
+            PENDING: 'bg-yellow-50 text-yellow-800 border border-yellow-200',
+            ASSIGNED: 'bg-blue-50 text-blue-800 border border-blue-200',
+            PICKED_UP: 'bg-orange-50 text-orange-800 border border-orange-200',
+            IN_TRANSIT: 'bg-indigo-50 text-indigo-800 border border-indigo-200',
+            DELIVERED: 'bg-green-50 text-green-800 border border-green-200',
+            FAILED: 'bg-red-50 text-red-800 border border-red-200',
         };
 
-        return styles[status?.toUpperCase()] || 'bg-gray-100 text-gray-800';
+        return styles[status?.toUpperCase()] || 'bg-gray-50 text-gray-700 border border-gray-200';
     };
 
     const getStyles = () => {
@@ -63,7 +63,7 @@ const StatusBadge = ({ status, type = 'order' }) => {
 
     return (
         <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStyles()}`}
+            className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide ring-1 ring-inset ring-black/5 ${getStyles()}`}
         >
             {formatStatus(status)}
         </span>

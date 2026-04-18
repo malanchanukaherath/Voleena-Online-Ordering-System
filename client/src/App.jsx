@@ -31,6 +31,9 @@ function App() {
             draggable
             pauseOnHover
             theme="light"
+            toastClassName={() => 'rounded-xl border border-gray-200 shadow-lg'}
+            bodyClassName={() => 'text-sm font-medium text-gray-800'}
+            progressClassName="!bg-primary-500"
           />
         </NotificationProvider>
       </AuthProvider>

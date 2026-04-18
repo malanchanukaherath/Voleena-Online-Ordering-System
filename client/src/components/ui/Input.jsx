@@ -16,7 +16,7 @@ const Input = ({
   const helperId = inputId && helperText && !error ? `${inputId}-description` : null;
   const describedBy = [errorId, helperId].filter(Boolean).join(' ') || undefined;
   const inputClasses = `
-    block w-full ${Icon ? 'pl-10 pr-3' : 'px-3'} py-2 border rounded-md shadow-sm placeholder-gray-400 
+    block w-full ${Icon ? 'pl-10 pr-3' : 'px-3'} py-2.5 border rounded-xl shadow-sm placeholder-gray-400 bg-white
     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
     ${error ? 'border-red-300 focus:ring-red-500 focus:border-red-500' : 'border-gray-300'}
     ${className}
@@ -25,7 +25,7 @@ const Input = ({
   return (
     <div className={containerClassName}>
       {label && (
-        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor={inputId} className="block text-sm font-semibold text-gray-700 mb-1.5">
           {label}
         </label>
       )}

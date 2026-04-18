@@ -79,7 +79,7 @@ const Sidebar = ({ className = '', onNavigate }) => {
 
     return (
         <aside className={className}>
-            <nav className="p-4 space-y-1">
+            <nav className="p-4 space-y-1.5">
                 {menuItems.map((item) => {
                     const Icon = item.icon;
                     const active = isActive(item.path);
@@ -89,19 +89,19 @@ const Sidebar = ({ className = '', onNavigate }) => {
                     return (
                         <React.Fragment key={item.path}>
                             {showGroup && (
-                                <div className="px-4 pt-4 pb-1 text-xs font-semibold uppercase tracking-wide text-gray-400 first:pt-0">
+                                <div className="px-2 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-slate-400 first:pt-0">
                                     {item.group}
                                 </div>
                             )}
                             <Link
                                 to={item.path}
                                 onClick={onNavigate}
-                                className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${active
-                                    ? 'bg-primary-100 text-primary-700 font-medium'
-                                    : 'text-gray-700 hover:bg-gray-100'
+                                className={`group flex items-center space-x-3 px-4 py-3 rounded-xl border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 ${active
+                                    ? 'bg-primary-50 border-primary-200 text-primary-700 font-semibold shadow-sm'
+                                    : 'text-gray-700 border-transparent hover:bg-gray-50 hover:border-gray-200'
                                     }`}
                             >
-                                <Icon className={`w-5 h-5 ${active ? 'text-primary-600' : 'text-gray-500'}`} />
+                                <Icon className={`w-5 h-5 transition-colors ${active ? 'text-primary-600' : 'text-gray-500 group-hover:text-gray-700'}`} />
                                 <span>{item.label}</span>
                             </Link>
                         </React.Fragment>
