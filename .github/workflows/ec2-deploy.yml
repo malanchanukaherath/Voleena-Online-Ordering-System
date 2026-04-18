@@ -15,6 +15,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_v26_preorder_migration:
+        description: Apply v2.6 preorder/add-on migration on EC2 before restarting app
+        required: false
+        default: false
+        type: boolean
       run_v27_addon_migration:
         description: Apply v2.7 add-on safety migration on EC2 before restarting app
         required: false
@@ -90,6 +95,7 @@ jobs:
           IMAGE_TAG: sha-${{ github.sha }}
           RUN_ACCOUNT_SEED: ${{ github.event.inputs.seed_accounts || 'false' }}
           RUN_DB_SYNC: ${{ github.event.inputs.run_db_sync || 'false' }}
+          RUN_DB_MIGRATION_V26: ${{ github.event.inputs.run_v26_preorder_migration || 'false' }}
           RUN_DB_MIGRATION_V27: ${{ github.event.inputs.run_v27_addon_migration || 'false' }}
           TARGET_BRANCH: main
         run: |

@@ -7,6 +7,8 @@ TARGET_BRANCH="${TARGET_BRANCH:-main}"
 COMPOSE_FILE_CHECK="${COMPOSE_FILE_CHECK:-/tmp/voleena-compose-check.yml}"
 DEPLOY_STRATEGY="${DEPLOY_STRATEGY:-auto}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
+RUN_DB_MIGRATION_V26="${RUN_DB_MIGRATION_V26:-false}"
+MIGRATION_V26_FILE="${MIGRATION_V26_FILE:-database/migration_v2.6_preorder_addons_resume_safe.sql}"
 RUN_DB_MIGRATION_V27="${RUN_DB_MIGRATION_V27:-false}"
 MIGRATION_V27_FILE="${MIGRATION_V27_FILE:-database/migration_v2.7_addon_admin_safety_baseline.sql}"
 
@@ -80,8 +82,22 @@ else
   echo "6) Skipping schema sync. Set RUN_DB_SYNC=true only after reviewing the SQL for this deploy."
 fi
 
+if [ "${RUN_DB_MIGRATION_V26}" = "true" ]; then
+  echo "7) Applying v2.6 preorder/add-on migration because RUN_DB_MIGRATION_V26=true..."
+
+  if [ ! -f "${MIGRATION_V26_FILE}" ]; then
+    echo "STOP: Migration file not found at '${MIGRATION_V26_FILE}'."
+    exit 1
+  fi
+
+  docker exec -i mysql_db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < "${MIGRATION_V26_FILE}"
+  echo "OK: v2.6 migration applied (idempotent; safe to re-run)."
+else
+  echo "7) Skipping v2.6 preorder/add-on migration. Set RUN_DB_MIGRATION_V26=true to apply it during this deploy."
+fi
+
 if [ "${RUN_DB_MIGRATION_V27}" = "true" ]; then
-  echo "7) Applying v2.7 add-on safety migration because RUN_DB_MIGRATION_V27=true..."
+  echo "8) Applying v2.7 add-on safety migration because RUN_DB_MIGRATION_V27=true..."
 
   if [ ! -f "${MIGRATION_V27_FILE}" ]; then
     echo "STOP: Migration file not found at '${MIGRATION_V27_FILE}'."
@@ -91,10 +107,10 @@ if [ "${RUN_DB_MIGRATION_V27}" = "true" ]; then
   docker exec -i mysql_db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < "${MIGRATION_V27_FILE}"
   echo "OK: v2.7 migration applied (idempotent; safe to re-run)."
 else
-  echo "7) Skipping v2.7 add-on migration. Set RUN_DB_MIGRATION_V27=true to apply it during this deploy."
+  echo "8) Skipping v2.7 add-on migration. Set RUN_DB_MIGRATION_V27=true to apply it during this deploy."
 fi
 
-echo "8) Updating and restarting app containers..."
+echo "9) Updating and restarting app containers..."
 case "${DEPLOY_STRATEGY}" in
   pull)
     if [ -z "${DOCKERHUB_USERNAME:-}" ]; then
@@ -129,19 +145,19 @@ case "${DEPLOY_STRATEGY}" in
 esac
 
 if [ "${RUN_ACCOUNT_SEED:-false}" = "true" ]; then
-  echo "9) Seeding login accounts because RUN_ACCOUNT_SEED=true..."
+  echo "10) Seeding login accounts because RUN_ACCOUNT_SEED=true..."
   docker compose --profile init run --rm --no-deps backend_seed
 else
-  echo "9) Skipping login account seed. Set RUN_ACCOUNT_SEED=true for first-time EC2 setup."
+  echo "10) Skipping login account seed. Set RUN_ACCOUNT_SEED=true for first-time EC2 setup."
 fi
 
-echo "10) Checking containers..."
+echo "11) Checking containers..."
 docker compose ps
 
-echo "11) Checking backend logs..."
+echo "12) Checking backend logs..."
 docker logs --tail=80 backend_app
 
-echo "12) Checking key database tables..."
+echo "13) Checking key database tables..."
 docker exec mysql_db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "SHOW TABLES LIKE '\''activity_log'\''; SHOW TABLES LIKE '\''otp_verification'\''; SHOW TABLES LIKE '\''app_notification'\''; SELECT COUNT(*) AS customers FROM customer;"'
 
 echo "DONE: deploy completed safely."

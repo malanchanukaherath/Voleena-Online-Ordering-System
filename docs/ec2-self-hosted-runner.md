@@ -127,9 +127,10 @@ Push the repo changes to `main`, then run the workflow manually:
 1. Go to **Actions** > **EC2 Deploy**.
 2. Click **Run workflow**.
 3. Set `seed_accounts` to `true`.
-4. Set `run_v27_addon_migration` to `true` for the first deploy that should apply `database/migration_v2.7_addon_admin_safety_baseline.sql`.
-5. Keep `run_db_sync` as needed for reviewed `safe_schema_sync_v2_4.sql` updates.
-6. Run it.
+4. Set `run_v26_preorder_migration` to `true` when upgrading environments that may not yet have preorder columns (`database/migration_v2.6_preorder_addons_resume_safe.sql`).
+5. Set `run_v27_addon_migration` to `true` for the first deploy that should apply `database/migration_v2.7_addon_admin_safety_baseline.sql`.
+6. Keep `run_db_sync` as needed for reviewed `safe_schema_sync_v2_4.sql` updates.
+7. Run it.
 
 This seeds:
 
