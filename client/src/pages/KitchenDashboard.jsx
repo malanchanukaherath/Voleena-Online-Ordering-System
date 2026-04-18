@@ -14,6 +14,12 @@ const KitchenDashboard = () => {
     const [stats, setStats] = useState(DEFAULT_STATS);
     const [activeOrders, setActiveOrders] = useState([]);
 
+    const normalizeSpecialInstructions = (order) => {
+        const rawValue = order?.SpecialInstructions ?? order?.specialInstructions ?? order?.special_instructions ?? '';
+        const normalized = String(rawValue || '').trim();
+        return normalized || '';
+    };
+
     useEffect(() => {
         let isMounted = true;
 
@@ -34,6 +40,7 @@ const KitchenDashboard = () => {
                         time: order.CreatedAt || order.createdAt || order.created_at,
                         status: order.Status,
                         orderType: order.OrderType,
+                        specialInstructions: normalizeSpecialInstructions(order),
                         priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
                     }))
                     .sort((a, b) => {
@@ -114,6 +121,11 @@ const KitchenDashboard = () => {
                                     <p className="text-sm text-gray-600">
                                         {order.items} items • {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
                                     </p>
+                                    {order.specialInstructions && (
+                                        <p className="mt-1 text-xs text-amber-800 break-words">
+                                            <span className="font-semibold">Instructions:</span> {order.specialInstructions}
+                                        </p>
+                                    )}
                                 </div>
                                 <StatusBadge status={order.status} />
                             </div>

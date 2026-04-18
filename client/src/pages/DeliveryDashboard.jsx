@@ -27,6 +27,12 @@ const DeliveryDashboard = () => {
         return Number.isNaN(timestamp) ? 0 : timestamp;
     };
 
+    const normalizeSpecialInstructions = (order) => {
+        const rawValue = order?.SpecialInstructions ?? order?.specialInstructions ?? order?.special_instructions ?? '';
+        const normalized = String(rawValue || '').trim();
+        return normalized || '';
+    };
+
     const {
         queueStatusUpdate,
         cancelPendingUpdate,
@@ -71,6 +77,7 @@ const DeliveryDashboard = () => {
                             id: delivery.DeliveryID,
                             orderNumber: delivery.order?.OrderNumber || 'N/A',
                             customer: delivery.order?.customer?.Name || 'Unknown',
+                            specialInstructions: normalizeSpecialInstructions(delivery.order),
                             contactPhone: delivery.order?.ContactPhone || delivery.order?.contact_phone || delivery.order?.customer?.Phone || '',
                             verifiedPhone:
                                 delivery.order?.VerifiedProfilePhone
@@ -407,6 +414,12 @@ const DeliveryDashboard = () => {
                                             <p className="text-xs text-gray-400 mt-1">
                                                 GPS: {delivery.lat}, {delivery.lng}
                                             </p>
+                                        )}
+                                        {delivery.specialInstructions && (
+                                            <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2 py-1.5">
+                                                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800">Special Instructions</p>
+                                                <p className="mt-1 text-xs text-amber-900 whitespace-pre-wrap break-words">{delivery.specialInstructions}</p>
+                                            </div>
                                         )}
                                     </div>
                                     <div className="self-start sm:self-auto">

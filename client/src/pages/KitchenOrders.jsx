@@ -13,6 +13,12 @@ const KitchenOrders = () => {
         return Number.isNaN(timestamp) ? 0 : timestamp;
     };
 
+    const normalizeSpecialInstructions = (order) => {
+        const rawValue = order?.SpecialInstructions ?? order?.specialInstructions ?? order?.special_instructions ?? '';
+        const normalized = String(rawValue || '').trim();
+        return normalized || '';
+    };
+
     const loadOrders = useCallback(async () => {
         try {
             const response = await kitchenService.getAssignedOrders();
@@ -25,6 +31,7 @@ const KitchenOrders = () => {
                     time: order.created_at || order.CreatedAt || order.createdAt,
                     status: order.Status,
                     orderType: order.OrderType,
+                    specialInstructions: normalizeSpecialInstructions(order),
                     priority: order.Status === 'CONFIRMED' ? 'high' : 'normal'
                 }))
                 .sort((a, b) => getOrderTimestamp(b.time) - getOrderTimestamp(a.time));
@@ -129,6 +136,12 @@ const KitchenOrders = () => {
                                 {order.items.map((item, idx) => <li key={idx} className="text-gray-700">{item}</li>)}
                             </ul>
                         </div>
+                        {order.specialInstructions && (
+                            <div className="mb-4 rounded border border-amber-200 bg-amber-50 px-3 py-2">
+                                <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Special Instructions</p>
+                                <p className="mt-1 text-sm text-amber-900 whitespace-pre-wrap break-words">{order.specialInstructions}</p>
+                            </div>
+                        )}
                         <div className="flex gap-2">
                             {getPendingUpdate(order.id) ? (
                                 <>

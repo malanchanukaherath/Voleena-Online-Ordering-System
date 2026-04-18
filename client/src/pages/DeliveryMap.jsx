@@ -60,6 +60,12 @@ const DeliveryMap = () => {
         return normalizedDistance === null ? 'N/A' : normalizedDistance.toFixed(2);
     };
 
+    const normalizeSpecialInstructions = (order) => {
+        const rawValue = order?.SpecialInstructions ?? order?.specialInstructions ?? order?.special_instructions ?? '';
+        const normalized = String(rawValue || '').trim();
+        return normalized || '';
+    };
+
     const requestCurrentLocation = useCallback(() => {
         if (!navigator.geolocation) {
             setLocationPermission('unavailable');
@@ -115,6 +121,7 @@ const DeliveryMap = () => {
                         id: delivery.DeliveryID,
                         orderNumber: delivery.order?.OrderNumber || 'N/A',
                         customerName: delivery.order?.customer?.Name || 'Unknown',
+                        specialInstructions: normalizeSpecialInstructions(delivery.order),
                         phone: delivery.order?.customer?.Phone || '',
                         address: delivery.address
                             ? `${delivery.address.AddressLine1 || ''}, ${delivery.address.City || ''}`
@@ -446,6 +453,11 @@ const DeliveryMap = () => {
                                                                 <p className="text-xs mb-1">
                                                                     <strong>Order:</strong> {delivery.orderNumber}
                                                                 </p>
+                                                                {delivery.specialInstructions && (
+                                                                    <p className="text-xs mb-1 break-words">
+                                                                        <strong>Instructions:</strong> {delivery.specialInstructions}
+                                                                    </p>
+                                                                )}
                                                                 <p className="text-xs mb-1">
                                                                     <strong>Distance:</strong> {formatDistanceKm(delivery.distance)} km
                                                                 </p>
@@ -635,6 +647,12 @@ const DeliveryMap = () => {
                                         <div className="text-xs text-gray-600 mb-2">
                                             <strong>Order:</strong> {delivery.orderNumber}
                                         </div>
+                                        {delivery.specialInstructions && (
+                                            <div className="mb-2 rounded border border-amber-200 bg-amber-50 px-2 py-1.5">
+                                                <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-800">Special Instructions</p>
+                                                <p className="mt-1 text-xs text-amber-900 whitespace-pre-wrap break-words">{delivery.specialInstructions}</p>
+                                            </div>
+                                        )}
                                         <div className="text-xs text-gray-600 mb-2">
                                             <strong>Distance:</strong> {formatDistanceKm(delivery.distance)} km
                                         </div>

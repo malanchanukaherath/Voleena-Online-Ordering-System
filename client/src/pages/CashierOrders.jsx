@@ -15,6 +15,12 @@ const CashierOrders = () => {
     const [reprintError, setReprintError] = useState('');
     const [isReprinting, setIsReprinting] = useState(false);
 
+    const normalizeSpecialInstructions = useCallback((order) => {
+        const rawValue = order?.SpecialInstructions ?? order?.specialInstructions ?? order?.special_instructions ?? '';
+        const normalized = String(rawValue || '').trim();
+        return normalized || '';
+    }, []);
+
     const getTerminalId = useCallback(() => {
         const terminalId = String(localStorage.getItem('posTerminalId') || import.meta.env.VITE_POS_TERMINAL_ID || 'WEB-POS-1').trim();
         return terminalId || 'WEB-POS-1';
@@ -107,6 +113,7 @@ const CashierOrders = () => {
                 customer: order.customer?.Name || 'Unknown',
                 customerEmail: order.customer?.Email || '-',
                 customerPhone: order.customer?.Phone || '-',
+                specialInstructions: normalizeSpecialInstructions(order),
                 total: parseFloat(order.FinalAmount ?? order.TotalAmount ?? 0),
                 status: order.Status,
                 orderType: order.OrderType
@@ -118,7 +125,7 @@ const CashierOrders = () => {
             setSearchMeta(null);
             setError(err.message || 'Failed to load orders');
         }
-    }, [searchQuery]);
+    }, [normalizeSpecialInstructions, searchQuery]);
 
     useEffect(() => {
         const timeoutId = window.setTimeout(() => {
@@ -222,6 +229,7 @@ const CashierOrders = () => {
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Instructions</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -230,7 +238,7 @@ const CashierOrders = () => {
                         <tbody className="divide-y">
                             {orders.length === 0 ? (
                                 <tr>
-                                    <td className="px-6 py-4 text-sm text-gray-500" colSpan={9}>
+                                    <td className="px-6 py-4 text-sm text-gray-500" colSpan={10}>
                                         {error || 'No orders available.'}
                                     </td>
                                 </tr>
@@ -242,6 +250,13 @@ const CashierOrders = () => {
                                     <td className="px-6 py-4">{order.customerEmail}</td>
                                     <td className="px-6 py-4">{order.customerPhone}</td>
                                     <td className="px-6 py-4">{order.orderType}</td>
+                                    <td className="px-6 py-4 text-sm text-gray-700 max-w-xs">
+                                        {order.specialInstructions ? (
+                                            <span className="break-words whitespace-pre-wrap">{order.specialInstructions}</span>
+                                        ) : (
+                                            <span className="text-gray-400">-</span>
+                                        )}
+                                    </td>
                                     <td className="px-6 py-4">LKR {order.total.toFixed(2)}</td>
                                     <td className="px-6 py-4"><StatusBadge status={order.status} /></td>
                                     <td className="px-6 py-4">
