@@ -940,6 +940,11 @@ exports.assignDeliveryStaff = async (req, res) => {
 
   try {
     const { orderId, staffId } = req.body;
+    const forceAssignUnavailable =
+      req.body?.forceAssign === true
+      || req.body?.forceAssign === 'true'
+      || req.body?.overrideUnavailable === true
+      || req.body?.overrideUnavailable === 'true';
     const normalizedOrderId = Number(orderId);
     const normalizedStaffId = Number(staffId);
 
@@ -1011,12 +1016,67 @@ exports.assignDeliveryStaff = async (req, res) => {
     const alreadyReservedForThisOrder =
       availability.CurrentOrderID === normalizedOrderId && availability.IsAvailable === false;
 
-    // Manual assignment must not bypass rider opt-out (is_available = false).
-    if (!availability.IsAvailable && !alreadyReservedForThisOrder) {
-      await transaction.rollback();
-      return res.status(409).json({
-        error: 'Selected delivery staff is currently unavailable'
+    const hasAnotherOrderReserved =
+      availability.CurrentOrderID
+      && availability.CurrentOrderID !== normalizedOrderId;
+
+    if (hasAnotherOrderReserved) {
+      const activeAssignment = await Delivery.findOne({
+        where: {
+          OrderID: availability.CurrentOrderID,
+          DeliveryStaffID: normalizedStaffId,
+          Status: {
+            [sequelize.Sequelize.Op.in]: ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT']
+          }
+        },
+        transaction,
+        lock: transaction.LOCK.UPDATE
       });
+
+      if (activeAssignment) {
+        await transaction.rollback();
+        return res.status(409).json({
+          error: 'Selected delivery staff is already handling another active delivery'
+        });
+      }
+    }
+
+    let shouldBypassAvailabilityGuard = false;
+
+    if (!availability.IsAvailable && !alreadyReservedForThisOrder) {
+      const availableStaffCount = await DeliveryStaffAvailability.count({
+        where: { IsAvailable: true },
+        include: [{
+          model: Staff,
+          as: 'staff',
+          required: true,
+          where: { IsActive: true },
+          include: [{
+            model: Role,
+            as: 'role',
+            required: true,
+            where: { RoleName: 'Delivery' }
+          }]
+        }],
+        transaction
+      });
+
+      const noAvailableStaff = availableStaffCount === 0;
+      shouldBypassAvailabilityGuard = noAvailableStaff || forceAssignUnavailable;
+
+      if (!shouldBypassAvailabilityGuard) {
+        await transaction.rollback();
+        return res.status(409).json({
+          error: 'Selected delivery staff is currently unavailable'
+        });
+      }
+
+      if (!noAvailableStaff && forceAssignUnavailable) {
+        await transaction.rollback();
+        return res.status(409).json({
+          error: 'Force assignment is only allowed when no delivery staff are currently available'
+        });
+      }
     }
 
     if (!alreadyReservedForThisOrder) {
@@ -1028,7 +1088,7 @@ exports.assignDeliveryStaff = async (req, res) => {
         {
           where: {
             DeliveryStaffID: normalizedStaffId,
-            IsAvailable: true
+            ...(shouldBypassAvailabilityGuard ? {} : { IsAvailable: true })
           },
           transaction
         }
