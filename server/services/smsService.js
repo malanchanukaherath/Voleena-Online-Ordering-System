@@ -124,16 +124,17 @@ async function logNotification(payload) {
  * Send SMS message
  */
 async function sendSMS(to, message, relatedOrderId = null, options = {}) {
+    const containsSensitiveContent = Boolean(options.containsSensitiveContent);
+    const recipientId = Number.isInteger(options.recipientId) && options.recipientId > 0
+        ? options.recipientId
+        : null;
+    const recipientType = String(options.recipientType || 'CUSTOMER').toUpperCase() === 'STAFF'
+        ? 'STAFF'
+        : 'CUSTOMER';
+    const auditableMessage = buildAuditableMessage(message, containsSensitiveContent);
+
     try {
         const normalizedTo = normalizePhoneForSms(to);
-        const containsSensitiveContent = Boolean(options.containsSensitiveContent);
-        const recipientId = Number.isInteger(options.recipientId) && options.recipientId > 0
-            ? options.recipientId
-            : null;
-        const recipientType = String(options.recipientType || 'CUSTOMER').toUpperCase() === 'STAFF'
-            ? 'STAFF'
-            : 'CUSTOMER';
-        const auditableMessage = buildAuditableMessage(message, containsSensitiveContent);
 
         if (!normalizedTo) {
             throw new Error('Recipient phone number is required for SMS');
@@ -221,7 +222,7 @@ async function sendSMS(to, message, relatedOrderId = null, options = {}) {
                     RecipientID: recipientId,
                     NotificationType: 'SMS',
                     Subject: null,
-                    Message: buildAuditableMessage(message, Boolean(options.containsSensitiveContent)),
+                    Message: auditableMessage,
                     Status: 'FAILED',
                     ErrorMessage: normalizedError.message,
                     RelatedOrderID: relatedOrderId
@@ -258,16 +259,19 @@ async function sendOTPSMS(phone, otp, purpose, metadata = {}) {
 /**
  * Send order confirmation SMS (FR15)
  */
-async function sendOrderConfirmationSMS(phone, orderNumber) {
+async function sendOrderConfirmationSMS(phone, orderNumber, metadata = {}) {
     const message = `Your Voleena Foods order #${orderNumber} has been confirmed. You will receive updates as it progresses. Thank you!`;
 
-    return sendSMS(phone, message);
+    return sendSMS(phone, message, metadata.relatedOrderId ?? null, {
+        recipientId: metadata.recipientId,
+        recipientType: metadata.recipientType
+    });
 }
 
 /**
  * Send order status update SMS (FR15)
  */
-async function sendOrderStatusUpdateSMS(phone, orderNumber, status) {
+async function sendOrderStatusUpdateSMS(phone, orderNumber, status, metadata = {}) {
     const statusMessages = {
         CONFIRMED: 'confirmed',
         PREPARING: 'being prepared',
@@ -279,16 +283,22 @@ async function sendOrderStatusUpdateSMS(phone, orderNumber, status) {
 
     const message = `Order #${orderNumber} is now ${statusMessages[status]}. Thank you for choosing Voleena Foods!`;
 
-    return sendSMS(phone, message);
+    return sendSMS(phone, message, metadata.relatedOrderId ?? null, {
+        recipientId: metadata.recipientId,
+        recipientType: metadata.recipientType
+    });
 }
 
 /**
  * Send delivery notification SMS
  */
-async function sendDeliveryNotificationSMS(phone, orderNumber, estimatedTime) {
+async function sendDeliveryNotificationSMS(phone, orderNumber, estimatedTime, metadata = {}) {
     const message = `Your order #${orderNumber} is on the way! Estimated delivery: ${estimatedTime} minutes. Our delivery staff will contact you shortly.`;
 
-    return sendSMS(phone, message);
+    return sendSMS(phone, message, metadata.relatedOrderId ?? null, {
+        recipientId: metadata.recipientId,
+        recipientType: metadata.recipientType
+    });
 }
 
 module.exports = {

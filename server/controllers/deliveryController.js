@@ -5,6 +5,7 @@ const { validateAddressLine, validateCoordinates } = require('../utils/validatio
 const { calculateDeliveryFee, getDeliveryFeeConfig, estimateDeliveryFee } = require('../utils/deliveryFeeCalculator');
 const systemSettingsService = require('../services/systemSettingsService');
 const appNotificationService = require('../services/appNotificationService');
+const { sendOrderStatusUpdateSMS } = require('../services/smsService');
 
 const isAddressTableMissingError = (error) => {
   const mysqlCode = error?.original?.code || error?.parent?.code;
@@ -19,6 +20,20 @@ const isAddressTableMissingError = (error) => {
 };
 
 const isAdminRequest = (req) => req.user?.type === 'Staff' && req.user?.role === 'Admin';
+
+const normalizeNotificationPreference = (value) => {
+  const normalized = String(value || 'BOTH').toUpperCase();
+  return ['EMAIL', 'SMS', 'BOTH', 'NONE'].includes(normalized) ? normalized : 'BOTH';
+};
+
+const canSendOrderStatusSms = (runtimeSettings, customerPhone, preferredNotification) => {
+  if (!runtimeSettings?.smsNotifications || !runtimeSettings?.orderStatusUpdates || !customerPhone) {
+    return false;
+  }
+
+  const preference = normalizeNotificationPreference(preferredNotification);
+  return preference === 'SMS' || preference === 'BOTH';
+};
 
 /**
  * Get delivery dashboard statistics
@@ -283,8 +298,34 @@ exports.updateDeliveryStatus = async (req, res) => {
 
     try {
       const orderNumber = order?.OrderNumber || delivery.OrderID;
+      const mappedOrderStatus = status === 'DELIVERED' ? 'DELIVERED' : status === 'FAILED' ? 'READY' : 'OUT_FOR_DELIVERY';
+      const shouldSendMappedStatusSms = mappedOrderStatus !== previousOrderStatus;
+      const runtimeSettings = await systemSettingsService.getRuntimeSettings();
 
       if (order?.CustomerID) {
+        const customer = await Customer.findByPk(order.CustomerID, {
+          attributes: ['CustomerID', 'Phone', 'PreferredNotification']
+        });
+
+        const smsTargetPhone = String(
+          order.ContactPhone
+          || order.VerifiedProfilePhone
+          || customer?.Phone
+          || ''
+        ).trim();
+
+        if (shouldSendMappedStatusSms && canSendOrderStatusSms(runtimeSettings, smsTargetPhone, customer?.PreferredNotification)) {
+          try {
+            await sendOrderStatusUpdateSMS(smsTargetPhone, orderNumber, mappedOrderStatus, {
+              recipientId: order.CustomerID,
+              recipientType: 'CUSTOMER',
+              relatedOrderId: delivery.OrderID
+            });
+          } catch (smsError) {
+            console.error('Delivery status SMS notification failed:', smsError.message || smsError);
+          }
+        }
+
         const customerMessageByStatus = {
           PICKED_UP: 'Your order has been picked up by the delivery rider.',
           IN_TRANSIT: 'Your order is on the way.',

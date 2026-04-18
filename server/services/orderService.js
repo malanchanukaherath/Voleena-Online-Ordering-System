@@ -470,7 +470,11 @@ class OrderService {
                         await sendOrderConfirmationEmail(order, customer);
                     }
                     if (canSendOrderSMS(runtimeSettings, customer, 'orderConfirmation')) {
-                        await sendOrderConfirmationSMS(customer.Phone, orderNumber);
+                        await sendOrderConfirmationSMS(customer.Phone, orderNumber, {
+                            recipientId: customer.CustomerID,
+                            recipientType: 'CUSTOMER',
+                            relatedOrderId: order.OrderID
+                        });
                     }
                 }
             } catch (notifError) {
@@ -592,7 +596,11 @@ class OrderService {
                     await sendOrderConfirmationEmail(order, order.customer);
                 }
                 if (canSendOrderSMS(runtimeSettings, order.customer, 'orderConfirmation')) {
-                    await sendOrderConfirmationSMS(order.customer.Phone, order.OrderNumber);
+                    await sendOrderConfirmationSMS(order.customer.Phone, order.OrderNumber, {
+                        recipientId: order.customer.CustomerID,
+                        recipientType: 'CUSTOMER',
+                        relatedOrderId: order.OrderID
+                    });
                 }
             } catch (notifError) {
                 console.error('Notification error:', notifError);
@@ -704,7 +712,11 @@ class OrderService {
                 await sendOrderStatusUpdateEmail(order, order.customer, newStatus);
             }
             if (order.OrderType !== 'WALK_IN' && canSendOrderSMS(runtimeSettings, order.customer, 'orderStatusUpdates')) {
-                await sendOrderStatusUpdateSMS(order.customer.Phone, order.OrderNumber, newStatus);
+                await sendOrderStatusUpdateSMS(order.customer.Phone, order.OrderNumber, newStatus, {
+                    recipientId: order.customer.CustomerID,
+                    recipientType: 'CUSTOMER',
+                    relatedOrderId: order.OrderID
+                });
             }
         } catch (notifError) {
             console.error('Notification error:', notifError);
