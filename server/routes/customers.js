@@ -595,6 +595,12 @@ router.post('/me/phone-verification/request', requireCustomer, otpLimiter, async
         });
     } catch (error) {
         console.error('Request phone verification OTP error:', error);
+        if (error?.code === 'INVALID_RECIPIENT_PHONE') {
+            return res.status(400).json({
+                success: false,
+                error: error.userMessage || 'Phone number must include country code (for example: +94771234567).'
+            });
+        }
         return res.status(500).json({ error: 'Failed to send phone verification OTP' });
     }
 });

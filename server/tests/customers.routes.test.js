@@ -221,6 +221,31 @@ describe('customer routes', () => {
     expect(sendOTPSMS).toHaveBeenCalledWith('+94770000000', expect.any(String), 'PHONE_VERIFICATION');
   });
 
+  test('returns user-friendly error when SMS provider rejects phone format', async () => {
+    setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
+    mockCustomer.findByPk.mockResolvedValue({
+      CustomerID: 5,
+      Phone: '0770000000',
+      IsPhoneVerified: false,
+      IsActive: true,
+      AccountStatus: 'ACTIVE'
+    });
+    mockOTPVerification.create.mockResolvedValue({ OTPID: 102 });
+
+    const invalidPhoneError = new Error('Recipient phone number must be in international format (E.164).');
+    invalidPhoneError.code = 'INVALID_RECIPIENT_PHONE';
+    invalidPhoneError.userMessage = 'Phone number must include country code (for example: +94771234567). Please update your profile phone and try again.';
+    sendOTPSMS.mockRejectedValueOnce(invalidPhoneError);
+
+    const response = await request(app)
+      .post('/api/v1/customers/me/phone-verification/request')
+      .send({});
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.error).toMatch(/country code/i);
+  });
+
   test('verifies profile phone using OTP', async () => {
     setAuthUser({ id: 5, type: 'Customer', role: 'Customer' });
     const save = jest.fn().mockResolvedValue(undefined);

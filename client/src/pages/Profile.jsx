@@ -144,7 +144,7 @@ const Profile = () => {
         if (!formData.phone.trim()) {
             newErrors.phone = 'Phone is required';
         } else if (!/^[+]?[0-9]{9,15}$/.test(formData.phone.replace(/\s/g, ''))) {
-            newErrors.phone = 'Phone number must be 9-15 digits';
+            newErrors.phone = 'Phone number must be 9-15 digits. Use country code format (e.g., +94771234567) for SMS verification.';
         }
 
         if (!NOTIFICATION_OPTIONS.includes(formData.preferredNotification)) {

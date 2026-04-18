@@ -4,6 +4,8 @@ const { Notification } = require('../models');
 // Initialize Twilio client
 let twilioClient = null;
 let hasLoggedSmsFallbackWarning = false;
+const E164_PHONE_PATTERN = /^\+[1-9]\d{7,14}$/;
+const DEFAULT_COUNTRY_CALLING_CODE = String(process.env.DEFAULT_COUNTRY_CALLING_CODE || '').trim();
 
 const shouldUseTwilio = process.env.SMS_PROVIDER === 'twilio';
 const hasApiKeyCredentials = Boolean(
@@ -30,6 +32,63 @@ if (shouldUseTwilio && (hasApiKeyCredentials || hasLegacyCredentials)) {
 
 const normalizePhone = (phone) => String(phone || '').trim();
 
+const buildInvalidPhoneError = (rawPhone) => {
+    const error = new Error('Recipient phone number must be in international format (E.164).');
+    error.code = 'INVALID_RECIPIENT_PHONE';
+    error.userMessage = 'Phone number must include country code (for example: +94771234567). Please update your profile phone and try again.';
+    error.rawPhone = rawPhone;
+    return error;
+};
+
+const normalizePhoneForSms = (phone) => {
+    const rawPhone = normalizePhone(phone);
+    if (!rawPhone) {
+        return '';
+    }
+
+    if (rawPhone.startsWith('+')) {
+        return `+${rawPhone.slice(1).replace(/\D/g, '')}`;
+    }
+
+    const digitsOnly = rawPhone.replace(/\D/g, '');
+    if (!digitsOnly) {
+        return '';
+    }
+
+    if (digitsOnly.startsWith('00')) {
+        return `+${digitsOnly.slice(2)}`;
+    }
+
+    const countryDigits = DEFAULT_COUNTRY_CALLING_CODE.replace(/\D/g, '');
+    if (!countryDigits) {
+        return digitsOnly;
+    }
+
+    if (digitsOnly.startsWith(countryDigits)) {
+        return `+${digitsOnly}`;
+    }
+
+    const nationalNumber = digitsOnly.startsWith('0') ? digitsOnly.replace(/^0+/, '') : digitsOnly;
+    if (!nationalNumber) {
+        return '';
+    }
+
+    return `+${countryDigits}${nationalNumber}`;
+};
+
+const mapProviderPhoneError = (error, rawPhone) => {
+    const code = String(error?.code || '');
+    const message = String(error?.message || '').toLowerCase();
+
+    if (code === '21211' || message.includes('invalid') && message.includes('phone number')) {
+        const invalidPhoneError = buildInvalidPhoneError(rawPhone);
+        invalidPhoneError.providerCode = error?.code;
+        return invalidPhoneError;
+    }
+
+    return error;
+};
+
 const buildAuditableMessage = (message, containsSensitiveContent) => {
     if (containsSensitiveContent) {
         return '[REDACTED] Sensitive SMS content';
@@ -51,12 +110,16 @@ async function logNotification(payload) {
  */
 async function sendSMS(to, message, relatedOrderId = null, options = {}) {
     try {
-        const normalizedTo = normalizePhone(to);
+        const normalizedTo = normalizePhoneForSms(to);
         const containsSensitiveContent = Boolean(options.containsSensitiveContent);
         const auditableMessage = buildAuditableMessage(message, containsSensitiveContent);
 
         if (!normalizedTo) {
             throw new Error('Recipient phone number is required for SMS');
+        }
+
+        if (!E164_PHONE_PATTERN.test(normalizedTo)) {
+            throw buildInvalidPhoneError(to);
         }
 
         if (twilioClient) {
@@ -125,6 +188,7 @@ async function sendSMS(to, message, relatedOrderId = null, options = {}) {
             reason: 'SMS provider not configured'
         };
     } catch (error) {
+        const normalizedError = mapProviderPhoneError(error, to);
         try {
             await logNotification({
                 RecipientType: 'CUSTOMER',
@@ -133,14 +197,14 @@ async function sendSMS(to, message, relatedOrderId = null, options = {}) {
                 Subject: null,
                 Message: buildAuditableMessage(message, Boolean(options.containsSensitiveContent)),
                 Status: 'FAILED',
-                ErrorMessage: error.message,
+                ErrorMessage: normalizedError.message,
                 RelatedOrderID: relatedOrderId
             });
         } catch (notificationLogError) {
             console.error('Failed to log SMS notification status:', notificationLogError.message);
         }
 
-        throw error;
+        throw normalizedError;
     }
 }
 
