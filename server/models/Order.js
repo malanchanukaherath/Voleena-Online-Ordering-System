@@ -72,15 +72,56 @@ module.exports = (sequelize) => {
             }
         },
         Status: {
-            type: DataTypes.ENUM('PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'),
+            type: DataTypes.ENUM('PENDING', 'PREORDER_PENDING', 'PREORDER_CONFIRMED', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'),
             allowNull: false,
-            defaultValue: 'CONFIRMED',
+            defaultValue: 'PENDING',
             field: 'status'
         },
         OrderType: {
             type: DataTypes.ENUM('ONLINE', 'DELIVERY', 'TAKEAWAY', 'WALK_IN'),
             allowNull: false,
             field: 'order_type'
+        },
+        IsPreorder: {
+            type: DataTypes.BOOLEAN,
+            allowNull: false,
+            defaultValue: false,
+            field: 'is_preorder'
+        },
+        ScheduledDatetime: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            field: 'scheduled_datetime'
+        },
+        ApprovalStatus: {
+            type: DataTypes.ENUM('NOT_REQUIRED', 'PENDING', 'APPROVED', 'REJECTED'),
+            allowNull: false,
+            defaultValue: 'NOT_REQUIRED',
+            field: 'approval_status'
+        },
+        ApprovalNotes: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+            field: 'approval_notes'
+        },
+        ApprovedBy: {
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            references: {
+                model: 'staff',
+                key: 'staff_id'
+            },
+            field: 'approved_by'
+        },
+        ApprovedAt: {
+            type: DataTypes.DATE,
+            allowNull: true,
+            field: 'approved_at'
+        },
+        RejectedReason: {
+            type: DataTypes.STRING(500),
+            allowNull: true,
+            field: 'rejected_reason'
         },
         SpecialInstructions: {
             type: DataTypes.TEXT,
@@ -170,10 +211,20 @@ module.exports = (sequelize) => {
             foreignKey: 'ConfirmedBy',
             as: 'confirmer'
         });
+        Order.belongsTo(models.Staff, {
+            foreignKey: 'ApprovedBy',
+            as: 'approver'
+        });
         Order.hasMany(models.OrderItem, {
             foreignKey: 'OrderID',
             as: 'items'
         });
+        if (models.PreorderApprovalLog) {
+            Order.hasMany(models.PreorderApprovalLog, {
+                foreignKey: 'OrderID',
+                as: 'preorderApprovalLogs'
+            });
+        }
         Order.hasOne(models.Payment, {
             foreignKey: 'OrderID',
             as: 'payment'

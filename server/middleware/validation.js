@@ -404,7 +404,7 @@ const validateOrderStatusUpdate = [
 
     body('status')
         .notEmpty().withMessage('Status is required')
-        .isIn(['CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'])
+        .isIn(['PREORDER_PENDING', 'PREORDER_CONFIRMED', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'])
         .withMessage('Invalid order status'),
 
     body('notes')

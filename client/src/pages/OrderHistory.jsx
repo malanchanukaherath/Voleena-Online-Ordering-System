@@ -78,6 +78,8 @@ const OrderHistory = () => {
 
     const statusOptions = [
         { value: '', label: 'All Orders' },
+        { value: 'PREORDER_PENDING', label: 'Preorder Pending' },
+        { value: 'PREORDER_CONFIRMED', label: 'Preorder Confirmed' },
         { value: 'CONFIRMED', label: 'Confirmed' },
         { value: 'PREPARING', label: 'Preparing' },
         { value: 'READY', label: 'Ready' },

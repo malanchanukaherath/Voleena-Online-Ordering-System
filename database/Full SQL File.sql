@@ -52,6 +52,39 @@ INSERT INTO `activity_log` VALUES (1,'STAFF',4,'CREATE','8',NULL,'{\"path\": \"/
 UNLOCK TABLES;
 
 --
+-- Table structure for table `addon_option`
+--
+
+DROP TABLE IF EXISTS `addon_option`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `addon_option` (
+  `addon_option_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `code` varchar(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `name` varchar(120) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `price_delta` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `is_active` tinyint(1) NOT NULL DEFAULT '1',
+  `affects_live_stock` tinyint(1) NOT NULL DEFAULT '0',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`addon_option_id`),
+  UNIQUE KEY `uk_addon_option_code` (`code`),
+  KEY `idx_addon_option_active` (`is_active`),
+  CONSTRAINT `chk_addon_price_non_negative` CHECK ((`price_delta` >= 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `addon_option`
+--
+
+LOCK TABLES `addon_option` WRITE;
+/*!40000 ALTER TABLE `addon_option` DISABLE KEYS */;
+/*!40000 ALTER TABLE `addon_option` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `address`
 --
 
@@ -540,8 +573,40 @@ CREATE TABLE `menu_item` (
 
 LOCK TABLES `menu_item` WRITE;
 /*!40000 ALTER TABLE `menu_item` DISABLE KEYS */;
-INSERT INTO `menu_item` VALUES (1,'Chicken Burger','Juicy, perfectly seasoned chicken patty grilled to golden perfection, layered with crisp lettuce, fresh tomatoes, and creamy mayo, all tucked inside a soft toasted bun. A timeless favorite that never disappoints.',500.00,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1776327319/voleena/menu/shutterstock_574607542-1776327317958-9abccc66.jpg',1,1,1,1,'2026-04-05 11:30:24','2026-04-18 15:45:00'),(2,'Chicken Kottu','Chopped godamba roti stir-fried with chicken, vegetables, egg, and spices.',700.00,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1776327335/voleena/menu/slk1-1776327334768-d26c7a0d.webp',2,1,1,1,'2026-04-16 08:15:37','2026-04-18 15:45:00'),(3,'Seafood Fried Rice','Flavorful rice stir-fried with prawns, cuttlefish, vegetables, and soy sauce.',800.00,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1776520330/voleena/menu/buttery_seafood_fried_rice_recipe_tiffy_chen-1776230994252-c-1776520326957-4f06901c.jpg',3,1,1,1,'2026-04-18 13:52:10','2026-04-18 15:45:00'),(4,'Chicken Rice & Curry','Steamed rice served with spicy chicken curry, dhal, vegetable curry, and sambol.',450.00,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1776520367/voleena/menu/ricecurry-chicken-1776230654606-eba822a1-1776520364493-b5bd8fef.png',4,1,1,1,'2026-04-18 13:52:47','2026-04-18 15:45:00'),(5,'Fresh Lime Juice','Chilled lime juice with a hint of sugar and salt.',150.00,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1776520395/voleena/menu/lime-juice-fresh-1-1776231097016-e08f56b8-1776520392657-3a2979e1.png',5,1,1,1,'2026-04-18 13:53:19','2026-04-18 15:45:00');
+INSERT INTO `menu_item` VALUES (1,'Chicken Burger','Juicy, perfectly seasoned chicken patty grilled to golden perfection, layered with crisp lettuce, fresh tomatoes, and creamy mayo, all tucked inside a soft toasted bun. A timeless favorite that never disappoints.',500.00,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1776327319/voleena/menu/shutterstock_574607542-1776327317958-9abccc66.jpg',1,1,1,1,'2026-04-05 11:30:24','2026-04-18 16:00:00'),(2,'Chicken Kottu','Chopped godamba roti stir-fried with chicken, vegetables, egg, and spices.',700.00,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1776327335/voleena/menu/slk1-1776327334768-d26c7a0d.webp',2,1,1,1,'2026-04-16 08:15:37','2026-04-18 16:00:00'),(3,'Seafood Fried Rice','Flavorful rice stir-fried with prawns, cuttlefish, vegetables, and soy sauce.',800.00,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1776520330/voleena/menu/buttery_seafood_fried_rice_recipe_tiffy_chen-1776230994252-c-1776520326957-4f06901c.jpg',3,1,1,1,'2026-04-18 13:52:10','2026-04-18 16:00:00'),(4,'Chicken Rice & Curry','Steamed rice served with spicy chicken curry, dhal, vegetable curry, and sambol.',450.00,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1776520367/voleena/menu/ricecurry-chicken-1776230654606-eba822a1-1776520364493-b5bd8fef.png',4,1,1,1,'2026-04-18 13:52:47','2026-04-18 16:00:00'),(5,'Fresh Lime Juice','Chilled lime juice with a hint of sugar and salt.',150.00,'https://res.cloudinary.com/dtfiyk6vx/image/upload/v1776520395/voleena/menu/lime-juice-fresh-1-1776231097016-e08f56b8-1776520392657-3a2979e1.png',5,1,1,1,'2026-04-18 13:53:19','2026-04-18 16:00:00');
 /*!40000 ALTER TABLE `menu_item` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `menu_item_addon_option`
+--
+
+DROP TABLE IF EXISTS `menu_item_addon_option`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `menu_item_addon_option` (
+  `menu_item_addon_option_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `menu_item_id` int unsigned NOT NULL,
+  `addon_option_id` int unsigned NOT NULL,
+  `is_required` tinyint(1) NOT NULL DEFAULT '0',
+  `max_qty` tinyint unsigned NOT NULL DEFAULT '1',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`menu_item_addon_option_id`),
+  UNIQUE KEY `uk_menu_item_addon_option` (`menu_item_id`,`addon_option_id`),
+  KEY `idx_menu_item_addon_option_addon` (`addon_option_id`),
+  CONSTRAINT `fk_menu_item_addon_option_addon` FOREIGN KEY (`addon_option_id`) REFERENCES `addon_option` (`addon_option_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_menu_item_addon_option_menu_item` FOREIGN KEY (`menu_item_id`) REFERENCES `menu_item` (`menu_item_id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_menu_item_addon_max_qty_positive` CHECK ((`max_qty` > 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `menu_item_addon_option`
+--
+
+LOCK TABLES `menu_item_addon_option` WRITE;
+/*!40000 ALTER TABLE `menu_item_addon_option` DISABLE KEYS */;
+/*!40000 ALTER TABLE `menu_item_addon_option` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -599,8 +664,15 @@ CREATE TABLE `order` (
   `discount_amount` decimal(10,2) NOT NULL DEFAULT '0.00',
   `delivery_fee` decimal(10,2) NOT NULL DEFAULT '0.00',
   `final_amount` decimal(10,2) GENERATED ALWAYS AS (greatest(((`total_amount` - `discount_amount`) + `delivery_fee`),0)) STORED,
-  `status` enum('PENDING','CONFIRMED','PREPARING','READY','OUT_FOR_DELIVERY','DELIVERED','CANCELLED') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'PENDING',
+  `status` enum('PENDING','PREORDER_PENDING','PREORDER_CONFIRMED','CONFIRMED','PREPARING','READY','OUT_FOR_DELIVERY','DELIVERED','CANCELLED') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'PENDING',
   `order_type` enum('ONLINE','DELIVERY','TAKEAWAY','WALK_IN') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ONLINE',
+  `is_preorder` tinyint(1) NOT NULL DEFAULT '0',
+  `scheduled_datetime` datetime DEFAULT NULL,
+  `approval_status` enum('NOT_REQUIRED','PENDING','APPROVED','REJECTED') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'NOT_REQUIRED',
+  `approval_notes` text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci,
+  `approved_by` int unsigned DEFAULT NULL,
+  `approved_at` timestamp NULL DEFAULT NULL,
+  `rejected_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `special_instructions` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `cancellation_reason` text COLLATE utf8mb4_unicode_ci,
   `cancelled_by` enum('CUSTOMER','ADMIN','CASHIER','SYSTEM') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -624,6 +696,10 @@ CREATE TABLE `order` (
   KEY `idx_order_status_created` (`status`,`created_at` DESC),
   KEY `idx_order_customer_status` (`customer_id`,`status`,`created_at`),
   KEY `idx_order_status_type_created` (`status`,`order_type`,`created_at`),
+  KEY `fk_order_approved_by` (`approved_by`),
+  KEY `idx_order_preorder_queue` (`is_preorder`,`approval_status`,`scheduled_datetime`,`status`),
+  KEY `idx_order_scheduled_datetime` (`scheduled_datetime`),
+  CONSTRAINT `fk_order_approved_by` FOREIGN KEY (`approved_by`) REFERENCES `staff` (`staff_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_order_confirmed_by` FOREIGN KEY (`confirmed_by`) REFERENCES `staff` (`staff_id`) ON DELETE SET NULL,
   CONSTRAINT `fk_order_customer` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`) ON DELETE RESTRICT,
   CONSTRAINT `fk_order_promotion` FOREIGN KEY (`promotion_id`) REFERENCES `promotion` (`promotion_id`) ON DELETE SET NULL,
@@ -638,7 +714,7 @@ CREATE TABLE `order` (
 
 LOCK TABLES `order` WRITE;
 /*!40000 ALTER TABLE `order` DISABLE KEYS */;
-INSERT INTO `order` (`order_id`, `order_number`, `customer_id`, `contact_phone`, `verified_profile_phone`, `total_amount`, `promotion_id`, `discount_amount`, `delivery_fee`, `status`, `order_type`, `special_instructions`, `cancellation_reason`, `cancelled_by`, `confirmed_at`, `preparing_at`, `ready_at`, `completed_at`, `cancelled_at`, `confirmed_by`, `updated_by`, `created_at`, `updated_at`) VALUES (1,'VF2604050001',2,NULL,NULL,500.00,NULL,0.00,0.00,'CANCELLED','TAKEAWAY',NULL,NULL,NULL,'2026-04-05 11:39:29','2026-04-05 11:43:41','2026-04-05 11:43:53',NULL,'2026-04-07 09:08:54',NULL,1,'2026-04-05 11:39:29','2026-04-07 09:08:54'),(2,'VF2604070001',4,NULL,NULL,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',NULL,NULL,NULL,'2026-04-07 09:14:52',NULL,NULL,NULL,'2026-04-07 10:04:59',NULL,1,'2026-04-07 09:14:52','2026-04-07 10:04:59'),(3,'VF2604070002',4,NULL,NULL,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:05:35',NULL,NULL,NULL,'2026-04-07 10:08:04',NULL,NULL,'2026-04-07 10:05:35','2026-04-07 10:08:04'),(4,'VF2604070003',4,NULL,NULL,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:15:02',NULL,NULL,NULL,'2026-04-07 10:34:28',NULL,NULL,'2026-04-07 10:15:02','2026-04-07 10:34:28'),(5,'VF2604070004',4,NULL,NULL,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:17:04',NULL,NULL,NULL,'2026-04-07 10:22:05',NULL,NULL,'2026-04-07 10:17:04','2026-04-07 10:22:05'),(6,'VF2604070005',4,NULL,NULL,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:25:23',NULL,NULL,NULL,'2026-04-07 10:28:09',NULL,NULL,'2026-04-07 10:25:23','2026-04-07 10:28:09'),(7,'VF2604070006',4,NULL,NULL,500.00,NULL,0.00,100.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-07 10:32:42','2026-04-07 10:37:16','2026-04-07 11:06:50','2026-04-07 11:08:53',NULL,NULL,3,'2026-04-07 10:32:42','2026-04-07 11:08:53'),(8,'VF2604070007',4,NULL,NULL,500.00,NULL,0.00,100.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-07 11:27:43','2026-04-07 11:28:37','2026-04-07 11:28:38','2026-04-07 11:29:06',NULL,NULL,3,'2026-04-07 11:27:43','2026-04-07 11:29:06'),(9,'VF2604080001',4,NULL,NULL,500.00,NULL,0.00,100.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-08 17:41:19','2026-04-10 18:46:56','2026-04-10 18:47:00','2026-04-14 05:29:19',NULL,NULL,3,'2026-04-08 17:41:19','2026-04-14 05:29:19'),(10,'VF2604110001',4,NULL,NULL,500.00,NULL,0.00,100.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-11 06:50:01','2026-04-11 06:51:20','2026-04-11 06:51:21','2026-04-17 06:00:31',NULL,NULL,1,'2026-04-11 06:50:01','2026-04-17 06:00:31'),(11,'ORD2604160001',2,NULL,NULL,1200.00,NULL,0.00,150.00,'CANCELLED','DELIVERY',NULL,'Auto-cancelled after 30 minutes without confirmation','SYSTEM',NULL,NULL,NULL,NULL,'2026-04-16 17:50:00',NULL,NULL,'2026-04-16 17:08:58','2026-04-16 17:50:00'),(12,'ORD2604160002',2,NULL,NULL,700.00,NULL,0.00,150.00,'CANCELLED','DELIVERY',NULL,'Auto-cancelled after 30 minutes without confirmation','SYSTEM',NULL,NULL,NULL,NULL,'2026-04-16 18:20:00',NULL,NULL,'2026-04-16 17:46:52','2026-04-16 18:20:00'),(13,'ORD2604160003',2,NULL,NULL,500.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-16 18:50:00','2026-04-17 06:11:28','2026-04-17 06:11:31','2026-04-17 06:11:54',NULL,NULL,3,'2026-04-16 18:29:06','2026-04-17 06:11:54'),(14,'ORD2604170001',2,NULL,NULL,700.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-16 18:50:01','2026-04-17 06:11:26','2026-04-17 06:11:30','2026-04-17 06:11:42',NULL,NULL,3,'2026-04-16 18:43:24','2026-04-17 06:11:42'),(15,'ORD2604170002',2,NULL,NULL,700.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-16 18:45:36','2026-04-16 18:46:00','2026-04-16 18:46:01','2026-04-17 05:46:48',NULL,NULL,3,'2026-04-16 18:45:36','2026-04-17 05:46:48'),(16,'ORD2604170003',2,NULL,NULL,500.00,NULL,0.00,150.00,'CANCELLED','DELIVERY',NULL,'Payment initialization failed: Online payments are not configured','SYSTEM','2026-04-17 05:35:12',NULL,NULL,NULL,'2026-04-17 05:35:14',NULL,NULL,'2026-04-17 05:35:12','2026-04-17 05:35:14'),(17,'ORD2604170004',2,NULL,NULL,500.00,NULL,0.00,150.00,'CANCELLED','DELIVERY',NULL,'Payment initialization failed: Online payments are not configured','SYSTEM','2026-04-17 05:36:01',NULL,NULL,NULL,'2026-04-17 05:36:02',NULL,NULL,'2026-04-17 05:36:01','2026-04-17 05:36:02'),(18,'ORD2604170005',2,NULL,NULL,500.00,NULL,0.00,150.00,'CONFIRMED','DELIVERY',NULL,NULL,NULL,'2026-04-17 05:36:29',NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-17 05:36:29','2026-04-17 05:36:29'),(19,'ORD2604170006',2,NULL,NULL,500.00,NULL,0.00,150.00,'CANCELLED','DELIVERY',NULL,'Payment initialization failed: Online payments are not configured','SYSTEM','2026-04-17 05:36:39',NULL,NULL,NULL,'2026-04-17 05:36:40',NULL,NULL,'2026-04-17 05:36:39','2026-04-17 05:36:40'),(20,'ORD2604170007',2,NULL,NULL,500.00,NULL,0.00,150.00,'CONFIRMED','DELIVERY',NULL,NULL,NULL,'2026-04-17 05:42:03',NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-17 05:42:03','2026-04-17 05:42:03'),(21,'ORD2604170008',2,NULL,NULL,500.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-17 05:43:01','2026-04-17 05:43:32','2026-04-17 05:43:36','2026-04-17 06:22:43',NULL,NULL,3,'2026-04-17 05:43:01','2026-04-17 06:22:43'),(22,'ORD2604170009',2,NULL,NULL,500.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-17 06:12:13','2026-04-17 06:12:25','2026-04-17 06:12:29','2026-04-17 06:12:53',NULL,NULL,3,'2026-04-17 06:12:13','2026-04-17 06:12:53'),(23,'ORD2604170010',2,NULL,NULL,1200.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-17 06:22:07','2026-04-17 06:22:16','2026-04-17 06:22:18','2026-04-17 06:22:33',NULL,NULL,3,'2026-04-17 06:22:07','2026-04-17 06:22:33'),(24,'ORD2604170011',2,NULL,NULL,500.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',NULL,NULL,NULL,'2026-04-17 10:45:26','2026-04-17 10:46:08','2026-04-17 10:46:12','2026-04-17 10:46:55',NULL,NULL,3,'2026-04-17 10:45:26','2026-04-17 10:46:55'),(25,'ORD2604180001',2,NULL,NULL,500.00,NULL,0.00,190.00,'CONFIRMED','DELIVERY',NULL,NULL,NULL,'2026-04-18 05:03:57',NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-18 05:03:57','2026-04-18 05:03:57');
+INSERT INTO `order` (`order_id`, `order_number`, `customer_id`, `contact_phone`, `verified_profile_phone`, `total_amount`, `promotion_id`, `discount_amount`, `delivery_fee`, `status`, `order_type`, `is_preorder`, `scheduled_datetime`, `approval_status`, `approval_notes`, `approved_by`, `approved_at`, `rejected_reason`, `special_instructions`, `cancellation_reason`, `cancelled_by`, `confirmed_at`, `preparing_at`, `ready_at`, `completed_at`, `cancelled_at`, `confirmed_by`, `updated_by`, `created_at`, `updated_at`) VALUES (1,'VF2604050001',2,NULL,NULL,500.00,NULL,0.00,0.00,'CANCELLED','TAKEAWAY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-05 11:39:29','2026-04-05 11:43:41','2026-04-05 11:43:53',NULL,'2026-04-07 09:08:54',NULL,1,'2026-04-05 11:39:29','2026-04-07 09:08:54'),(2,'VF2604070001',4,NULL,NULL,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-07 09:14:52',NULL,NULL,NULL,'2026-04-07 10:04:59',NULL,1,'2026-04-07 09:14:52','2026-04-07 10:04:59'),(3,'VF2604070002',4,NULL,NULL,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:05:35',NULL,NULL,NULL,'2026-04-07 10:08:04',NULL,NULL,'2026-04-07 10:05:35','2026-04-07 10:08:04'),(4,'VF2604070003',4,NULL,NULL,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:15:02',NULL,NULL,NULL,'2026-04-07 10:34:28',NULL,NULL,'2026-04-07 10:15:02','2026-04-07 10:34:28'),(5,'VF2604070004',4,NULL,NULL,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:17:04',NULL,NULL,NULL,'2026-04-07 10:22:05',NULL,NULL,'2026-04-07 10:17:04','2026-04-07 10:22:05'),(6,'VF2604070005',4,NULL,NULL,500.00,NULL,0.00,100.00,'CANCELLED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,'Cancelled by customer','CUSTOMER','2026-04-07 10:25:23',NULL,NULL,NULL,'2026-04-07 10:28:09',NULL,NULL,'2026-04-07 10:25:23','2026-04-07 10:28:09'),(7,'VF2604070006',4,NULL,NULL,500.00,NULL,0.00,100.00,'DELIVERED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-07 10:32:42','2026-04-07 10:37:16','2026-04-07 11:06:50','2026-04-07 11:08:53',NULL,NULL,3,'2026-04-07 10:32:42','2026-04-07 11:08:53'),(8,'VF2604070007',4,NULL,NULL,500.00,NULL,0.00,100.00,'DELIVERED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-07 11:27:43','2026-04-07 11:28:37','2026-04-07 11:28:38','2026-04-07 11:29:06',NULL,NULL,3,'2026-04-07 11:27:43','2026-04-07 11:29:06'),(9,'VF2604080001',4,NULL,NULL,500.00,NULL,0.00,100.00,'DELIVERED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-08 17:41:19','2026-04-10 18:46:56','2026-04-10 18:47:00','2026-04-14 05:29:19',NULL,NULL,3,'2026-04-08 17:41:19','2026-04-14 05:29:19'),(10,'VF2604110001',4,NULL,NULL,500.00,NULL,0.00,100.00,'DELIVERED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-11 06:50:01','2026-04-11 06:51:20','2026-04-11 06:51:21','2026-04-17 06:00:31',NULL,NULL,1,'2026-04-11 06:50:01','2026-04-17 06:00:31'),(11,'ORD2604160001',2,NULL,NULL,1200.00,NULL,0.00,150.00,'CANCELLED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,'Auto-cancelled after 30 minutes without confirmation','SYSTEM',NULL,NULL,NULL,NULL,'2026-04-16 17:50:00',NULL,NULL,'2026-04-16 17:08:58','2026-04-16 17:50:00'),(12,'ORD2604160002',2,NULL,NULL,700.00,NULL,0.00,150.00,'CANCELLED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,'Auto-cancelled after 30 minutes without confirmation','SYSTEM',NULL,NULL,NULL,NULL,'2026-04-16 18:20:00',NULL,NULL,'2026-04-16 17:46:52','2026-04-16 18:20:00'),(13,'ORD2604160003',2,NULL,NULL,500.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-16 18:50:00','2026-04-17 06:11:28','2026-04-17 06:11:31','2026-04-17 06:11:54',NULL,NULL,3,'2026-04-16 18:29:06','2026-04-17 06:11:54'),(14,'ORD2604170001',2,NULL,NULL,700.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-16 18:50:01','2026-04-17 06:11:26','2026-04-17 06:11:30','2026-04-17 06:11:42',NULL,NULL,3,'2026-04-16 18:43:24','2026-04-17 06:11:42'),(15,'ORD2604170002',2,NULL,NULL,700.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-16 18:45:36','2026-04-16 18:46:00','2026-04-16 18:46:01','2026-04-17 05:46:48',NULL,NULL,3,'2026-04-16 18:45:36','2026-04-17 05:46:48'),(16,'ORD2604170003',2,NULL,NULL,500.00,NULL,0.00,150.00,'CANCELLED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,'Payment initialization failed: Online payments are not configured','SYSTEM','2026-04-17 05:35:12',NULL,NULL,NULL,'2026-04-17 05:35:14',NULL,NULL,'2026-04-17 05:35:12','2026-04-17 05:35:14'),(17,'ORD2604170004',2,NULL,NULL,500.00,NULL,0.00,150.00,'CANCELLED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,'Payment initialization failed: Online payments are not configured','SYSTEM','2026-04-17 05:36:01',NULL,NULL,NULL,'2026-04-17 05:36:02',NULL,NULL,'2026-04-17 05:36:01','2026-04-17 05:36:02'),(18,'ORD2604170005',2,NULL,NULL,500.00,NULL,0.00,150.00,'CONFIRMED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-17 05:36:29',NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-17 05:36:29','2026-04-17 05:36:29'),(19,'ORD2604170006',2,NULL,NULL,500.00,NULL,0.00,150.00,'CANCELLED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,'Payment initialization failed: Online payments are not configured','SYSTEM','2026-04-17 05:36:39',NULL,NULL,NULL,'2026-04-17 05:36:40',NULL,NULL,'2026-04-17 05:36:39','2026-04-17 05:36:40'),(20,'ORD2604170007',2,NULL,NULL,500.00,NULL,0.00,150.00,'CONFIRMED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-17 05:42:03',NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-17 05:42:03','2026-04-17 05:42:03'),(21,'ORD2604170008',2,NULL,NULL,500.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-17 05:43:01','2026-04-17 05:43:32','2026-04-17 05:43:36','2026-04-17 06:22:43',NULL,NULL,3,'2026-04-17 05:43:01','2026-04-17 06:22:43'),(22,'ORD2604170009',2,NULL,NULL,500.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-17 06:12:13','2026-04-17 06:12:25','2026-04-17 06:12:29','2026-04-17 06:12:53',NULL,NULL,3,'2026-04-17 06:12:13','2026-04-17 06:12:53'),(23,'ORD2604170010',2,NULL,NULL,1200.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-17 06:22:07','2026-04-17 06:22:16','2026-04-17 06:22:18','2026-04-17 06:22:33',NULL,NULL,3,'2026-04-17 06:22:07','2026-04-17 06:22:33'),(24,'ORD2604170011',2,NULL,NULL,500.00,NULL,0.00,150.00,'DELIVERED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-17 10:45:26','2026-04-17 10:46:08','2026-04-17 10:46:12','2026-04-17 10:46:55',NULL,NULL,3,'2026-04-17 10:45:26','2026-04-17 10:46:55'),(25,'ORD2604180001',2,NULL,NULL,500.00,NULL,0.00,190.00,'CONFIRMED','DELIVERY',0,NULL,'NOT_REQUIRED',NULL,NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-18 05:03:57',NULL,NULL,NULL,NULL,NULL,NULL,'2026-04-18 05:03:57','2026-04-18 05:03:57');
 /*!40000 ALTER TABLE `order` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -678,6 +754,41 @@ LOCK TABLES `order_item` WRITE;
 /*!40000 ALTER TABLE `order_item` DISABLE KEYS */;
 INSERT INTO `order_item` (`order_item_id`, `order_id`, `menu_item_id`, `combo_id`, `quantity`, `unit_price`, `item_notes`) VALUES (1,1,1,NULL,1,500.00,NULL),(2,2,1,NULL,1,500.00,NULL),(3,3,1,NULL,1,500.00,NULL),(4,4,1,NULL,1,500.00,NULL),(5,5,1,NULL,1,500.00,NULL),(6,6,1,NULL,1,500.00,NULL),(7,7,1,NULL,1,500.00,NULL),(8,8,1,NULL,1,500.00,NULL),(9,9,1,NULL,1,500.00,NULL),(10,10,1,NULL,1,500.00,NULL),(11,11,2,NULL,1,700.00,NULL),(12,11,1,NULL,1,500.00,NULL),(13,12,2,NULL,1,700.00,NULL),(14,13,1,NULL,1,500.00,NULL),(15,14,2,NULL,1,700.00,NULL),(16,15,2,NULL,1,700.00,NULL),(17,16,1,NULL,1,500.00,NULL),(18,17,1,NULL,1,500.00,NULL),(19,18,1,NULL,1,500.00,NULL),(20,19,1,NULL,1,500.00,NULL),(21,20,1,NULL,1,500.00,NULL),(22,21,1,NULL,1,500.00,NULL),(23,22,1,NULL,1,500.00,NULL),(24,23,2,NULL,1,700.00,NULL),(25,23,1,NULL,1,500.00,NULL),(26,24,1,NULL,1,500.00,NULL),(27,25,1,NULL,1,500.00,NULL);
 /*!40000 ALTER TABLE `order_item` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `order_item_addon`
+--
+
+DROP TABLE IF EXISTS `order_item_addon`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `order_item_addon` (
+  `order_item_addon_id` int unsigned NOT NULL AUTO_INCREMENT,
+  `order_item_id` int unsigned NOT NULL,
+  `addon_option_id` int unsigned NOT NULL,
+  `quantity` int unsigned NOT NULL DEFAULT '1',
+  `unit_price` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `line_total` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `addon_name_snapshot` varchar(120) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`order_item_addon_id`),
+  UNIQUE KEY `uk_order_item_addon` (`order_item_id`,`addon_option_id`),
+  KEY `idx_order_item_addon_addon` (`addon_option_id`),
+  CONSTRAINT `fk_order_item_addon_addon` FOREIGN KEY (`addon_option_id`) REFERENCES `addon_option` (`addon_option_id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_order_item_addon_order_item` FOREIGN KEY (`order_item_id`) REFERENCES `order_item` (`order_item_id`) ON DELETE CASCADE,
+  CONSTRAINT `chk_order_item_addon_prices_non_negative` CHECK (((`unit_price` >= 0) and (`line_total` >= 0))),
+  CONSTRAINT `chk_order_item_addon_qty_positive` CHECK ((`quantity` > 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `order_item_addon`
+--
+
+LOCK TABLES `order_item_addon` WRITE;
+/*!40000 ALTER TABLE `order_item_addon` DISABLE KEYS */;
+/*!40000 ALTER TABLE `order_item_addon` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -782,8 +893,8 @@ DROP TABLE IF EXISTS `order_status_history`;
 CREATE TABLE `order_status_history` (
   `history_id` int unsigned NOT NULL AUTO_INCREMENT,
   `order_id` int unsigned NOT NULL,
-  `old_status` enum('PENDING','CONFIRMED','PREPARING','READY','OUT_FOR_DELIVERY','DELIVERED','CANCELLED') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `new_status` enum('PENDING','CONFIRMED','PREPARING','READY','OUT_FOR_DELIVERY','DELIVERED','CANCELLED') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `old_status` enum('PENDING','PREORDER_PENDING','PREORDER_CONFIRMED','CONFIRMED','PREPARING','READY','OUT_FOR_DELIVERY','DELIVERED','CANCELLED') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `new_status` enum('PENDING','PREORDER_PENDING','PREORDER_CONFIRMED','CONFIRMED','PREPARING','READY','OUT_FOR_DELIVERY','DELIVERED','CANCELLED') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
   `changed_by` int unsigned DEFAULT NULL,
   `changed_by_type` enum('CUSTOMER','STAFF','SYSTEM') COLLATE utf8mb4_unicode_ci NOT NULL,
   `notes` text COLLATE utf8mb4_unicode_ci,
@@ -943,6 +1054,39 @@ LOCK TABLES `payment` WRITE;
 /*!40000 ALTER TABLE `payment` DISABLE KEYS */;
 INSERT INTO `payment` VALUES (1,4,600.00,'CARD','PENDING','pi_3TJWewCp4XuCJFA91pc4jPzT',NULL,NULL,NULL,NULL,'2026-04-07 10:15:02','2026-04-07 10:15:03'),(2,5,600.00,'CARD','PAID','pi_3TJWgvCp4XuCJFA91Op34btM','SUCCESS','2026-04-07 10:20:39',NULL,NULL,'2026-04-07 10:17:04','2026-04-07 10:20:39'),(3,6,600.00,'CARD','PAID','pi_3TJWoxCp4XuCJFA91yp3w3m1','SUCCESS','2026-04-07 10:25:39',NULL,NULL,'2026-04-07 10:25:23','2026-04-07 10:25:39'),(4,7,600.00,'CARD','PAID','pi_3TJWw3Cp4XuCJFA90gPFZl7J','SUCCESS','2026-04-07 10:33:12',NULL,NULL,'2026-04-07 10:32:42','2026-04-07 10:33:12'),(5,8,600.00,'CARD','PAID','pi_3TJXnHCp4XuCJFA90bdANnrf','SUCCESS','2026-04-07 11:28:10',NULL,NULL,'2026-04-07 11:27:43','2026-04-07 11:28:10'),(6,9,600.00,'CARD','PAID','pi_3TK06NCp4XuCJFA911bEF2ui','SUCCESS','2026-04-08 17:41:35','2026-04-08 17:41:48','Cancelled by customer','2026-04-08 17:41:19','2026-04-10 18:47:00'),(7,10,600.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-11 06:50:01','2026-04-11 06:50:01'),(8,11,1350.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-16 17:08:58','2026-04-16 17:08:58'),(9,12,850.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-16 17:46:52','2026-04-16 17:46:52'),(10,13,650.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-16 18:29:06','2026-04-16 18:29:06'),(11,14,850.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-16 18:43:24','2026-04-16 18:43:24'),(12,15,850.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-16 18:45:36','2026-04-16 18:45:36'),(13,16,650.00,'ONLINE','FAILED',NULL,'INIT_FAILED_ONLINE',NULL,NULL,NULL,'2026-04-17 05:35:12','2026-04-17 05:35:14'),(14,17,650.00,'ONLINE','FAILED',NULL,'INIT_FAILED_ONLINE',NULL,NULL,NULL,'2026-04-17 05:36:01','2026-04-17 05:36:02'),(15,18,650.00,'CARD','PENDING','pi_3TN54tCp4XuCJFA91CObMqaK','PENDING',NULL,NULL,NULL,'2026-04-17 05:36:29','2026-04-17 05:36:31'),(16,19,650.00,'ONLINE','FAILED',NULL,'INIT_FAILED_ONLINE',NULL,NULL,NULL,'2026-04-17 05:36:39','2026-04-17 05:36:40'),(17,20,650.00,'ONLINE','PENDING',NULL,'PENDING',NULL,NULL,NULL,'2026-04-17 05:42:03','2026-04-17 05:42:03'),(18,21,650.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-17 05:43:01','2026-04-17 05:43:01'),(19,22,650.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-17 06:12:13','2026-04-17 06:12:13'),(20,23,1350.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-17 06:22:07','2026-04-17 06:22:07'),(21,24,650.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-17 10:45:26','2026-04-17 10:45:26'),(22,25,690.00,'CASH','PENDING',NULL,'PAY_ON_DELIVERY',NULL,NULL,NULL,'2026-04-18 05:03:57','2026-04-18 05:03:57');
 /*!40000 ALTER TABLE `payment` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `preorder_approval_log`
+--
+
+DROP TABLE IF EXISTS `preorder_approval_log`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `preorder_approval_log` (
+  `preorder_approval_log_id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `order_id` int unsigned NOT NULL,
+  `old_approval_status` enum('NOT_REQUIRED','PENDING','APPROVED','REJECTED') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `new_approval_status` enum('NOT_REQUIRED','PENDING','APPROVED','REJECTED') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `action_by` int unsigned DEFAULT NULL,
+  `action_by_type` enum('STAFF','SYSTEM') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'STAFF',
+  `notes` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`preorder_approval_log_id`),
+  KEY `idx_preorder_log_order_created` (`order_id`,`created_at`),
+  KEY `idx_preorder_log_actor_created` (`action_by`,`created_at`),
+  CONSTRAINT `fk_preorder_log_actor` FOREIGN KEY (`action_by`) REFERENCES `staff` (`staff_id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_preorder_log_order` FOREIGN KEY (`order_id`) REFERENCES `order` (`order_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `preorder_approval_log`
+--
+
+LOCK TABLES `preorder_approval_log` WRITE;
+/*!40000 ALTER TABLE `preorder_approval_log` DISABLE KEYS */;
+/*!40000 ALTER TABLE `preorder_approval_log` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -1210,6 +1354,27 @@ SET @saved_cs_client     = @@character_set_client;
 SET character_set_client = @saved_cs_client;
 
 --
+-- Temporary view structure for view `vw_preorder_pending_queue`
+--
+
+DROP TABLE IF EXISTS `vw_preorder_pending_queue`;
+/*!50001 DROP VIEW IF EXISTS `vw_preorder_pending_queue`*/;
+SET @saved_cs_client     = @@character_set_client;
+/*!50503 SET character_set_client = utf8mb4 */;
+/*!50001 CREATE VIEW `vw_preorder_pending_queue` AS SELECT 
+ 1 AS `order_id`,
+ 1 AS `order_number`,
+ 1 AS `customer_id`,
+ 1 AS `customer_name`,
+ 1 AS `customer_phone`,
+ 1 AS `contact_phone`,
+ 1 AS `status`,
+ 1 AS `approval_status`,
+ 1 AS `scheduled_datetime`,
+ 1 AS `created_at`*/;
+SET character_set_client = @saved_cs_client;
+
+--
 -- Final view structure for view `v_active_orders`
 --
 
@@ -1262,6 +1427,24 @@ SET character_set_client = @saved_cs_client;
 /*!50001 SET character_set_client      = @saved_cs_client */;
 /*!50001 SET character_set_results     = @saved_cs_results */;
 /*!50001 SET collation_connection      = @saved_col_connection */;
+
+--
+-- Final view structure for view `vw_preorder_pending_queue`
+--
+
+/*!50001 DROP VIEW IF EXISTS `vw_preorder_pending_queue`*/;
+/*!50001 SET @saved_cs_client          = @@character_set_client */;
+/*!50001 SET @saved_cs_results         = @@character_set_results */;
+/*!50001 SET @saved_col_connection     = @@collation_connection */;
+/*!50001 SET character_set_client      = utf8mb4 */;
+/*!50001 SET character_set_results     = utf8mb4 */;
+/*!50001 SET collation_connection      = utf8mb4_0900_ai_ci */;
+/*!50001 CREATE ALGORITHM=UNDEFINED */
+/*!50013 DEFINER=`root`@`localhost` SQL SECURITY DEFINER */
+/*!50001 VIEW `vw_preorder_pending_queue` AS select `o`.`order_id` AS `order_id`,`o`.`order_number` AS `order_number`,`o`.`customer_id` AS `customer_id`,`c`.`name` AS `customer_name`,`c`.`phone` AS `customer_phone`,`o`.`contact_phone` AS `contact_phone`,`o`.`status` AS `status`,`o`.`approval_status` AS `approval_status`,`o`.`scheduled_datetime` AS `scheduled_datetime`,`o`.`created_at` AS `created_at` from (`order` `o` left join `customer` `c` on((`c`.`customer_id` = `o`.`customer_id`))) where ((`o`.`is_preorder` = 1) and (`o`.`approval_status` = 'PENDING')) order by (`o`.`scheduled_datetime` is null),`o`.`scheduled_datetime`,`o`.`created_at` */;
+/*!50001 SET character_set_client      = @saved_cs_client */;
+/*!50001 SET character_set_results     = @saved_cs_results */;
+/*!50001 SET collation_connection      = @saved_col_connection */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -1272,4 +1455,4 @@ SET character_set_client = @saved_cs_client;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-04-18 21:24:00
+-- Dump completed on 2026-04-18 21:33:00

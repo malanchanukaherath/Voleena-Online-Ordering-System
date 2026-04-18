@@ -18,12 +18,12 @@ module.exports = (sequelize) => {
             field: 'order_id'
         },
         OldStatus: {
-            type: DataTypes.ENUM('PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'),
+            type: DataTypes.ENUM('PENDING', 'PREORDER_PENDING', 'PREORDER_CONFIRMED', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'),
             allowNull: true,
             field: 'old_status'
         },
         NewStatus: {
-            type: DataTypes.ENUM('PENDING', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'),
+            type: DataTypes.ENUM('PENDING', 'PREORDER_PENDING', 'PREORDER_CONFIRMED', 'CONFIRMED', 'PREPARING', 'READY', 'OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'),
             allowNull: false,
             field: 'new_status'
         },

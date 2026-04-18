@@ -174,6 +174,10 @@ const OrderTracking = () => {
             orderNumber: data.OrderNumber,
             status: data.Status,
             orderType: data.OrderType,
+            isPreorder: Boolean(data.IsPreorder ?? data.isPreorder),
+            scheduledDatetime: data.ScheduledDatetime || data.scheduledDatetime || null,
+            approvalStatus: data.ApprovalStatus || data.approvalStatus || null,
+            approvalNotes: data.ApprovalNotes || data.approvalNotes || null,
             paymentMethod: data.payment?.Method || 'CASH',
             paymentStatus: data.payment?.Status || null,
             subtotal: toMoney(data.TotalAmount || 0),
@@ -206,6 +210,7 @@ const OrderTracking = () => {
             completedAt: data.CompletedAt || data.completedAt,
             deliveredAt: data.delivery?.DeliveredAt || data.delivery?.deliveredAt,
             cancelledAt: data.CancelledAt || data.cancelledAt || null,
+            approvedAt: data.ApprovedAt || data.approvedAt || null,
             items: (data.items || []).map((entry) => {
                 const unitPrice = toMoney(entry.UnitPrice || 0);
                 const parsedAddOns = parseOrderItemAddOnsFromNotes(entry.ItemNotes, unitPrice);
@@ -549,7 +554,7 @@ const OrderTracking = () => {
     }, [order?.deliveryId, order?.deliveryPerson?.name, order?.deliveryPerson?.phone, order?.orderType, order?.status]);
 
     const canCancelOrder = () => {
-        const cancellableStatuses = ['CONFIRMED'];
+        const cancellableStatuses = ['CONFIRMED', 'PREORDER_PENDING', 'PREORDER_CONFIRMED'];
         const isNotCancelled = order?.status !== 'CANCELLED';
         return cancellableStatuses.includes(order?.status) && isNotCancelled;
     };
@@ -557,6 +562,18 @@ const OrderTracking = () => {
     const getDeliveryEtaText = () => {
         if (!order || order.orderType !== 'DELIVERY' || order.status === 'CANCELLED' || order.status === 'DELIVERED') {
             return null;
+        }
+
+        if (order.status === 'PREORDER_PENDING') {
+            return order.scheduledDatetime
+                ? `Preorder awaiting approval for ${new Date(order.scheduledDatetime).toLocaleString()}`
+                : 'Preorder awaiting staff approval';
+        }
+
+        if (order.status === 'PREORDER_CONFIRMED') {
+            return order.scheduledDatetime
+                ? `Scheduled for ${new Date(order.scheduledDatetime).toLocaleString()}`
+                : 'Preorder approved and scheduled';
         }
 
         const countdown = formatEtaCountdown(order.estimatedDeliveryTime);
@@ -588,6 +605,10 @@ const OrderTracking = () => {
         switch (status) {
             case 'PLACED':
                 return formatTimeLabel(order.placedAt);
+            case 'PREORDER_PENDING':
+                return formatTimeLabel(order.placedAt);
+            case 'PREORDER_CONFIRMED':
+                return formatTimeLabel(order.approvedAt);
             case 'CONFIRMED':
                 return formatTimeLabel(order.confirmedAt || order.placedAt);
             case 'PREPARING':
@@ -656,6 +677,8 @@ const OrderTracking = () => {
         }
     };
 
+    const isPreorderFlow = Boolean(order?.isPreorder);
+
     const trackingSteps = [
         {
             status: 'PLACED',
@@ -663,7 +686,31 @@ const OrderTracking = () => {
             time: getTimelineTime('PLACED'),
             completed: true,
             icon: FaBox
-        },
+        }
+    ];
+
+    if (isPreorderFlow) {
+        trackingSteps.push(
+            {
+                status: 'PREORDER_PENDING',
+                label: 'Awaiting Approval',
+                time: getTimelineTime('PREORDER_PENDING'),
+                completed: ['PREORDER_PENDING', 'PREORDER_CONFIRMED', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'READY', 'CANCELLED'].includes(order?.status),
+                icon: FaClock,
+                current: order?.status === 'PREORDER_PENDING'
+            },
+            {
+                status: 'PREORDER_CONFIRMED',
+                label: 'Preorder Approved',
+                time: getTimelineTime('PREORDER_CONFIRMED'),
+                completed: ['PREORDER_CONFIRMED', 'CONFIRMED', 'PREPARING', 'OUT_FOR_DELIVERY', 'DELIVERED', 'READY'].includes(order?.status),
+                icon: FaCheckCircle,
+                current: order?.status === 'PREORDER_CONFIRMED'
+            }
+        );
+    }
+
+    trackingSteps.push(
         {
             status: 'CONFIRMED',
             label: 'Order Confirmed',
@@ -680,7 +727,7 @@ const OrderTracking = () => {
             icon: FaClock,
             current: order?.status === 'PREPARING'
         }
-    ];
+    );
 
     if (order?.orderType === 'DELIVERY') {
         trackingSteps.push({
@@ -803,6 +850,8 @@ const OrderTracking = () => {
                                 </h2>
                                 <p className={order.status === 'CANCELLED' ? 'text-red-700' : 'text-primary-700'}>
                                     {order.status === 'CANCELLED' ? 'Your order has been cancelled' :
+                                        order.status === 'PREORDER_PENDING' ? 'Your preorder is awaiting staff approval' :
+                                            order.status === 'PREORDER_CONFIRMED' ? 'Your preorder is approved and scheduled' :
                                         order.status === 'CONFIRMED' ? 'Your order is confirmed!' :
                                             order.status === 'PREPARING' ? 'Your order is being prepared' :
                                                 order.status === 'READY' ? (order.orderType === 'TAKEAWAY' ? 'Your order is ready for pickup!' : 'Your order is ready!') :
@@ -812,6 +861,11 @@ const OrderTracking = () => {
                             </div>
                             <StatusBadge status={order.status} type="order" />
                         </div>
+                        {order.isPreorder && order.scheduledDatetime && order.status !== 'CANCELLED' && (
+                            <div className="text-sm text-primary-800 mb-2">
+                                Scheduled for: <span className="font-semibold">{new Date(order.scheduledDatetime).toLocaleString()}</span>
+                            </div>
+                        )}
                         {order.status === 'DELIVERED' && order.orderType === 'DELIVERY' && order.deliveredAt && (
                             <div className="text-sm text-green-800 bg-green-50 p-2 rounded mt-3">
                                 <p>Delivered on: <span className="font-semibold">{new Date(order.deliveredAt).toLocaleString()}</span></p>

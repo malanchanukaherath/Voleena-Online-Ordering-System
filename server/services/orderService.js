@@ -1,4 +1,4 @@
-const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, ComboPackItem, Delivery, DeliveryStaffAvailability, Payment, Address, sequelize } = require('../models');
+const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, ComboPackItem, Delivery, DeliveryStaffAvailability, Payment, Address, PreorderApprovalLog, sequelize } = require('../models');
 const { Transaction, Op } = require('sequelize');
 const stockService = require('./stockService');
 const { geocodeAddress, validateDeliveryDistanceWithFallback } = require('./distanceValidation');
@@ -187,6 +187,8 @@ class OrderService {
             const orderType = orderData.orderType || orderData.order_type;
             const specialInstructions = orderData.specialInstructions || orderData.special_instructions;
             const promotionId = orderData.promotionId || orderData.promotion_id;
+            const requestedIsPreorder = Boolean(orderData.isPreorder ?? orderData.is_preorder);
+            const rawScheduledDatetime = orderData.scheduledDatetime || orderData.scheduled_datetime || null;
             const providedContactPhone = orderData.contactPhone || orderData.contact_phone || null;
             const normalizedPaymentMethod = typeof (orderData.paymentMethod || orderData.payment_method) === 'string'
                 ? String(orderData.paymentMethod || orderData.payment_method).trim().toUpperCase()
@@ -218,6 +220,29 @@ class OrderService {
 
             if (orderType !== 'WALK_IN' && !CUSTOMER_PAYMENT_METHODS.has(normalizedPaymentMethod)) {
                 throw new Error('Unsupported payment method for order creation');
+            }
+
+            const isPreorder = requestedIsPreorder && orderType !== 'WALK_IN';
+            let scheduledDatetime = null;
+
+            if (requestedIsPreorder && orderType === 'WALK_IN') {
+                throw new Error('Preorders are not available for walk-in orders');
+            }
+
+            if (isPreorder) {
+                if (!rawScheduledDatetime) {
+                    throw new Error('Scheduled date/time is required for preorder');
+                }
+
+                scheduledDatetime = new Date(rawScheduledDatetime);
+                if (Number.isNaN(scheduledDatetime.getTime())) {
+                    throw new Error('Invalid scheduled date/time');
+                }
+
+                const minLeadTimeMs = 15 * 60 * 1000;
+                if (scheduledDatetime.getTime() < Date.now() + minLeadTimeMs) {
+                    throw new Error('Preorder time must be at least 15 minutes in the future');
+                }
             }
 
             if (orderType !== 'WALK_IN') {
@@ -396,8 +421,9 @@ class OrderService {
 
             // Generate order number
             const orderNumber = await this.generateOrderNumber();
-            // Orders are accepted immediately; payment status separately gates preparation.
-            const confirmedAt = new Date();
+            const initialStatus = isPreorder ? 'PREORDER_PENDING' : 'CONFIRMED';
+            const initialApprovalStatus = isPreorder ? 'PENDING' : 'NOT_REQUIRED';
+            const confirmedAt = isPreorder ? null : new Date();
 
             const order = await Order.create({
                 OrderNumber: orderNumber,
@@ -408,8 +434,11 @@ class OrderService {
                 PromotionID: promotionId || null,
                 DiscountAmount: discountAmount,
                 DeliveryFee: deliveryFee,
-                Status: 'CONFIRMED',
+                Status: initialStatus,
                 OrderType: orderType,
+                IsPreorder: isPreorder,
+                ScheduledDatetime: scheduledDatetime,
+                ApprovalStatus: initialApprovalStatus,
                 SpecialInstructions: specialInstructions,
                 ConfirmedAt: confirmedAt,
                 ConfirmedBy: null
@@ -450,22 +479,26 @@ class OrderService {
                 }, { transaction });
             }
 
-            const stockDate = new Date().toISOString().split('T')[0];
-            const stockItems = await this.buildStockItemsFromOrderItems(orderItems, transaction);
+            if (!isPreorder) {
+                const stockDate = new Date().toISOString().split('T')[0];
+                const stockItems = await this.buildStockItemsFromOrderItems(orderItems, transaction);
 
-            if (stockItems.length > 0) {
-                await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
-                await stockService.deductStock(order.OrderID, stockItems, stockDate, null, transaction);
+                if (stockItems.length > 0) {
+                    await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
+                    await stockService.deductStock(order.OrderID, stockItems, stockDate, null, transaction);
+                }
             }
 
             // Log initial status history.
             await OrderStatusHistory.create({
                 OrderID: order.OrderID,
                 OldStatus: null,
-                NewStatus: 'CONFIRMED',
+                NewStatus: initialStatus,
                 ChangedBy: null,
                 ChangedByType: 'SYSTEM',
-                Notes: 'Order created and auto-confirmed',
+                Notes: isPreorder
+                    ? 'Preorder created and pending staff approval'
+                    : 'Order created and auto-confirmed',
                 CreatedAt: new Date()
             }, { transaction });
 
@@ -473,7 +506,7 @@ class OrderService {
 
             try {
                 const customer = customerProfile;
-                if (customer && orderType !== 'WALK_IN') {
+                if (customer && orderType !== 'WALK_IN' && !isPreorder) {
                     if (canSendOrderEmail(runtimeSettings, customer, 'orderConfirmation')) {
                         await sendOrderConfirmationEmail(order, customer);
                     }
@@ -490,21 +523,24 @@ class OrderService {
                 // Don't fail the order if notification fails
             }
 
-            const eventType = 'ORDER_CONFIRMED';
-            const creationRecipientRoles = ['Kitchen', 'Admin'];
+            const eventType = isPreorder ? 'PREORDER_PENDING_APPROVAL' : 'ORDER_CONFIRMED';
+            const creationRecipientRoles = isPreorder ? ['Cashier', 'Admin'] : ['Kitchen', 'Admin'];
 
             await notifySafely(async () => {
                 await appNotificationService.notifyStaffRoles(creationRecipientRoles, {
                     eventType,
                     title: `Order #${orderNumber}`,
-                    message: `New ${orderType.toLowerCase()} order #${orderNumber} is confirmed.`,
+                    message: isPreorder
+                        ? `New ${orderType.toLowerCase()} preorder #${orderNumber} requires review.`
+                        : `New ${orderType.toLowerCase()} order #${orderNumber} is confirmed.`,
                     priority: 'MEDIUM',
                     relatedOrderId: order.OrderID,
                     payload: {
                         orderId: order.OrderID,
                         orderNumber,
                         orderType,
-                        status: 'CONFIRMED'
+                        status: initialStatus,
+                        isPreorder
                     },
                     dedupeKey: `${eventType}:STAFF:${order.OrderID}`
                 });
@@ -515,14 +551,17 @@ class OrderService {
                     await appNotificationService.notifyCustomer(customerId, {
                         eventType,
                         title: `Order #${orderNumber}`,
-                        message: `Your order #${orderNumber} has been confirmed.`,
+                        message: isPreorder
+                            ? `Your preorder #${orderNumber} is pending staff approval.`
+                            : `Your order #${orderNumber} has been confirmed.`,
                         priority: 'MEDIUM',
                         relatedOrderId: order.OrderID,
                         payload: {
                             orderId: order.OrderID,
                             orderNumber,
                             orderType,
-                            status: 'CONFIRMED'
+                            status: initialStatus,
+                            isPreorder
                         },
                         dedupeKey: `${eventType}:CUSTOMER:${customerId}:${order.OrderID}`
                     });
@@ -564,9 +603,11 @@ class OrderService {
                 return order;
             }
 
-            if (order.Status !== 'PENDING') {
+            if (!['PENDING', 'PREORDER_CONFIRMED'].includes(order.Status)) {
                 throw new Error(`Order cannot be confirmed. Current status: ${order.Status}`);
             }
+
+            const oldStatus = order.Status;
 
             // Validate and reserve stock
             const stockDate = new Date().toISOString().split('T')[0];
@@ -586,11 +627,13 @@ class OrderService {
             // Log status history
             await OrderStatusHistory.create({
                 OrderID: orderId,
-                OldStatus: 'PENDING',
+                OldStatus: oldStatus,
                 NewStatus: 'CONFIRMED',
                 ChangedBy: staffId,
                 ChangedByType: 'STAFF',
-                Notes: 'Order confirmed by staff',
+                Notes: oldStatus === 'PREORDER_CONFIRMED'
+                    ? 'Preorder moved to confirmed for production'
+                    : 'Order confirmed by staff',
                 CreatedAt: new Date()
             }, { transaction });
 
@@ -632,7 +675,11 @@ class OrderService {
 
         try {
             order = await Order.findByPk(orderId, {
-                include: [{ model: Customer, as: 'customer' }],
+                include: [
+                    { model: Customer, as: 'customer' },
+                    { model: OrderItem, as: 'items' },
+                    { model: Payment, as: 'payment' }
+                ],
                 transaction
             });
 
@@ -647,6 +694,39 @@ class OrderService {
 
             // Update order
             order.Status = newStatus;
+
+            const shouldMovePreorderToConfirmed = oldStatus === 'PREORDER_CONFIRMED' && newStatus === 'CONFIRMED';
+            const shouldApprovePreorder = oldStatus === 'PREORDER_PENDING' && newStatus === 'PREORDER_CONFIRMED';
+            const shouldRejectPreorder = oldStatus === 'PREORDER_PENDING' && newStatus === 'CANCELLED';
+
+            if (shouldMovePreorderToConfirmed) {
+                const stockDate = new Date().toISOString().split('T')[0];
+                const stockItems = await this.buildStockItemsFromOrderItems(order.items || [], transaction);
+
+                if (stockItems.length > 0) {
+                    await stockService.validateAndReserveStock(stockItems, stockDate, transaction);
+                    await stockService.deductStock(order.OrderID, stockItems, stockDate, staffId, transaction);
+                }
+
+                order.ConfirmedAt = order.ConfirmedAt || new Date();
+                order.ConfirmedBy = staffId;
+            }
+
+            if (shouldApprovePreorder) {
+                order.ApprovalStatus = 'APPROVED';
+                order.ApprovedBy = staffId;
+                order.ApprovedAt = new Date();
+                order.RejectedReason = null;
+            }
+
+            if (shouldRejectPreorder) {
+                order.ApprovalStatus = 'REJECTED';
+                order.ApprovedBy = staffId;
+                order.ApprovedAt = new Date();
+                order.RejectedReason = notes || 'Preorder rejected by staff';
+                order.CancellationReason = notes || order.CancellationReason;
+                order.CancelledBy = 'ADMIN';
+            }
 
             // Set timestamp based on status
             switch (newStatus) {
@@ -695,6 +775,18 @@ class OrderService {
                 CreatedAt: new Date()
             }, { transaction });
 
+            if ((shouldApprovePreorder || shouldRejectPreorder) && PreorderApprovalLog) {
+                await PreorderApprovalLog.create({
+                    OrderID: orderId,
+                    OldApprovalStatus: 'PENDING',
+                    NewApprovalStatus: shouldApprovePreorder ? 'APPROVED' : 'REJECTED',
+                    ActionBy: staffId,
+                    ActionByType: 'STAFF',
+                    Notes: notes || null,
+                    CreatedAt: new Date()
+                }, { transaction });
+            }
+
             await transaction.commit();
         } catch (error) {
             if (!transaction.finished) {
@@ -731,6 +823,8 @@ class OrderService {
         }
 
         const statusMessageMap = {
+            PREORDER_PENDING: 'Preorder is pending staff approval',
+            PREORDER_CONFIRMED: 'Preorder approved and scheduled',
             CONFIRMED: 'Order confirmed',
             PREPARING: 'Order is being prepared',
             READY: order.OrderType === 'DELIVERY' ? 'Order is ready for dispatch' : 'Order is ready',
@@ -766,6 +860,8 @@ class OrderService {
 
         await notifySafely(async () => {
             const staffRoleMatrixByStatus = {
+                PREORDER_PENDING: ['Cashier', 'Admin'],
+                PREORDER_CONFIRMED: ['Cashier', 'Admin'],
                 CONFIRMED: ['Kitchen', 'Admin'],
                 PREPARING: ['Admin'],
                 READY: order.OrderType === 'DELIVERY' ? ['Admin'] : ['Cashier', 'Admin'],
@@ -958,7 +1054,7 @@ class OrderService {
                     throw new Error('Access denied. You can only cancel your own orders');
                 }
 
-                if (!['PENDING', 'CONFIRMED'].includes(order.Status)) {
+                if (!['PENDING', 'PREORDER_PENDING', 'PREORDER_CONFIRMED', 'CONFIRMED'].includes(order.Status)) {
                     throw new Error('Customer cancellation is allowed only before order preparation starts');
                 }
             }
@@ -1050,6 +1146,8 @@ class OrderService {
     validateStatusTransition(oldStatus, newStatus) {
         const validTransitions = {
             'PENDING': ['CONFIRMED', 'CANCELLED'],
+            'PREORDER_PENDING': ['PREORDER_CONFIRMED', 'CANCELLED'],
+            'PREORDER_CONFIRMED': ['CONFIRMED', 'CANCELLED'],
             'CONFIRMED': ['PREPARING', 'CANCELLED'],
             'PREPARING': ['READY', 'CANCELLED'],
             'READY': ['OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'],

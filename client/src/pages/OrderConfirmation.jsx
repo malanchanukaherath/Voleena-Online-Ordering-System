@@ -52,6 +52,10 @@ const OrderConfirmation = () => {
     const paymentSyncWarning = Boolean(location.state?.paymentSyncWarning);
     const hasEmail = Boolean(order?.customer?.Email);
     const hasPhone = Boolean(order?.customer?.Phone);
+    const isPreorder = Boolean(order?.IsPreorder ?? order?.isPreorder);
+    const rawScheduledDatetime = order?.ScheduledDatetime || order?.scheduledDatetime || null;
+    const scheduledDatetime = rawScheduledDatetime ? new Date(rawScheduledDatetime) : null;
+    const hasValidSchedule = Boolean(scheduledDatetime && !Number.isNaN(scheduledDatetime.getTime()));
 
     let updateChannelText = 'Order updates are always available in your tracking page.';
     if (hasEmail && hasPhone) {
@@ -81,8 +85,15 @@ const OrderConfirmation = () => {
                 <FaCheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h1 className="text-3xl font-bold text-green-700 mb-2">Order Placed Successfully!</h1>
                 <p className="text-lg text-green-600 mb-4">
-                    Thank you for your order. We've received your order and will start preparing it shortly.
+                    {isPreorder
+                        ? 'Thank you for your preorder. It is now pending staff approval.'
+                        : "Thank you for your order. We've received your order and will start preparing it shortly."}
                 </p>
+                {isPreorder && hasValidSchedule && (
+                    <p className="text-sm text-green-700 mb-3">
+                        Scheduled for: <span className="font-semibold">{scheduledDatetime.toLocaleString()}</span>
+                    </p>
+                )}
                 <p className="text-sm text-gray-600">
                     Order Number: <span className="font-bold text-gray-900">{order?.OrderNumber || '—'}</span>
                 </p>

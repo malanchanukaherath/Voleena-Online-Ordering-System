@@ -12,6 +12,8 @@ import useDelayedStatusUpdate from '../hooks/useDelayedStatusUpdate';
 
 const statusOptions = [
     { value: '', label: 'All Statuses' },
+    { value: 'PREORDER_PENDING', label: 'Preorder Pending' },
+    { value: 'PREORDER_CONFIRMED', label: 'Preorder Confirmed' },
     { value: 'CONFIRMED', label: 'Confirmed' },
     { value: 'PREPARING', label: 'Preparing' },
     { value: 'READY', label: 'Ready' },
@@ -24,6 +26,8 @@ const orderStatusOptions = statusOptions.filter((option) => option.value);
 
 const validStatusTransitions = {
     PENDING: ['CONFIRMED', 'CANCELLED'],
+    PREORDER_PENDING: ['PREORDER_CONFIRMED', 'CANCELLED'],
+    PREORDER_CONFIRMED: ['CONFIRMED', 'CANCELLED'],
     CONFIRMED: ['PREPARING', 'CANCELLED'],
     PREPARING: ['READY', 'CANCELLED'],
     READY: ['OUT_FOR_DELIVERY', 'DELIVERED', 'CANCELLED'],

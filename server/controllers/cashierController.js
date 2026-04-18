@@ -176,9 +176,11 @@ async function notifyCashierOrderStatusChange(order, newStatus, options = {}) {
     const reason = options.reason || null;
 
     if (order.CustomerID && order.OrderType !== 'WALK_IN') {
-      const customerMessage = newStatus === 'CONFIRMED'
-        ? `Your order #${orderNumber} has been confirmed.`
-        : `Your order #${orderNumber} has been cancelled.`;
+      const customerMessage = newStatus === 'PREORDER_CONFIRMED'
+        ? `Your preorder #${orderNumber} has been approved.`
+        : newStatus === 'CONFIRMED'
+          ? `Your order #${orderNumber} has been confirmed.`
+          : `Your order #${orderNumber} has been cancelled.`;
 
       await appNotificationService.notifyCustomer(order.CustomerID, {
         eventType: 'ORDER_STATUS_UPDATED',
@@ -566,7 +568,7 @@ exports.getAllOrders = async (req, res) => {
       include: orderIncludes,
       order: [
         // Prioritize action-required statuses.
-        sequelize.literal("CASE WHEN `Order`.Status = 'CONFIRMED' THEN 0 ELSE 1 END"),
+        sequelize.literal("CASE WHEN `Order`.Status = 'PREORDER_PENDING' THEN 0 WHEN `Order`.Status = 'PREORDER_CONFIRMED' THEN 1 WHEN `Order`.Status = 'CONFIRMED' THEN 2 ELSE 3 END"),
         // Then show newest orders first
         ['created_at', 'DESC']
       ],
@@ -673,17 +675,36 @@ exports.confirmOrder = async (req, res) => {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    // Orders are now auto-confirmed, return success if already confirmed
-    if (order.Status === 'CONFIRMED') {
+    // Orders are now auto-confirmed. For preorders, this endpoint approves the preorder.
+    if (['CONFIRMED', 'PREORDER_CONFIRMED'].includes(order.Status)) {
       return res.json({
         success: true,
-        message: 'Order is already confirmed',
+        message: order.Status === 'PREORDER_CONFIRMED' ? 'Preorder is already approved' : 'Order is already confirmed',
         data: order
       });
     }
 
-    if (order.Status !== 'PENDING') {
-      return res.status(400).json({ error: 'Only pending orders can be confirmed' });
+    if (!['PENDING', 'PREORDER_PENDING'].includes(order.Status)) {
+      return res.status(400).json({ error: 'Only pending orders can be confirmed or approved' });
+    }
+
+    const approvingPreorder = order.Status === 'PREORDER_PENDING';
+
+    if (approvingPreorder) {
+      const approvedOrder = await orderService.updateOrderStatus(
+        orderId,
+        'PREORDER_CONFIRMED',
+        staffId,
+        'Preorder approved by cashier'
+      );
+
+      await notifyCashierOrderStatusChange(order, 'PREORDER_CONFIRMED', { oldStatus: 'PREORDER_PENDING' });
+
+      return res.json({
+        success: true,
+        message: 'Preorder approved successfully',
+        data: approvedOrder
+      });
     }
 
     await order.update({
@@ -730,9 +751,9 @@ exports.cancelOrder = async (req, res) => {
       return res.status(404).json({ error: 'Order not found' });
     }
 
-    if (!['PENDING', 'CONFIRMED'].includes(order.Status)) {
+    if (!['PENDING', 'PREORDER_PENDING', 'PREORDER_CONFIRMED', 'CONFIRMED'].includes(order.Status)) {
       return res.status(400).json({
-        error: 'Only pending or confirmed orders can be cancelled'
+        error: 'Only pending, approved, or confirmed orders can be cancelled'
       });
     }
 

@@ -33,7 +33,9 @@ exports.createOrder = async (req, res) => {
             promotionCode,
             paymentMethod = 'CASH',
             deliveryCoordinates = null,
-            contactPhone
+            contactPhone,
+            isPreorder = false,
+            scheduledDatetime = null
         } = req.body;
         const customerId = req.user.id;
         const normalizedPaymentMethod = typeof paymentMethod === 'string' ? paymentMethod.trim().toUpperCase() : '';
@@ -69,6 +71,8 @@ exports.createOrder = async (req, res) => {
             paymentMethod: normalizedPaymentMethod,
             deliveryCoordinates,
             contactPhone: normalizedContactPhone,
+            isPreorder: Boolean(isPreorder),
+            scheduledDatetime: scheduledDatetime || null,
             items: items.map((item) => ({
                 menuItemId: item.menuItemId || null,
                 comboId: item.comboId || null,
@@ -108,7 +112,7 @@ exports.createOrder = async (req, res) => {
         }
 
         const statusCode = error.statusCode
-            || (/unsupported payment|disabled by system settings|minimum order amount|maximum order amount|required|outside our delivery|not available|invalid/i.test(error.message)
+            || (/unsupported payment|disabled by system settings|minimum order amount|maximum order amount|required|outside our delivery|not available|invalid|preorder|scheduled/i.test(error.message)
                 ? 400
                 : 500);
 
@@ -154,7 +158,7 @@ exports.getAllOrders = async (req, res) => {
             ],
             order: [
                 // Prioritize action-required statuses.
-                sequelize.literal("CASE WHEN `Order`.Status = 'CONFIRMED' THEN 0 WHEN `Order`.Status = 'PREPARING' THEN 1 WHEN `Order`.Status = 'READY' THEN 2 ELSE 3 END"),
+                sequelize.literal("CASE WHEN `Order`.Status = 'PREORDER_PENDING' THEN 0 WHEN `Order`.Status = 'PREORDER_CONFIRMED' THEN 1 WHEN `Order`.Status = 'CONFIRMED' THEN 2 WHEN `Order`.Status = 'PREPARING' THEN 3 WHEN `Order`.Status = 'READY' THEN 4 ELSE 5 END"),
                 // Then show newest orders first
                 ['created_at', 'DESC']
             ],
