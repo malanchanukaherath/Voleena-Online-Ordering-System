@@ -36,6 +36,7 @@ BEGIN
     `name` VARCHAR(120) COLLATE utf8mb4_unicode_ci NOT NULL,
     `description` VARCHAR(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `price_delta` DECIMAL(10,2) NOT NULL DEFAULT '0.00',
+    `default_max_qty` TINYINT UNSIGNED NOT NULL DEFAULT '1',
     `is_active` TINYINT(1) NOT NULL DEFAULT '1',
     `affects_live_stock` TINYINT(1) NOT NULL DEFAULT '0',
     `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -100,6 +101,14 @@ BEGIN
   IF v_exists = 0 THEN
     ALTER TABLE `addon_option`
       ADD COLUMN `addon_group` VARCHAR(80) COLLATE utf8mb4_unicode_ci DEFAULT NULL;
+  END IF;
+
+  SELECT COUNT(*) INTO v_exists
+  FROM information_schema.COLUMNS
+  WHERE BINARY TABLE_SCHEMA = BINARY @db AND TABLE_NAME = 'addon_option' AND COLUMN_NAME = 'default_max_qty';
+  IF v_exists = 0 THEN
+    ALTER TABLE `addon_option`
+      ADD COLUMN `default_max_qty` TINYINT UNSIGNED NOT NULL DEFAULT 1;
   END IF;
 
   SELECT COUNT(*) INTO v_exists
@@ -257,6 +266,10 @@ BEGIN
   SET `display_order` = 0
   WHERE `display_order` IS NULL;
 
+  UPDATE `addon_option`
+  SET `default_max_qty` = 1
+  WHERE `default_max_qty` IS NULL OR `default_max_qty` < 1;
+
   UPDATE `menu_item_addon_option`
   SET `display_order` = 0
   WHERE `display_order` IS NULL;
@@ -287,5 +300,5 @@ SELECT
 FROM information_schema.COLUMNS
 WHERE BINARY TABLE_SCHEMA = BINARY DATABASE()
   AND TABLE_NAME = 'addon_option'
-  AND COLUMN_NAME IN ('display_order','addon_group','created_by','updated_by')
+  AND COLUMN_NAME IN ('display_order','addon_group','default_max_qty','created_by','updated_by')
 ORDER BY ORDINAL_POSITION;

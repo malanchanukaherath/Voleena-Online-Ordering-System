@@ -17,6 +17,7 @@ import {
     FaUsers,
     FaUserTie,
     FaChartLine,
+    FaTags,
     FaBoxes,
     FaMapMarkedAlt,
     FaCashRegister,
@@ -94,6 +95,7 @@ const Header = ({
                     { path: '/admin/customers', label: 'Customers', icon: FaUsers },
                     { path: '/admin/staff', label: 'Staff', icon: FaUserTie },
                     { path: '/admin/menu', label: 'Menu', icon: FaUtensils },
+                    { path: '/admin/addons', label: 'Add-ons', icon: FaTags },
                     { path: '/admin/analytics', label: 'Analytics', icon: FaChartLine },
                     { path: '/delivery/map', label: 'Live Delivery Map', icon: FaMapMarkedAlt },
                 ];

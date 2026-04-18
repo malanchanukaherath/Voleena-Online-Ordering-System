@@ -67,6 +67,12 @@ jest.mock('../controllers/stockController', () => ({
 jest.mock('../controllers/menuItemController', () => ({
   createMenuItem: mockOkHandler,
   getAllMenuItems: mockOkHandler,
+  getAddOnCatalog: mockOkHandler,
+  createAddOnCatalogItem: mockOkHandler,
+  updateAddOnCatalogItem: mockOkHandler,
+  deactivateAddOnCatalogItem: mockOkHandler,
+  getMenuItemAddOnConfig: mockOkHandler,
+  updateMenuItemAddOnConfig: mockOkHandler,
   getMenuItem: mockOkHandler,
   updateMenuItem: mockOkHandler,
   deleteMenuItem: mockOkHandler,
@@ -166,13 +172,19 @@ const routerDefinitions = [
     router: require('../routes/menuItems'),
     protectedEndpoints: [
       ['post', '/'],
-      ['get', '/1'],
+      ['get', '/addons/catalog'],
+      ['post', '/addons/catalog'],
+      ['put', '/addons/catalog/add_cheese'],
+      ['delete', '/addons/catalog/add_cheese'],
+      ['get', '/1/addons-config'],
+      ['put', '/1/addons-config'],
       ['put', '/1'],
       ['delete', '/1'],
       ['post', '/1/image']
     ],
     publicEndpoints: [
-      ['get', '/']
+      ['get', '/'],
+      ['get', '/1']
     ]
   },
   {

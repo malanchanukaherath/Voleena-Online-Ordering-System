@@ -9,6 +9,7 @@ import {
     FaUserTie,
     FaChartLine,
     FaShoppingBag,
+    FaTags,
     FaTruck,
     FaCheckCircle,
     FaArrowRight,
@@ -195,6 +196,7 @@ const AdminDashboard = () => {
                     <div className="grid grid-cols-2 gap-3">
                         {[
                             { to: '/admin/menu', icon: FaShoppingBag, label: 'Manage Menu' },
+                            { to: '/admin/addons', icon: FaTags, label: 'Manage Add-ons' },
                             { to: '/admin/orders', icon: FaClipboardList, label: 'View Orders' },
                             { to: '/admin/customers', icon: FaUsers, label: 'Customers' },
                             { to: '/admin/analytics', icon: FaChartLine, label: 'Analytics' },
