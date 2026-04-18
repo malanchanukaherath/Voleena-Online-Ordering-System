@@ -138,48 +138,66 @@ const Home = () => {
     return (
         <div>
             {/* Hero Section */}
-            <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white py-16 sm:py-20">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <section className="relative bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 text-white pt-16 sm:pt-20 pb-24 overflow-hidden">
+                {/* Background pattern */}
+                <div className="absolute inset-0 opacity-10" aria-hidden="true">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full -translate-y-1/2 translate-x-1/3" />
+                    <div className="absolute bottom-0 left-0 w-72 h-72 bg-white rounded-full translate-y-1/2 -translate-x-1/4" />
+                </div>
+
+                <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center">
-                        <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6 break-words max-w-[18rem] sm:max-w-none mx-auto">
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 border border-white/20 text-sm text-white/90 font-medium mb-6">
+                            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                            Now accepting online orders
+                        </div>
+                        <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6 break-words max-w-[18rem] sm:max-w-none mx-auto leading-tight">
                             Welcome to Voleena Foods
                         </h1>
-                        <p className="text-lg sm:text-xl md:text-2xl mb-8 max-w-[20rem] sm:max-w-3xl mx-auto leading-relaxed">
+                        <p className="text-lg sm:text-xl mb-8 max-w-[20rem] sm:max-w-3xl mx-auto leading-relaxed text-primary-100">
                             Authentic Sri Lankan cuisine delivered fresh to your doorstep.
                             Enjoy our special Sunday combo offers and daily specials!
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link to="/menu">
-                                <Button size="lg" className="w-full sm:w-auto">
+                                <Button size="lg" variant="secondary" className="w-full sm:w-auto font-bold">
                                     Browse Menu
                                 </Button>
                             </Link>
                             {!isAuthenticated && (
                                 <Link to="/register">
-                                    <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white text-primary-600 hover:bg-gray-100">
-                                        Sign Up Now
+                                    <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/60 text-white hover:bg-white/10 hover:border-white">
+                                        Sign Up — It's Free
                                     </Button>
                                 </Link>
                             )}
                         </div>
                     </div>
                 </div>
+
+                {/* Wave divider */}
+                <div className="absolute bottom-0 left-0 right-0" aria-hidden="true">
+                    <svg viewBox="0 0 1440 56" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full">
+                        <path d="M0 56L60 48C120 40 240 24 360 20C480 16 600 24 720 28C840 32 960 32 1080 28C1200 24 1320 16 1380 12L1440 8V56H1380C1320 56 1200 56 1080 56C960 56 840 56 720 56C600 56 480 56 360 56C240 56 120 56 60 56H0V56Z" fill="#f8fafc"/>
+                    </svg>
+                </div>
             </section>
 
-            <section className="py-10 bg-indigo-50 border-b border-indigo-100">
+            <section className="py-10 bg-white border-b border-gray-100">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="bg-white rounded-xl shadow p-6 md:p-8 border border-indigo-100">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div className="card p-6 md:p-8 bg-gradient-to-r from-indigo-50 to-blue-50 border-indigo-100">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-900">Preorder and Bulk Ordering Available</h2>
-                                <p className="text-gray-700 mt-2">
-                                    Need food in advance or for larger groups? You can place scheduled preorders and include bulk quantity notes.
+                                <span className="inline-block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-2">Bulk & Preorders</span>
+                                <h2 className="text-xl font-bold text-gray-900">Preorder and Bulk Ordering Available</h2>
+                                <p className="text-gray-600 mt-2 text-sm leading-relaxed">
+                                    Need food in advance or for larger groups? Place scheduled preorders with bulk quantity notes.
                                 </p>
-                                <p className="text-sm text-indigo-700 mt-2">
-                                    If an item is low on immediate stock, submit it as a preorder request with your preferred date and details.
+                                <p className="text-xs text-indigo-600 mt-1.5">
+                                    Low on stock? Submit as preorder with your preferred date.
                                 </p>
                             </div>
-                            <div className="flex gap-3">
+                            <div className="flex gap-3 shrink-0">
                                 <Link to="/menu">
                                     <Button variant="outline">Browse Menu</Button>
                                 </Link>
@@ -272,22 +290,25 @@ const Home = () => {
             )}
 
             {/* Features Section */}
-            <section className="py-12 bg-gray-50">
+            <section className="py-14 bg-slate-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-bold text-center mb-10">Order With Confidence</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div className="text-center mb-12">
+                        <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Order With Confidence</h2>
+                        <p className="mt-2 text-gray-500 text-sm md:text-base">Everything you need for a great dining experience</p>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                         {features.map((feature, index) => {
                             const Icon = feature.icon;
                             return (
                                 <div
                                     key={index}
-                                    className="bg-white p-6 rounded-lg shadow-md text-center hover:shadow-lg transition-shadow"
+                                    className="card motion-surface p-6 text-center cursor-default"
                                 >
-                                    <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-100 rounded-full mb-4">
-                                        <Icon className="w-8 h-8 text-primary-600" />
+                                    <div className="inline-flex items-center justify-center w-14 h-14 bg-primary-50 rounded-2xl mb-4 border border-primary-100">
+                                        <Icon className="w-7 h-7 text-primary-600" />
                                     </div>
-                                    <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
-                                    <p className="text-gray-600">{feature.description}</p>
+                                    <h3 className="text-base font-bold text-gray-900 mb-1.5">{feature.title}</h3>
+                                    <p className="text-sm text-gray-500 leading-relaxed">{feature.description}</p>
                                 </div>
                             );
                         })}
@@ -296,26 +317,27 @@ const Home = () => {
             </section>
 
             {/* Featured Items Preview */}
-            <section className="py-12">
+            <section className="py-14 bg-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-3xl font-bold">Popular Picks</h2>
-                        <Link to="/menu" className="text-primary-600 hover:text-primary-700 font-medium">
-                            View All →
+                        <div>
+                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Popular Picks</h2>
+                            <p className="mt-1 text-sm text-gray-500">Our most-loved menu items</p>
+                        </div>
+                        <Link to="/menu" className="text-sm font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors">
+                            View All <span aria-hidden="true">→</span>
                         </Link>
                     </div>
                     {isLoadingFeatured ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                             {Array.from({ length: 4 }).map((_, index) => (
-                                <div
-                                    key={index}
-                                    className="bg-white rounded-lg shadow-md overflow-hidden"
-                                >
-                                    <div className="h-48 bg-gray-200" />
-                                    <div className="p-4">
-                                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-3" />
-                                        <div className="h-3 bg-gray-200 rounded w-full mb-3" />
-                                        <div className="h-8 bg-gray-200 rounded" />
+                                <div key={index} className="card overflow-hidden">
+                                    <div className="skeleton h-48" />
+                                    <div className="p-4 space-y-3">
+                                        <div className="skeleton h-4 w-3/4" />
+                                        <div className="skeleton h-3 w-full" />
+                                        <div className="skeleton h-3 w-2/3" />
+                                        <div className="skeleton h-8 w-full mt-2" />
                                     </div>
                                 </div>
                             ))}
@@ -325,28 +347,28 @@ const Home = () => {
                             {featuredItems.map((item) => (
                                 <div
                                     key={item.id}
-                                    className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
+                                    className="card overflow-hidden motion-surface cursor-default"
                                 >
-                                    <div className="h-48 bg-gray-200 flex items-center justify-center">
+                                    <div className="h-48 bg-gray-100 flex items-center justify-center overflow-hidden">
                                         {item.image ? (
-                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
                                         ) : (
-                                            <span className="text-gray-400">No image available</span>
+                                            <span className="text-gray-400 text-sm">No image available</span>
                                         )}
                                     </div>
                                     <div className="p-4">
-                                        <h3 className="font-semibold mb-2">{item.name}</h3>
-                                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
+                                        <h3 className="font-bold text-gray-900 mb-1 leading-snug">{item.name}</h3>
+                                        <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed">{item.description}</p>
                                         <div className="flex justify-between items-center">
-                                            <span className="text-lg font-bold text-primary-600">LKR {item.price.toFixed(2)}</span>
-                                            <Button size="sm" onClick={() => handleAddToCart(item)}>Add to Cart</Button>
+                                            <span className="text-base font-bold text-primary-600">LKR {item.price.toFixed(2)}</span>
+                                            <Button size="sm" onClick={() => handleAddToCart(item)}>Add</Button>
                                         </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     ) : (
-                        <div className="bg-white rounded-lg shadow-md p-6 text-center text-gray-600">
+                        <div className="card p-8 text-center text-gray-500 text-sm">
                             No featured items yet. Check back soon!
                         </div>
                     )}
@@ -354,15 +376,15 @@ const Home = () => {
             </section>
 
             {/* CTA Section */}
-            <section className="bg-primary-600 text-white py-16">
+            <section className="bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 text-white py-16">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                    <h2 className="text-3xl font-bold mb-4">Ready to Order?</h2>
-                    <p className="text-xl mb-8">
+                    <h2 className="text-2xl md:text-3xl font-bold mb-3 tracking-tight">Ready to Order?</h2>
+                    <p className="text-primary-100 text-base md:text-lg mb-8 max-w-md mx-auto">
                         Explore our menu and place your order in just a few clicks!
                     </p>
                     <Link to="/menu">
-                        <Button size="lg" className="bg-orange-500 text-red-900 hover:bg-yellow-300">
-                            Order Now
+                        <Button size="lg" variant="secondary" className="font-bold shadow-lg">
+                            Order Now →
                         </Button>
                     </Link>
                 </div>

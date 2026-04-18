@@ -160,7 +160,7 @@ const CashierOrders = () => {
             isActive = false;
             clearInterval(intervalId);
         };
-    }, [loadOrders]);
+    }, [loadOrders, searchQuery]);
 
     return (
         <div className="p-6">

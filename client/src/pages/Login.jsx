@@ -4,9 +4,8 @@ import { useAuth } from '../contexts/AuthContext';
 import authService from '../services/authService';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
-import Card from '../components/ui/Card';
 import Toast from '../components/ui/Toast';
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaUtensils } from 'react-icons/fa';
 
 const Login = () => {
   const { login, isAuthenticated, error, clearError } = useAuth();
@@ -29,11 +28,9 @@ const Login = () => {
     if (result?.retryAfterSeconds) {
       return `${fallbackMessage} Try again in ${result.retryAfterSeconds} seconds.`;
     }
-
     return fallbackMessage;
   };
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
       const from = location.state?.from?.pathname || '/';
@@ -41,7 +38,6 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate, location]);
 
-  // Show toast when there's an auth error
   useEffect(() => {
     if (error) {
       setShowToast(true);
@@ -63,24 +59,16 @@ const Login = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => ({ ...prev, [name]: value }));
 
     if (name === 'email') {
       setVerificationEmail(value.trim().toLowerCase());
     }
 
-    // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+      setErrors(prev => ({ ...prev, [name]: '' }));
     }
 
-    // Clear auth error
     if (error) {
       clearError();
     }
@@ -148,39 +136,87 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
-      <div className="mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] sm:max-w-md">
-        <div className="flex justify-center">
-          <div className="w-12 h-12 bg-primary-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl">V</span>
+    <div className="min-h-screen flex overflow-x-hidden">
+      {/* === Left Brand Panel (desktop only) === */}
+      <div className="hidden lg:flex lg:w-5/12 xl:w-1/2 bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 flex-col justify-between p-12 relative overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute -top-20 -left-20 w-80 h-80 bg-white/5 rounded-full" aria-hidden="true" />
+        <div className="absolute -bottom-32 -right-20 w-96 h-96 bg-white/5 rounded-full" aria-hidden="true" />
+        <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-white/5 rounded-full -translate-y-1/2" aria-hidden="true" />
+
+        {/* Logo */}
+        <div className="relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30">
+              <FaUtensils className="w-6 h-6 text-white" />
+            </div>
+            <span className="text-white font-bold text-xl tracking-tight">Voleena Foods</span>
           </div>
         </div>
-        <h2 className="mt-6 text-center text-2xl font-bold text-gray-900 break-words sm:text-3xl">
-          Sign in to your account
-        </h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Or{' '}
-          <Link
-            to="/register"
-            className="font-medium text-primary-600 hover:text-primary-500"
-          >
-            create a new account
-          </Link>
-        </p>
+
+        {/* Center hero content */}
+        <div className="relative z-10 text-white">
+          <h1 className="text-4xl xl:text-5xl font-bold leading-tight mb-4">
+            Authentic Sri Lankan Cuisine
+          </h1>
+          <p className="text-primary-100 text-lg leading-relaxed max-w-sm">
+            Traditional meals, special combo packs, and catering services delivered fresh to your doorstep.
+          </p>
+
+          <div className="mt-10 flex flex-col gap-4">
+            {[
+              { icon: '🍛', text: 'Traditional Sri Lankan meals' },
+              { icon: '🎁', text: 'Special Sunday combo offers' },
+              { icon: '🚚', text: 'Delivery within 15km radius' },
+            ].map((item) => (
+              <div key={item.text} className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center text-lg shrink-0">
+                  {item.icon}
+                </div>
+                <span className="text-primary-100 text-sm">{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Bottom tagline */}
+        <div className="relative z-10">
+          <p className="text-primary-200 text-sm">
+            © {new Date().getFullYear()} Voleena Foods. All rights reserved.
+          </p>
+        </div>
       </div>
 
-      <div className="mt-8 mx-auto w-full min-w-0 max-w-[calc(100vw-2rem)] sm:max-w-md">
-        <Card className="w-full max-w-full py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      {/* === Right Form Panel === */}
+      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-white lg:bg-slate-50/60">
+        <div className="w-full max-w-md">
+          {/* Mobile logo */}
+          <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
+            <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
+              <FaUtensils className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-gray-900 font-bold text-xl">Voleena Foods</span>
+          </div>
+
+          {/* Heading */}
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Welcome back</h2>
+            <p className="mt-1.5 text-sm text-gray-500">
+              Sign in to your account to continue ordering
+            </p>
+          </div>
+
+          {/* Notice Banner */}
           {notice && (
-            <div className="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
-              {notice}
+            <div className="mb-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <p>{notice}</p>
               {(verificationEmail || formData.email.trim()) && (
-                <div className="mt-3">
+                <div className="mt-2.5">
                   <button
                     type="button"
                     onClick={handleResendVerification}
                     disabled={resendingVerification}
-                    className="font-medium text-amber-900 underline hover:text-amber-700 disabled:opacity-60"
+                    className="font-semibold text-amber-900 underline underline-offset-2 hover:text-amber-700 disabled:opacity-60 text-xs"
                   >
                     {resendingVerification ? 'Sending verification email...' : 'Resend verification email'}
                   </button>
@@ -189,58 +225,71 @@ const Login = () => {
             </div>
           )}
 
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <Input
-              label="Email address"
-              name="email"
-              type="email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={handleInputChange}
-              error={errors.email}
-              required
-            />
-
-            <div className="relative">
+          {/* Form Card */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-7" style={{ boxShadow: '0 4px 24px -4px rgba(0,0,0,0.08)' }}>
+            <form className="space-y-5" onSubmit={handleSubmit}>
               <Input
-                label="Password"
-                name="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                value={formData.password}
+                label="Email address"
+                name="email"
+                type="email"
+                autoComplete="email"
+                value={formData.email}
                 onChange={handleInputChange}
-                error={errors.password}
+                error={errors.email}
                 required
+                placeholder="you@example.com"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-9 text-gray-500 hover:text-gray-700 focus:outline-none"
-                tabIndex={-1}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <FaEyeSlash size={20} /> : <FaEye size={20} />}
-              </button>
-            </div>
 
-            <div className="flex justify-end">
-              <div className="text-sm">
-                <Link to="/forgot-password" className="font-medium text-primary-600 hover:text-primary-500">
+              <div className="relative">
+                <Input
+                  label="Password"
+                  name="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  error={errors.password}
+                  required
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 focus:outline-none p-1"
+                  tabIndex={-1}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}
+                </button>
+              </div>
+
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-semibold text-primary-600 hover:text-primary-700 transition-colors"
+                >
                   Forgot your password?
                 </Link>
               </div>
-            </div>
 
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full"
-              loading={loading}
-            >
-              Sign in
-            </Button>
-          </form>
-        </Card>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full"
+                loading={loading}
+              >
+                Sign in
+              </Button>
+            </form>
+
+            <p className="mt-5 text-center text-sm text-gray-500">
+              Don't have an account?{' '}
+              <Link to="/register" className="font-semibold text-primary-600 hover:text-primary-700 transition-colors">
+                Create one
+              </Link>
+            </p>
+          </div>
+        </div>
       </div>
 
       {showToast && error && (

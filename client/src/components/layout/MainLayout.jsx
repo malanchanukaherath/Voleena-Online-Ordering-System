@@ -99,7 +99,7 @@ const MainLayout = ({ children }) => {
     }
 
     return (
-        <div className="flex flex-col min-h-screen overflow-x-hidden bg-gradient-to-b from-slate-50/80 via-white to-slate-100/70">
+        <div className="flex flex-col min-h-screen overflow-x-hidden bg-gradient-to-b from-slate-50/80 via-white to-slate-100/70 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950">
             <Header
                 showSidebarToggle={showSidebar}
                 isSidebarVisible={isDesktopSidebarVisible}
@@ -112,7 +112,7 @@ const MainLayout = ({ children }) => {
                 {showSidebar && (
                     <Sidebar
                         className={`hidden lg:block sticky top-16 self-start min-h-[calc(100vh-4rem)] overflow-hidden transition-all duration-300 ease-in-out motion-reduce:transition-none ${showDesktopSidebar
-                            ? 'w-64 opacity-100 translate-x-0 bg-white/95 shadow-sm border-r border-gray-200/80 backdrop-blur'
+                            ? 'w-64 opacity-100 translate-x-0 bg-white/95 shadow-sm border-r border-gray-200/80 backdrop-blur dark:bg-slate-900/95 dark:border-slate-700'
                             : 'w-0 opacity-0 -translate-x-2 bg-transparent shadow-none pointer-events-none'
                             }`}
                     />
@@ -122,7 +122,7 @@ const MainLayout = ({ children }) => {
                     <>
                         <button
                             type="button"
-                            className={`lg:hidden fixed inset-0 z-30 bg-slate-900/35 backdrop-blur-[1px] transition-opacity duration-300 ease-out motion-reduce:transition-none ${isMobileSidebarOpen
+                            className={`lg:hidden fixed inset-0 z-30 bg-slate-900/35 backdrop-blur-[1px] transition-opacity duration-300 ease-out motion-reduce:transition-none dark:bg-slate-950/60 ${isMobileSidebarOpen
                                 ? 'opacity-100 pointer-events-auto'
                                 : 'opacity-0 pointer-events-none'
                                 }`}
@@ -131,7 +131,7 @@ const MainLayout = ({ children }) => {
                         />
 
                         <Sidebar
-                            className={`lg:hidden fixed top-16 bottom-0 left-0 z-40 w-72 bg-white shadow-xl border-r border-gray-200 overflow-y-auto transform transition-transform duration-300 ease-out motion-reduce:transition-none ${isMobileSidebarOpen
+                            className={`lg:hidden fixed top-16 bottom-0 left-0 z-40 w-72 bg-white shadow-xl border-r border-gray-200 overflow-y-auto transform transition-transform duration-300 ease-out motion-reduce:transition-none dark:bg-slate-900 dark:border-slate-700 ${isMobileSidebarOpen
                                 ? 'translate-x-0 pointer-events-auto'
                                 : '-translate-x-full pointer-events-none'
                                 }`}

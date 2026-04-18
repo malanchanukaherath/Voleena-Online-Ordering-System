@@ -1,58 +1,55 @@
 import React from 'react';
 
 const StatusBadge = ({ status, type = 'order' }) => {
-    const getOrderStatusStyles = (status) => {
+    const getOrderStatusConfig = (status) => {
         const normalized = status?.toUpperCase().replace(/_/g, '_');
 
-        const styles = {
-            PENDING: 'bg-yellow-50 text-yellow-800 border border-yellow-200',
-            PREORDER_PENDING: 'bg-amber-50 text-amber-800 border border-amber-200',
-            PREORDER_CONFIRMED: 'bg-cyan-50 text-cyan-800 border border-cyan-200',
-            CONFIRMED: 'bg-blue-50 text-blue-800 border border-blue-200',
-            PREPARING: 'bg-orange-50 text-orange-800 border border-orange-200',
-            READY: 'bg-purple-50 text-purple-800 border border-purple-200',
-            OUT_FOR_DELIVERY: 'bg-indigo-50 text-indigo-800 border border-indigo-200',
-            DELIVERED: 'bg-green-50 text-green-800 border border-green-200',
-            CANCELLED: 'bg-red-50 text-red-800 border border-red-200',
-            COMPLETED: 'bg-green-50 text-green-800 border border-green-200',
+        const configs = {
+            PENDING:            { bg: 'bg-amber-50',   text: 'text-amber-700',  border: 'border-amber-200',  dot: 'bg-amber-500'  },
+            PREORDER_PENDING:   { bg: 'bg-orange-50',  text: 'text-orange-700', border: 'border-orange-200', dot: 'bg-orange-500' },
+            PREORDER_CONFIRMED: { bg: 'bg-cyan-50',    text: 'text-cyan-700',   border: 'border-cyan-200',   dot: 'bg-cyan-500'   },
+            CONFIRMED:          { bg: 'bg-blue-50',    text: 'text-blue-700',   border: 'border-blue-200',   dot: 'bg-blue-500'   },
+            PREPARING:          { bg: 'bg-orange-50',  text: 'text-orange-700', border: 'border-orange-200', dot: 'bg-orange-500' },
+            READY:              { bg: 'bg-purple-50',  text: 'text-purple-700', border: 'border-purple-200', dot: 'bg-purple-500' },
+            OUT_FOR_DELIVERY:   { bg: 'bg-indigo-50',  text: 'text-indigo-700', border: 'border-indigo-200', dot: 'bg-indigo-500' },
+            DELIVERED:          { bg: 'bg-green-50',   text: 'text-green-700',  border: 'border-green-200',  dot: 'bg-green-500'  },
+            CANCELLED:          { bg: 'bg-red-50',     text: 'text-red-700',    border: 'border-red-200',    dot: 'bg-red-500'    },
+            COMPLETED:          { bg: 'bg-green-50',   text: 'text-green-700',  border: 'border-green-200',  dot: 'bg-green-500'  },
         };
 
-        return styles[normalized] || 'bg-gray-50 text-gray-700 border border-gray-200';
+        return configs[normalized] || { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200', dot: 'bg-gray-400' };
     };
 
-    const getPaymentStatusStyles = (status) => {
-        const styles = {
-            PENDING: 'bg-yellow-50 text-yellow-800 border border-yellow-200',
-            PAID: 'bg-green-50 text-green-800 border border-green-200',
-            FAILED: 'bg-red-50 text-red-800 border border-red-200',
-            REFUNDED: 'bg-gray-50 text-gray-700 border border-gray-200',
+    const getPaymentStatusConfig = (status) => {
+        const configs = {
+            PENDING:  { bg: 'bg-amber-50',  text: 'text-amber-700',  border: 'border-amber-200',  dot: 'bg-amber-500'  },
+            PAID:     { bg: 'bg-green-50',  text: 'text-green-700',  border: 'border-green-200',  dot: 'bg-green-500'  },
+            FAILED:   { bg: 'bg-red-50',    text: 'text-red-700',    border: 'border-red-200',    dot: 'bg-red-500'    },
+            REFUNDED: { bg: 'bg-slate-50',  text: 'text-slate-600',  border: 'border-slate-200',  dot: 'bg-slate-400'  },
         };
 
-        return styles[status?.toUpperCase()] || 'bg-gray-50 text-gray-700 border border-gray-200';
+        return configs[status?.toUpperCase()] || { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200', dot: 'bg-gray-400' };
     };
 
-    const getDeliveryStatusStyles = (status) => {
-        const styles = {
-            PENDING: 'bg-yellow-50 text-yellow-800 border border-yellow-200',
-            ASSIGNED: 'bg-blue-50 text-blue-800 border border-blue-200',
-            PICKED_UP: 'bg-orange-50 text-orange-800 border border-orange-200',
-            IN_TRANSIT: 'bg-indigo-50 text-indigo-800 border border-indigo-200',
-            DELIVERED: 'bg-green-50 text-green-800 border border-green-200',
-            FAILED: 'bg-red-50 text-red-800 border border-red-200',
+    const getDeliveryStatusConfig = (status) => {
+        const configs = {
+            PENDING:    { bg: 'bg-amber-50',   text: 'text-amber-700',  border: 'border-amber-200',  dot: 'bg-amber-500'  },
+            ASSIGNED:   { bg: 'bg-blue-50',    text: 'text-blue-700',   border: 'border-blue-200',   dot: 'bg-blue-500'   },
+            PICKED_UP:  { bg: 'bg-orange-50',  text: 'text-orange-700', border: 'border-orange-200', dot: 'bg-orange-500' },
+            IN_TRANSIT: { bg: 'bg-indigo-50',  text: 'text-indigo-700', border: 'border-indigo-200', dot: 'bg-indigo-500' },
+            DELIVERED:  { bg: 'bg-green-50',   text: 'text-green-700',  border: 'border-green-200',  dot: 'bg-green-500'  },
+            FAILED:     { bg: 'bg-red-50',     text: 'text-red-700',    border: 'border-red-200',    dot: 'bg-red-500'    },
         };
 
-        return styles[status?.toUpperCase()] || 'bg-gray-50 text-gray-700 border border-gray-200';
+        return configs[status?.toUpperCase()] || { bg: 'bg-gray-50', text: 'text-gray-600', border: 'border-gray-200', dot: 'bg-gray-400' };
     };
 
-    const getStyles = () => {
+    const getConfig = () => {
         switch (type) {
-            case 'payment':
-                return getPaymentStatusStyles(status);
-            case 'delivery':
-                return getDeliveryStatusStyles(status);
+            case 'payment':  return getPaymentStatusConfig(status);
+            case 'delivery': return getDeliveryStatusConfig(status);
             case 'order':
-            default:
-                return getOrderStatusStyles(status);
+            default:         return getOrderStatusConfig(status);
         }
     };
 
@@ -61,10 +58,13 @@ const StatusBadge = ({ status, type = 'order' }) => {
         return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
     };
 
+    const config = getConfig();
+
     return (
         <span
-            className={`inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide ring-1 ring-inset ring-black/5 ${getStyles()}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wide border ${config.bg} ${config.text} ${config.border}`}
         >
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${config.dot}`} aria-hidden="true" />
             {formatStatus(status)}
         </span>
     );

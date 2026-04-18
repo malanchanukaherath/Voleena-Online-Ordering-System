@@ -22,7 +22,7 @@ const Select = ({
     return (
         <div className="w-full">
             {label && (
-                <label htmlFor={selectId} className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <label htmlFor={selectId} className="block text-sm font-semibold text-gray-700 mb-1.5 dark:text-slate-300">
                     {label}
                     {required && <span className="text-red-500 ml-1">*</span>}
                 </label>
@@ -40,7 +40,10 @@ const Select = ({
                 block w-full px-3 py-2.5 border rounded-xl shadow-sm bg-white
           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
           disabled:bg-gray-100 disabled:cursor-not-allowed
-          ${error ? 'border-red-500' : 'border-gray-300'}
+          dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100
+          dark:focus:ring-primary-500 dark:focus:border-primary-500
+          dark:disabled:bg-slate-700 dark:disabled:text-slate-500
+          ${error ? 'border-red-500 dark:border-red-500' : 'border-gray-300'}
           ${className}
         `}
                 {...props}
@@ -57,7 +60,7 @@ const Select = ({
                 ))}
             </select>
             {error && <p id={errorId || undefined} className="mt-1 text-sm text-red-600">{error}</p>}
-            {helperText && !error && <p id={helperId || undefined} className="mt-1 text-sm text-gray-500">{helperText}</p>}
+            {helperText && !error && <p id={helperId || undefined} className="mt-1 text-sm text-gray-500 dark:text-slate-500">{helperText}</p>}
         </div>
     );
 };

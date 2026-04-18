@@ -34,11 +34,11 @@ const EmptyState = ({
     };
 
     return (
-        <div className="flex flex-col items-center justify-center py-12 px-4 rounded-2xl border border-dashed border-gray-300 bg-white/90 shadow-sm">
+        <div className="flex flex-col items-center justify-center py-12 px-4 rounded-2xl border border-dashed border-gray-300 bg-white/90 shadow-sm dark:bg-slate-800/80 dark:border-slate-600">
             <DefaultIcon className={`w-14 h-14 ${getColors()} mb-4`} />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center">{title}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2 text-center dark:text-slate-100">{title}</h3>
             {description && (
-                <p className="text-sm text-gray-600 text-center max-w-md mb-6 leading-6">
+                <p className="text-sm text-gray-600 text-center max-w-md mb-6 leading-6 dark:text-slate-400">
                     {description}
                 </p>
             )}

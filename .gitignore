@@ -38,3 +38,8 @@ coverage/
 *.pem
 
 .docx_extract
+code-review-structure-guide.md
+code-review-file-by-file-guide.md
+.lighthouseci
+testing-report-2026-04-18.md
+voleena_presentation.md

@@ -76,7 +76,7 @@ const parseOrderItemAddOnsFromNotes = (rawNotes, fallbackUnitPrice) => {
             baseUnitPrice,
             selectedAddOns
         };
-    } catch (error) {
+    } catch {
         return {
             baseUnitPrice: safeFallback,
             selectedAddOns: []

@@ -30,7 +30,7 @@ const Footer = () => {
     const businessHours = settings.businessHours || {};
 
     return (
-        <footer className="bg-slate-900 text-slate-300 border-t border-slate-800/80">
+        <footer className="bg-slate-900 text-slate-300 border-t border-slate-800/80 dark:bg-slate-950 dark:border-slate-700/80">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     {/* About Section */}
@@ -115,7 +115,7 @@ const Footer = () => {
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="border-t border-slate-800 mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center text-sm gap-3">
+                <div className="border-t border-slate-800 mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center text-sm gap-3 dark:border-slate-700">
                     <p>© {currentYear} {restaurantName}. All rights reserved.</p>
                     <div className="flex space-x-6 mt-4 sm:mt-0">
                         <Link to="/privacy" className="hover:text-primary-300 transition-colors">

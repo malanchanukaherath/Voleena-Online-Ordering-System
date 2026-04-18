@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { getCart } from '../../utils/cartStorage';
 import {
     FaHome,
@@ -19,6 +20,8 @@ import {
     FaBoxes,
     FaMapMarkedAlt,
     FaCashRegister,
+    FaSun,
+    FaMoon,
 } from 'react-icons/fa';
 import NotificationCenter from '../ui/NotificationCenter';
 import { usePublicSettings } from '../../hooks/usePublicSettings';
@@ -32,6 +35,7 @@ const Header = ({
 }) => {
     const { user, isAuthenticated, logout } = useAuth();
     const { settings: publicSettings } = usePublicSettings();
+    const { isDark, toggleTheme } = useTheme();
     const location = useLocation();
     const [cartCount, setCartCount] = useState(0);
     const userRole = user?.role || user?.staffRole;
@@ -124,7 +128,7 @@ const Header = ({
     const navigationItems = getNavigationItems();
 
     return (
-        <header className="bg-white/95 backdrop-blur border-b border-gray-200/80 shadow-sm sticky top-0 z-30">
+        <header className="bg-white/95 backdrop-blur border-b border-gray-200/80 shadow-sm sticky top-0 z-30 dark:bg-slate-900/95 dark:border-slate-700">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     {/* Logo and Sidebar Controls */}
@@ -134,7 +138,7 @@ const Header = ({
                                 <button
                                     type="button"
                                     onClick={onToggleMobileSidebar}
-                                    className="lg:hidden p-2 text-gray-700 hover:text-primary-700 hover:bg-gray-100 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                                    className="lg:hidden p-2 text-gray-700 hover:text-primary-700 hover:bg-gray-100 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-slate-300 dark:hover:text-primary-400 dark:hover:bg-slate-800 dark:focus-visible:ring-offset-slate-900"
                                     aria-label={isMobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
                                     title={isMobileSidebarOpen ? 'Close sidebar' : 'Open sidebar'}
                                 >
@@ -144,7 +148,7 @@ const Header = ({
                                 <button
                                     type="button"
                                     onClick={onToggleSidebar}
-                                    className="hidden lg:inline-flex p-2 text-gray-700 hover:text-primary-700 hover:bg-gray-100 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                                    className="hidden lg:inline-flex p-2 text-gray-700 hover:text-primary-700 hover:bg-gray-100 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-slate-300 dark:hover:text-primary-400 dark:hover:bg-slate-800 dark:focus-visible:ring-offset-slate-900"
                                     aria-label={isSidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
                                     title={isSidebarVisible ? 'Hide sidebar' : 'Show sidebar'}
                                 >
@@ -157,23 +161,23 @@ const Header = ({
                             <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl shadow-sm flex items-center justify-center">
                                 <span className="text-white font-bold text-xl">{(publicSettings.restaurantName || 'V').charAt(0).toUpperCase()}</span>
                             </div>
-                            <span className="text-xl font-bold text-gray-900 hidden sm:block">
+                            <span className="text-xl font-bold text-gray-900 hidden sm:block dark:text-slate-100">
                                 {publicSettings.restaurantName}
                             </span>
                         </Link>
                     </div>
 
                     {/* Desktop Navigation */}
-                    <nav className={`${showSidebarToggle ? 'hidden' : 'hidden md:flex'} space-x-1 rounded-xl bg-slate-50/80 p-1 border border-slate-200/80`}>
+                    <nav className={`${showSidebarToggle ? 'hidden' : 'hidden md:flex'} space-x-1 rounded-xl bg-slate-50/80 p-1 border border-slate-200/80 dark:bg-slate-800/80 dark:border-slate-700`}>
                         {navigationItems.map((item) => {
                             const Icon = item.icon;
                             return (
                                 <Link
                                     key={item.path}
                                     to={item.path}
-                                    className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 ${isActive(item.path)
-                                        ? 'bg-white text-primary-700 shadow-sm'
-                                        : 'text-gray-700 hover:bg-white/80'
+                                    className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-900 ${isActive(item.path)
+                                        ? 'bg-white text-primary-700 shadow-sm dark:bg-slate-700 dark:text-primary-400'
+                                        : 'text-gray-700 hover:bg-white/80 dark:text-slate-300 dark:hover:bg-slate-700/80'
                                         }`}
                                 >
                                     <Icon className="w-4 h-4" />
@@ -184,16 +188,30 @@ const Header = ({
                     </nav>
 
                     {/* Right Side Actions */}
-                    <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+                    <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                        {/* Dark mode toggle */}
+                        <button
+                            type="button"
+                            onClick={toggleTheme}
+                            className="p-2 rounded-xl text-gray-600 hover:text-primary-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-slate-400 dark:hover:text-primary-400 dark:hover:bg-slate-800 dark:focus-visible:ring-offset-slate-900 transition-colors"
+                            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                        >
+                            {isDark
+                                ? <FaSun className="w-4 h-4" />
+                                : <FaMoon className="w-4 h-4" />
+                            }
+                        </button>
+
                         {shouldShowCart && (
                             <Link
                                 to="/cart"
-                                className="relative rounded-xl p-2 text-gray-700 hover:text-primary-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2"
+                                className="relative rounded-xl p-2 text-gray-700 hover:text-primary-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 dark:text-slate-300 dark:hover:text-primary-400 dark:hover:bg-slate-800 dark:focus-visible:ring-offset-slate-900"
                                 title="View cart"
                             >
                                 <FaShoppingCart className="w-6 h-6" />
                                 {cartCount > 0 && (
-                                    <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-[11px] rounded-full w-5 h-5 flex items-center justify-center font-semibold ring-2 ring-white">
+                                    <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-[11px] rounded-full w-5 h-5 flex items-center justify-center font-semibold ring-2 ring-white dark:ring-slate-900">
                                         {cartCount}
                                     </span>
                                 )}
@@ -205,13 +223,13 @@ const Header = ({
                                 <NotificationCenter />
 
                                 <div className="flex items-center space-x-3">
-                                    <div className="hidden sm:block text-right bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/80">
-                                        <p className="text-sm font-medium text-gray-900">{user?.name}</p>
-                                        <p className="text-xs text-gray-500">{user?.role || user?.staffRole}</p>
+                                    <div className="hidden sm:block text-right bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/80 dark:bg-slate-800 dark:border-slate-700">
+                                        <p className="text-sm font-medium text-gray-900 dark:text-slate-100">{user?.name}</p>
+                                        <p className="text-xs text-gray-500 dark:text-slate-400">{user?.role || user?.staffRole}</p>
                                     </div>
                                     <button
                                         onClick={logout}
-                                        className="text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-xl p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2"
+                                        className="text-gray-700 hover:text-red-600 hover:bg-red-50 rounded-xl p-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:text-slate-300 dark:hover:text-red-400 dark:hover:bg-red-950/30 dark:focus-visible:ring-offset-slate-900"
                                         title="Logout"
                                     >
                                         <FaSignOutAlt className="w-5 h-5" />
@@ -224,7 +242,7 @@ const Header = ({
                             <div className="flex items-center gap-2 flex-shrink-0">
                                 <Link
                                     to="/login"
-                                    className="text-xs sm:text-sm font-medium text-gray-700 hover:text-primary-600 whitespace-nowrap px-2 py-1 rounded-lg hover:bg-slate-100"
+                                    className="text-xs sm:text-sm font-medium text-gray-700 hover:text-primary-600 whitespace-nowrap px-2 py-1 rounded-lg hover:bg-slate-100 dark:text-slate-300 dark:hover:text-primary-400 dark:hover:bg-slate-800"
                                 >
                                     Sign In
                                 </Link>
@@ -249,8 +267,8 @@ const Header = ({
                                     key={item.path}
                                     to={item.path}
                                     className={`px-3 py-2 rounded-xl text-xs font-medium flex items-center space-x-1 border transition-colors ${isActive(item.path)
-                                        ? 'bg-primary-50 border-primary-200 text-primary-700'
-                                        : 'text-gray-700 bg-white border-gray-200 hover:bg-gray-50'
+                                        ? 'bg-primary-50 border-primary-200 text-primary-700 dark:bg-primary-900/30 dark:border-primary-800 dark:text-primary-400'
+                                        : 'text-gray-700 bg-white border-gray-200 hover:bg-gray-50 dark:text-slate-300 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700'
                                         }`}
                                 >
                                     <Icon className="w-3 h-3" />

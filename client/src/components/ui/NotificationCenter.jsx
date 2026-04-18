@@ -58,7 +58,7 @@ const NotificationCenter = () => {
       {/* Notification Bell */}
       <button
         onClick={() => setIsOpen(true)}
-        className="relative text-gray-700 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md"
+        className="relative text-gray-700 hover:text-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-md dark:text-slate-300 dark:hover:text-primary-400"
         title="Notifications"
       >
         <FaBell className="w-6 h-6" />
@@ -121,7 +121,7 @@ const NotificationCenter = () => {
                 <Card
                   key={notification.id}
                   className={`border-l-4 ${getPriorityColor(notification.priority)} ${
-                    !notification.read ? 'bg-blue-50' : 'bg-white'
+                    !notification.read ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-white dark:bg-slate-800'
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -133,14 +133,14 @@ const NotificationCenter = () => {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className={`text-sm font-medium ${
-                          notification.read ? 'text-gray-600' : 'text-gray-900'
+                          notification.read ? 'text-gray-600 dark:text-slate-400' : 'text-gray-900 dark:text-slate-100'
                         }`}>
                           {notification.title}
                         </h4>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-gray-600 mt-1 dark:text-slate-400">
                           {notification.message}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 mt-1 dark:text-slate-500">
                           {formatTime(notification.timestamp)}
                         </p>
                       </div>

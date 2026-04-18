@@ -25,6 +25,7 @@ const Card = ({
   
   const classes = `
     bg-white rounded-2xl border border-gray-200/90 motion-surface shadow-sm
+    dark:bg-slate-800 dark:border-slate-700
     ${paddingClasses[padding]} 
     ${shadowClasses[shadow]} 
     ${className}

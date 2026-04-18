@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --motion-duration-fast: 160ms;
+    --motion-duration-fast: 150ms;
     --motion-duration-medium: 240ms;
     --motion-duration-slow: 360ms;
     --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
@@ -15,11 +15,31 @@
     --border-soft: #e2e8f0;
     --text-strong: #0f172a;
     --text-muted: #475569;
+    --shadow-card: 0 1px 3px 0 rgba(0,0,0,0.07), 0 1px 2px -1px rgba(0,0,0,0.05);
+    --shadow-elevated: 0 4px 16px -2px rgba(0,0,0,0.10), 0 2px 8px -2px rgba(0,0,0,0.05);
+    --radius-card: 1rem;
+    --radius-pill: 9999px;
+  }
+
+  /* ── Dark mode token overrides ── */
+  html.dark {
+    --surface-base: #0f172a;
+    --surface-card: #1e293b;
+    --surface-muted: #1e293b;
+    --border-soft: #334155;
+    --text-strong: #f1f5f9;
+    --text-muted: #94a3b8;
+    --shadow-card: 0 1px 3px 0 rgba(0,0,0,0.40), 0 1px 2px -1px rgba(0,0,0,0.30);
+    --shadow-elevated: 0 4px 16px -2px rgba(0,0,0,0.50), 0 2px 8px -2px rgba(0,0,0,0.35);
+    color-scheme: dark;
   }
 
   html {
     font-family: 'Inter', system-ui, sans-serif;
     scroll-behavior: smooth;
+    /* Smooth theme transition */
+    transition: background-color var(--motion-duration-fast) var(--motion-ease-standard),
+                color var(--motion-duration-fast) var(--motion-ease-standard);
   }
 
   *,
@@ -31,9 +51,19 @@
   body {
     color: var(--text-strong);
     background-color: var(--surface-base);
-    background-image: radial-gradient(circle at top right, rgba(220, 38, 38, 0.06), transparent 42%), radial-gradient(circle at bottom left, rgba(22, 163, 74, 0.05), transparent 35%);
+    background-image: 
+      radial-gradient(circle at top right, rgba(220, 38, 38, 0.05), transparent 40%),
+      radial-gradient(circle at bottom left, rgba(22, 163, 74, 0.04), transparent 35%);
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
+    transition: background-color var(--motion-duration-fast) var(--motion-ease-standard),
+                color var(--motion-duration-fast) var(--motion-ease-standard);
+  }
+
+  html.dark body {
+    background-image:
+      radial-gradient(circle at top right, rgba(220, 38, 38, 0.06), transparent 40%),
+      radial-gradient(circle at bottom left, rgba(22, 163, 74, 0.04), transparent 35%);
   }
 
   h1,
@@ -67,35 +97,53 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 shadow-sm;
+    @apply bg-primary-600 text-white hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 shadow-sm dark:focus:ring-offset-slate-900;
   }
   
   .btn-secondary {
-    @apply bg-white text-gray-800 hover:bg-gray-100 border border-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 shadow-sm;
+    @apply bg-white text-gray-800 hover:bg-gray-100 border border-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 shadow-sm
+           dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600 dark:hover:bg-slate-700 dark:focus:ring-offset-slate-900;
   }
   
   .input-field {
-    @apply block w-full px-3 py-2.5 border border-gray-300 rounded-xl shadow-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white;
+    @apply block w-full px-3.5 py-2.5 border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 
+           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 
+           bg-white text-gray-900 text-sm
+           dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500
+           dark:focus:ring-primary-500 dark:focus:border-primary-500;
   }
   
   .card {
-    @apply bg-white rounded-2xl shadow-sm border border-gray-200;
+    @apply bg-white rounded-2xl border border-gray-100/80
+           dark:bg-slate-800 dark:border-slate-700;
+    box-shadow: var(--shadow-card);
+  }
+
+  .card-hover {
+    @apply card transition-all duration-200;
+  }
+
+  .card-hover:hover {
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-1px);
   }
 
   .panel {
-    @apply bg-white/95 border border-gray-200 rounded-2xl shadow-sm;
+    @apply bg-white/96 border border-gray-200/70 rounded-2xl backdrop-blur-sm
+           dark:bg-slate-800/95 dark:border-slate-700;
+    box-shadow: var(--shadow-card);
   }
 
   .section-title {
-    @apply text-xl md:text-2xl font-semibold text-gray-900 tracking-tight;
+    @apply text-xl md:text-2xl font-bold text-gray-900 tracking-tight dark:text-slate-100;
   }
 
   .field-label {
-    @apply block text-sm font-semibold text-gray-700 mb-1.5;
+    @apply block text-sm font-semibold text-gray-700 mb-1.5 leading-none dark:text-slate-300;
   }
 
   .field-help {
-    @apply mt-1 text-sm text-gray-500;
+    @apply mt-1.5 text-xs text-gray-500 leading-relaxed dark:text-slate-500;
   }
 
   .table-shell {
@@ -103,7 +151,30 @@
   }
 
   .table-row-hover {
-    @apply transition-colors hover:bg-gray-50;
+    @apply transition-colors duration-150 hover:bg-slate-50/80 dark:hover:bg-slate-700/50;
+  }
+
+  /* === Skeleton loader — shimmer effect === */
+  .skeleton {
+    background: linear-gradient(
+      90deg,
+      #f0f0f0 25%,
+      #e0e0e0 50%,
+      #f0f0f0 75%
+    );
+    background-size: 200% 100%;
+    animation: shimmerSlide 1.6s linear infinite;
+    @apply rounded-xl;
+  }
+
+  html.dark .skeleton {
+    background: linear-gradient(
+      90deg,
+      #1e293b 25%,
+      #334155 50%,
+      #1e293b 75%
+    );
+    background-size: 200% 100%;
   }
 }
 
@@ -131,13 +202,13 @@
 
   .motion-surface {
     transition-property: transform, box-shadow, background-color, border-color, opacity;
-    transition-duration: var(--motion-duration-fast);
-    transition-timing-function: var(--motion-ease-standard);
+    transition-duration: 200ms;
+    transition-timing-function: var(--motion-ease-emphasized);
   }
 
   .motion-surface:hover {
     transform: translateY(-2px);
-    box-shadow: 0 10px 26px -18px rgba(15, 23, 42, 0.55);
+    box-shadow: var(--shadow-elevated);
   }
 
   .motion-surface:active {
@@ -165,22 +236,34 @@
   .animate-toast-in {
     animation: toastSlideIn var(--motion-duration-medium) var(--motion-ease-emphasized) both;
   }
+
+  /* Gradient text utility */
+  .text-gradient-primary {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }
 
-/* Custom animations */
+/* ============================================
+   Keyframe Animations
+   ============================================ */
+
+@keyframes shimmerSlide {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 @keyframes routeFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes contentRise {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -191,7 +274,7 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -200,18 +283,14 @@
 }
 
 @keyframes modalBackdropIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes modalPanelIn {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.98);
+    transform: translateY(12px) scale(0.97);
   }
   to {
     opacity: 1;
@@ -222,7 +301,7 @@
 @keyframes toastSlideIn {
   from {
     opacity: 0;
-    transform: translate3d(24px, 0, 0);
+    transform: translate3d(20px, 0, 0);
   }
   to {
     opacity: 1;
@@ -249,50 +328,61 @@
   animation: slideIn 0.3s ease-out;
 }
 
-/* Loading spinner */
+/* ============================================
+   Loading Spinner
+   ============================================ */
 .spinner {
-  @apply animate-spin rounded-full border-2 border-gray-300 border-t-primary-600;
+  @apply animate-spin rounded-full border-2 border-gray-200 border-t-primary-600 dark:border-slate-700 dark:border-t-primary-500;
 }
 
-/* Focus styles */
+/* ============================================
+   Focus styles
+   ============================================ */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
 }
 
 /* Hover effects */
 .hover-lift {
-  @apply transition-transform duration-200 hover:-translate-y-1;
+  @apply transition-transform duration-200 hover:-translate-y-0.5;
 }
 
 .hover-scale {
   @apply transition-transform duration-200 hover:scale-105;
 }
 
-  .focus-visible-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
-  }
+.focus-visible-ring {
+  @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2;
+}
 
-  .surface-elevated {
-    @apply bg-white border border-gray-200 shadow-sm rounded-2xl;
-  }
+.surface-elevated {
+  @apply bg-white border border-gray-100 dark:bg-slate-800 dark:border-slate-700;
+  box-shadow: var(--shadow-elevated);
+  border-radius: var(--radius-card);
+}
 
-/* Custom scrollbar */
+/* ============================================
+   Custom Scrollbar
+   ============================================ */
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  @apply bg-gray-100 rounded-full;
+  @apply bg-transparent rounded-full;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
+  @apply bg-gray-300/80 rounded-full dark:bg-slate-600/80;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
+  @apply bg-gray-400 dark:bg-slate-500;
 }
 
+/* ============================================
+   Reduced motion
+   ============================================ */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

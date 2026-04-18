@@ -316,37 +316,39 @@ const Menu = () => {
     return (
         <div className="max-w-7xl mx-auto">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">Our Menu</h1>
-                <p className="text-gray-600">Browse our delicious selection of food items</p>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Our Menu</h1>
+                <p className="text-gray-500 text-sm mt-1">Browse our delicious selection of food items</p>
                 {comboPacks.length > 0 && (
-                    <p className="text-sm text-primary-600 mt-2">
-                        🎉 {comboPacks.length} special combo pack{comboPacks.length > 1 ? 's' : ''} available now!
-                    </p>
+                    <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-xs font-semibold text-orange-700">
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                        {comboPacks.length} special combo pack{comboPacks.length > 1 ? 's' : ''} available now!
+                    </div>
                 )}
             </div>
 
             {/* Search and Filter Bar */}
-            <div className="bg-white p-4 rounded-lg shadow mb-8">
+            <div className="card p-4 mb-8">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5">
                             Search
                         </label>
                         <div className="relative">
+                            <FaSearch className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-3.5 h-3.5" />
                             <input
                                 type="text"
                                 placeholder="Search menu items..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                className="w-full pl-10 pr-9 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 focus:border-primary-400 hover:border-gray-300 bg-white transition-all duration-150 placeholder-gray-400"
                             />
-                            <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                             {searchTerm && (
                                 <button
                                     onClick={() => setSearchTerm('')}
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 rounded"
+                                    aria-label="Clear search"
                                 >
-                                    <FaTimes />
+                                    <FaTimes className="w-3 h-3" />
                                 </button>
                             )}
                         </div>
@@ -356,7 +358,7 @@ const Menu = () => {
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         options={categoryOptions}
-                        label="Filter by category"
+                        label="Category"
                         name="category"
                         placeholder="All categories"
                         helperText={categoryOptions.length > 0 ? 'Showing menu items and combo packs' : 'Categories load from available menu items'}
@@ -376,14 +378,13 @@ const Menu = () => {
             {loading ? (
                 <LoadingSkeleton type="card" count={8} />
             ) : filteredItems.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                     {filteredItems.map((item) => {
                         const stockBadge = getStockBadge(item);
                         return (
                             <div
                                 key={`${item.type || (item.isCombo ? 'combo' : 'menu')}:${item.id}`}
-                                className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${!item.isAvailable || item.stockQuantity === 0 ? 'opacity-60' : ''
-                                    } cursor-pointer`}
+                                className={`card overflow-hidden motion-surface cursor-pointer ${!item.isAvailable || item.stockQuantity === 0 ? 'opacity-60' : ''}`}
                                 role="button"
                                 tabIndex={0}
                                 onClick={() => handleOpenItemDetails(item)}
@@ -394,49 +395,49 @@ const Menu = () => {
                                     }
                                 }}
                             >
-                                <div className="h-48 bg-gray-200 flex items-center justify-center relative">
+                                <div className="h-48 bg-gray-100 flex items-center justify-center relative overflow-hidden">
                                     {item.image ? (
-                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" loading="lazy" />
                                     ) : (
-                                        <span className="text-gray-400 text-sm">No image available</span>
+                                        <span className="text-gray-400 text-sm">No image</span>
                                     )}
 
                                     {/* Out of Stock Overlay */}
                                     {(item.stockQuantity === 0 || !item.isAvailable) && (
-                                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                            <span className="text-white font-semibold">Out of Stock</span>
+                                        <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                                            <span className="text-white font-bold text-sm bg-black/40 px-3 py-1.5 rounded-full">Out of Stock</span>
                                         </div>
                                     )}
 
                                     {/* Combo Discount Badge */}
                                     {item.isCombo && item.discount > 0 && (
-                                        <div className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
-                                            <FaTag />
+                                        <div className="absolute top-2 right-2 bg-red-500 text-white px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                            <FaTag className="w-2.5 h-2.5" />
                                             {item.discount}% OFF
                                         </div>
                                     )}
 
                                     {/* Stock Badge */}
                                     {stockBadge && item.stockQuantity > 0 && (
-                                        <div className={`absolute top-2 left-2 ${stockBadge.className} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1`}>
-                                            {item.stockQuantity <= 5 && <FaExclamationTriangle />}
+                                        <div className={`absolute top-2 left-2 ${stockBadge.className} px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1`}>
+                                            {item.stockQuantity <= 5 && <FaExclamationTriangle className="w-2.5 h-2.5" />}
                                             {stockBadge.text}
                                         </div>
                                     )}
                                 </div>
                                 <div className="p-4">
-                                    <div className="flex items-start justify-between mb-1">
-                                        <h3 className="font-semibold text-lg">{item.name}</h3>
+                                    <div className="flex items-start justify-between mb-1 gap-2">
+                                        <h3 className="font-bold text-gray-900 leading-snug text-sm">{item.name}</h3>
                                         {item.isCombo && (
-                                            <span className="bg-primary-100 text-primary-800 text-xs px-2 py-0.5 rounded">COMBO</span>
+                                            <span className="shrink-0 bg-primary-100 text-primary-700 text-[10px] px-2 py-0.5 rounded-full font-bold uppercase">COMBO</span>
                                         )}
                                     </div>
-                                    <p className="text-sm text-gray-600 mb-3 line-clamp-2">{item.description}</p>
+                                    <p className="text-xs text-gray-500 mb-3 line-clamp-2 leading-relaxed">{item.description}</p>
 
                                     {/* Stock Info */}
                                     {!item.isCombo && item.stockQuantity !== null && (
-                                        <p className="text-xs text-gray-500 mb-2">
-                                            Stock: {item.stockQuantity > 0 ? `${item.stockQuantity} available` : 'Out of stock'}
+                                        <p className="text-[11px] text-gray-400 mb-2">
+                                            {item.stockQuantity > 0 ? `${item.stockQuantity} in stock` : 'Out of stock'}
                                         </p>
                                     )}
 
@@ -444,15 +445,15 @@ const Menu = () => {
                                         <div>
                                             {item.isCombo && item.originalPrice ? (
                                                 <div>
-                                                    <span className="text-sm text-gray-400 line-through">
+                                                    <span className="text-xs text-gray-400 line-through">
                                                         LKR {item.originalPrice.toFixed(2)}
                                                     </span>
-                                                    <span className="text-lg font-bold text-primary-600 ml-2">
+                                                    <span className="text-sm font-bold text-primary-600 ml-1.5">
                                                         LKR {item.price.toFixed(2)}
                                                     </span>
                                                 </div>
                                             ) : (
-                                                <span className="text-lg font-bold text-primary-600">
+                                                <span className="text-sm font-bold text-primary-600">
                                                     LKR {item.price.toFixed(2)}
                                                 </span>
                                             )}
@@ -466,7 +467,7 @@ const Menu = () => {
                                                 handleAddToCart(item);
                                             }}
                                         >
-                                            {item.stockQuantity === 0 || !item.isAvailable ? 'Unavailable' : 'Add to Cart'}
+                                            {item.stockQuantity === 0 || !item.isAvailable ? 'N/A' : 'Add'}
                                         </Button>
                                     </div>
                                 </div>

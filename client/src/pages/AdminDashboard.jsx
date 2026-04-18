@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../services/dashboardService';
 import { getOrders } from '../services/orderApi';
+import StatusBadge from '../components/ui/StatusBadge';
 import {
     FaClipboardList,
     FaUsers,
@@ -10,6 +11,7 @@ import {
     FaShoppingBag,
     FaTruck,
     FaCheckCircle,
+    FaArrowRight,
 } from 'react-icons/fa';
 
 const RevenueCurrencyIcon = ({ className = '' }) => (
@@ -122,28 +124,28 @@ const AdminDashboard = () => {
     return (
         <div className="p-6">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
-                <p className="text-gray-600">Welcome back! Here's what's happening today.</p>
+                <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Admin Dashboard</h1>
+                <p className="text-gray-500 text-sm mt-1">Welcome back! Here's what's happening today.</p>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
                 {stats.map((stat, index) => {
                     const Icon = stat.icon;
                     return (
                         <Link
                             key={index}
                             to={stat.link}
-                            className="bg-white rounded-lg shadow p-6 hover:shadow-lg transition-shadow"
+                            className="card p-5 motion-surface group"
                         >
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                                    <p className="text-2xl font-bold">{stat.value}</p>
-                                    <p className="text-sm text-green-600 mt-1">{stat.change}</p>
+                            <div className="flex items-start justify-between">
+                                <div className="min-w-0">
+                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">{stat.title}</p>
+                                    <p className="text-2xl font-bold text-gray-900 mt-1 truncate">{stat.value}</p>
+                                    <p className="text-xs text-secondary-600 mt-1 font-medium">{stat.change}</p>
                                 </div>
-                                <div className={`${stat.color} p-3 rounded-lg`}>
-                                    <Icon className="w-6 h-6 text-white" />
+                                <div className={`${stat.color} p-3 rounded-xl shrink-0 ml-3 shadow-sm`}>
+                                    <Icon className="w-5 h-5 text-white" />
                                 </div>
                             </div>
                         </Link>
@@ -151,37 +153,35 @@ const AdminDashboard = () => {
                 })}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Recent Orders */}
-                <div className="bg-white rounded-lg shadow">
-                    <div className="p-6 border-b">
+                <div className="card overflow-hidden">
+                    <div className="px-6 py-4 border-b border-gray-100">
                         <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-semibold">Recent Orders</h2>
-                            <Link to="/admin/orders" className="text-primary-600 hover:text-primary-700 text-sm font-medium">
-                                View All→
+                            <h2 className="text-base font-bold text-gray-900">Recent Orders</h2>
+                            <Link to="/admin/orders" className="text-primary-600 hover:text-primary-700 text-xs font-semibold flex items-center gap-1">
+                                View All <FaArrowRight className="w-3 h-3" />
                             </Link>
                         </div>
                     </div>
-                    <div className="divide-y">
+                    <div className="divide-y divide-gray-50">
                         {recentOrders.length === 0 ? (
-                            <div className="p-6 text-sm text-gray-500">No recent orders yet.</div>
+                            <div className="p-8 text-center text-sm text-gray-400">No recent orders yet.</div>
                         ) : recentOrders.map((order) => (
-                            <div key={order.id} className="p-4 hover:bg-gray-50">
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                        <div className="w-10 h-10 flex items-center justify-center">
+                            <div key={order.id} className="px-5 py-3.5 hover:bg-slate-50/60 transition-colors">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-8 h-8 flex items-center justify-center bg-gray-50 rounded-xl border border-gray-100 shrink-0">
                                             {getStatusIcon(order.status)}
                                         </div>
-                                        <div>
-                                            <p className="font-medium">{order.orderNumber}</p>
-                                            <p className="text-sm text-gray-600">{order.customer}</p>
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-sm text-gray-900 truncate">{order.orderNumber}</p>
+                                            <p className="text-xs text-gray-500 truncate">{order.customer}</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-semibold">LKR {order.total.toFixed(2)}</p>
-                                        <p className="text-xs text-gray-500">
-                                            {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
-                                        </p>
+                                    <div className="text-right shrink-0">
+                                        <p className="font-bold text-sm text-gray-900">LKR {order.total.toFixed(2)}</p>
+                                        <StatusBadge status={order.status} />
                                     </div>
                                 </div>
                             </div>
@@ -190,63 +190,49 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-                    <div className="grid grid-cols-2 gap-4">
-                        <Link
-                            to="/admin/menu"
-                            className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors text-center"
-                        >
-                            <FaShoppingBag className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                            <p className="font-medium">Manage Menu</p>
-                        </Link>
-                        <Link
-                            to="/admin/orders"
-                            className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors text-center"
-                        >
-                            <FaClipboardList className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                            <p className="font-medium">View Orders</p>
-                        </Link>
-                        <Link
-                            to="/admin/customers"
-                            className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors text-center"
-                        >
-                            <FaUsers className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                            <p className="font-medium">Customers</p>
-                        </Link>
-                        <Link
-                            to="/admin/analytics"
-                            className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors text-center"
-                        >
-                            <FaChartLine className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                            <p className="font-medium">View Analytics</p>
-                        </Link>
-                        <Link
-                            to="/delivery/map"
-                            className="p-4 border-2 border-gray-200 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-colors text-center"
-                        >
-                            <FaTruck className="w-8 h-8 mx-auto mb-2 text-primary-600" />
-                            <p className="font-medium">Live Delivery Map</p>
-                        </Link>
+                <div className="card p-6">
+                    <h2 className="text-base font-bold text-gray-900 mb-4">Quick Actions</h2>
+                    <div className="grid grid-cols-2 gap-3">
+                        {[
+                            { to: '/admin/menu', icon: FaShoppingBag, label: 'Manage Menu' },
+                            { to: '/admin/orders', icon: FaClipboardList, label: 'View Orders' },
+                            { to: '/admin/customers', icon: FaUsers, label: 'Customers' },
+                            { to: '/admin/analytics', icon: FaChartLine, label: 'Analytics' },
+                            { to: '/delivery/map', icon: FaTruck, label: 'Live Map' },
+                        ].map(({ to, icon: Icon, label }) => (
+                            <Link
+                                key={to}
+                                to={to}
+                                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-gray-100 hover:border-primary-200 hover:bg-primary-50/60 transition-all duration-150 text-center group"
+                            >
+                                <div className="w-10 h-10 rounded-xl bg-primary-50 flex items-center justify-center group-hover:bg-primary-100 transition-colors">
+                                    <Icon className="w-5 h-5 text-primary-600" />
+                                </div>
+                                <p className="text-xs font-semibold text-gray-700 group-hover:text-primary-700">{label}</p>
+                            </Link>
+                        ))}
                     </div>
                 </div>
             </div>
 
             {/* Today's Summary */}
-            <div className="mt-8 bg-gradient-to-r from-primary-600 to-primary-800 rounded-lg shadow text-white p-6">
-                <h2 className="text-xl font-semibold mb-4">Today's Summary</h2>
+            <div className="mt-6 bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 rounded-2xl text-white p-6" style={{ boxShadow: '0 4px 24px -4px rgba(220,38,38,0.25)' }}>
+                <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-base font-bold">Today's Summary</h2>
+                    <span className="text-xs text-primary-200 font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div>
-                        <p className="text-primary-200 text-sm">Orders Today</p>
-                        <p className="text-3xl font-bold">{statsData?.todayOrders ?? 0}</p>
+                    <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                        <p className="text-primary-200 text-xs font-semibold uppercase tracking-wide">Orders Today</p>
+                        <p className="text-3xl font-bold mt-1">{statsData?.todayOrders ?? 0}</p>
                     </div>
-                    <div>
-                        <p className="text-primary-200 text-sm">Revenue Today</p>
-                        <p className="text-3xl font-bold">LKR {(statsData?.todayRevenue ?? 0).toLocaleString()}</p>
+                    <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                        <p className="text-primary-200 text-xs font-semibold uppercase tracking-wide">Revenue Today</p>
+                        <p className="text-3xl font-bold mt-1">LKR {(statsData?.todayRevenue ?? 0).toLocaleString()}</p>
                     </div>
-                    <div>
-                        <p className="text-primary-200 text-sm">Active Orders</p>
-                        <p className="text-3xl font-bold">{statsData?.activeOrders ?? 0}</p>
+                    <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                        <p className="text-primary-200 text-xs font-semibold uppercase tracking-wide">Active Orders</p>
+                        <p className="text-3xl font-bold mt-1">{statsData?.activeOrders ?? 0}</p>
                     </div>
                 </div>
             </div>
