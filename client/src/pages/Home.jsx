@@ -12,6 +12,7 @@ const Home = () => {
     const { isAuthenticated } = useAuth();
     const [featuredItems, setFeaturedItems] = useState([]);
     const [isLoadingFeatured, setIsLoadingFeatured] = useState(true);
+    const [topCategories, setTopCategories] = useState([]);
     const [comboSpecials, setComboSpecials] = useState([]);
     const [isLoadingCombos, setIsLoadingCombos] = useState(true);
 
@@ -27,6 +28,46 @@ const Home = () => {
             try {
                 const response = await menuItemService.getAll({ isActive: 'true' });
                 if (response.success && Array.isArray(response.data)) {
+                    const categoryMap = new Map();
+
+                    response.data.forEach((item) => {
+                        const categoryId = item.CategoryID || item.category?.CategoryID;
+                        const categoryName = item.category?.Name || item.CategoryName;
+
+                        if (!categoryId || !categoryName) {
+                            return;
+                        }
+
+                        const categoryKey = String(categoryId);
+                        const imageCandidate = resolveImageUrl(item.ImageURL || item.Image_URL || null);
+
+                        if (!categoryMap.has(categoryKey)) {
+                            categoryMap.set(categoryKey, {
+                                id: categoryKey,
+                                name: categoryName,
+                                count: 0,
+                                image: imageCandidate
+                            });
+                        }
+
+                        const current = categoryMap.get(categoryKey);
+                        current.count += 1;
+                        if (!current.image && imageCandidate) {
+                            current.image = imageCandidate;
+                        }
+                    });
+
+                    const rankedCategories = Array.from(categoryMap.values())
+                        .sort((a, b) => {
+                            if (b.count !== a.count) {
+                                return b.count - a.count;
+                            }
+                            return a.name.localeCompare(b.name);
+                        })
+                        .slice(0, 6);
+
+                    setTopCategories(rankedCategories);
+
                     const items = response.data.slice(0, 4).map(item => ({
                         id: item.MenuItemID || item.ItemID,
                         name: item.Name,
@@ -39,10 +80,12 @@ const Home = () => {
                     setFeaturedItems(items);
                 } else {
                     setFeaturedItems([]);
+                    setTopCategories([]);
                 }
             } catch (error) {
                 console.error('Error loading featured items:', error);
                 setFeaturedItems([]);
+                setTopCategories([]);
             } finally {
                 setIsLoadingFeatured(false);
             }
@@ -288,6 +331,71 @@ const Home = () => {
                     </div>
                 </section>
             )}
+
+            {/* Top Categories Section */}
+            <section className="py-14 bg-white dark:bg-slate-900">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center mb-8">
+                        <div>
+                            <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight dark:text-slate-100">Top Categories</h2>
+                            <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">Browse menu by what you feel like eating</p>
+                        </div>
+                        <Link to="/menu" className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors dark:text-primary-400 dark:hover:text-primary-300">
+                            View Full Menu →
+                        </Link>
+                    </div>
+
+                    {isLoadingFeatured ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {Array.from({ length: 6 }).map((_, index) => (
+                                <div key={index} className="card overflow-hidden">
+                                    <div className="skeleton h-36" />
+                                    <div className="p-4 space-y-2">
+                                        <div className="skeleton h-4 w-2/3" />
+                                        <div className="skeleton h-3 w-1/2" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : topCategories.length > 0 ? (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                            {topCategories.map((category) => (
+                                <Link
+                                    key={category.id}
+                                    to={`/menu?category=${encodeURIComponent(category.id)}`}
+                                    className="card overflow-hidden motion-surface group"
+                                >
+                                    <div className="h-36 bg-gray-100 overflow-hidden dark:bg-slate-700">
+                                        {category.image ? (
+                                            <img
+                                                src={category.image}
+                                                alt={category.name}
+                                                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                                loading="lazy"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-gray-400 dark:text-slate-500">
+                                                <FaUtensils className="w-8 h-8" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="p-4 flex items-center justify-between gap-3">
+                                        <div>
+                                            <h3 className="font-bold text-gray-900 dark:text-slate-100">{category.name}</h3>
+                                            <p className="text-xs text-gray-500 mt-0.5 dark:text-slate-400">{category.count} item{category.count > 1 ? 's' : ''}</p>
+                                        </div>
+                                        <span className="text-primary-600 font-semibold text-sm dark:text-primary-400">Explore →</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="card p-8 text-center text-gray-500 text-sm dark:text-slate-400">
+                            Categories are not available yet. You can still browse all items from the menu.
+                        </div>
+                    )}
+                </div>
+            </section>
 
             {/* Features Section */}
             <section className="py-14 bg-slate-50 dark:bg-slate-900/50">

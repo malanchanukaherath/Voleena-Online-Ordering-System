@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { FaSearch, FaTimes, FaTag, FaExclamationTriangle } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import Select from '../components/ui/Select';
@@ -50,6 +50,7 @@ const dedupeDisplayItems = (items) => {
 };
 
 const Menu = () => {
+    const location = useLocation();
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('');
@@ -200,6 +201,12 @@ const Menu = () => {
         fetchCategories();
     }, []);
 
+    useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const queryCategory = params.get('category');
+        setSelectedCategory(queryCategory || '');
+    }, [location.search]);
+
     const categoryOptions = useMemo(() => {
         const sourceCategories = categories.length > 0
             ? categories.map(cat => ({
@@ -218,6 +225,29 @@ const Menu = () => {
 
         return [...sourceCategories, ...comboOption];
     }, [categories, menuItems, comboPacks]);
+
+    const selectedCategoryLabel = useMemo(() => {
+        if (!selectedCategory) {
+            return '';
+        }
+
+        return categoryOptions.find((option) => option.value === selectedCategory)?.label || 'Selected category';
+    }, [categoryOptions, selectedCategory]);
+
+    const updateCategoryFilter = useCallback((nextCategory) => {
+        const categoryValue = nextCategory || '';
+        setSelectedCategory(categoryValue);
+
+        const params = new URLSearchParams(location.search);
+        if (categoryValue) {
+            params.set('category', categoryValue);
+        } else {
+            params.delete('category');
+        }
+
+        const nextSearch = params.toString();
+        navigate(`${location.pathname}${nextSearch ? `?${nextSearch}` : ''}`, { replace: true });
+    }, [location.pathname, location.search, navigate]);
 
     // Convert combo packs to menu item format
     const comboMenuItems = useMemo(() => comboPacks.map(combo => ({
@@ -257,7 +287,7 @@ const Menu = () => {
 
     const clearFilters = () => {
         setSearchTerm('');
-        setSelectedCategory('');
+        updateCategoryFilter('');
     };
 
     // Get stock badge info
@@ -324,6 +354,22 @@ const Menu = () => {
                         {comboPacks.length} special combo pack{comboPacks.length > 1 ? 's' : ''} available now!
                     </div>
                 )}
+                {selectedCategory && (
+                    <div className="mt-2 flex items-center gap-2">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-50 border border-primary-200 text-xs font-semibold text-primary-700 dark:bg-primary-950/30 dark:border-primary-900/50 dark:text-primary-400">
+                            <span>Showing:</span>
+                            <span>{selectedCategoryLabel}</span>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => updateCategoryFilter('')}
+                            className="text-xs font-medium text-primary-700 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
+                            aria-label="Clear selected category"
+                        >
+                            Clear category
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Search and Filter Bar */}
@@ -356,7 +402,7 @@ const Menu = () => {
 
                     <Select
                         value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
+                        onChange={(e) => updateCategoryFilter(e.target.value)}
                         options={categoryOptions}
                         label="Category"
                         name="category"
