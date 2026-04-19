@@ -46,6 +46,25 @@ const toFiniteNumber = (value, fallback = null) => {
     return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+// Simple: This handles parse pinned destination from notes logic.
+const parsePinnedDestinationFromNotes = (rawNotes) => {
+    const notes = String(rawNotes || '');
+    const match = notes.match(/__VOLEENA_DEST_PIN__:\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+
+    if (!match) {
+        return null;
+    }
+
+    const lat = Number(match[1]);
+    const lng = Number(match[2]);
+
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+        return null;
+    }
+
+    return { lat, lng };
+};
+
 // Simple: This cleans or formats the order item add ons from notes.
 const parseOrderItemAddOnsFromNotes = (rawNotes, fallbackUnitPrice) => {
     const notes = String(rawNotes || '').trim();
@@ -164,6 +183,7 @@ const OrderTracking = () => {
 
     const mapOrderData = useCallback((data = {}) => {
         const deliveryPerson = data.delivery?.deliveryStaff || data.delivery?.staff || null;
+        const pinnedDestination = parsePinnedDestinationFromNotes(data.delivery?.DeliveryNotes || data.delivery?.deliveryNotes);
 
         return {
             id: data.OrderID,
@@ -189,8 +209,12 @@ const OrderTracking = () => {
                 line1: data.delivery.address.AddressLine1,
                 city: data.delivery.address.City,
                 district: data.delivery.address.District || '',
-                latitude: toFiniteNumber(data.delivery.address.Latitude ?? data.delivery.address.latitude),
-                longitude: toFiniteNumber(data.delivery.address.Longitude ?? data.delivery.address.longitude)
+                latitude: pinnedDestination
+                    ? pinnedDestination.lat
+                    : toFiniteNumber(data.delivery.address.Latitude ?? data.delivery.address.latitude),
+                longitude: pinnedDestination
+                    ? pinnedDestination.lng
+                    : toFiniteNumber(data.delivery.address.Longitude ?? data.delivery.address.longitude)
             } : null,
             deliveryPerson: deliveryPerson ? {
                 name: deliveryPerson.Name,

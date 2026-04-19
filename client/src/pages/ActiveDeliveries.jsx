@@ -16,6 +16,24 @@ const ActiveDeliveries = () => {
         return Number.isNaN(timestamp) ? 0 : timestamp;
     };
 
+    // Simple: This cleans or formats the address for maps.
+    const normalizeAddressForMaps = (rawAddress) => {
+        let normalized = String(rawAddress || '').replace(/\s+/g, ' ').trim();
+
+        if (!normalized) {
+            return '';
+        }
+
+        // Convert common house number style like "33,12" to "33/12" for better map matching.
+        normalized = normalized.replace(/^(\d+)\s*,\s*(\d+)(?=\b)/, '$1/$2');
+
+        if (!/sri\s*lanka/i.test(normalized)) {
+            normalized = `${normalized}, Sri Lanka`;
+        }
+
+        return normalized;
+    };
+
     // Simple: This cleans or formats the special instructions.
     const normalizeSpecialInstructions = (order) => {
         const rawValue = order?.SpecialInstructions ?? order?.specialInstructions ?? order?.special_instructions ?? '';
@@ -57,10 +75,14 @@ const ActiveDeliveries = () => {
                         phone: delivery.order?.customer?.Phone || '',
                         specialInstructions: normalizeSpecialInstructions(delivery.order),
                         address: delivery.address
-                            ? [delivery.address.AddressLine1, delivery.address.City].filter(Boolean).join(', ')
+                            ? [delivery.address.AddressLine1, delivery.address.City, delivery.address.District, delivery.address.PostalCode].filter(Boolean).join(', ')
                             : 'N/A',
-                        lat: delivery.address?.Latitude != null ? Number(delivery.address.Latitude) : null,
-                        lng: delivery.address?.Longitude != null ? Number(delivery.address.Longitude) : null,
+                        lat: delivery.PinnedLatitude != null
+                            ? Number(delivery.PinnedLatitude)
+                            : (delivery.address?.Latitude != null ? Number(delivery.address.Latitude) : null),
+                        lng: delivery.PinnedLongitude != null
+                            ? Number(delivery.PinnedLongitude)
+                            : (delivery.address?.Longitude != null ? Number(delivery.address.Longitude) : null),
                         status: delivery.Status,
                         assignedAt: delivery.AssignedAt || delivery.createdAt || delivery.created_at || delivery.order?.CreatedAt || null,
                     }))
@@ -123,7 +145,10 @@ const ActiveDeliveries = () => {
             return `https://www.google.com/maps/dir/?api=1&destination=${delivery.lat},${delivery.lng}&travelmode=driving`;
         }
 
-        return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(delivery.address)}&travelmode=driving`;
+        const normalizedAddress = normalizeAddressForMaps(delivery.address);
+        return normalizedAddress
+            ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(normalizedAddress)}&travelmode=driving`
+            : null;
     };
 
     return (

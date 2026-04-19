@@ -70,6 +70,24 @@ const DeliveryMap = () => {
         return normalized || '';
     };
 
+    // Simple: This cleans or formats the address for maps.
+    const normalizeAddressForMaps = (rawAddress) => {
+        let normalized = String(rawAddress || '').replace(/\s+/g, ' ').trim();
+
+        if (!normalized) {
+            return '';
+        }
+
+        // Convert common house number style like "33,12" to "33/12" for better map matching.
+        normalized = normalized.replace(/^(\d+)\s*,\s*(\d+)(?=\b)/, '$1/$2');
+
+        if (!/sri\s*lanka/i.test(normalized)) {
+            normalized = `${normalized}, Sri Lanka`;
+        }
+
+        return normalized;
+    };
+
     const requestCurrentLocation = useCallback(() => {
         if (!navigator.geolocation) {
             setLocationPermission('unavailable');
@@ -119,8 +137,12 @@ const DeliveryMap = () => {
 
                 const formattedDeliveries = data.map((delivery) => {
                     const distanceKm = toFiniteNumber(delivery.DistanceKm, 5);
-                    const destinationLat = toFiniteNumber(delivery.address?.Latitude);
-                    const destinationLng = toFiniteNumber(delivery.address?.Longitude);
+                    const destinationLat = delivery.PinnedLatitude != null
+                        ? toFiniteNumber(delivery.PinnedLatitude)
+                        : toFiniteNumber(delivery.address?.Latitude);
+                    const destinationLng = delivery.PinnedLongitude != null
+                        ? toFiniteNumber(delivery.PinnedLongitude)
+                        : toFiniteNumber(delivery.address?.Longitude);
 
                     return {
                         id: delivery.DeliveryID,
@@ -129,7 +151,7 @@ const DeliveryMap = () => {
                         specialInstructions: normalizeSpecialInstructions(delivery.order),
                         phone: delivery.order?.customer?.Phone || '',
                         address: delivery.address
-                            ? `${delivery.address.AddressLine1 || ''}, ${delivery.address.City || ''}`
+                            ? [delivery.address.AddressLine1, delivery.address.City, delivery.address.District, delivery.address.PostalCode].filter(Boolean).join(', ')
                             : 'N/A',
                         status: delivery.Status,
                         // CRITICAL FIX: Store both current location and destination
@@ -248,10 +270,10 @@ const DeliveryMap = () => {
 
         const destination = hasCoordinates
             ? `${delivery.lat},${delivery.lng}`
-            : encodeURIComponent(delivery.address);
+            : encodeURIComponent(normalizeAddressForMaps(delivery.address));
 
-        if (Number.isFinite(currentLocation?.lat) && Number.isFinite(currentLocation?.lng)) {
-            return `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination}&travelmode=driving`;
+        if (!destination) {
+            return null;
         }
 
         return `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;

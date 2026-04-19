@@ -26,6 +26,29 @@ const isAddressTableMissingError = (error) => {
 // Simple: This checks whether admin request is true.
 const isAdminRequest = (req) => req.user?.type === 'Staff' && req.user?.role === 'Admin';
 
+// Simple: This handles parse pinned destination from notes logic.
+const parsePinnedDestinationFromNotes = (rawNotes) => {
+  const notes = String(rawNotes || '');
+  const match = notes.match(/__VOLEENA_DEST_PIN__:\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+
+  if (!match) {
+    return null;
+  }
+
+  const lat = Number(match[1]);
+  const lng = Number(match[2]);
+
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    return null;
+  }
+
+  if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+    return null;
+  }
+
+  return { lat, lng };
+};
+
 // Simple: This cleans or formats the notification preference.
 const normalizeNotificationPreference = (value) => {
   const normalized = String(value || 'BOTH').toUpperCase();
@@ -162,9 +185,21 @@ exports.getMyDeliveries = async (req, res) => {
       order: [['AssignedAt', 'DESC'], ['created_at', 'DESC']]
     });
 
+    const deliveriesWithPinnedDestination = deliveries.map((delivery) => {
+      const plainDelivery = delivery.toJSON ? delivery.toJSON() : delivery;
+      const pinnedDestination = parsePinnedDestinationFromNotes(plainDelivery.DeliveryNotes);
+
+      if (pinnedDestination) {
+        plainDelivery.PinnedLatitude = pinnedDestination.lat;
+        plainDelivery.PinnedLongitude = pinnedDestination.lng;
+      }
+
+      return plainDelivery;
+    });
+
     return res.json({
       success: true,
-      data: deliveries
+      data: deliveriesWithPinnedDestination
     });
   } catch (error) {
     console.error('Get my deliveries error:', error);

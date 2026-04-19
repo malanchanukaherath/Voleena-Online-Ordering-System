@@ -42,6 +42,7 @@ const markAddressUnavailableError = (error) => {
 };
 
 const CUSTOMER_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
+const DELIVERY_DESTINATION_PIN_PREFIX = '__VOLEENA_DEST_PIN__:';
 // Simple: This cleans or formats the phone.
 const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
 
@@ -346,6 +347,7 @@ class OrderService {
             let deliveryDistance = 0;
             let deliveryDurationSeconds = null;
             let validatedAddressId = null;
+            let pinnedDestinationCoordinates = null;
             if (orderType === 'DELIVERY') {
                 if (!addressId) {
                     throw new Error('Address is required for delivery orders');
@@ -373,25 +375,30 @@ class OrderService {
                 const payloadLatitude = Number(orderData?.deliveryCoordinates?.latitude);
                 const payloadLongitude = Number(orderData?.deliveryCoordinates?.longitude);
                 const hasPayloadCoordinates = isUsableCoordinatePair(payloadLatitude, payloadLongitude);
+                if (hasPayloadCoordinates) {
+                    pinnedDestinationCoordinates = {
+                        latitude: payloadLatitude,
+                        longitude: payloadLongitude
+                    };
+                }
 
                 let deliveryLatitude = Number(address.Latitude);
                 let deliveryLongitude = Number(address.Longitude);
 
-                if (!isUsableCoordinatePair(deliveryLatitude, deliveryLongitude)) {
-                    if (hasPayloadCoordinates) {
-                        deliveryLatitude = payloadLatitude;
-                        deliveryLongitude = payloadLongitude;
-                    } else {
-                        try {
-                            const addressText = [address.AddressLine1, address.City, address.PostalCode]
-                                .filter(Boolean)
-                                .join(', ');
-                            const geocoded = await geocodeAddress(addressText, address.City);
-                            deliveryLatitude = Number(geocoded.lat);
-                            deliveryLongitude = Number(geocoded.lng);
-                        } catch (geocodeError) {
-                            throw new Error('Unable to validate delivery distance for this address. Please update your address details or use GPS pinning at checkout.');
-                        }
+                if (hasPayloadCoordinates) {
+                    // PIN mode should override saved address coordinates for this order.
+                    deliveryLatitude = payloadLatitude;
+                    deliveryLongitude = payloadLongitude;
+                } else if (!isUsableCoordinatePair(deliveryLatitude, deliveryLongitude)) {
+                    try {
+                        const addressText = [address.AddressLine1, address.City, address.PostalCode]
+                            .filter(Boolean)
+                            .join(', ');
+                        const geocoded = await geocodeAddress(addressText, address.City);
+                        deliveryLatitude = Number(geocoded.lat);
+                        deliveryLongitude = Number(geocoded.lng);
+                    } catch (geocodeError) {
+                        throw new Error('Unable to validate delivery distance for this address. Please update your address details or use GPS pinning at checkout.');
                     }
                 }
 
@@ -586,11 +593,16 @@ class OrderService {
 
             // Create delivery record if delivery order
             if (orderType === 'DELIVERY') {
+                const destinationPinNote = pinnedDestinationCoordinates
+                    ? `${DELIVERY_DESTINATION_PIN_PREFIX}${pinnedDestinationCoordinates.latitude},${pinnedDestinationCoordinates.longitude}`
+                    : null;
+
                 await Delivery.create({
                     OrderID: order.OrderID,
                     AddressID: validatedAddressId,
                     Status: 'PENDING',
                     DistanceKm: deliveryDistance,
+                    DeliveryNotes: destinationPinNote,
                     EstimatedDeliveryTime: calculateEstimatedDeliveryTime({
                         stage: 'CONFIRMED',
                         durationSeconds: deliveryDurationSeconds,

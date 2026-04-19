@@ -36,6 +36,24 @@ const DeliveryDashboard = () => {
         return normalized || '';
     };
 
+    // Simple: This cleans or formats the address for maps.
+    const normalizeAddressForMaps = (rawAddress) => {
+        let normalized = String(rawAddress || '').replace(/\s+/g, ' ').trim();
+
+        if (!normalized) {
+            return '';
+        }
+
+        // Convert common house number style like "33,12" to "33/12" for better map matching.
+        normalized = normalized.replace(/^(\d+)\s*,\s*(\d+)(?=\b)/, '$1/$2');
+
+        if (!/sri\s*lanka/i.test(normalized)) {
+            normalized = `${normalized}, Sri Lanka`;
+        }
+
+        return normalized;
+    };
+
     const {
         queueStatusUpdate,
         cancelPendingUpdate,
@@ -88,10 +106,14 @@ const DeliveryDashboard = () => {
                                 || delivery.order?.verified_profile_phone
                                 || (delivery.order?.customer?.IsPhoneVerified ? delivery.order?.customer?.Phone : ''),
                             address: delivery.address
-                                ? [delivery.address.AddressLine1, delivery.address.City, delivery.address.District].filter(Boolean).join(', ')
+                                ? [delivery.address.AddressLine1, delivery.address.City, delivery.address.District, delivery.address.PostalCode].filter(Boolean).join(', ')
                                 : 'N/A',
-                            lat: delivery.address?.Latitude != null ? Number(delivery.address.Latitude) : null,
-                            lng: delivery.address?.Longitude != null ? Number(delivery.address.Longitude) : null,
+                            lat: delivery.PinnedLatitude != null
+                                ? Number(delivery.PinnedLatitude)
+                                : (delivery.address?.Latitude != null ? Number(delivery.address.Latitude) : null),
+                            lng: delivery.PinnedLongitude != null
+                                ? Number(delivery.PinnedLongitude)
+                                : (delivery.address?.Longitude != null ? Number(delivery.address.Longitude) : null),
                             status: delivery.Status,
                             assignedAt: delivery.AssignedAt || delivery.createdAt || delivery.created_at || delivery.order?.CreatedAt || null,
                         }))
@@ -288,15 +310,13 @@ const DeliveryDashboard = () => {
 
         const destination = hasCoordinates
             ? `${delivery.lat},${delivery.lng}`
-            : encodeURIComponent(delivery.address);
+            : encodeURIComponent(normalizeAddressForMaps(delivery.address));
 
-        if (Number.isFinite(currentLocation?.lat) && Number.isFinite(currentLocation?.lng)) {
-            return `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination}&travelmode=driving`;
+        if (!destination) {
+            return null;
         }
 
-        return hasCoordinates
-            ? `https://www.google.com/maps/search/?api=1&query=${destination}`
-            : `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
+        return `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
     };
 
     return (
