@@ -248,6 +248,9 @@ const Home = () => {
                                 <p className="text-xs text-indigo-600 mt-1.5 dark:text-indigo-400">
                                     Low on stock? Submit as preorder with your preferred date.
                                 </p>
+                                <p className="text-xs text-indigo-600 mt-1 dark:text-indigo-400">
+                                    or contact us +94 11 234 5678
+                                </p>
                             </div>
                             <div className="flex gap-3 shrink-0">
                                 <Link to="/menu">
