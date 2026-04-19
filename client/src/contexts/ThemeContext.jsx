@@ -4,6 +4,7 @@ const ThemeContext = createContext(null);
 
 const STORAGE_KEY = 'voleena-theme';
 
+// Code Review: Function getInitialTheme in client\src\contexts\ThemeContext.jsx. Used in: client/src/contexts/ThemeContext.jsx.
 const getInitialTheme = () => {
     try {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -18,6 +19,7 @@ const getInitialTheme = () => {
     return 'light';
 };
 
+// Code Review: Function applyTheme in client\src\contexts\ThemeContext.jsx. Used in: client/src/contexts/ThemeContext.jsx.
 const applyTheme = (theme) => {
     const root = document.documentElement;
     if (theme === 'dark') {
@@ -27,6 +29,7 @@ const applyTheme = (theme) => {
     }
 };
 
+// Code Review: Function ThemeProvider in client\src\contexts\ThemeContext.jsx. Used in: client/src/App.jsx, client/src/contexts/ThemeContext.jsx.
 export const ThemeProvider = ({ children }) => {
     const [theme, setTheme] = useState(() => {
         const initial = getInitialTheme();
@@ -51,6 +54,7 @@ export const ThemeProvider = ({ children }) => {
     // Sync with OS preference changes (when user hasn't manually set a preference)
     useEffect(() => {
         const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        // Code Review: Function handleChange in client\src\contexts\ThemeContext.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
         const handleChange = (e) => {
             try {
                 const stored = localStorage.getItem(STORAGE_KEY);
@@ -75,6 +79,7 @@ export const ThemeProvider = ({ children }) => {
     );
 };
 
+// Code Review: Function useTheme in client\src\contexts\ThemeContext.jsx. Used in: client/src/App.jsx, client/src/components/layout/Header.jsx, client/src/contexts/ThemeContext.jsx.
 export const useTheme = () => {
     const context = useContext(ThemeContext);
     if (!context) {

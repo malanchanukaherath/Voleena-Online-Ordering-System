@@ -4,6 +4,7 @@ import { FaCheckCircle, FaClipboardList, FaHome } from 'react-icons/fa';
 import Button from '../components/ui/Button';
 import { getOrderById } from '../services/orderApi';
 
+// Code Review: Function OrderConfirmation in client\src\pages\OrderConfirmation.jsx. Used in: client/src/pages/Feedback.jsx, client/src/pages/OrderConfirmation.jsx, client/src/routes/AppRoutes.jsx.
 const OrderConfirmation = () => {
     const { orderId } = useParams();
     const location = useLocation();
@@ -15,6 +16,7 @@ const OrderConfirmation = () => {
     useEffect(() => {
         let isMounted = true;
 
+        // Code Review: Function loadOrder in client\src\pages\OrderConfirmation.jsx. Used in: client/src/pages/Feedback.jsx, client/src/pages/OrderConfirmation.jsx.
         const loadOrder = async () => {
             try {
                 setLoading(true);

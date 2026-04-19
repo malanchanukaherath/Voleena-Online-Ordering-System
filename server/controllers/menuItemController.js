@@ -15,6 +15,7 @@ const {
     setConfiguredAddOnIdsForMenuItem
 } = require('../utils/orderAddOnUtils');
 
+// Code Review: Function createMenuItem in server\controllers\menuItemController.js. Used in: server/controllers/menuItemController.js, server/routes/menuItems.js, server/tests/route-contracts.test.js.
 const createMenuItem = async (req, res) => {
     try {
         const { Name, Description, Price, CategoryID, IsActive, ImageURL } = req.body;
@@ -56,6 +57,7 @@ const createMenuItem = async (req, res) => {
     }
 };
 
+// Code Review: Function getAllMenuItems in server\controllers\menuItemController.js. Used in: client/src/services/dashboardService.js, server/controllers/kitchenController.js, server/controllers/menuItemController.js.
 const getAllMenuItems = async (req, res) => {
     try {
         const { categoryId, isActive, search } = req.query;
@@ -129,6 +131,7 @@ const getAllMenuItems = async (req, res) => {
     }
 };
 
+// Code Review: Function getMenuItem in server\controllers\menuItemController.js. Used in: server/controllers/menuItemController.js, server/routes/menuItems.js, server/tests/route-contracts.test.js.
 const getMenuItem = async (req, res) => {
     try {
         const { id } = req.params;
@@ -158,6 +161,7 @@ const getMenuItem = async (req, res) => {
     }
 };
 
+// Code Review: Function updateMenuItem in server\controllers\menuItemController.js. Used in: server/controllers/menuItemController.js, server/routes/menuItems.js, server/tests/route-contracts.test.js.
 const updateMenuItem = async (req, res) => {
     try {
         const { id } = req.params;
@@ -217,6 +221,7 @@ const updateMenuItem = async (req, res) => {
     }
 };
 
+// Code Review: Function deleteMenuItem in server\controllers\menuItemController.js. Used in: server/controllers/menuItemController.js, server/routes/menuItems.js, server/tests/route-contracts.test.js.
 const deleteMenuItem = async (req, res) => {
     try {
         const { id } = req.params;
@@ -238,6 +243,7 @@ const deleteMenuItem = async (req, res) => {
     }
 };
 
+// Code Review: Function uploadImage in server\controllers\menuItemController.js. Used in: client/src/components/ImageUpload.jsx, client/src/services/menuService.js, server/controllers/comboPackController.js.
 const uploadImage = async (req, res) => {
     try {
         const { id } = req.params;
@@ -283,6 +289,7 @@ const uploadImage = async (req, res) => {
     }
 };
 
+// Code Review: Function getMenuItemAddOnConfig in server\controllers\menuItemController.js. Used in: server/controllers/menuItemController.js, server/routes/menuItems.js, server/tests/route-contracts.test.js.
 const getMenuItemAddOnConfig = async (req, res) => {
     try {
         const { id } = req.params;
@@ -313,6 +320,7 @@ const getMenuItemAddOnConfig = async (req, res) => {
     }
 };
 
+// Code Review: Function updateMenuItemAddOnConfig in server\controllers\menuItemController.js. Used in: server/controllers/menuItemController.js, server/routes/menuItems.js, server/tests/route-contracts.test.js.
 const updateMenuItemAddOnConfig = async (req, res) => {
     try {
         const { id } = req.params;
@@ -345,6 +353,7 @@ const updateMenuItemAddOnConfig = async (req, res) => {
     }
 };
 
+// Code Review: Function getAddOnCatalog in server\controllers\menuItemController.js. Used in: client/src/pages/AddOnManagement.jsx, client/src/services/menuService.js, server/controllers/menuItemController.js.
 const getAddOnCatalog = async (req, res) => {
     try {
         const includeInactive = String(req.query?.includeInactive || '').toLowerCase() === 'true';
@@ -361,6 +370,7 @@ const getAddOnCatalog = async (req, res) => {
     }
 };
 
+// Code Review: Function createAddOnCatalogItem in server\controllers\menuItemController.js. Used in: client/src/pages/AddOnManagement.jsx, client/src/services/menuService.js, server/controllers/menuItemController.js.
 const createAddOnCatalogItem = async (req, res) => {
     try {
         const created = await createAddOnCatalogEntry(req.body || {}, req.user?.id || null);
@@ -377,6 +387,7 @@ const createAddOnCatalogItem = async (req, res) => {
     }
 };
 
+// Code Review: Function updateAddOnCatalogItem in server\controllers\menuItemController.js. Used in: client/src/pages/AddOnManagement.jsx, client/src/services/menuService.js, server/controllers/menuItemController.js.
 const updateAddOnCatalogItem = async (req, res) => {
     try {
         const updated = await updateAddOnCatalogEntry(req.params.id, req.body || {}, req.user?.id || null);
@@ -399,6 +410,7 @@ const updateAddOnCatalogItem = async (req, res) => {
     }
 };
 
+// Code Review: Function deactivateAddOnCatalogItem in server\controllers\menuItemController.js. Used in: server/controllers/menuItemController.js, server/routes/menuItems.js, server/tests/route-contracts.test.js.
 const deactivateAddOnCatalogItem = async (req, res) => {
     try {
         const deactivated = await deactivateAddOnCatalogEntry(req.params.id, req.user?.id || null);

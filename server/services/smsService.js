@@ -33,8 +33,10 @@ if (shouldUseTwilio && (hasApiKeyCredentials || hasLegacyCredentials)) {
     );
 }
 
+// Code Review: Function normalizePhone in server\services\smsService.js. Used in: server/controllers/orderController.js, server/routes/customers.js, server/services/orderService.js.
 const normalizePhone = (phone) => String(phone || '').trim();
 
+// Code Review: Function buildInvalidPhoneError in server\services\smsService.js. Used in: server/services/smsService.js.
 const buildInvalidPhoneError = (rawPhone) => {
     const error = new Error('Recipient phone number must be in international format (E.164).');
     error.code = 'INVALID_RECIPIENT_PHONE';
@@ -43,6 +45,7 @@ const buildInvalidPhoneError = (rawPhone) => {
     return error;
 };
 
+// Code Review: Function normalizePhoneForSms in server\services\smsService.js. Used in: server/services/smsService.js.
 const normalizePhoneForSms = (phone) => {
     const rawPhone = normalizePhone(phone);
     if (!rawPhone) {
@@ -79,6 +82,7 @@ const normalizePhoneForSms = (phone) => {
     return `+${countryDigits}${nationalNumber}`;
 };
 
+// Code Review: Function mapProviderPhoneError in server\services\smsService.js. Used in: server/services/smsService.js.
 const mapProviderPhoneError = (error, rawPhone) => {
     const code = String(error?.code || '');
     const message = String(error?.message || '').toLowerCase();
@@ -100,6 +104,7 @@ const mapProviderPhoneError = (error, rawPhone) => {
     return error;
 };
 
+// Code Review: Function buildAuditableMessage in server\services\smsService.js. Used in: server/services/smsService.js.
 const buildAuditableMessage = (message, containsSensitiveContent) => {
     if (containsSensitiveContent) {
         return '[REDACTED] Sensitive SMS content';
@@ -108,6 +113,7 @@ const buildAuditableMessage = (message, containsSensitiveContent) => {
     return message;
 };
 
+// Code Review: Function logNotification in server\services\smsService.js. Used in: server/services/smsService.js.
 async function logNotification(payload) {
     if (!Notification || typeof Notification.create !== 'function') {
         return false;
@@ -126,6 +132,7 @@ async function logNotification(payload) {
 /**
  * Send SMS message
  */
+// Code Review: Function sendSMS in server\services\smsService.js. Used in: server/services/smsService.js, server/utils/notificationService.js.
 async function sendSMS(to, message, relatedOrderId = null, options = {}) {
     const containsSensitiveContent = Boolean(options.containsSensitiveContent);
     const recipientId = Number.isInteger(options.recipientId) && options.recipientId > 0
@@ -242,6 +249,7 @@ async function sendSMS(to, message, relatedOrderId = null, options = {}) {
 /**
  * Send OTP via SMS (FR28)
  */
+// Code Review: Function sendOTPSMS in server\services\smsService.js. Used in: server/controllers/authController.js, server/routes/customers.js, server/services/smsService.js.
 async function sendOTPSMS(phone, otp, purpose, metadata = {}) {
     const purposeMessages = {
         EMAIL_VERIFICATION: 'email verification',
@@ -262,6 +270,7 @@ async function sendOTPSMS(phone, otp, purpose, metadata = {}) {
 /**
  * Send order confirmation SMS (FR15)
  */
+// Code Review: Function sendOrderConfirmationSMS in server\services\smsService.js. Used in: server/services/orderService.js, server/services/smsService.js.
 async function sendOrderConfirmationSMS(phone, orderNumber, metadata = {}) {
     const message = `Your Voleena Foods order #${orderNumber} has been confirmed. You will receive updates as it progresses. Thank you!`;
 
@@ -274,6 +283,7 @@ async function sendOrderConfirmationSMS(phone, orderNumber, metadata = {}) {
 /**
  * Send order status update SMS (FR15)
  */
+// Code Review: Function sendOrderStatusUpdateSMS in server\services\smsService.js. Used in: server/controllers/deliveryController.js, server/services/orderService.js, server/services/smsService.js.
 async function sendOrderStatusUpdateSMS(phone, orderNumber, status, metadata = {}) {
     const statusMessages = {
         CONFIRMED: 'confirmed',
@@ -295,6 +305,7 @@ async function sendOrderStatusUpdateSMS(phone, orderNumber, status, metadata = {
 /**
  * Send delivery notification SMS
  */
+// Code Review: Function sendDeliveryNotificationSMS in server\services\smsService.js. Used in: server/services/smsService.js.
 async function sendDeliveryNotificationSMS(phone, orderNumber, estimatedTime, metadata = {}) {
     const message = `Your order #${orderNumber} is on the way! Estimated delivery: ${estimatedTime} minutes. Our delivery staff will contact you shortly.`;
 

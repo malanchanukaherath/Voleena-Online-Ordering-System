@@ -46,10 +46,12 @@ const DEFAULT_SETTINGS = Object.freeze({
 
 const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
+// Code Review: Function cloneDefaultSettings in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function cloneDefaultSettings() {
     return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
 }
 
+// Code Review: Function normalizeString in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function normalizeString(value, fallback) {
     if (typeof value !== 'string') {
         return fallback;
@@ -59,6 +61,7 @@ function normalizeString(value, fallback) {
     return trimmed || fallback;
 }
 
+// Code Review: Function normalizeOrderPrefix in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function normalizeOrderPrefix(value, fallback) {
     const normalized = normalizeString(value, fallback)
         .toUpperCase()
@@ -72,6 +75,7 @@ function normalizeOrderPrefix(value, fallback) {
     return normalized;
 }
 
+// Code Review: Function normalizeNumber in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function normalizeNumber(value, fallback, { min = Number.NEGATIVE_INFINITY, max = Number.POSITIVE_INFINITY, isInteger = false } = {}) {
     const parsed = Number(value);
 
@@ -87,6 +91,7 @@ function normalizeNumber(value, fallback, { min = Number.NEGATIVE_INFINITY, max 
     return normalized;
 }
 
+// Code Review: Function normalizeBoolean in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function normalizeBoolean(value, fallback) {
     if (typeof value === 'boolean') {
         return value;
@@ -98,6 +103,7 @@ function normalizeBoolean(value, fallback) {
     return fallback;
 }
 
+// Code Review: Function normalizeBusinessHours in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function normalizeBusinessHours(hours) {
     const defaults = cloneDefaultSettings().businessHours;
 
@@ -121,6 +127,7 @@ function normalizeBusinessHours(hours) {
     return normalized;
 }
 
+// Code Review: Function normalizeSettings in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function normalizeSettings(rawSettings) {
     const defaults = cloneDefaultSettings();
     const source = rawSettings && typeof rawSettings === 'object' ? rawSettings : {};
@@ -154,6 +161,7 @@ function normalizeSettings(rawSettings) {
     };
 }
 
+// Code Review: Function normalizeCacheTtl in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function normalizeCacheTtl() {
     if (!Number.isFinite(SETTINGS_CACHE_TTL_MS) || SETTINGS_CACHE_TTL_MS < 0) {
         return 30000;
@@ -161,11 +169,13 @@ function normalizeCacheTtl() {
     return SETTINGS_CACHE_TTL_MS;
 }
 
+// Code Review: Function invalidateSettingsCache in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function invalidateSettingsCache() {
     cachedAdminSettings = null;
     cachedAt = 0;
 }
 
+// Code Review: Function getPublicSettingsFromAdminSettings in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function getPublicSettingsFromAdminSettings(settings) {
     return {
         restaurantName: settings.restaurantName,
@@ -196,6 +206,7 @@ function getPublicSettingsFromAdminSettings(settings) {
     };
 }
 
+// Code Review: Function getSystemSettingModel in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function getSystemSettingModel() {
     try {
         const models = require('../models');
@@ -211,6 +222,7 @@ function getSystemSettingModel() {
     }
 }
 
+// Code Review: Function isSystemSettingsTableMissingError in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function isSystemSettingsTableMissingError(error) {
     const mysqlCode = error?.original?.code || error?.parent?.code;
     const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -225,6 +237,7 @@ function isSystemSettingsTableMissingError(error) {
     );
 }
 
+// Code Review: Function parseStoredSettings in server\services\systemSettingsService.js. Used in: server/services/systemSettingsService.js.
 function parseStoredSettings(settingValue) {
     if (!settingValue || typeof settingValue !== 'string') {
         return {};
@@ -238,6 +251,7 @@ function parseStoredSettings(settingValue) {
     }
 }
 
+// Code Review: Function getAdminSettings in server\services\systemSettingsService.js. Used in: server/controllers/adminController.js, server/services/systemSettingsService.js.
 async function getAdminSettings() {
     const ttlMs = normalizeCacheTtl();
     if (cachedAdminSettings && Date.now() - cachedAt < ttlMs) {
@@ -270,15 +284,18 @@ async function getAdminSettings() {
     }
 }
 
+// Code Review: Function getRuntimeSettings in server\services\systemSettingsService.js. Used in: server/controllers/cartController.js, server/controllers/deliveryController.js, server/services/automatedJobs.js.
 async function getRuntimeSettings() {
     return getAdminSettings();
 }
 
+// Code Review: Function getPublicSettings in server\services\systemSettingsService.js. Used in: client/src/hooks/usePublicSettings.js, client/src/services/publicSettingsApi.js, server/routes/settings.js.
 async function getPublicSettings() {
     const settings = await getAdminSettings();
     return getPublicSettingsFromAdminSettings(settings);
 }
 
+// Code Review: Function updateAdminSettings in server\services\systemSettingsService.js. Used in: server/controllers/adminController.js, server/services/systemSettingsService.js.
 async function updateAdminSettings(rawSettings, updatedBy = null) {
     if (!rawSettings || typeof rawSettings !== 'object' || Array.isArray(rawSettings)) {
         const validationError = new Error('Settings payload must be a JSON object');

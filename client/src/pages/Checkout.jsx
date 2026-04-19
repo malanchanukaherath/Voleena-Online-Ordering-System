@@ -25,6 +25,7 @@ const DELIVERY_LOCATION_MODES = {
     PIN: 'PIN',
 };
 
+// Code Review: Function mapSavedAddress in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
 const mapSavedAddress = (address = {}) => ({
     id: address.AddressID ?? address.address_id ?? address.id ?? null,
     addressLine1: (address.AddressLine1 ?? address.addressLine1 ?? '').trim(),
@@ -33,11 +34,13 @@ const mapSavedAddress = (address = {}) => ({
     postalCode: (address.PostalCode ?? address.postalCode ?? '').trim(),
 });
 
+// Code Review: Function formatSavedAddressLabel in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
 const formatSavedAddressLabel = (address) => {
     const parts = [address.addressLine1, address.city, address.postalCode].filter(Boolean);
     return parts.join(', ');
 };
 
+// Code Review: Function normalizeCheckoutAddOns in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
 const normalizeCheckoutAddOns = (addOns) => {
     return (Array.isArray(addOns) ? addOns : [])
         .map((entry) => {
@@ -54,6 +57,7 @@ const normalizeCheckoutAddOns = (addOns) => {
         .filter(Boolean);
 };
 
+// Code Review: Function normalizeCheckoutAddOnOptions in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
 const normalizeCheckoutAddOnOptions = (addOns) => {
     return (Array.isArray(addOns) ? addOns : [])
         .map((entry) => {
@@ -75,7 +79,9 @@ const normalizeCheckoutAddOnOptions = (addOns) => {
         .sort((left, right) => left.id.localeCompare(right.id));
 };
 
+// Code Review: Function intersectCheckoutAddOnOptions in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
 const intersectCheckoutAddOnOptions = (collections) => {
+    // Code Review: Function safeCollections in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx, client/src/pages/MenuItemDetail.jsx, server/services/orderService.js.
     const safeCollections = (collections || []).filter((entry) => Array.isArray(entry));
     if (safeCollections.length === 0) {
         return [];
@@ -104,6 +110,7 @@ const intersectCheckoutAddOnOptions = (collections) => {
     return [...accumulator.values()].sort((left, right) => left.id.localeCompare(right.id));
 };
 
+// Code Review: Function mapItemSelections in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
 const mapItemSelections = (item) => {
     return normalizeCheckoutAddOns(item?.addOns).reduce((accumulator, entry) => {
         accumulator[entry.id] = entry.quantity;
@@ -111,6 +118,7 @@ const mapItemSelections = (item) => {
     }, {});
 };
 
+// Code Review: Function sanitizeSelectionMap in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
 const sanitizeSelectionMap = (selectionMap, options) => {
     const allowedById = new Map((options || []).map((entry) => [entry.id, entry]));
 
@@ -131,6 +139,7 @@ const sanitizeSelectionMap = (selectionMap, options) => {
     }, {});
 };
 
+// Code Review: Function buildUpdatedCartItemWithAddOns in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
 const buildUpdatedCartItemWithAddOns = (item, selectionMap, options) => {
     const safeOptions = normalizeCheckoutAddOnOptions(options);
     const safeSelections = sanitizeSelectionMap(selectionMap, safeOptions);
@@ -166,8 +175,10 @@ const buildUpdatedCartItemWithAddOns = (item, selectionMap, options) => {
     };
 };
 
+// Code Review: Function getCheckoutItemLabel in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
 const getCheckoutItemLabel = (item, index) => item?.name || `Item ${index + 1}`;
 
+// Code Review: Function Checkout in client\src\pages\Checkout.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/Cart.jsx, client/src/pages/CashierDashboard.jsx.
 const Checkout = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -251,6 +262,7 @@ const Checkout = () => {
     ), [savedAddresses]);
 
     useEffect(() => {
+        // Code Review: Function syncCart in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
         const syncCart = () => {
             setCartItems(getCart());
         };
@@ -260,6 +272,7 @@ const Checkout = () => {
     }, []);
 
     useEffect(() => {
+        // Code Review: Function loadAddOnOptions in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
         const loadAddOnOptions = async () => {
             const menuItemIds = [...new Set(
                 cartItems
@@ -505,6 +518,7 @@ const Checkout = () => {
     useEffect(() => {
         let isMounted = true;
 
+        // Code Review: Function loadCheckoutDefaults in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
         const loadCheckoutDefaults = async () => {
             const [profileResult, addressResult] = await Promise.allSettled([
                 getCustomerProfile(),
@@ -564,6 +578,7 @@ const Checkout = () => {
         };
     }, [validateDeliveryAddressDistance]);
 
+    // Code Review: Function validateCoordinatesForDelivery in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const validateCoordinatesForDelivery = async (lat, lng, outsideMessagePrefix = 'Selected location') => {
         try {
             setValidatingDistance(true);
@@ -608,6 +623,7 @@ const Checkout = () => {
         }
     };
 
+    // Code Review: Function extractCityFromAddressComponents in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const extractCityFromAddressComponents = (components = []) => {
         const locality = components.find(component =>
             component.types.includes('locality') ||
@@ -619,6 +635,7 @@ const Checkout = () => {
         return locality?.long_name || '';
     };
 
+    // Code Review: Function reverseGeocodeAndAutofill in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const reverseGeocodeAndAutofill = async (lat, lng) => {
         if (!(window.google && window.google.maps && window.google.maps.Geocoder)) {
             return;
@@ -660,10 +677,12 @@ const Checkout = () => {
         }
     };
 
+    // Code Review: Function extractCityFromPlace in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const extractCityFromPlace = (place) => {
         return extractCityFromAddressComponents(place?.address_components || []);
     };
 
+    // Code Review: Function handleChange in client\src\pages\Checkout.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -674,6 +693,7 @@ const Checkout = () => {
     };
 
     // Prevent accidental order placement when pressing Enter inside form fields.
+    // Code Review: Function handleFormKeyDown in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const handleFormKeyDown = (e) => {
         if (e.key !== 'Enter') {
             return;
@@ -693,6 +713,7 @@ const Checkout = () => {
         e.preventDefault();
     };
 
+    // Code Review: Function handleMapSearchKeyDown in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const handleMapSearchKeyDown = async (e) => {
         if (e.key !== 'Enter') {
             return;
@@ -777,6 +798,7 @@ const Checkout = () => {
         applyCheckoutAddOnSelections(item, current);
     }, [applyCheckoutAddOnSelections, editableSelectionsByCartItemKey]);
 
+    // Code Review: Function clearDeliveryValidationErrors in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const clearDeliveryValidationErrors = () => {
         setErrors((prev) => {
             const next = { ...prev };
@@ -792,6 +814,7 @@ const Checkout = () => {
         });
     };
 
+    // Code Review: Function handleSavedAddressChange in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const handleSavedAddressChange = async (e) => {
         const nextAddressId = e.target.value;
         setSelectedAddressId(nextAddressId);
@@ -819,6 +842,7 @@ const Checkout = () => {
         }
     };
 
+    // Code Review: Function handleDeliveryAddressMethodChange in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const handleDeliveryAddressMethodChange = (method) => {
         setDeliveryAddressMethod(method);
         clearDeliveryValidationErrors();
@@ -849,6 +873,7 @@ const Checkout = () => {
     /**
      * Get current GPS location and validate it for delivery
      */
+    // Code Review: Function handleUseCurrentLocation in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const handleUseCurrentLocation = async () => {
         if (!navigator.geolocation) {
             setLocationError('Geolocation is not supported by your browser.');
@@ -891,6 +916,7 @@ const Checkout = () => {
         );
     };
 
+    // Code Review: Function handleMapClick in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const handleMapClick = async (event) => {
         const lat = event.latLng?.lat();
         const lng = event.latLng?.lng();
@@ -908,6 +934,7 @@ const Checkout = () => {
         await validateCoordinatesForDelivery(lat, lng, 'Pinned location');
     };
 
+    // Code Review: Function handleMarkerDragEnd in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const handleMarkerDragEnd = async (event) => {
         const lat = event.latLng?.lat();
         const lng = event.latLng?.lng();
@@ -924,6 +951,7 @@ const Checkout = () => {
         await validateCoordinatesForDelivery(lat, lng, 'Pinned location');
     };
 
+    // Code Review: Function geocodeFromSearchText in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const geocodeFromSearchText = async (searchText) => {
         if (!(window.google && window.google.maps && window.google.maps.Geocoder)) {
             throw new Error('Google Maps geocoder is not available');
@@ -955,6 +983,7 @@ const Checkout = () => {
         return results[0] || null;
     };
 
+    // Code Review: Function handlePlaceChanged in client\src\pages\Checkout.jsx. Used in: client/src/pages/Checkout.jsx.
     const handlePlaceChanged = async () => {
         if (!searchAutocomplete && !mapSearchValue.trim()) {
             setLocationError('Type and search for a delivery area first.');
@@ -998,6 +1027,7 @@ const Checkout = () => {
         await validateCoordinatesForDelivery(lat, lng, 'Selected searched location');
     };
 
+    // Code Review: Function validateForm in client\src\pages\Checkout.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/Checkout.jsx.
     const validateForm = () => {
         const newErrors = {};
         const normalizedEmail = formData.email.trim();
@@ -1086,6 +1116,7 @@ const Checkout = () => {
         return Object.keys(newErrors).length === 0;
     };
 
+    // Code Review: Function handleSubmit in client\src\pages\Checkout.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
     const handleSubmit = async (e) => {
         e.preventDefault();
 

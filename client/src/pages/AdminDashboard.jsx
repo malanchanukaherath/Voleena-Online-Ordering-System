@@ -15,10 +15,12 @@ import {
     FaArrowRight,
 } from 'react-icons/fa';
 
+// Code Review: Function RevenueCurrencyIcon in client\src\pages\AdminDashboard.jsx. Used in: client/src/pages/AdminDashboard.jsx.
 const RevenueCurrencyIcon = ({ className = '' }) => (
     <span className={`${className} inline-flex items-center justify-center text-sm font-bold leading-none`}>LKR</span>
 );
 
+// Code Review: Function AdminDashboard in client\src\pages\AdminDashboard.jsx. Used in: client/src/components/ui/StatusBadge.jsx, client/src/pages/AdminDashboard.jsx, client/src/routes/AppRoutes.jsx.
 const AdminDashboard = () => {
     const [statsData, setStatsData] = useState(null);
     const [recentOrders, setRecentOrders] = useState([]);
@@ -58,6 +60,7 @@ const AdminDashboard = () => {
     useEffect(() => {
         let isActive = true;
 
+        // Code Review: Function loadDashboardSafely in client\src\pages\AdminDashboard.jsx. Used in: client/src/pages/AdminDashboard.jsx.
         const loadDashboardSafely = async () => {
             if (!isActive) return;
             await loadDashboard();
@@ -109,6 +112,7 @@ const AdminDashboard = () => {
         },
     ]), [statsData]);
 
+    // Code Review: Function getStatusIcon in client\src\pages\AdminDashboard.jsx. Used in: client/src/pages/AdminDashboard.jsx.
     const getStatusIcon = (status) => {
         switch (status) {
             case 'PREPARING':

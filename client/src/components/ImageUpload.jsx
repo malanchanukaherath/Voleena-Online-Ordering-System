@@ -19,6 +19,7 @@ const ImageUpload = ({
         setPreview(currentImage || null);
     }, [currentImage]);
 
+    // Code Review: Function handleDrag in client\src\components\ImageUpload.jsx. Used in: client/src/components/ImageUpload.jsx.
     const handleDrag = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -29,6 +30,7 @@ const ImageUpload = ({
         }
     };
 
+    // Code Review: Function handleDrop in client\src\components\ImageUpload.jsx. Used in: client/src/components/ImageUpload.jsx.
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -39,6 +41,7 @@ const ImageUpload = ({
         }
     };
 
+    // Code Review: Function handleChange in client\src\components\ImageUpload.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
     const handleChange = (e) => {
         e.preventDefault();
         if (e.target.files && e.target.files[0]) {
@@ -46,6 +49,7 @@ const ImageUpload = ({
         }
     };
 
+    // Code Review: Function handleFile in client\src\components\ImageUpload.jsx. Used in: client/src/components/ImageUpload.jsx.
     const handleFile = async (file) => {
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         const maxSize = 5 * 1024 * 1024;
@@ -93,10 +97,12 @@ const ImageUpload = ({
         }
     };
 
+    // Code Review: Function handleClick in client\src\components\ImageUpload.jsx. Used in: client/src/components/ImageUpload.jsx.
     const handleClick = () => {
         fileInputRef.current?.click();
     };
 
+    // Code Review: Function handleRemove in client\src\components\ImageUpload.jsx. Used in: client/src/components/ImageUpload.jsx.
     const handleRemove = (e) => {
         e.stopPropagation();
         setPreview(null);

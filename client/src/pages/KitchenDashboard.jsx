@@ -10,10 +10,12 @@ const DEFAULT_STATS = {
     readyOrders: 0,
 };
 
+// Code Review: Function KitchenDashboard in client\src\pages\KitchenDashboard.jsx. Used in: client/src/pages/KitchenDashboard.jsx, client/src/routes/AppRoutes.jsx.
 const KitchenDashboard = () => {
     const [stats, setStats] = useState(DEFAULT_STATS);
     const [activeOrders, setActiveOrders] = useState([]);
 
+    // Code Review: Function normalizeSpecialInstructions in client\src\pages\KitchenDashboard.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/CashierOrders.jsx, client/src/pages/DeliveryDashboard.jsx.
     const normalizeSpecialInstructions = (order) => {
         const rawValue = order?.SpecialInstructions ?? order?.specialInstructions ?? order?.special_instructions ?? '';
         const normalized = String(rawValue || '').trim();
@@ -23,6 +25,7 @@ const KitchenDashboard = () => {
     useEffect(() => {
         let isMounted = true;
 
+        // Code Review: Function loadDashboard in client\src\pages\KitchenDashboard.jsx. Used in: client/src/pages/AdminDashboard.jsx, client/src/pages/KitchenDashboard.jsx.
         const loadDashboard = async () => {
             try {
                 const [statsResponse, ordersResponse] = await Promise.all([

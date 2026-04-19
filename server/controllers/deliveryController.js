@@ -10,6 +10,7 @@ const systemSettingsService = require('../services/systemSettingsService');
 const appNotificationService = require('../services/appNotificationService');
 const { sendOrderStatusUpdateSMS } = require('../services/smsService');
 
+// Code Review: Function isAddressTableMissingError in server\controllers\deliveryController.js. Used in: server/controllers/cashierController.js, server/controllers/deliveryController.js, server/controllers/orderController.js.
 const isAddressTableMissingError = (error) => {
   const mysqlCode = error?.original?.code || error?.parent?.code;
   const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -22,13 +23,16 @@ const isAddressTableMissingError = (error) => {
     || (message.includes("doesn't exist") && message.includes('address'));
 };
 
+// Code Review: Function isAdminRequest in server\controllers\deliveryController.js. Used in: server/controllers/deliveryController.js.
 const isAdminRequest = (req) => req.user?.type === 'Staff' && req.user?.role === 'Admin';
 
+// Code Review: Function normalizeNotificationPreference in server\controllers\deliveryController.js. Used in: server/controllers/deliveryController.js, server/services/orderService.js.
 const normalizeNotificationPreference = (value) => {
   const normalized = String(value || 'BOTH').toUpperCase();
   return ['EMAIL', 'SMS', 'BOTH', 'NONE'].includes(normalized) ? normalized : 'BOTH';
 };
 
+// Code Review: Function canSendOrderStatusSms in server\controllers\deliveryController.js. Used in: server/controllers/deliveryController.js.
 const canSendOrderStatusSms = (runtimeSettings, customerPhone, preferredNotification) => {
   if (!runtimeSettings?.smsNotifications || !runtimeSettings?.orderStatusUpdates || !customerPhone) {
     return false;

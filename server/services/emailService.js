@@ -8,6 +8,7 @@ const { Notification } = require('../models');
 let hasLoggedEmailNotConfiguredWarning = false;
 let hasLoggedResendNotConfiguredWarning = false;
 
+// Code Review: Function warnEmailNotConfiguredOnce in server\services\emailService.js. Used in: server/services/emailService.js.
 const warnEmailNotConfiguredOnce = () => {
   if (hasLoggedEmailNotConfiguredWarning) {
     return;
@@ -17,6 +18,7 @@ const warnEmailNotConfiguredOnce = () => {
   hasLoggedEmailNotConfiguredWarning = true;
 };
 
+// Code Review: Function warnResendNotConfiguredOnce in server\services\emailService.js. Used in: server/services/emailService.js.
 const warnResendNotConfiguredOnce = () => {
   if (hasLoggedResendNotConfiguredWarning) {
     return;
@@ -26,15 +28,18 @@ const warnResendNotConfiguredOnce = () => {
   hasLoggedResendNotConfiguredWarning = true;
 };
 
+// Code Review: Function getPreferredEmailProvider in server\services\emailService.js. Used in: server/services/emailService.js.
 const getPreferredEmailProvider = () => {
   return String(process.env.EMAIL_PROVIDER || 'smtp').trim().toLowerCase();
 };
 
+// Code Review: Function isResendConfigured in server\services\emailService.js. Used in: server/services/emailService.js.
 const isResendConfigured = () => {
   return Boolean(process.env.RESEND_API_KEY);
 };
 
 // Check if email service is properly configured
+// Code Review: Function isEmailConfigured in server\services\emailService.js. Used in: server/services/emailService.js.
 const isEmailConfigured = () => {
   return !!(
     process.env.SMTP_HOST &&
@@ -69,10 +74,12 @@ if (isEmailConfigured()) {
 
 const resend = isResendConfigured() ? new Resend(process.env.RESEND_API_KEY) : null;
 
+// Code Review: Function getEmailFromAddress in server\services\emailService.js. Used in: server/services/emailService.js.
 const getEmailFromAddress = () => {
   return process.env.EMAIL_FROM || process.env.SMTP_FROM || 'onboarding@resend.dev';
 };
 
+// Code Review: Function sendViaResend in server\services\emailService.js. Used in: server/services/emailService.js.
 async function sendViaResend(to, subject, html) {
   if (!resend || !isResendConfigured()) {
     throw new Error('Resend provider is not configured');
@@ -99,6 +106,7 @@ async function sendViaResend(to, subject, html) {
 /**
  * Send email and log notification
  */
+// Code Review: Function sendEmail in server\services\emailService.js. Used in: server/services/emailService.js, server/utils/notificationService.js.
 async function sendEmail(to, subject, html, relatedOrderId = null, options = {}) {
   const messageForAudit = options.logMessage || html;
   const preferredProvider = getPreferredEmailProvider();
@@ -193,6 +201,7 @@ async function sendEmail(to, subject, html, relatedOrderId = null, options = {})
 /**
  * Send order confirmation email (FR15)
  */
+// Code Review: Function sendOrderConfirmationEmail in server\services\emailService.js. Used in: server/services/emailService.js, server/services/orderService.js.
 async function sendOrderConfirmationEmail(order, customer) {
   const subject = `Order Confirmed - #${order.OrderNumber}`;
   const html = `
@@ -243,6 +252,7 @@ async function sendOrderConfirmationEmail(order, customer) {
 /**
  * Send order status update email (FR15)
  */
+// Code Review: Function sendOrderStatusUpdateEmail in server\services\emailService.js. Used in: server/services/emailService.js, server/services/orderService.js.
 async function sendOrderStatusUpdateEmail(order, customer, newStatus) {
   const statusMessages = {
     CONFIRMED: 'Your order has been confirmed',
@@ -301,6 +311,7 @@ async function sendOrderStatusUpdateEmail(order, customer, newStatus) {
 /**
  * Send OTP verification email (FR28)
  */
+// Code Review: Function sendOTPEmail in server\services\emailService.js. Used in: server/controllers/authController.js, server/services/emailService.js, server/tests/auth.routes.test.js.
 async function sendOTPEmail(email, otp, purpose) {
   const purposeMessages = {
     EMAIL_VERIFICATION: 'Verify Your Email',
@@ -354,6 +365,7 @@ async function sendOTPEmail(email, otp, purpose) {
 /**
  * Send password reset email (FR27)
  */
+// Code Review: Function sendPasswordResetEmail in server\services\emailService.js. Used in: server/services/emailService.js.
 async function sendPasswordResetEmail(email, resetToken) {
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
   const subject = 'Password Reset Request';
@@ -402,6 +414,7 @@ async function sendPasswordResetEmail(email, resetToken) {
 /**
  * Send welcome email for new customers
  */
+// Code Review: Function sendWelcomeEmail in server\services\emailService.js. Used in: server/services/emailService.js.
 async function sendWelcomeEmail(customer) {
   const subject = 'Welcome to Voleena Foods!';
   const html = `
@@ -444,6 +457,7 @@ async function sendWelcomeEmail(customer) {
  * Used for automated job failures, stock issues, payment problems
  * CRITICAL: Ensures admins are notified of system failures that require manual intervention
  */
+// Code Review: Function sendAdminCriticalAlert in server\services\emailService.js. Used in: server/services/automatedJobs.js, server/services/emailService.js.
 async function sendAdminCriticalAlert(alertType, details, errorMessage = null) {
   // Get admin email from environment
   const adminEmails = (process.env.ADMIN_EMAIL || process.env.SMTP_USER || '').split(',').filter(e => e.trim());

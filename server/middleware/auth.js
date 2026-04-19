@@ -7,6 +7,7 @@ const { Customer, Staff, Role } = require('../models');
 /**
  * Authenticate JWT token and attach user to request
  */
+// Code Review: Function authenticateToken in server\middleware\auth.js. Used in: server/middleware/auth.js, server/routes/authRoutes.js, server/routes/orders.js.
 async function authenticateToken(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
@@ -63,6 +64,7 @@ async function authenticateToken(req, res, next) {
  * Role-based authorization middleware
  * Usage: requireRole('Admin', 'Cashier')
  */
+// Code Review: Function requireRole in server\middleware\auth.js. Used in: server/middleware/auth.js, server/routes/categories.js, server/routes/comboPacks.js.
 function requireRole(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user) {
@@ -109,6 +111,7 @@ function requireRole(...allowedRoles) {
  * Verify resource ownership for customers
  * Ensures customers can only access their own resources
  */
+// Code Review: Function verifyOwnership in server\middleware\auth.js. Used in: server/middleware/auth.js.
 function verifyOwnership(resourceType) {
   return async (req, res, next) => {
     if (req.user.type !== 'Customer') {

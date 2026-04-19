@@ -5,15 +5,18 @@ import Button from '../components/ui/Button';
 import { deliveryService } from '../services/dashboardService';
 import useDelayedStatusUpdate from '../hooks/useDelayedStatusUpdate';
 
+// Code Review: Function ActiveDeliveries in client\src\pages\ActiveDeliveries.jsx. Used in: client/src/components/ui/StatusBadge.jsx, client/src/pages/ActiveDeliveries.jsx, client/src/routes/AppRoutes.jsx.
 const ActiveDeliveries = () => {
     const [deliveries, setDeliveries] = useState([]);
     const [error, setError] = useState('');
 
+    // Code Review: Function getDeliveryTimestamp in client\src\pages\ActiveDeliveries.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx.
     const getDeliveryTimestamp = (value) => {
         const timestamp = new Date(value || 0).getTime();
         return Number.isNaN(timestamp) ? 0 : timestamp;
     };
 
+    // Code Review: Function normalizeSpecialInstructions in client\src\pages\ActiveDeliveries.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/CashierOrders.jsx, client/src/pages/DeliveryDashboard.jsx.
     const normalizeSpecialInstructions = (order) => {
         const rawValue = order?.SpecialInstructions ?? order?.specialInstructions ?? order?.special_instructions ?? '';
         const normalized = String(rawValue || '').trim();
@@ -41,6 +44,7 @@ const ActiveDeliveries = () => {
     useEffect(() => {
         let isMounted = true;
 
+        // Code Review: Function loadDeliveries in client\src\pages\ActiveDeliveries.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx.
         const loadDeliveries = async () => {
             try {
                 const response = await deliveryService.getMyDeliveries();
@@ -79,6 +83,7 @@ const ActiveDeliveries = () => {
         };
     }, []);
 
+    // Code Review: Function getNextStatus in client\src\pages\ActiveDeliveries.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx, client/src/pages/KitchenOrders.jsx.
     const getNextStatus = (status) => {
         const map = {
             ASSIGNED: 'PICKED_UP',
@@ -88,6 +93,7 @@ const ActiveDeliveries = () => {
         return map[status];
     };
 
+    // Code Review: Function getActionLabel in client\src\pages\ActiveDeliveries.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx, client/src/pages/KitchenOrders.jsx.
     const getActionLabel = (status) => {
         const nextStatus = getNextStatus(status);
         if (nextStatus === 'PICKED_UP') return 'Mark Picked Up';
@@ -96,6 +102,7 @@ const ActiveDeliveries = () => {
         return 'Update Status';
     };
 
+    // Code Review: Function handleQueueAdvanceStatus in client\src\pages\ActiveDeliveries.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx.
     const handleQueueAdvanceStatus = (delivery) => {
         const nextStatus = getNextStatus(delivery.status);
         if (!nextStatus) return;
@@ -103,6 +110,7 @@ const ActiveDeliveries = () => {
         queueStatusUpdate(delivery.id, delivery.status, nextStatus);
     };
 
+    // Code Review: Function getGoogleMapsNavigationUrl in client\src\pages\ActiveDeliveries.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx, client/src/pages/DeliveryMap.jsx.
     const getGoogleMapsNavigationUrl = (delivery) => {
         if (!Number.isFinite(delivery?.lat) || !Number.isFinite(delivery?.lng)) {
             return null;

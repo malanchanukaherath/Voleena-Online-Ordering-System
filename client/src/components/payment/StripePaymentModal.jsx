@@ -8,6 +8,7 @@ const isStripeConfigured = Boolean(
 );
 let stripePromise = null;
 
+// Code Review: Function getStripePromise in client\src\components\payment\StripePaymentModal.jsx. Used in: client/src/components/payment/StripePaymentModal.jsx.
 const getStripePromise = () => {
     if (!isStripeConfigured) {
         return null;
@@ -23,12 +24,14 @@ const getStripePromise = () => {
 /**
  * Payment form component that handles Stripe card payment
  */
+// Code Review: Function StripePaymentForm in client\src\components\payment\StripePaymentModal.jsx. Used in: client/src/components/payment/StripePaymentModal.jsx.
 const StripePaymentForm = ({ clientSecret, total, billingDetails, onSuccess, onCancel, onError }) => {
     const stripe = useStripe();
     const elements = useElements();
     const [isProcessing, setIsProcessing] = useState(false);
     const [cardError, setCardError] = useState(null);
 
+    // Code Review: Function handleCardChange in client\src\components\payment\StripePaymentModal.jsx. Used in: client/src/components/payment/StripePaymentModal.jsx.
     const handleCardChange = (event) => {
         if (event.error) {
             setCardError(event.error.message);
@@ -37,6 +40,7 @@ const StripePaymentForm = ({ clientSecret, total, billingDetails, onSuccess, onC
         }
     };
 
+    // Code Review: Function handleSubmit in client\src\components\payment\StripePaymentModal.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
     const handleSubmit = async (e) => {
         e.preventDefault();
 

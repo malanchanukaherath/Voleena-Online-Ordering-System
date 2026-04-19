@@ -7,6 +7,7 @@ import Input from '../components/ui/Input';
 import Toast from '../components/ui/Toast';
 import { FaEye, FaEyeSlash, FaUtensils } from 'react-icons/fa';
 
+// Code Review: Function Login in client\src\pages\Login.jsx. Used in: client/src/contexts/AuthContext.jsx, client/src/pages/Cart.jsx, client/src/pages/ForgotPassword.jsx.
 const Login = () => {
   const { login, isAuthenticated, error, clearError } = useAuth();
   const navigate = useNavigate();
@@ -24,6 +25,7 @@ const Login = () => {
   const [verificationEmail, setVerificationEmail] = useState('');
   const [resendingVerification, setResendingVerification] = useState(false);
 
+  // Code Review: Function buildRetryMessage in client\src\pages\Login.jsx. Used in: client/src/pages/Login.jsx, client/src/pages/VerifyEmail.jsx.
   const buildRetryMessage = (result, fallbackMessage) => {
     if (result?.retryAfterSeconds) {
       return `${fallbackMessage} Try again in ${result.retryAfterSeconds} seconds.`;
@@ -57,6 +59,7 @@ const Login = () => {
     }
   }, [location.state]);
 
+  // Code Review: Function handleInputChange in client\src\pages\Login.jsx. Used in: client/src/pages/Login.jsx, client/src/pages/Register.jsx, client/src/pages/Settings.jsx.
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
@@ -74,6 +77,7 @@ const Login = () => {
     }
   };
 
+  // Code Review: Function handleResendVerification in client\src\pages\Login.jsx. Used in: client/src/pages/Login.jsx.
   const handleResendVerification = async () => {
     const targetEmail = verificationEmail || formData.email.trim().toLowerCase();
 
@@ -94,6 +98,7 @@ const Login = () => {
     }
   };
 
+  // Code Review: Function validateForm in client\src\pages\Login.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/Checkout.jsx.
   const validateForm = () => {
     const newErrors = {};
 
@@ -113,6 +118,7 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Code Review: Function handleSubmit in client\src\pages\Login.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
   const handleSubmit = async (e) => {
     e.preventDefault();
 

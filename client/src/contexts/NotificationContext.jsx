@@ -7,6 +7,7 @@ const NotificationContext = createContext(null);
 
 const POLL_INTERVAL_MS = 30000;
 
+// Code Review: Function toUiNotification in client\src\contexts\NotificationContext.jsx. Used in: client/src/contexts/NotificationContext.jsx.
 const toUiNotification = (item) => ({
   id: item?.AppNotificationID,
   title: item?.Title || 'Notification',
@@ -19,6 +20,7 @@ const toUiNotification = (item) => ({
   payload: item?.PayloadJSON || null
 });
 
+// Code Review: Function NotificationProvider in client\src\contexts\NotificationContext.jsx. Used in: client/src/App.jsx, client/src/contexts/NotificationContext.jsx.
 export const NotificationProvider = ({ children }) => {
   const { isAuthenticated } = useAuth();
   const [notifications, setNotifications] = useState([]);
@@ -168,6 +170,7 @@ export const NotificationProvider = ({ children }) => {
   );
 };
 
+// Code Review: Function useNotifications in client\src\contexts\NotificationContext.jsx. Used in: client/src/components/ui/NotificationCenter.jsx, client/src/contexts/NotificationContext.jsx.
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
 

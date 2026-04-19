@@ -40,6 +40,7 @@ jest.mock('../models', () => ({
 jest.mock('../services/orderService', () => mockOrderService);
 jest.mock('../middleware/auth', () => require('./helpers/mockAuth'));
 jest.mock('../middleware/rateLimiter', () => {
+  // Code Review: Function passThrough in server\tests\orders.routes.test.js. Used in: server/tests/auth.routes.test.js, server/tests/customers.routes.test.js, server/tests/orders.routes.test.js.
   const passThrough = (req, res, next) => next();
   return {
     orderLimiter: passThrough,

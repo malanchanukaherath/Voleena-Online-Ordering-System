@@ -23,6 +23,7 @@ const mockOTPVerification = {
 jest.mock('../models', () => ({ Customer: mockCustomer, Address: mockAddress, OTPVerification: mockOTPVerification }));
 jest.mock('../middleware/auth', () => require('./helpers/mockAuth'));
 jest.mock('../middleware/rateLimiter', () => {
+  // Code Review: Function passThrough in server\tests\customers.routes.test.js. Used in: server/tests/auth.routes.test.js, server/tests/customers.routes.test.js, server/tests/orders.routes.test.js.
   const passThrough = (req, res, next) => next();
   return { otpLimiter: passThrough };
 });

@@ -6,6 +6,7 @@
 
 const { ActivityLog } = require('../models');
 
+// Code Review: Function auditLogMiddleware in server\middleware\auditLog.js. Used in: server/index.js, server/middleware/auditLog.js.
 const auditLogMiddleware = async (req, res, next) => {
   // Only log state-changing operations
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
@@ -32,6 +33,7 @@ const auditLogMiddleware = async (req, res, next) => {
   next();
 };
 
+// Code Review: Function logActivity in server\middleware\auditLog.js. Used in: server/middleware/auditLog.js, server/utils/auditLogger.js.
 async function logActivity(req, res) {
   try {
     // Extract entity type and ID from route

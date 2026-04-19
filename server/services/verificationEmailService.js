@@ -6,14 +6,17 @@ const { Resend } = require('resend');
 const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
+// Code Review: Function getFromAddress in server\services\verificationEmailService.js. Used in: server/services/verificationEmailService.js.
 const getFromAddress = () => {
   return process.env.EMAIL_FROM || 'onboarding@resend.dev';
 };
 
+// Code Review: Function shouldLogVerificationLink in server\services\verificationEmailService.js. Used in: server/services/verificationEmailService.js.
 const shouldLogVerificationLink = () => {
   return process.env.NODE_ENV !== 'production' && process.env.EMAIL_VERIFICATION_CONSOLE_LOG !== 'false';
 };
 
+// Code Review: Function logVerificationLink in server\services\verificationEmailService.js. Used in: server/services/verificationEmailService.js.
 const logVerificationLink = (email, verificationUrl, source = 'generated') => {
   if (!shouldLogVerificationLink()) {
     return;
@@ -22,6 +25,7 @@ const logVerificationLink = (email, verificationUrl, source = 'generated') => {
   console.log(`[DEV][email-verification:${source}] ${email} -> ${verificationUrl}`);
 };
 
+// Code Review: Function isResendSandboxRestriction in server\services\verificationEmailService.js. Used in: server/services/verificationEmailService.js.
 const isResendSandboxRestriction = (message = '') => {
   return (
     /only send testing emails to your own email address/i.test(message) ||
@@ -29,6 +33,7 @@ const isResendSandboxRestriction = (message = '') => {
   );
 };
 
+// Code Review: Function sendEmailVerificationLink in server\services\verificationEmailService.js. Used in: server/controllers/authController.js, server/routes/customers.js, server/services/verificationEmailService.js.
 async function sendEmailVerificationLink(email, customerName, verificationUrl) {
   if (!resend) {
     if (process.env.NODE_ENV === 'production') {

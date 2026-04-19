@@ -12,6 +12,7 @@ const { ActivityLog } = require('../models');
  * @param {string} params.ipAddress - IP address
  * @param {string} params.userAgent - User agent string
  */
+// Code Review: Function logActivity in server\utils\auditLogger.js. Used in: server/middleware/auditLog.js, server/utils/auditLogger.js.
 async function logActivity({
     userType,
     userId,
@@ -42,6 +43,7 @@ async function logActivity({
 /**
  * Extract IP address from request
  */
+// Code Review: Function getClientIP in server\utils\auditLogger.js. Used in: server/utils/auditLogger.js.
 function getClientIP(req) {
     return req.ip ||
         req.headers['x-forwarded-for']?.split(',')[0] ||
@@ -52,6 +54,7 @@ function getClientIP(req) {
 /**
  * Log customer creation
  */
+// Code Review: Function logCustomerCreation in server\utils\auditLogger.js. Used in: server/routes/customers.js, server/tests/customers.routes.test.js, server/utils/auditLogger.js.
 async function logCustomerCreation(req, customer, isNew = true) {
     await logActivity({
         userType: 'STAFF',
@@ -74,6 +77,7 @@ async function logCustomerCreation(req, customer, isNew = true) {
 /**
  * Log staff creation
  */
+// Code Review: Function logStaffCreation in server\utils\auditLogger.js. Used in: server/routes/staff.js, server/utils/auditLogger.js.
 async function logStaffCreation(req, staff, roleName, isNew = true) {
     await logActivity({
         userType: 'STAFF',

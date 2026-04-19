@@ -5,6 +5,7 @@ const { v4: uuidv4 } = require('uuid');
  * Adds a unique request ID for distributed tracing and debugging
  * Returns X-Request-ID header in all responses
  */
+// Code Review: Function requestIdMiddleware in server\middleware\requestId.js. Used in: server/index.js, server/middleware/requestId.js.
 function requestIdMiddleware(req, res, next) {
     // Check for existing request ID (from load balancer or client)
     const requestId = req.headers['x-request-id'] || uuidv4();

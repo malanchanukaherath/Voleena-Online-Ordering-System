@@ -67,24 +67,30 @@ const EMPTY_REPORT = {
     }
 };
 
+// Code Review: Function toInputDateTime in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
 const toInputDateTime = (date) => {
+    // Code Review: Function pad in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
     const pad = (value) => String(value).padStart(2, '0');
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
+// Code Review: Function toApiDateTime in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
 const toApiDateTime = (value) => {
     if (!value) return null;
     const parsed = new Date(value);
     return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 };
 
+// Code Review: Function formatCurrency in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx, client/src/utils/helpers.js, client/src/utils/posReceiptPrint.js.
 const formatCurrency = (value) => `LKR ${Number(value || 0).toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
 })}`;
 
+// Code Review: Function formatPercent in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
 const formatPercent = (value) => `${Number(value || 0).toFixed(2)}%`;
 
+// Code Review: Function escapeHtml in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx, client/src/utils/posReceiptPrint.js.
 const escapeHtml = (value) => String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -92,6 +98,7 @@ const escapeHtml = (value) => String(value ?? '')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+// Code Review: Function csvValue in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
 const csvValue = (value) => {
     const text = String(value ?? '');
     if (/[",\n]/.test(text)) {
@@ -100,6 +107,7 @@ const csvValue = (value) => {
     return text;
 };
 
+// Code Review: Function downloadCsv in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
 const downloadCsv = (filename, rows) => {
     const csv = rows.map((row) => row.map(csvValue).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -113,6 +121,7 @@ const downloadCsv = (filename, rows) => {
     URL.revokeObjectURL(url);
 };
 
+// Code Review: Function buildCsvRows in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
 const buildCsvRows = (report) => {
     const rows = [
         ['Business Summary Report'],
@@ -192,6 +201,7 @@ const buildCsvRows = (report) => {
     return rows;
 };
 
+// Code Review: Function openPrintWindow in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
 const openPrintWindow = (report) => {
     const printWindow = window.open('', '_blank', 'width=1100,height=900');
 
@@ -199,6 +209,7 @@ const openPrintWindow = (report) => {
         return;
     }
 
+    // Code Review: Function renderTableRows in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
     const renderTableRows = (rows) => rows.map((row) => `
         <tr>${row.map((cell) => `<td>${escapeHtml(cell)}</td>`).join('')}</tr>
     `).join('');
@@ -278,6 +289,7 @@ const openPrintWindow = (report) => {
     printWindow.print();
 };
 
+// Code Review: Function SalesAnalytics in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx, client/src/routes/AppRoutes.jsx.
 const SalesAnalytics = () => {
     const [dateRange, setDateRange] = useState('7days');
     const [customStart, setCustomStart] = useState('');
@@ -347,6 +359,7 @@ const SalesAnalytics = () => {
     useEffect(() => {
         let isMounted = true;
 
+        // Code Review: Function loadAnalytics in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
         const loadAnalytics = async () => {
             try {
                 setLoading(true);
@@ -428,8 +441,10 @@ const SalesAnalytics = () => {
         revenue: item.totalRevenue,
         category: item.categoryName
     }));
+    // Code Review: Function sanitizeFileLabel in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
     const sanitizeFileLabel = (value) => (value || 'report').replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase();
 
+    // Code Review: Function handleExportCsv in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
     const handleExportCsv = () => {
         downloadCsv(
             `${sanitizeFileLabel(reportData.range.label)}-business-summary.csv`,
@@ -437,6 +452,7 @@ const SalesAnalytics = () => {
         );
     };
 
+    // Code Review: Function handlePrintReport in client\src\pages\SalesAnalytics.jsx. Used in: client/src/pages/SalesAnalytics.jsx.
     const handlePrintReport = () => {
         openPrintWindow(reportData);
     };

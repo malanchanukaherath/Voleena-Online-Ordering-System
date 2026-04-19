@@ -9,10 +9,12 @@ const state = {
   token: 'test-token'
 };
 
+// Code Review: Function cloneUser in server\tests\helpers\mockAuth.js. Used in: server/tests/helpers/mockAuth.js.
 function cloneUser() {
   return { ...state.user };
 }
 
+// Code Review: Function authenticateToken in server\tests\helpers\mockAuth.js. Used in: server/middleware/auth.js, server/routes/authRoutes.js, server/routes/orders.js.
 function authenticateToken(req, res, next) {
   if (state.mode === 'unauthorized') {
     return res.status(401).json({ success: false, error: 'Authorization token missing' });
@@ -23,6 +25,7 @@ function authenticateToken(req, res, next) {
   return next();
 }
 
+// Code Review: Function requireRole in server\tests\helpers\mockAuth.js. Used in: server/middleware/auth.js, server/routes/categories.js, server/routes/comboPacks.js.
 function requireRole(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user) {
@@ -51,6 +54,7 @@ function requireRole(...allowedRoles) {
   };
 }
 
+// Code Review: Function resetAuthState in server\tests\helpers\mockAuth.js. Used in: server/tests/cashier.routes.test.js, server/tests/categories.routes.test.js, server/tests/customers.routes.test.js.
 function resetAuthState() {
   state.mode = 'allow';
   state.user = {
@@ -62,10 +66,12 @@ function resetAuthState() {
   state.token = 'test-token';
 }
 
+// Code Review: Function setAuthMode in server\tests\helpers\mockAuth.js. Used in: server/tests/cashier.routes.test.js, server/tests/categories.routes.test.js, server/tests/customers.routes.test.js.
 function setAuthMode(mode) {
   state.mode = mode;
 }
 
+// Code Review: Function setAuthUser in server\tests\helpers\mockAuth.js. Used in: server/tests/cashier.routes.test.js, server/tests/categories.routes.test.js, server/tests/customers.routes.test.js.
 function setAuthUser(user) {
   state.user = { ...state.user, ...user };
 }

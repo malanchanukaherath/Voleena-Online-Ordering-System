@@ -6,6 +6,7 @@
 
 const deprecationWarnings = new Map();
 
+// Code Review: Function deprecationMiddleware in server\middleware\deprecation.js. Used in: server/index.js, server/middleware/deprecation.js.
 function deprecationMiddleware(newPath) {
   return (req, res, next) => {
     const key = `${req.method}:${req.path}`;

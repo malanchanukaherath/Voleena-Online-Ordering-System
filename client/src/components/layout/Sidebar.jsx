@@ -17,12 +17,15 @@ import {
     FaCashRegister,
 } from 'react-icons/fa';
 
+// Code Review: Function Sidebar in client\src\components\layout\Sidebar.jsx. Used in: client/src/components/layout/Header.jsx, client/src/components/layout/MainLayout.jsx, client/src/components/layout/Sidebar.jsx.
 const Sidebar = ({ className = '', onNavigate }) => {
     const { user } = useAuth();
     const location = useLocation();
 
+    // Code Review: Function isActive in client\src\components\layout\Sidebar.jsx. Used in: client/src/components/layout/Header.jsx, client/src/components/layout/Sidebar.jsx, client/src/pages/AddOnManagement.jsx.
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
+    // Code Review: Function getMenuItems in client\src\components\layout\Sidebar.jsx. Used in: client/src/components/layout/Sidebar.jsx.
     const getMenuItems = () => {
         const role = user?.role || user?.staffRole;
 

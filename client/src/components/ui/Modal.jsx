@@ -11,6 +11,7 @@ const Modal = ({
 }) => {
   // Handle escape key
   useEffect(() => {
+    // Code Review: Function handleEscape in client\src\components\ui\Modal.jsx. Used in: client/src/components/ui/Modal.jsx.
     const handleEscape = (e) => {
       if (e.key === 'Escape') {
         onClose();

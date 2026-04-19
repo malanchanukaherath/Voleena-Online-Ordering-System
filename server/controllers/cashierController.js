@@ -12,11 +12,13 @@ const DEFAULT_STORE_ADDRESS = process.env.POS_STORE_ADDRESS || 'Store Address No
 const DEFAULT_STORE_CONTACT = process.env.POS_STORE_CONTACT || 'N/A';
 const DEFAULT_TERMINAL_ID = process.env.POS_TERMINAL_ID || 'WEB-POS-1';
 
+// Code Review: Function toFiniteNumber in server\controllers\cashierController.js. Used in: client/src/pages/DeliveryMap.jsx, client/src/pages/OrderTracking.jsx, client/src/utils/posReceiptPrint.js.
 const toFiniteNumber = (value, fallback = 0) => {
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
+// Code Review: Function toPositiveNumberOrNull in server\controllers\cashierController.js. Used in: server/controllers/cashierController.js.
 const toPositiveNumberOrNull = (value) => {
   if (value === null || value === undefined || value === '') {
     return null;
@@ -30,8 +32,10 @@ const toPositiveNumberOrNull = (value) => {
   return parsed;
 };
 
+// Code Review: Function getOrderCreatedAt in server\controllers\cashierController.js. Used in: server/controllers/cashierController.js.
 const getOrderCreatedAt = (order) => order?.created_at || order?.CreatedAt || order?.createdAt || new Date();
 
+// Code Review: Function buildReceiptPayload in server\controllers\cashierController.js. Used in: server/controllers/cashierController.js.
 const buildReceiptPayload = (order, options = {}) => {
   const subtotal = toFiniteNumber(order?.TotalAmount, 0);
   const discount = toFiniteNumber(order?.DiscountAmount, 0);
@@ -101,6 +105,7 @@ const buildReceiptPayload = (order, options = {}) => {
   };
 };
 
+// Code Review: Function isAddressTableMissingError in server\controllers\cashierController.js. Used in: server/controllers/cashierController.js, server/controllers/deliveryController.js, server/controllers/orderController.js.
 const isAddressTableMissingError = (error) => {
   const mysqlCode = error?.original?.code || error?.parent?.code;
   const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -116,6 +121,7 @@ const isAddressTableMissingError = (error) => {
 const DEFAULT_GUEST_NAME = 'Walk-in Customer';
 const DEFAULT_GUEST_PHONE = process.env.WALKIN_GUEST_PHONE || '7000000000';
 
+// Code Review: Function findOrCreateGuestCustomer in server\controllers\cashierController.js. Used in: server/controllers/cashierController.js.
 async function findOrCreateGuestCustomer() {
   const existingGuest = await Customer.findOne({
     where: {
@@ -142,6 +148,7 @@ async function findOrCreateGuestCustomer() {
   });
 }
 
+// Code Review: Function resolveWalkInCustomer in server\controllers\cashierController.js. Used in: server/controllers/cashierController.js.
 async function resolveWalkInCustomer(rawCustomerId) {
   const customerId = Number.parseInt(rawCustomerId, 10);
 
@@ -168,6 +175,7 @@ async function resolveWalkInCustomer(rawCustomerId) {
   return customer;
 }
 
+// Code Review: Function notifyCashierOrderStatusChange in server\controllers\cashierController.js. Used in: server/controllers/cashierController.js.
 async function notifyCashierOrderStatusChange(order, newStatus, options = {}) {
   try {
     if (!order) {

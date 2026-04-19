@@ -41,6 +41,7 @@ import ActiveDeliveries from '../pages/ActiveDeliveries';
 import DeliveryMap from '../pages/DeliveryMap';
 import StaticPage from '../pages/StaticPage';
 
+// Code Review: Function AppRoutes in client\src\routes\AppRoutes.jsx. Used in: client/src/App.jsx, client/src/components/ProtectedRoute.jsx, client/src/main.jsx.
 const AppRoutes = () => {
   return (
     <Routes>

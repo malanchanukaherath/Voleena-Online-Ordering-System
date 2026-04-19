@@ -54,6 +54,7 @@ const customerAccounts = [
   }
 ];
 
+// Code Review: Function upsertRoles in server\seed_roles_and_staff.js. Used in: server/seed_roles_and_staff.js.
 async function upsertRoles() {
   console.log('Creating roles...');
 
@@ -67,6 +68,7 @@ async function upsertRoles() {
   }
 }
 
+// Code Review: Function upsertStaffAccounts in server\seed_roles_and_staff.js. Used in: server/seed_roles_and_staff.js.
 async function upsertStaffAccounts() {
   console.log('\nCreating staff accounts...');
 
@@ -112,6 +114,7 @@ async function upsertStaffAccounts() {
   }
 }
 
+// Code Review: Function upsertCustomerAccounts in server\seed_roles_and_staff.js. Used in: server/seed_roles_and_staff.js.
 async function upsertCustomerAccounts() {
   console.log('\nCreating customer accounts...');
 
@@ -148,6 +151,7 @@ async function upsertCustomerAccounts() {
   }
 }
 
+// Code Review: Function seedRolesAndAccounts in server\seed_roles_and_staff.js. Used in: server/seed_roles_and_staff.js.
 async function seedRolesAndAccounts() {
   try {
     console.log('Starting account seed...\n');

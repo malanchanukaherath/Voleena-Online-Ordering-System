@@ -41,6 +41,7 @@ const DEFAULT_PUBLIC_SETTINGS = {
     }
 };
 
+// Code Review: Function mergeBusinessHours in client\src\services\publicSettingsApi.js. Used in: client/src/services/publicSettingsApi.js.
 const mergeBusinessHours = (incomingHours = {}) => {
     const defaults = DEFAULT_PUBLIC_SETTINGS.businessHours;
     return Object.keys(defaults).reduce((acc, day) => {
@@ -52,6 +53,7 @@ const mergeBusinessHours = (incomingHours = {}) => {
     }, {});
 };
 
+// Code Review: Function normalizePublicSettings in client\src\services\publicSettingsApi.js. Used in: client/src/services/publicSettingsApi.js.
 export const normalizePublicSettings = (incoming = {}) => ({
     ...DEFAULT_PUBLIC_SETTINGS,
     ...incoming,
@@ -70,6 +72,7 @@ export const normalizePublicSettings = (incoming = {}) => ({
     businessHours: mergeBusinessHours(incoming.businessHours || {})
 });
 
+// Code Review: Function getPublicSettings in client\src\services\publicSettingsApi.js. Used in: client/src/hooks/usePublicSettings.js, client/src/services/publicSettingsApi.js, server/routes/settings.js.
 export const getPublicSettings = async ({ forceRefresh = false } = {}) => {
     const now = Date.now();
 
@@ -90,9 +93,11 @@ export const getPublicSettings = async ({ forceRefresh = false } = {}) => {
     return normalized;
 };
 
+// Code Review: Function invalidatePublicSettingsCache in client\src\services\publicSettingsApi.js. Used in: client/src/pages/Settings.jsx, client/src/services/publicSettingsApi.js.
 export const invalidatePublicSettingsCache = () => {
     cachedSettings = null;
     cachedAt = 0;
 };
 
+// Code Review: Function getDefaultPublicSettings in client\src\services\publicSettingsApi.js. Used in: client/src/hooks/usePublicSettings.js, client/src/services/publicSettingsApi.js.
 export const getDefaultPublicSettings = () => normalizePublicSettings();

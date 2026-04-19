@@ -7,6 +7,7 @@ import { addToCart } from '../utils/cartStorage';
 import { comboPackService, menuItemService } from '../services/menuService';
 import { resolveAssetUrl } from '../config/api';
 
+// Code Review: Function normalizeDetailAddOnOptions in client\src\pages\MenuItemDetail.jsx. Used in: client/src/pages/MenuItemDetail.jsx.
 const normalizeDetailAddOnOptions = (entries) => {
     return (Array.isArray(entries) ? entries : [])
         .map((entry) => {
@@ -26,7 +27,9 @@ const normalizeDetailAddOnOptions = (entries) => {
         .filter(Boolean);
 };
 
+// Code Review: Function intersectDetailAddOnOptions in client\src\pages\MenuItemDetail.jsx. Used in: client/src/pages/MenuItemDetail.jsx.
 const intersectDetailAddOnOptions = (collections) => {
+    // Code Review: Function safeCollections in client\src\pages\MenuItemDetail.jsx. Used in: client/src/pages/Checkout.jsx, client/src/pages/MenuItemDetail.jsx, server/services/orderService.js.
     const safeCollections = (collections || []).filter((entry) => Array.isArray(entry));
     if (safeCollections.length === 0) {
         return [];
@@ -55,6 +58,7 @@ const intersectDetailAddOnOptions = (collections) => {
     return [...accumulator.values()].sort((left, right) => left.id.localeCompare(right.id));
 };
 
+// Code Review: Function MenuItemDetail in client\src\pages\MenuItemDetail.jsx. Used in: client/src/pages/Checkout.jsx, client/src/pages/Home.jsx, client/src/pages/Menu.jsx.
 const MenuItemDetail = () => {
     const { itemId, itemType } = useParams();
     const isComboPath = String(itemType || '').toLowerCase() === 'combo';
@@ -127,6 +131,7 @@ const MenuItemDetail = () => {
     useEffect(() => {
         let isMounted = true;
 
+        // Code Review: Function fetchItem in client\src\pages\MenuItemDetail.jsx. Used in: client/src/pages/MenuItemDetail.jsx.
         const fetchItem = async () => {
             setLoading(true);
             setError(null);
@@ -239,6 +244,7 @@ const MenuItemDetail = () => {
     const addOnsPerUnit = Number(selectedAddOns.reduce((sum, entry) => sum + Number(entry.total || 0), 0).toFixed(2));
     const effectiveUnitPrice = Number((((item?.basePrice || item?.price || 0)) + addOnsPerUnit).toFixed(2));
 
+    // Code Review: Function setAddOnEnabled in client\src\pages\MenuItemDetail.jsx. Used in: client/src/pages/MenuItemDetail.jsx.
     const setAddOnEnabled = (addOnId, isEnabled) => {
         setAddOnSelections((previous) => {
             const next = { ...previous };
@@ -251,6 +257,7 @@ const MenuItemDetail = () => {
         });
     };
 
+    // Code Review: Function adjustAddOnQuantity in client\src\pages\MenuItemDetail.jsx. Used in: client/src/pages/MenuItemDetail.jsx.
     const adjustAddOnQuantity = (addOnId, requestedQuantity, maxQuantity) => {
         const normalizedMax = Math.max(1, Number(maxQuantity || 1));
         const normalizedNext = Math.min(normalizedMax, Math.max(1, Number(requestedQuantity || 1)));
@@ -261,6 +268,7 @@ const MenuItemDetail = () => {
         }));
     };
 
+    // Code Review: Function handleAddToCart in client\src\pages\MenuItemDetail.jsx. Used in: client/src/pages/Home.jsx, client/src/pages/Menu.jsx, client/src/pages/MenuItemDetail.jsx.
     const handleAddToCart = () => {
         if (!item?.isAvailable) {
             toast.error('This item is not available right now');

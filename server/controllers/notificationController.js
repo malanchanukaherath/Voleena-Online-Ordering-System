@@ -3,6 +3,7 @@
 // SEARCH_HINT: Look here for request handling logic and data processing.
 const appNotificationService = require('../services/appNotificationService');
 
+// Code Review: Function parseBoolean in server\controllers\notificationController.js. Used in: server/controllers/notificationController.js.
 const parseBoolean = (value) => {
     if (typeof value === 'boolean') {
         return value;

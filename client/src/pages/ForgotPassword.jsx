@@ -6,6 +6,7 @@ import Card from '../components/ui/Card';
 import Toast from '../components/ui/Toast';
 import authService from '../services/authService';
 
+// Code Review: Function ForgotPassword in client\src\pages\ForgotPassword.jsx. Used in: client/src/pages/ForgotPassword.jsx, client/src/routes/AppRoutes.jsx.
 const ForgotPassword = () => {
     const navigate = useNavigate();
     const [step, setStep] = useState(1); // 1: Enter email, 2: Confirm and send code
@@ -18,6 +19,7 @@ const ForgotPassword = () => {
     const [toastType, setToastType] = useState('success');
     const [loading, setLoading] = useState(false);
 
+    // Code Review: Function handleChange in client\src\pages\ForgotPassword.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -26,6 +28,7 @@ const ForgotPassword = () => {
         }
     };
 
+    // Code Review: Function validateStep1 in client\src\pages\ForgotPassword.jsx. Used in: client/src/pages/ForgotPassword.jsx.
     const validateStep1 = () => {
         const newErrors = {};
         if (!formData.identifier.trim()) {
@@ -37,12 +40,14 @@ const ForgotPassword = () => {
         return Object.keys(newErrors).length === 0;
     };
 
+    // Code Review: Function handleStep1Submit in client\src\pages\ForgotPassword.jsx. Used in: client/src/pages/ForgotPassword.jsx.
     const handleStep1Submit = (e) => {
         e.preventDefault();
         if (!validateStep1()) return;
         setStep(2);
     };
 
+    // Code Review: Function handleSendOTP in client\src\pages\ForgotPassword.jsx. Used in: client/src/pages/ForgotPassword.jsx.
     const handleSendOTP = async () => {
         setLoading(true);
         const email = formData.identifier.trim();

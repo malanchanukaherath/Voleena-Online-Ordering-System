@@ -21,6 +21,7 @@ const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 const systemSettingsService = require('../services/systemSettingsService');
 const appNotificationService = require('../services/appNotificationService');
 
+// Code Review: Function parseAnalyticsDateRange in server\controllers\adminController.js. Used in: server/controllers/adminController.js.
 const parseAnalyticsDateRange = (query) => {
   const hasCustomRange = Boolean(query.startDate || query.endDate);
 
@@ -56,6 +57,7 @@ const parseAnalyticsDateRange = (query) => {
   };
 };
 
+// Code Review: Function decodeFeedbackPayload in server\controllers\adminController.js. Used in: server/controllers/adminController.js, server/controllers/feedbackController.js.
 const decodeFeedbackPayload = (rawComment) => {
   if (!rawComment || typeof rawComment !== 'string') {
     return {
@@ -81,6 +83,7 @@ const decodeFeedbackPayload = (rawComment) => {
   }
 };
 
+// Code Review: Function incrementCounter in server\controllers\adminController.js. Used in: server/controllers/adminController.js.
 const incrementCounter = (map, key) => {
   if (!key) {
     return;
@@ -89,6 +92,7 @@ const incrementCounter = (map, key) => {
   map.set(key, (map.get(key) || 0) + 1);
 };
 
+// Code Review: Function safeNumber in server\controllers\adminController.js. Used in: server/controllers/adminController.js.
 const safeNumber = (value, digits = 2) => {
   const parsed = Number(value || 0);
   if (!Number.isFinite(parsed)) {
@@ -98,6 +102,7 @@ const safeNumber = (value, digits = 2) => {
   return Number(parsed.toFixed(digits));
 };
 
+// Code Review: Function getRangeLabel in server\controllers\adminController.js. Used in: server/controllers/adminController.js.
 const getRangeLabel = (startDate, endDate) => {
   const sameDay = startDate.toDateString() === endDate.toDateString();
 

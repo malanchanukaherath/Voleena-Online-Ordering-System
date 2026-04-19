@@ -14,6 +14,7 @@ const FREE_DELIVERY_DISTANCE_KM = parseFloat(process.env.FREE_DELIVERY_DISTANCE_
 const DELIVERY_FEE_PER_KM = parseFloat(process.env.DELIVERY_FEE_PER_KM) || 20; // Additional cost per km
 const MAX_DELIVERY_FEE = parseFloat(process.env.MAX_DELIVERY_FEE) || 300; // Maximum delivery fee cap
 
+// Code Review: Function resolveNumber in server\utils\deliveryFeeCalculator.js. Used in: server/utils/deliveryFeeCalculator.js.
 function resolveNumber(value, fallback, { min = Number.NEGATIVE_INFINITY } = {}) {
     const parsed = Number(value);
     if (!Number.isFinite(parsed) || parsed < min) {
@@ -22,6 +23,7 @@ function resolveNumber(value, fallback, { min = Number.NEGATIVE_INFINITY } = {})
     return parsed;
 }
 
+// Code Review: Function getResolvedDeliveryConfig in server\utils\deliveryFeeCalculator.js. Used in: server/utils/deliveryFeeCalculator.js.
 function getResolvedDeliveryConfig(overrides = {}) {
     return {
         baseFee: resolveNumber(overrides.baseFee, BASE_DELIVERY_FEE, { min: 0 }),
@@ -43,6 +45,7 @@ function getResolvedDeliveryConfig(overrides = {}) {
  *   isFreeRange: boolean
  * }}
  */
+// Code Review: Function calculateDeliveryFee in server\utils\deliveryFeeCalculator.js. Used in: client/src/utils/helpers.js, server/controllers/deliveryController.js, server/routes/deliveryRoutes.js.
 function calculateDeliveryFee(distanceKm, overrides = {}) {
     const config = getResolvedDeliveryConfig(overrides);
 
@@ -106,6 +109,7 @@ function calculateDeliveryFee(distanceKm, overrides = {}) {
  *   maxFee: number
  * }}
  */
+// Code Review: Function getDeliveryFeeConfig in server\utils\deliveryFeeCalculator.js. Used in: server/controllers/deliveryController.js, server/routes/deliveryRoutes.js, server/tests/delivery.routes.test.js.
 function getDeliveryFeeConfig(overrides = {}) {
     const config = getResolvedDeliveryConfig(overrides);
 
@@ -124,6 +128,7 @@ function getDeliveryFeeConfig(overrides = {}) {
  * @param {number} distanceKm - Distance in kilometers
  * @returns {number} Estimated delivery fee
  */
+// Code Review: Function estimateDeliveryFee in server\utils\deliveryFeeCalculator.js. Used in: server/controllers/deliveryController.js, server/tests/delivery.routes.test.js, server/utils/deliveryFeeCalculator.js.
 function estimateDeliveryFee(distanceKm, overrides = {}) {
     const result = calculateDeliveryFee(distanceKm, overrides);
     return result.totalFee;

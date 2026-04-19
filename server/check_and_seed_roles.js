@@ -1,5 +1,6 @@
 const db = require('./models');
 
+// Code Review: Function checkAndSeedRoles in server\check_and_seed_roles.js. Used in: server/check_and_seed_roles.js.
 async function checkAndSeedRoles() {
     try {
         await db.sequelize.authenticate();

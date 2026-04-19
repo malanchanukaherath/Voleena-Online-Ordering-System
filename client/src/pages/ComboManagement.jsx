@@ -10,6 +10,7 @@ import ImageUpload from '../components/ImageUpload';
 import { comboPackService, menuItemService } from '../services/menuService';
 import { resolveAssetUrl } from '../config/api';
 
+// Code Review: Function ComboManagement in client\src\pages\ComboManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx.
 const ComboManagement = () => {
     const [combos, setCombos] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
@@ -125,6 +126,7 @@ const ComboManagement = () => {
         fetchMenuItems();
     }, [fetchCombos, fetchMenuItems]);
 
+    // Code Review: Function handleOpenCreate in client\src\pages\ComboManagement.jsx. Used in: client/src/pages/ComboManagement.jsx.
     const handleOpenCreate = () => {
         setEditingCombo(null);
         setFormData({
@@ -142,6 +144,7 @@ const ComboManagement = () => {
         setShowModal(true);
     };
 
+    // Code Review: Function handleOpenEdit in client\src\pages\ComboManagement.jsx. Used in: client/src/pages/ComboManagement.jsx.
     const handleOpenEdit = (combo) => {
         setEditingCombo(combo);
         setFormData({
@@ -159,6 +162,7 @@ const ComboManagement = () => {
         setShowModal(true);
     };
 
+    // Code Review: Function handleChange in client\src\pages\ComboManagement.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -170,6 +174,7 @@ const ComboManagement = () => {
         }
     };
 
+    // Code Review: Function handleItemChange in client\src\pages\ComboManagement.jsx. Used in: client/src/pages/ComboManagement.jsx.
     const handleItemChange = (index, field, value) => {
         setFormData(prev => ({
             ...prev,
@@ -182,6 +187,7 @@ const ComboManagement = () => {
         }
     };
 
+    // Code Review: Function handleAddItemRow in client\src\pages\ComboManagement.jsx. Used in: client/src/pages/ComboManagement.jsx.
     const handleAddItemRow = () => {
         setFormData(prev => ({
             ...prev,
@@ -189,6 +195,7 @@ const ComboManagement = () => {
         }));
     };
 
+    // Code Review: Function handleRemoveItemRow in client\src\pages\ComboManagement.jsx. Used in: client/src/pages/ComboManagement.jsx.
     const handleRemoveItemRow = (index) => {
         setFormData(prev => ({
             ...prev,
@@ -196,6 +203,7 @@ const ComboManagement = () => {
         }));
     };
 
+    // Code Review: Function validateForm in client\src\pages\ComboManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/Checkout.jsx.
     const validateForm = () => {
         const newErrors = {};
         const parsedDiscount = formData.discount === '' ? 0 : parseFloat(formData.discount);
@@ -245,6 +253,7 @@ const ComboManagement = () => {
         return Object.keys(newErrors).length === 0;
     };
 
+    // Code Review: Function handleSubmit in client\src\pages\ComboManagement.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -303,6 +312,7 @@ const ComboManagement = () => {
         }
     };
 
+    // Code Review: Function handleDelete in client\src\pages\ComboManagement.jsx. Used in: client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx, client/src/pages/MenuManagement.jsx.
     const handleDelete = async (comboId) => {
         if (!confirm('Are you sure you want to delete this combo pack?')) return;
         try {
@@ -319,6 +329,7 @@ const ComboManagement = () => {
         }
     };
 
+    // Code Review: Function handleToggleStatus in client\src\pages\ComboManagement.jsx. Used in: client/src/pages/ComboManagement.jsx, client/src/pages/StaffManagement.jsx.
     const handleToggleStatus = async (comboId, nextActive) => {
         try {
             await comboPackService.update(comboId, { IsActive: nextActive });
@@ -335,6 +346,7 @@ const ComboManagement = () => {
     };
 
     // Check if combo is currently active based on dates
+    // Code Review: Function isComboActiveNow in client\src\pages\ComboManagement.jsx. Used in: client/src/pages/ComboManagement.jsx.
     const isComboActiveNow = (combo) => {
         const now = new Date();
         const start = new Date(combo.startDate);

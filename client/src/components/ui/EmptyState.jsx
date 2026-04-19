@@ -8,6 +8,7 @@ const EmptyState = ({
     action,
     type = 'default', // 'default', 'error', 'search'
 }) => {
+    // Code Review: Function getIcon in client\src\components\ui\EmptyState.jsx. Used in: client/src/components/ui/EmptyState.jsx.
     const getIcon = () => {
         if (Icon) return Icon;
         switch (type) {
@@ -22,6 +23,7 @@ const EmptyState = ({
 
     const DefaultIcon = getIcon();
 
+    // Code Review: Function getColors in client\src\components\ui\EmptyState.jsx. Used in: client/src/components/ui/EmptyState.jsx.
     const getColors = () => {
         switch (type) {
             case 'error':

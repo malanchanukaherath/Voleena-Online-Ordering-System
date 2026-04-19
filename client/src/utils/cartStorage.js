@@ -6,8 +6,10 @@
 
 const STORAGE_KEY = 'voleena_cart';
 
+// Code Review: Function hasFiniteStockLimit in client\src\utils\cartStorage.js. Used in: client/src/pages/Cart.jsx, client/src/utils/cartStorage.js.
 const hasFiniteStockLimit = (item) => Number.isFinite(item?.stockQuantity) && item.stockQuantity >= 0;
 
+// Code Review: Function toMoney in client\src\utils\cartStorage.js. Used in: client/src/pages/OrderTracking.jsx, client/src/utils/cartStorage.js, server/services/orderService.js.
 const toMoney = (value) => {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) {
@@ -17,6 +19,7 @@ const toMoney = (value) => {
   return Number(numeric.toFixed(2));
 };
 
+// Code Review: Function normalizeAddOnsForCart in client\src\utils\cartStorage.js. Used in: client/src/utils/cartStorage.js.
 const normalizeAddOnsForCart = (addOns) => {
   const raw = Array.isArray(addOns) ? addOns : [];
 
@@ -46,6 +49,7 @@ const normalizeAddOnsForCart = (addOns) => {
     .sort((left, right) => left.id.localeCompare(right.id));
 };
 
+// Code Review: Function buildAddOnSignature in client\src\utils\cartStorage.js. Used in: client/src/utils/cartStorage.js.
 const buildAddOnSignature = (addOns) => {
   const normalized = normalizeAddOnsForCart(addOns);
   if (!normalized.length) {
@@ -58,6 +62,7 @@ const buildAddOnSignature = (addOns) => {
   })));
 };
 
+// Code Review: Function buildCartItemKey in client\src\utils\cartStorage.js. Used in: client/src/utils/cartStorage.js.
 export const buildCartItemKey = (item) => {
   const safeType = String(item?.type || '').trim() || 'item';
   const safeId = String(item?.id ?? '').trim() || 'unknown';
@@ -65,6 +70,7 @@ export const buildCartItemKey = (item) => {
   return `${safeType}:${safeId}:${signature}`;
 };
 
+// Code Review: Function normalizeCartEntry in client\src\utils\cartStorage.js. Used in: client/src/utils/cartStorage.js.
 const normalizeCartEntry = (entry) => {
   const normalizedAddOns = normalizeAddOnsForCart(entry?.addOns);
   const addOnsPerUnit = toMoney(
@@ -102,6 +108,7 @@ const normalizeCartEntry = (entry) => {
 /**
  * Emit cart update event for listeners to react to changes
  */
+// Code Review: Function emitCartUpdate in client\src\utils\cartStorage.js. Used in: client/src/utils/cartStorage.js.
 const emitCartUpdate = () => {
   window.dispatchEvent(new Event('cartUpdated'));
 };
@@ -110,6 +117,7 @@ const emitCartUpdate = () => {
  * Get current cart from localStorage
  * @returns {Array} Cart items array
  */
+// Code Review: Function getCart in client\src\utils\cartStorage.js. Used in: client/src/components/layout/Header.jsx, client/src/pages/Cart.jsx, client/src/pages/Checkout.jsx.
 export const getCart = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -129,6 +137,7 @@ export const getCart = () => {
  * Save cart to localStorage
  * @param {Array} items - Cart items to save
  */
+// Code Review: Function setCart in client\src\utils\cartStorage.js. Used in: client/src/pages/Cart.jsx, client/src/utils/cartStorage.js.
 export const setCart = (items) => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   emitCartUpdate();
@@ -148,6 +157,7 @@ export const setCart = (items) => {
  * @param {number} [quantity=1] - Quantity to add
  * @returns {Array} Updated cart
  */
+// Code Review: Function addToCart in client\src\utils\cartStorage.js. Used in: client/src/pages/Home.jsx, client/src/pages/Menu.jsx, client/src/pages/MenuItemDetail.jsx.
 export const addToCart = (item, quantity = 1) => {
   if (!item || !item.id || !item.type) {
     throw new Error('Invalid item: must have id and type');
@@ -228,6 +238,7 @@ export const addToCart = (item, quantity = 1) => {
  * @param {Object} updates - Fields to update (quantity, notes, etc.)
  * @returns {Array} Updated cart
  */
+// Code Review: Function updateCartItem in client\src\utils\cartStorage.js. Used in: client/src/pages/Cart.jsx, client/src/pages/Checkout.jsx, client/src/utils/cartStorage.js.
 export const updateCartItem = (id, type, updates, cartItemKey = '') => {
   const targetKey = String(cartItemKey || updates?.cartItemKey || '').trim();
   const items = getCart().map((item) => {
@@ -256,6 +267,7 @@ export const updateCartItem = (id, type, updates, cartItemKey = '') => {
  * @param {string} type - Item type ('menu' or 'combo')
  * @returns {Array} Updated cart
  */
+// Code Review: Function removeCartItem in client\src\utils\cartStorage.js. Used in: client/src/pages/Cart.jsx, client/src/utils/cartStorage.js.
 export const removeCartItem = (id, type, cartItemKey = '') => {
   const targetKey = String(cartItemKey || '').trim();
   const items = getCart().filter((item) => {
@@ -272,6 +284,7 @@ export const removeCartItem = (id, type, cartItemKey = '') => {
 /**
  * Clear entire cart
  */
+// Code Review: Function clearCart in client\src\utils\cartStorage.js. Used in: client/src/pages/Checkout.jsx, client/src/utils/cartStorage.js.
 export const clearCart = () => {
   localStorage.removeItem(STORAGE_KEY);
   emitCartUpdate();
@@ -282,6 +295,7 @@ export const clearCart = () => {
  * Calculates subtotal, item count, etc.
  * @returns {Object} Cart summary
  */
+// Code Review: Function getCartSummary in client\src\utils\cartStorage.js. Used in: client/src/services/orderApi.js, client/src/utils/cartStorage.js, server/controllers/cartController.js.
 export const getCartSummary = () => {
   const items = getCart();
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -300,6 +314,7 @@ export const getCartSummary = () => {
  * Check if cart is empty
  * @returns {boolean}
  */
+// Code Review: Function isCartEmpty in client\src\utils\cartStorage.js. Used in: client/src/utils/cartStorage.js.
 export const isCartEmpty = () => {
   return getCart().length === 0;
 };
@@ -309,6 +324,7 @@ export const isCartEmpty = () => {
  * @param {string} orderType - 'DELIVERY' or 'TAKEAWAY'
  * @returns {Object} Total breakdown
  */
+// Code Review: Function getCartTotal in client\src\utils\cartStorage.js. Used in: client/src/utils/cartStorage.js.
 export const getCartTotal = (orderType = 'DELIVERY') => {
   const items = getCart();
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);

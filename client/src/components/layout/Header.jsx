@@ -44,6 +44,7 @@ const Header = ({
 
     // Load cart count on mount and listen for updates
     useEffect(() => {
+        // Code Review: Function updateCartCount in client\src\components\layout\Header.jsx. Used in: client/src/components/layout/Header.jsx.
         const updateCartCount = () => {
             const cart = getCart();
             const count = cart.reduce((total, item) => total + item.quantity, 0);
@@ -65,9 +66,11 @@ const Header = ({
         };
     }, []);
 
+    // Code Review: Function isActive in client\src\components\layout\Header.jsx. Used in: client/src/components/layout/Header.jsx, client/src/components/layout/Sidebar.jsx, client/src/pages/AddOnManagement.jsx.
     const isActive = (path) => location.pathname === path;
 
     // Navigation items based on user role
+    // Code Review: Function getNavigationItems in client\src\components\layout\Header.jsx. Used in: client/src/components/layout/Header.jsx.
     const getNavigationItems = () => {
         if (!isAuthenticated) {
             return [

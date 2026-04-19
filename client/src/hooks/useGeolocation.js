@@ -8,6 +8,7 @@ import { useState, useEffect, useCallback } from 'react';
  * @param {number} options.updateInterval - Update interval in ms for watching (default: 30000)
  * @returns {Object} Geolocation state including location, loading, error, and permission status
  */
+// Code Review: Function useGeolocation in client\src\hooks\useGeolocation.js. Used in: client/src/hooks/useGeolocation.js.
 export const useGeolocation = (options = {}) => {
     const {
         watch = false,

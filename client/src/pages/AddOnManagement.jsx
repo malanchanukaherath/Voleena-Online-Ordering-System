@@ -8,8 +8,10 @@ import Toast from '../components/ui/Toast';
 import LoadingSkeleton from '../components/ui/LoadingSkeleton';
 import { menuItemService } from '../services/menuService';
 
+// Code Review: Function normalizeIdValue in client\src\pages\AddOnManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx.
 const normalizeIdValue = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '_');
 
+// Code Review: Function AddOnManagement in client\src\pages\AddOnManagement.jsx. Used in: client/src/components/layout/Header.jsx, client/src/components/layout/Sidebar.jsx, client/src/components/ui/LoadingSkeleton.jsx.
 const AddOnManagement = () => {
     const [addOns, setAddOns] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -29,12 +31,14 @@ const AddOnManagement = () => {
     });
     const [errors, setErrors] = useState({});
 
+    // Code Review: Function fetchAddOns in client\src\pages\AddOnManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx.
     const fetchAddOns = async () => {
         const response = await menuItemService.getAddOnCatalog({ includeInactive: true });
         setAddOns(response.data || []);
     };
 
     useEffect(() => {
+        // Code Review: Function load in client\src\pages\AddOnManagement.jsx. Used in: client/src/components/layout/Header.jsx, client/src/contexts/AuthContext.jsx, client/src/hooks/usePublicSettings.js.
         const load = async () => {
             try {
                 setLoading(true);
@@ -51,10 +55,12 @@ const AddOnManagement = () => {
         load();
     }, []);
 
+    // Code Review: Function showToast in client\src\pages\AddOnManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx.
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
     };
 
+    // Code Review: Function openModal in client\src\pages\AddOnManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx.
     const openModal = (addOn = null) => {
         if (addOn) {
             setEditingAddOn(addOn);
@@ -85,12 +91,14 @@ const AddOnManagement = () => {
         setShowModal(true);
     };
 
+    // Code Review: Function closeModal in client\src\pages\AddOnManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx.
     const closeModal = () => {
         setShowModal(false);
         setEditingAddOn(null);
         setErrors({});
     };
 
+    // Code Review: Function validateForm in client\src\pages\AddOnManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/Checkout.jsx.
     const validateForm = () => {
         const nextErrors = {};
         const safeId = normalizeIdValue(formData.id);
@@ -130,6 +138,7 @@ const AddOnManagement = () => {
         return Object.keys(nextErrors).length === 0;
     };
 
+    // Code Review: Function handleSubmit in client\src\pages\AddOnManagement.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (!validateForm()) {
@@ -166,6 +175,7 @@ const AddOnManagement = () => {
         }
     };
 
+    // Code Review: Function handleToggleActive in client\src\pages\AddOnManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/MenuManagement.jsx.
     const handleToggleActive = async (addOn) => {
         try {
             await menuItemService.updateAddOnCatalogItem(addOn.id, { isActive: !addOn.isActive });
@@ -177,6 +187,7 @@ const AddOnManagement = () => {
         }
     };
 
+    // Code Review: Function handleDeactivate in client\src\pages\AddOnManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx.
     const handleDeactivate = async (addOn) => {
         if (!window.confirm(`Deactivate add-on "${addOn.name}"?`)) {
             return;
@@ -192,6 +203,7 @@ const AddOnManagement = () => {
         }
     };
 
+    // Code Review: Function handleChange in client\src\pages\AddOnManagement.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
     const handleChange = (event) => {
         const { name, value, type, checked } = event.target;
         setFormData((previous) => ({

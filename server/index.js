@@ -17,6 +17,7 @@ const automatedJobs = require('./services/automatedJobs'); // Daily stock creati
 
 const PORT = process.env.PORT || 3001;
 
+// Code Review: Function waitForDatabaseConnection in server\index.js. Used in: server/index.js.
 async function waitForDatabaseConnection() {
   const maxRetries = Number.parseInt(process.env.DB_CONNECT_RETRIES || '10', 10);
   const retryDelayMs = Number.parseInt(process.env.DB_CONNECT_RETRY_DELAY_MS || '3000', 10);
@@ -39,9 +40,11 @@ async function waitForDatabaseConnection() {
   }
 }
 
+// Code Review: Function createApp in server\index.js. Used in: server/index.js, server/tests/index.bootstrap.test.js.
 function createApp() {
   const app = express();
 
+  // Code Review: Function safeRequireRoute in server\index.js. Used in: server/index.js.
   const safeRequireRoute = (routePath) => {
     try {
       return require(routePath);
@@ -292,6 +295,7 @@ const app = createApp();
 // SERVER INITIALIZATION
 // =====================================================
 
+// Code Review: Function startServer in server\index.js. Used in: server/index.js, server/tests/index.bootstrap.test.js.
 async function startServer() {
   try {
     // Test database connection with retries for container startup ordering.

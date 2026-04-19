@@ -30,6 +30,7 @@ const AUTH_ACTIONS = {
 };
 
 // Reducer function
+// Code Review: Function authReducer in client\src\contexts\AuthContext.jsx. Used in: client/src/contexts/AuthContext.jsx.
 const authReducer = (state, action) => {
   switch (action.type) {
     case AUTH_ACTIONS.LOGIN_START:
@@ -103,6 +104,7 @@ const authReducer = (state, action) => {
 const AuthContext = createContext();
 
 // Auth provider component
+// Code Review: Function AuthProvider in client\src\contexts\AuthContext.jsx. Used in: client/src/App.jsx, client/src/contexts/AuthContext.jsx.
 export const AuthProvider = ({ children }) => {
   const [state, dispatch] = useReducer(authReducer, initialState);
   const sessionTimeoutRef = useRef(null);
@@ -169,6 +171,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const activityEvents = ['mousedown', 'keydown', 'scroll', 'touchstart'];
 
+    // Code Review: Function handleActivity in client\src\contexts\AuthContext.jsx. Used in: client/src/contexts/AuthContext.jsx.
     const handleActivity = () => {
       const now = Date.now();
       if (now - lastActivityRef.current > 60000) { // Only reset if > 1 minute since last activity
@@ -200,6 +203,7 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize auth state on app load
   useEffect(() => {
+    // Code Review: Function initAuth in client\src\contexts\AuthContext.jsx. Used in: client/src/contexts/AuthContext.jsx.
     const initAuth = () => {
       const token = authService.getToken();
       const user = token ? authService.getCurrentUser() : null;
@@ -216,6 +220,7 @@ export const AuthProvider = ({ children }) => {
 
   // Listen for storage changes (e.g., profile updates from other tabs)
   useEffect(() => {
+    // Code Review: Function onStorage in client\src\contexts\AuthContext.jsx. Used in: client/src/contexts/AuthContext.jsx.
     const onStorage = (e) => {
       if (e.key === 'user') {
         const user = authService.getCurrentUser();
@@ -228,6 +233,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Login function
+  // Code Review: Function login in client\src\contexts\AuthContext.jsx. Used in: client/src/components/ProtectedRoute.jsx, client/src/components/layout/Header.jsx, client/src/components/layout/MainLayout.jsx.
   const login = async (credentials) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
@@ -249,6 +255,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register function
+  // Code Review: Function register in client\src\contexts\AuthContext.jsx. Used in: client/src/components/layout/Header.jsx, client/src/components/layout/MainLayout.jsx, client/src/contexts/AuthContext.jsx.
   const register = async (userData) => {
     dispatch({ type: AUTH_ACTIONS.REGISTER_START });
 
@@ -269,6 +276,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Clear error function
+  // Code Review: Function clearError in client\src\contexts\AuthContext.jsx. Used in: client/src/contexts/AuthContext.jsx, client/src/pages/Login.jsx, client/src/pages/Register.jsx.
   const clearError = () => {
     dispatch({ type: AUTH_ACTIONS.CLEAR_ERROR });
   };
@@ -283,11 +291,13 @@ export const AuthProvider = ({ children }) => {
   }, [state.token]);
 
   // Check if user is admin
+  // Code Review: Function isAdmin in client\src\contexts\AuthContext.jsx. Used in: client/src/contexts/AuthContext.jsx, client/src/pages/CustomerManagement.jsx, client/src/pages/StockManagement.jsx.
   const isAdmin = () => {
     return state.user?.role === 'Admin' || state.user?.staffRole === 'Admin';
   };
 
   // Check if user has a specific role
+  // Code Review: Function hasRole in client\src\contexts\AuthContext.jsx. Used in: client/src/contexts/AuthContext.jsx, client/src/services/authService.js.
   const hasRole = (roles) => {
     if (!Array.isArray(roles) || !roles.length) return false;
     const userRole = state.user?.role || state.user?.staffRole || null;
@@ -295,16 +305,19 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Get user role
+  // Code Review: Function getUserRole in client\src\contexts\AuthContext.jsx. Used in: client/src/contexts/AuthContext.jsx.
   const getUserRole = () => {
     return state.user?.role || state.user?.staffRole || null;
   };
 
   // Check if user is staff
+  // Code Review: Function isStaff in client\src\contexts\AuthContext.jsx. Used in: client/src/contexts/AuthContext.jsx.
   const isStaff = () => {
     return state.user?.type === 'Staff';
   };
 
   // Check if user is customer
+  // Code Review: Function isCustomer in client\src\contexts\AuthContext.jsx. Used in: client/src/contexts/AuthContext.jsx, server/controllers/deliveryController.js.
   const isCustomer = () => {
     return state.user?.type === 'Customer';
   };
@@ -332,6 +345,7 @@ export const AuthProvider = ({ children }) => {
 };
 
 // Custom hook to use auth context
+// Code Review: Function useAuth in client\src\contexts\AuthContext.jsx. Used in: client/src/components/ProtectedRoute.jsx, client/src/components/layout/Header.jsx, client/src/components/layout/MainLayout.jsx.
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

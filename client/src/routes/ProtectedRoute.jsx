@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
+// Code Review: Function ProtectedRoute in client\src\routes\ProtectedRoute.jsx. Used in: client/src/components/ProtectedRoute.jsx, client/src/contexts/AuthContext.jsx, client/src/routes/AppRoutes.jsx.
 const ProtectedRoute = ({ children, requireAdmin = false, allowedRoles = null }) => {
   const { isAuthenticated, isAdmin, user } = useAuth();
   const location = useLocation();

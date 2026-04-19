@@ -10,6 +10,7 @@ import ImageUpload from '../components/ImageUpload';
 import { categoryService, menuItemService } from '../services/menuService';
 import { resolveAssetUrl } from '../config/api';
 
+// Code Review: Function CategoryManagement in client\src\pages\CategoryManagement.jsx. Used in: client/src/components/ui/LoadingSkeleton.jsx, client/src/config/api.js, client/src/pages/AddOnManagement.jsx.
 const CategoryManagement = () => {
     const [categories, setCategories] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
@@ -38,17 +39,20 @@ const CategoryManagement = () => {
         return counts;
     }, [menuItems]);
 
+    // Code Review: Function fetchCategories in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/CategoryManagement.jsx, client/src/pages/Menu.jsx, client/src/pages/MenuManagement.jsx.
     const fetchCategories = async () => {
         const response = await categoryService.getAll({ includeInactive: true });
         setCategories(response.data || []);
     };
 
+    // Code Review: Function fetchMenuItems in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx, client/src/pages/Menu.jsx.
     const fetchMenuItems = async () => {
         const response = await menuItemService.getAll();
         setMenuItems(response.data || []);
     };
 
     useEffect(() => {
+        // Code Review: Function loadData in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/CashierDashboard.jsx, client/src/pages/CategoryManagement.jsx.
         const loadData = async () => {
             try {
                 setLoading(true);
@@ -65,10 +69,12 @@ const CategoryManagement = () => {
         loadData();
     }, []);
 
+    // Code Review: Function showToast in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx.
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
     };
 
+    // Code Review: Function openModal in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx.
     const openModal = (category = null) => {
         if (category) {
             setEditingCategory(category);
@@ -93,6 +99,7 @@ const CategoryManagement = () => {
         setShowModal(true);
     };
 
+    // Code Review: Function closeModal in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx.
     const closeModal = () => {
         setShowModal(false);
         setEditingCategory(null);
@@ -106,6 +113,7 @@ const CategoryManagement = () => {
         setErrors({});
     };
 
+    // Code Review: Function validateForm in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/Checkout.jsx.
     const validateForm = () => {
         const newErrors = {};
 
@@ -121,6 +129,7 @@ const CategoryManagement = () => {
         return Object.keys(newErrors).length === 0;
     };
 
+    // Code Review: Function handleSubmit in client\src\pages\CategoryManagement.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (!validateForm()) return;
@@ -142,6 +151,7 @@ const CategoryManagement = () => {
         }
     };
 
+    // Code Review: Function handleToggleActive in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/MenuManagement.jsx.
     const handleToggleActive = async (category) => {
         try {
             await categoryService.update(category.CategoryID, { IsActive: !category.IsActive });
@@ -153,6 +163,7 @@ const CategoryManagement = () => {
         }
     };
 
+    // Code Review: Function handleDelete in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx, client/src/pages/MenuManagement.jsx.
     const handleDelete = async (category) => {
         if (!window.confirm(`Deactivate "${category.Name}"?`)) return;
 
@@ -166,6 +177,7 @@ const CategoryManagement = () => {
         }
     };
 
+    // Code Review: Function handleChange in client\src\pages\CategoryManagement.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
     const handleChange = (event) => {
         const { name, value, type, checked } = event.target;
         setFormData(prev => ({

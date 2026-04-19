@@ -21,6 +21,7 @@ if (isCloudinaryConfigured) {
     });
 }
 
+// Code Review: Function assertCloudinaryConfigured in server\config\cloudinary.js. Used in: server/config/cloudinary.js, server/services/uploadService.js, server/tests/uploadService.test.js.
 const assertCloudinaryConfigured = () => {
     if (isCloudinaryConfigured) {
         return;

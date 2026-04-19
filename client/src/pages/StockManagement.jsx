@@ -9,6 +9,7 @@ import Select from '../components/ui/Select';
 import { menuItemService } from '../services/menuService';
 import { API_BASE_URL } from '../config/api';
 
+// Code Review: Function StockManagement in client\src\pages\StockManagement.jsx. Used in: client/src/contexts/AuthContext.jsx, client/src/pages/StockManagement.jsx, client/src/routes/AppRoutes.jsx.
 const StockManagement = () => {
     const { user } = useAuth();
     const apiBaseUrl = API_BASE_URL;
@@ -67,6 +68,7 @@ const StockManagement = () => {
     }, [fetchStock]);
 
     useEffect(() => {
+        // Code Review: Function loadMenuItems in client\src\pages\StockManagement.jsx. Used in: client/src/pages/StockManagement.jsx.
         const loadMenuItems = async () => {
             try {
                 const response = await menuItemService.getAll({ isActive: 'true' });
@@ -86,6 +88,7 @@ const StockManagement = () => {
         }
     }, [canEditStock]);
 
+    // Code Review: Function handleUpdateOpening in client\src\pages\StockManagement.jsx. Used in: client/src/pages/StockManagement.jsx.
     const handleUpdateOpening = async (stockId, newQuantity) => {
         if (!canEditStock) {
             toast.error('Only admins or kitchen staff can update stock');
@@ -120,6 +123,7 @@ const StockManagement = () => {
         }
     };
 
+    // Code Review: Function handleManualAdjust in client\src\pages\StockManagement.jsx. Used in: client/src/pages/StockManagement.jsx.
     const handleManualAdjust = async (stockId, adjustment, reason) => {
         if (!canEditStock) {
             toast.error('Only admins or kitchen staff can update stock');
@@ -166,6 +170,7 @@ const StockManagement = () => {
         }
     };
 
+    // Code Review: Function handleAddStockItem in client\src\pages\StockManagement.jsx. Used in: client/src/pages/StockManagement.jsx.
     const handleAddStockItem = async () => {
         if (!canEditStock) {
             toast.error('Only admins or kitchen staff can update stock');
@@ -215,6 +220,7 @@ const StockManagement = () => {
         }
     };
 
+    // Code Review: Function handleRemoveStockItem in client\src\pages\StockManagement.jsx. Used in: client/src/pages/StockManagement.jsx.
     const handleRemoveStockItem = async (stockId) => {
         if (!canEditStock) {
             toast.error('Only admins or kitchen staff can update stock');

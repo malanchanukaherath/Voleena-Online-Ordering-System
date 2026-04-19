@@ -3,6 +3,7 @@ import Modal from './ui/Modal';
 import Button from './ui/Button';
 import { FaCreditCard, FaLock, FaSpinner } from 'react-icons/fa';
 
+// Code Review: Function PaymentGatewayModal in client\src\components\PaymentGatewayModal.jsx. Used in: client/src/components/PaymentGatewayModal.jsx.
 const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFailure }) => {
     const [processing, setProcessing] = useState(false);
     const [cardDetails, setCardDetails] = useState({
@@ -13,6 +14,7 @@ const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFa
     });
     const [errors, setErrors] = useState({});
 
+    // Code Review: Function handleChange in client\src\components\PaymentGatewayModal.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setCardDetails(prev => ({ ...prev, [name]: value }));
@@ -21,6 +23,7 @@ const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFa
         }
     };
 
+    // Code Review: Function validateCard in client\src\components\PaymentGatewayModal.jsx. Used in: client/src/components/PaymentGatewayModal.jsx.
     const validateCard = () => {
         const newErrors = {};
         if (!cardDetails.cardNumber || cardDetails.cardNumber.length < 16) {
@@ -39,6 +42,7 @@ const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFa
         return Object.keys(newErrors).length === 0;
     };
 
+    // Code Review: Function handlePayment in client\src\components\PaymentGatewayModal.jsx. Used in: client/src/components/PaymentGatewayModal.jsx.
     const handlePayment = () => {
         if (!validateCard()) return;
 
@@ -68,6 +72,7 @@ const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFa
         }, 2500);
     };
 
+    // Code Review: Function formatCardNumber in client\src\components\PaymentGatewayModal.jsx. Used in: client/src/components/PaymentGatewayModal.jsx.
     const formatCardNumber = (value) => {
         return value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
     };

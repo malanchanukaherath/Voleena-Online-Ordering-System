@@ -17,18 +17,22 @@ const STRIPE_WEBHOOK_EVENTS = new Set([
   'payment_intent.processing'
 ]);
 
+// Code Review: Function normalizePaymentMethod in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
 function normalizePaymentMethod(paymentMethod) {
   return typeof paymentMethod === 'string' ? paymentMethod.trim().toUpperCase() : '';
 }
 
+// Code Review: Function hasConfiguredStripeValue in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js, server/utils/paymentService.js.
 function hasConfiguredStripeValue(value, prefix) {
   return typeof value === 'string' && value.trim().startsWith(prefix) && !value.includes('your_');
 }
 
+// Code Review: Function amountsMatch in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
 function amountsMatch(left, right) {
   return Math.abs(Number(left) - Number(right)) <= 0.01;
 }
 
+// Code Review: Function buildGatewayStatus in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js, server/utils/paymentService.js.
 function buildGatewayStatus(status, detail) {
   return [status, detail]
     .filter(Boolean)
@@ -39,6 +43,7 @@ function buildGatewayStatus(status, detail) {
     .slice(0, 50);
 }
 
+// Code Review: Function cancelOrderAfterPaymentFailure in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
 async function cancelOrderAfterPaymentFailure(order, reason) {
   if (!order || ['CANCELLED', 'DELIVERED'].includes(order.Status)) {
     return;
@@ -52,6 +57,7 @@ async function cancelOrderAfterPaymentFailure(order, reason) {
   );
 }
 
+// Code Review: Function notifyPaymentUpdate in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
 async function notifyPaymentUpdate(order, payment, nextStatus) {
   try {
     if (!order || !payment) {
@@ -131,6 +137,7 @@ async function notifyPaymentUpdate(order, payment, nextStatus) {
   }
 }
 
+// Code Review: Function findStripePaymentRecord in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
 async function findStripePaymentRecord(intent) {
   const metadataPaymentId = Number.parseInt(intent.metadata?.paymentId, 10);
 
@@ -141,6 +148,7 @@ async function findStripePaymentRecord(intent) {
   return Payment.findOne({ where: { TransactionID: intent.id } });
 }
 
+// Code Review: Function verifyPayHereSignature in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
 function verifyPayHereSignature(payload) {
   const merchantSecret = process.env.PAYHERE_MERCHANT_SECRET;
   if (!merchantSecret) {

@@ -6,6 +6,7 @@
 
 const { MenuItem, sequelize } = require('./models');
 
+// Code Review: Function checkMenuAvailability in server\check_menu_availability.js. Used in: server/check_menu_availability.js.
 async function checkMenuAvailability() {
     try {
         console.log('Checking menu item availability...\n');

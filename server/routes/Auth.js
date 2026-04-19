@@ -8,13 +8,16 @@ const router = express.Router();
 const { Customer, Staff, Role } = require('../models');
 
 // Helper: Validate email format
+// Code Review: Function isValidEmail in server\routes\Auth.js. Used in: server/controllers/authController.js, server/routes/Auth.js.
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 // Helper: Validate password strength
+// Code Review: Function isValidPassword in server\routes\Auth.js. Used in: server/controllers/authController.js, server/routes/Auth.js.
 const isValidPassword = (password) => {
   return password && password.length >= 8;
 };
 
+// Code Review: Function getJwtSecret in server\routes\Auth.js. Used in: server/routes/Auth.js.
 const getJwtSecret = () => {
   if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET is not configured');

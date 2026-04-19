@@ -14,6 +14,7 @@ const { logCustomerCreation } = require('../utils/auditLogger');
 const { sendEmailVerificationLink } = require('../services/verificationEmailService');
 const { sendOTPSMS } = require('../services/smsService');
 
+// Code Review: Function normalizeOptionalEmail in server\routes\customers.js. Used in: server/routes/customers.js.
 const normalizeOptionalEmail = (email) => {
     if (email === undefined || email === null) {
         return null;
@@ -23,18 +24,26 @@ const normalizeOptionalEmail = (email) => {
     return trimmed || null;
 };
 
+// Code Review: Function normalizePhone in server\routes\customers.js. Used in: server/controllers/orderController.js, server/routes/customers.js, server/services/orderService.js.
 const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
+// Code Review: Function hashOtpCode in server\routes\customers.js. Used in: server/controllers/authController.js, server/routes/customers.js.
 const hashOtpCode = (otpCode, phoneContext = null) => {
     const otpPart = String(otpCode).trim();
     const phonePart = phoneContext ? `:${normalizePhone(phoneContext)}` : '';
     return crypto.createHash('sha256').update(`${otpPart}${phonePart}`).digest('hex');
 };
+// Code Review: Function generatePhoneVerificationOtp in server\routes\customers.js. Used in: server/routes/customers.js.
 const generatePhoneVerificationOtp = () => crypto.randomInt(100000, 1000000).toString();
 
+// Code Review: Function isValidProfileName in server\routes\customers.js. Used in: server/routes/customers.js.
 const isValidProfileName = (name) => typeof name === 'string' && name.trim().length >= 2;
+// Code Review: Function isValidProfileEmail in server\routes\customers.js. Used in: server/routes/customers.js.
 const isValidProfileEmail = (email) => email === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+// Code Review: Function isValidProfilePhone in server\routes\customers.js. Used in: server/routes/customers.js.
 const isValidProfilePhone = (phone) => /^[+]?[0-9]{9,15}$/.test(phone);
+// Code Review: Function isValidNotificationPreference in server\routes\customers.js. Used in: server/routes/customers.js.
 const isValidNotificationPreference = (value) => ['EMAIL', 'SMS', 'BOTH'].includes(value);
+// Code Review: Function isSuccessfulOtpDelivery in server\routes\customers.js. Used in: server/routes/customers.js.
 const isSuccessfulOtpDelivery = (deliveryResult) => {
     return Boolean(deliveryResult && deliveryResult.success === true && deliveryResult.skipped !== true);
 };
@@ -51,11 +60,13 @@ const PHONE_VERIFICATION_OTP_EXPIRY_MINUTES = parseInt(
     10
 );
 
+// Code Review: Function buildEmailChangeVerificationUrl in server\routes\customers.js. Used in: server/routes/customers.js.
 const buildEmailChangeVerificationUrl = (token) => {
     const frontendBase = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
     return `${frontendBase}/verify-email?token=${encodeURIComponent(token)}`;
 };
 
+// Code Review: Function buildCustomerEmailChangeToken in server\routes\customers.js. Used in: server/routes/customers.js.
 const buildCustomerEmailChangeToken = ({ customerId, currentEmail, newEmail }) => {
     return jwt.sign(
         {
@@ -69,6 +80,7 @@ const buildCustomerEmailChangeToken = ({ customerId, currentEmail, newEmail }) =
     );
 };
 
+// Code Review: Function isAddressTableMissingError in server\routes\customers.js. Used in: server/controllers/cashierController.js, server/controllers/deliveryController.js, server/controllers/orderController.js.
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
     const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -81,6 +93,7 @@ const isAddressTableMissingError = (error) => {
         || (message.includes("doesn't exist") && message.includes('address'));
 };
 
+// Code Review: Function handleAddressTableMissing in server\routes\customers.js. Used in: server/routes/customers.js.
 const handleAddressTableMissing = (res, error) => {
     if (!isAddressTableMissingError(error)) {
         return false;
@@ -91,6 +104,7 @@ const handleAddressTableMissing = (res, error) => {
     });
 };
 
+// Code Review: Function findCustomerWithOptionalAddresses in server\routes\customers.js. Used in: server/routes/customers.js.
 const findCustomerWithOptionalAddresses = async (customerId, attributes) => {
     try {
         const customer = await Customer.findByPk(customerId, {
@@ -123,6 +137,7 @@ const findCustomerWithOptionalAddresses = async (customerId, attributes) => {
     }
 };
 
+// Code Review: Function createAddressForCustomer in server\routes\customers.js. Used in: server/routes/customers.js.
 const createAddressForCustomer = async (customerId, payload = {}) => {
     const { addressLine1, addressLine2, city, postalCode, district, latitude, longitude } = payload;
 
@@ -152,6 +167,7 @@ const createAddressForCustomer = async (customerId, payload = {}) => {
         };
     }
 
+    // Code Review: Function parseCoordinate in server\routes\customers.js. Used in: server/routes/customers.js.
     const parseCoordinate = (value) => {
         if (value === undefined || value === null || String(value).trim() === '') {
             return null;

@@ -3,6 +3,7 @@ import { API_BASE_URL } from '../config/api';
 /**
  * Get authentication headers
  */
+// Code Review: Function getAuthHeaders in client\src\services\dashboardService.js. Used in: client/src/services/dashboardService.js.
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
   return {
@@ -14,6 +15,7 @@ const getAuthHeaders = () => {
 /**
  * Handle API response
  */
+// Code Review: Function handleResponse in client\src\services\dashboardService.js. Used in: client/src/services/dashboardService.js.
 const handleResponse = async (response) => {
   const data = await response.json();
 

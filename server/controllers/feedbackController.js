@@ -3,6 +3,7 @@
 // SEARCH_HINT: Look here for request handling logic and data processing.
 const { Feedback, Order, Customer, Staff } = require('../models');
 
+// Code Review: Function getFeedbackErrorMessage in server\controllers\feedbackController.js. Used in: server/controllers/feedbackController.js.
 const getFeedbackErrorMessage = (error, fallback) => {
     return error?.message || error?.original?.sqlMessage || fallback;
 };
@@ -10,6 +11,7 @@ const getFeedbackErrorMessage = (error, fallback) => {
 const ALLOWED_POSITIVE_TAGS = ['Good taste', 'Fast delivery'];
 const ALLOWED_ISSUE_TAGS = ['Late delivery', 'Wrong item', 'Poor packaging'];
 
+// Code Review: Function sanitizeTagArray in server\controllers\feedbackController.js. Used in: server/controllers/feedbackController.js.
 const sanitizeTagArray = (value, allowed) => {
     if (!Array.isArray(value)) {
         return [];
@@ -19,6 +21,7 @@ const sanitizeTagArray = (value, allowed) => {
     return unique.filter((tag) => allowed.includes(tag));
 };
 
+// Code Review: Function encodeFeedbackPayload in server\controllers\feedbackController.js. Used in: server/controllers/feedbackController.js.
 const encodeFeedbackPayload = ({ comment, positiveTags, issueTags }) => {
     return JSON.stringify({
         comment: String(comment || '').trim(),
@@ -27,6 +30,7 @@ const encodeFeedbackPayload = ({ comment, positiveTags, issueTags }) => {
     });
 };
 
+// Code Review: Function decodeFeedbackPayload in server\controllers\feedbackController.js. Used in: server/controllers/adminController.js, server/controllers/feedbackController.js.
 const decodeFeedbackPayload = (rawComment) => {
     const fallback = {
         comment: rawComment || '',
@@ -54,6 +58,7 @@ const decodeFeedbackPayload = (rawComment) => {
     }
 };
 
+// Code Review: Function toResponseFeedback in server\controllers\feedbackController.js. Used in: server/controllers/feedbackController.js.
 const toResponseFeedback = (record) => {
     const plain = record?.get ? record.get({ plain: true }) : record;
     const decoded = decodeFeedbackPayload(plain.Comment);

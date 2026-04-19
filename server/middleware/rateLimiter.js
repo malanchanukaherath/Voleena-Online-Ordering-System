@@ -22,6 +22,7 @@ try {
 /**
  * Helper to create a RedisStore using the rate-limit-redis v4 API (sendCommand)
  */
+// Code Review: Function makeRedisStore in server\middleware\rateLimiter.js. Used in: server/middleware/rateLimiter.js.
 function makeRedisStore(prefix) {
     if (!redisClient) return undefined;
     return new RedisStore({

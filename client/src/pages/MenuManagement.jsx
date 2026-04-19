@@ -10,6 +10,7 @@ import ImageUpload from '../components/ImageUpload';
 import { menuItemService, categoryService } from '../services/menuService';
 import { resolveAssetUrl } from '../config/api';
 
+// Code Review: Function MenuManagement in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx.
 const MenuManagement = () => {
     const [menuItems, setMenuItems] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -78,10 +79,12 @@ const MenuManagement = () => {
         fetchCategories();
     }, [fetchMenuItems, fetchCategories]);
 
+    // Code Review: Function showToast in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx.
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
     };
 
+    // Code Review: Function handleOpenModal in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/MenuManagement.jsx.
     const handleOpenModal = (item = null) => {
         if (item) {
             setEditingItem(item);
@@ -108,6 +111,7 @@ const MenuManagement = () => {
         setShowModal(true);
     };
 
+    // Code Review: Function handleCloseModal in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/MenuManagement.jsx.
     const handleCloseModal = () => {
         setShowModal(false);
         setEditingItem(null);
@@ -122,6 +126,7 @@ const MenuManagement = () => {
         setErrors({});
     };
 
+    // Code Review: Function openAddOnModal in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/MenuManagement.jsx.
     const openAddOnModal = async (item) => {
         setEditingAddOnMenuItem(item);
         setShowAddOnModal(true);
@@ -149,6 +154,7 @@ const MenuManagement = () => {
         }
     };
 
+    // Code Review: Function closeAddOnModal in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/MenuManagement.jsx.
     const closeAddOnModal = () => {
         setShowAddOnModal(false);
         setEditingAddOnMenuItem(null);
@@ -159,6 +165,7 @@ const MenuManagement = () => {
         setSavingAddOnConfig(false);
     };
 
+    // Code Review: Function toggleAddOnSelection in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/MenuManagement.jsx.
     const toggleAddOnSelection = (addOnId, isSelected) => {
         setSelectedAddOnIds((previous) => {
             if (isSelected) {
@@ -169,6 +176,7 @@ const MenuManagement = () => {
         });
     };
 
+    // Code Review: Function saveAddOnConfig in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/MenuManagement.jsx.
     const saveAddOnConfig = async () => {
         if (!editingAddOnMenuItem) {
             return;
@@ -188,6 +196,7 @@ const MenuManagement = () => {
         }
     };
 
+    // Code Review: Function resetToInheritedAddOns in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/MenuManagement.jsx.
     const resetToInheritedAddOns = async () => {
         if (!editingAddOnMenuItem) {
             return;
@@ -207,6 +216,7 @@ const MenuManagement = () => {
         }
     };
 
+    // Code Review: Function validateForm in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/Checkout.jsx.
     const validateForm = () => {
         const newErrors = {};
 
@@ -226,6 +236,7 @@ const MenuManagement = () => {
         return Object.keys(newErrors).length === 0;
     };
 
+    // Code Review: Function handleSubmit in client\src\pages\MenuManagement.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -248,6 +259,7 @@ const MenuManagement = () => {
         }
     };
 
+    // Code Review: Function handleToggleActive in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/MenuManagement.jsx.
     const handleToggleActive = async (item) => {
         try {
             await menuItemService.update(item.MenuItemID, { IsActive: !item.IsActive });
@@ -259,6 +271,7 @@ const MenuManagement = () => {
         }
     };
 
+    // Code Review: Function handleDelete in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx, client/src/pages/MenuManagement.jsx.
     const handleDelete = async (item) => {
         if (!window.confirm(`Are you sure you want to delete "${item.Name}"?`)) return;
 
@@ -272,6 +285,7 @@ const MenuManagement = () => {
         }
     };
 
+    // Code Review: Function handleChange in client\src\pages\MenuManagement.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setFormData(prev => ({
@@ -286,6 +300,7 @@ const MenuManagement = () => {
     const filteredItems = menuItems;
     const hasActiveFilters = Boolean(searchTerm || categoryFilter || isActiveFilter !== '');
 
+    // Code Review: Function clearFilters in client\src\pages\MenuManagement.jsx. Used in: client/src/pages/Menu.jsx, client/src/pages/MenuManagement.jsx, client/src/pages/OrderHistory.jsx.
     const clearFilters = () => {
         setSearchTerm('');
         setCategoryFilter('');

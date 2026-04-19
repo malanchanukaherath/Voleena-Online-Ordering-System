@@ -3,6 +3,7 @@ const { body, param, query, validationResult } = require('express-validator');
 /**
  * Handle validation errors
  */
+// Code Review: Function handleValidationErrors in server\middleware\validation.js. Used in: server/middleware/validation.js.
 function handleValidationErrors(req, res, next) {
     const errors = validationResult(req);
 
@@ -453,9 +454,11 @@ const validateDeliveryAssignment = [
 /**
  * Sanitize user input to prevent XSS
  */
+// Code Review: Function sanitizeInput in server\middleware\validation.js. Used in: server/index.js, server/middleware/validation.js, server/tests/index.bootstrap.test.js.
 function sanitizeInput(req, res, next) {
     const DOMPurify = require('isomorphic-dompurify');
 
+    // Code Review: Function sanitizeObject in server\middleware\validation.js. Used in: server/middleware/validation.js.
     const sanitizeObject = (obj) => {
         for (let key in obj) {
             if (typeof obj[key] === 'string') {

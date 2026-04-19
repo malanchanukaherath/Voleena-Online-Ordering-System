@@ -7,6 +7,7 @@ import Card from '../components/ui/Card';
 import Toast from '../components/ui/Toast';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
+// Code Review: Function Register in client\src\pages\Register.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/contexts/AuthContext.jsx, client/src/pages/CustomerRegistration.jsx.
 const Register = () => {
   const { register, isAuthenticated, error, clearError } = useAuth();
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ const Register = () => {
     }
   }, [error]);
 
+  // Code Review: Function handleInputChange in client\src\pages\Register.jsx. Used in: client/src/pages/Login.jsx, client/src/pages/Register.jsx, client/src/pages/Settings.jsx.
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -61,6 +63,7 @@ const Register = () => {
     }
   };
 
+  // Code Review: Function validateForm in client\src\pages\Register.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/Checkout.jsx.
   const validateForm = () => {
     const newErrors = {};
 
@@ -100,6 +103,7 @@ const Register = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Code Review: Function handleSubmit in client\src\pages\Register.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
   const handleSubmit = async (e) => {
     e.preventDefault();
 

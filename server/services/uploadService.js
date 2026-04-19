@@ -8,6 +8,7 @@ const { cloudinary, assertCloudinaryConfigured, isCloudinaryConfigured } = requi
 const ALLOWED_FOLDERS = ['menu', 'category', 'profile', 'combo'];
 const ROOT_FOLDER = process.env.CLOUDINARY_ROOT_FOLDER || 'voleena';
 
+// Code Review: Function sanitizeFilename in server\services\uploadService.js. Used in: server/services/uploadService.js.
 const sanitizeFilename = (filename) => {
     const extension = path.extname(filename || '').toLowerCase();
     const nameWithoutExt = path.basename(filename || 'image', extension);
@@ -22,6 +23,7 @@ const sanitizeFilename = (filename) => {
     return sanitized || 'image';
 };
 
+// Code Review: Function resolveTargetFolder in server\services\uploadService.js. Used in: server/services/uploadService.js.
 const resolveTargetFolder = (folder) => {
     if (!folder) {
         return 'menu';
@@ -30,6 +32,7 @@ const resolveTargetFolder = (folder) => {
     return ALLOWED_FOLDERS.includes(folder) ? folder : null;
 };
 
+// Code Review: Function hasAllowedImageSignature in server\services\uploadService.js. Used in: server/services/uploadService.js, server/tests/uploadService.test.js.
 const hasAllowedImageSignature = (buffer) => {
     if (!Buffer.isBuffer(buffer) || buffer.length < 12) {
         return false;
@@ -43,6 +46,7 @@ const hasAllowedImageSignature = (buffer) => {
     return isJpeg || isPng || isWebp;
 };
 
+// Code Review: Function uploadBufferToCloudinary in server\services\uploadService.js. Used in: server/services/uploadService.js.
 const uploadBufferToCloudinary = (buffer, uploadOptions) => {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
@@ -56,6 +60,7 @@ const uploadBufferToCloudinary = (buffer, uploadOptions) => {
     });
 };
 
+// Code Review: Function uploadImageFile in server\services\uploadService.js. Used in: server/controllers/comboPackController.js, server/controllers/menuItemController.js, server/controllers/uploadController.js.
 const uploadImageFile = async (file, folder = 'menu') => {
     assertCloudinaryConfigured();
 
@@ -95,6 +100,7 @@ const uploadImageFile = async (file, folder = 'menu') => {
     };
 };
 
+// Code Review: Function extractPublicIdFromUrl in server\services\uploadService.js. Used in: server/services/uploadService.js.
 const extractPublicIdFromUrl = (imageUrl) => {
     if (!imageUrl || typeof imageUrl !== 'string') {
         return null;
@@ -138,6 +144,7 @@ const extractPublicIdFromUrl = (imageUrl) => {
     return publicIdSegments.join('/');
 };
 
+// Code Review: Function deleteImageByUrl in server\services\uploadService.js. Used in: server/controllers/comboPackController.js, server/controllers/menuItemController.js, server/routes/categories.js.
 const deleteImageByUrl = async (imageUrl) => {
     const publicId = extractPublicIdFromUrl(imageUrl);
     if (!publicId) {

@@ -8,6 +8,7 @@ import { addToCart } from '../utils/cartStorage';
 import { toast } from 'react-toastify';
 import { resolveAssetUrl } from '../config/api';
 
+// Code Review: Function Home in client\src\pages\Home.jsx. Used in: client/src/components/ComboPackCard.jsx, client/src/components/layout/Footer.jsx, client/src/components/layout/Header.jsx.
 const Home = () => {
     const { isAuthenticated } = useAuth();
     const [featuredItems, setFeaturedItems] = useState([]);
@@ -16,6 +17,7 @@ const Home = () => {
     const [comboSpecials, setComboSpecials] = useState([]);
     const [isLoadingCombos, setIsLoadingCombos] = useState(true);
 
+    // Code Review: Function resolveImageUrl in client\src\pages\Home.jsx. Used in: client/src/components/ComboPackCard.jsx, client/src/pages/Home.jsx, client/src/pages/Menu.jsx.
     const resolveImageUrl = (imagePath) => {
         if (!imagePath) {
             return null;
@@ -24,6 +26,7 @@ const Home = () => {
     };
 
     useEffect(() => {
+        // Code Review: Function loadFeatured in client\src\pages\Home.jsx. Used in: client/src/pages/Home.jsx.
         const loadFeatured = async () => {
             try {
                 const response = await menuItemService.getAll({ isActive: 'true' });
@@ -98,6 +101,7 @@ const Home = () => {
     }, []);
 
     useEffect(() => {
+        // Code Review: Function loadCombos in client\src\pages\Home.jsx. Used in: client/src/pages/Home.jsx.
         const loadCombos = async () => {
             try {
                 const response = await comboPackService.getActive();
@@ -116,6 +120,7 @@ const Home = () => {
         loadCombos();
     }, []);
 
+    // Code Review: Function handleAddComboToCart in client\src\pages\Home.jsx. Used in: client/src/pages/Home.jsx.
     const handleAddComboToCart = (combo) => {
         try {
             addToCart({
@@ -133,6 +138,7 @@ const Home = () => {
         }
     };
 
+    // Code Review: Function handleAddToCart in client\src\pages\Home.jsx. Used in: client/src/pages/Home.jsx, client/src/pages/Menu.jsx, client/src/pages/MenuItemDetail.jsx.
     const handleAddToCart = (item) => {
         if (!item.isAvailable) {
             toast.error('This item is not available right now');

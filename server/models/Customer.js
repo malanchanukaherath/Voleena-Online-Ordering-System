@@ -93,6 +93,7 @@ module.exports = (sequelize, DataTypes) => {
     updatedAt: 'updated_at'
   });
   //Hashing
+  // Code Review: Function hashPassword in server\models\Customer.js. Used in: server/models/Customer.js, server/models/Staff.js.
   const hashPassword = async (customer) => {
     if (customer.changed('Password')) {
       customer.Password = await bcrypt.hash(customer.Password, 10);

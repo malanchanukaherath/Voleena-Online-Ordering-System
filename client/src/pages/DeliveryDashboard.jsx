@@ -12,6 +12,7 @@ const DEFAULT_STATS = {
     pendingPickup: 0,
 };
 
+// Code Review: Function DeliveryDashboard in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx, client/src/routes/AppRoutes.jsx.
 const DeliveryDashboard = () => {
     const [stats, setStats] = useState(DEFAULT_STATS);
     const [activeDeliveries, setActiveDeliveries] = useState([]);
@@ -22,11 +23,13 @@ const DeliveryDashboard = () => {
     const [loadingError, setLoadingError] = useState(null);
     const [updatingAvailability, setUpdatingAvailability] = useState(false);
 
+    // Code Review: Function getDeliveryTimestamp in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx.
     const getDeliveryTimestamp = (value) => {
         const timestamp = new Date(value || 0).getTime();
         return Number.isNaN(timestamp) ? 0 : timestamp;
     };
 
+    // Code Review: Function normalizeSpecialInstructions in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/CashierOrders.jsx, client/src/pages/DeliveryDashboard.jsx.
     const normalizeSpecialInstructions = (order) => {
         const rawValue = order?.SpecialInstructions ?? order?.specialInstructions ?? order?.special_instructions ?? '';
         const normalized = String(rawValue || '').trim();
@@ -66,6 +69,7 @@ const DeliveryDashboard = () => {
         let isMounted = true;
 
         // OPTIMIZATION: Split into frequent and infrequent polling
+        // Code Review: Function loadDeliveries in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx.
         const loadDeliveries = async () => {
             try {
                 const deliveriesResponse = await deliveryService.getMyDeliveries();
@@ -114,6 +118,7 @@ const DeliveryDashboard = () => {
             }
         };
 
+        // Code Review: Function loadMetadata in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/pages/DeliveryDashboard.jsx.
         const loadMetadata = async () => {
             try {
                 const [statsResponse, availabilityResponse] = await Promise.all([
@@ -149,6 +154,7 @@ const DeliveryDashboard = () => {
 
     // Request and track current location
     useEffect(() => {
+        // Code Review: Function requestLocation in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/hooks/useGeolocation.js, client/src/pages/DeliveryDashboard.jsx.
         const requestLocation = () => {
             if (!navigator.geolocation) {
                 setLocationPermission('unavailable');
@@ -196,6 +202,7 @@ const DeliveryDashboard = () => {
 
         let trackingDisabled = false;
 
+        // Code Review: Function broadcastLocation in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/pages/DeliveryDashboard.jsx, client/src/pages/DeliveryMap.jsx.
         const broadcastLocation = async () => {
             if (trackingDisabled) {
                 return;
@@ -228,6 +235,7 @@ const DeliveryDashboard = () => {
     }, [currentLocation, activeDeliveries]);
 
     // Toggle availability status
+    // Code Review: Function toggleAvailability in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/pages/DeliveryDashboard.jsx.
     const toggleAvailability = async () => {
         try {
             setUpdatingAvailability(true);
@@ -242,6 +250,7 @@ const DeliveryDashboard = () => {
         }
     };
 
+    // Code Review: Function getNextStatus in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx, client/src/pages/KitchenOrders.jsx.
     const getNextStatus = (status) => {
         const map = {
             ASSIGNED: 'PICKED_UP',
@@ -251,6 +260,7 @@ const DeliveryDashboard = () => {
         return map[status];
     };
 
+    // Code Review: Function getActionLabel in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx, client/src/pages/KitchenOrders.jsx.
     const getActionLabel = (status) => {
         const nextStatus = getNextStatus(status);
         if (nextStatus === 'PICKED_UP') return 'Mark Picked Up';
@@ -259,6 +269,7 @@ const DeliveryDashboard = () => {
         return 'Update Status';
     };
 
+    // Code Review: Function handleQueueAdvanceStatus in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx.
     const handleQueueAdvanceStatus = (delivery) => {
         const nextStatus = getNextStatus(delivery.status);
         if (!nextStatus) return;
@@ -266,6 +277,7 @@ const DeliveryDashboard = () => {
         queueStatusUpdate(delivery.id, delivery.status, nextStatus);
     };
 
+    // Code Review: Function getGoogleMapsNavigationUrl in client\src\pages\DeliveryDashboard.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx, client/src/pages/DeliveryMap.jsx.
     const getGoogleMapsNavigationUrl = (delivery) => {
         if (!Number.isFinite(delivery?.lat) || !Number.isFinite(delivery?.lng)) {
             return null;
