@@ -12,12 +12,10 @@ import {
     FaCheckCircle,
     FaClock,
     FaBan,
-    FaMoneyBillWave,
-    FaMapMarkedAlt
+    FaMoneyBillWave
 } from 'react-icons/fa';
 import {
     cancelOrder,
-    getDeliveryLocation,
     getOrderById
 } from '../services/orderApi';
 import { comboPackService, menuItemService } from '../services/menuService';
@@ -166,8 +164,6 @@ const OrderTracking = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
     const [isCancelling, setIsCancelling] = useState(false);
-    const [liveLocation, setLiveLocation] = useState(null);
-    const [liveLocationError, setLiveLocationError] = useState('');
 
     const [selectedItem, setSelectedItem] = useState(null);
     const [showItemPreviewModal, setShowItemPreviewModal] = useState(false);
@@ -393,67 +389,6 @@ const OrderTracking = () => {
         };
     }, [fetchOrder]);
 
-    useEffect(() => {
-        const deliveryId = order?.deliveryId;
-        const hasAssignedDeliveryPerson = Boolean(order?.deliveryPerson?.name || order?.deliveryPerson?.phone);
-        const shouldTrackLiveLocation = order?.orderType === 'DELIVERY'
-            && !['CANCELLED', 'DELIVERED'].includes(order?.status)
-            && Number.isInteger(Number(deliveryId))
-            && hasAssignedDeliveryPerson;
-
-        if (!shouldTrackLiveLocation) {
-            setLiveLocation(null);
-            setLiveLocationError('');
-            return;
-        }
-
-        let isMounted = true;
-
-        // Simple: This gets the live location.
-        const fetchLiveLocation = async () => {
-            try {
-                const response = await getDeliveryLocation(deliveryId);
-                const payload = response?.data?.data;
-
-                if (!payload || !isMounted) {
-                    return;
-                }
-
-                setLiveLocation({
-                    lat: toFiniteNumber(payload.lat),
-                    lng: toFiniteNumber(payload.lng),
-                    lastUpdate: payload.lastUpdate || null,
-                    status: payload.status || null
-                });
-                setLiveLocationError('');
-            } catch (error) {
-                if (!isMounted) {
-                    return;
-                }
-
-                if (error?.response?.status === 503) {
-                    setLiveLocationError(error.response?.data?.message || 'Live location tracking is temporarily unavailable.');
-                    return;
-                }
-
-                if ([403, 404].includes(error?.response?.status)) {
-                    setLiveLocationError('Live rider location is not available for this order right now.');
-                    return;
-                }
-
-                setLiveLocationError('Unable to fetch live rider location right now.');
-            }
-        };
-
-        fetchLiveLocation();
-        const intervalId = setInterval(fetchLiveLocation, 10000);
-
-        return () => {
-            isMounted = false;
-            clearInterval(intervalId);
-        };
-    }, [order?.deliveryId, order?.deliveryPerson?.name, order?.deliveryPerson?.phone, order?.orderType, order?.status]);
-
     // Simple: This checks whether cancel order is allowed.
     const canCancelOrder = () => {
         const cancellableStatuses = ['CONFIRMED', 'PREORDER_PENDING', 'PREORDER_CONFIRMED'];
@@ -533,22 +468,6 @@ const OrderTracking = () => {
                 return '';
         }
     };
-
-    const destinationLat = toFiniteNumber(order?.deliveryAddress?.latitude);
-    const destinationLng = toFiniteNumber(order?.deliveryAddress?.longitude);
-    const liveLat = toFiniteNumber(liveLocation?.lat);
-    const liveLng = toFiniteNumber(liveLocation?.lng);
-    const hasDestinationCoordinates = Number.isFinite(destinationLat) && Number.isFinite(destinationLng);
-    const hasLiveCoordinates = Number.isFinite(liveLat) && Number.isFinite(liveLng);
-    const isAssignedToRider = Boolean(order?.deliveryPerson?.name || order?.deliveryPerson?.phone);
-
-    const liveRouteUrl = hasDestinationCoordinates && hasLiveCoordinates
-        ? `https://www.google.com/maps/dir/?api=1&origin=${liveLat},${liveLng}&destination=${destinationLat},${destinationLng}&travelmode=driving`
-        : hasDestinationCoordinates
-            ? `https://www.google.com/maps/dir/?api=1&destination=${destinationLat},${destinationLng}&travelmode=driving`
-            : hasLiveCoordinates
-                ? `https://www.google.com/maps/search/?api=1&query=${liveLat},${liveLng}`
-                : null;
 
     // Simple: This handles what happens when cancel order is triggered.
     const handleCancelOrder = async () => {
@@ -788,69 +707,6 @@ const OrderTracking = () => {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
-
-                    {order.orderType === 'DELIVERY' && order.deliveryAddress && !['CANCELLED', 'DELIVERED'].includes(order.status) && (
-                        <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className="text-lg font-semibold mb-4 flex items-center">
-                                <FaMapMarkedAlt className="mr-2 text-primary-600" />
-                                Live Delivery Tracking
-                            </h3>
-
-                            {!isAssignedToRider ? (
-                                <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800">
-                                    <p>Delivery person has not been assigned yet. Live rider tracking will appear once assignment is complete.</p>
-                                </div>
-                            ) : hasDestinationCoordinates ? (
-                                <div className="space-y-4">
-                                    <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm text-blue-800">
-                                        <p>Your order is on the way to:</p>
-                                        <p className="font-medium mt-1">{order.deliveryAddress.line1}, {order.deliveryAddress.city}</p>
-                                    </div>
-
-                                    {hasLiveCoordinates ? (
-                                        <div className="bg-green-50 border border-green-200 rounded p-3 text-sm text-green-800">
-                                            <p>Rider live location is updating in near real-time.</p>
-                                            <p className="font-medium mt-1">Current: {liveLat.toFixed(6)}, {liveLng.toFixed(6)}</p>
-                                            {liveLocation?.lastUpdate && (
-                                                <p className="text-xs mt-1">Last update: {new Date(liveLocation.lastUpdate).toLocaleTimeString()}</p>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800">
-                                            <p>Waiting for rider GPS updates...</p>
-                                        </div>
-                                    )}
-
-                                    {liveLocationError && (
-                                        <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800">
-                                            <p>{liveLocationError}</p>
-                                        </div>
-                                    )}
-
-                                    <div className="bg-gray-100 rounded-lg p-4 text-center">
-                                        <FaMapMarkedAlt className="w-16 h-16 mx-auto mb-3 text-gray-400" />
-                                        <p className="text-sm text-gray-600">
-                                            Open Google Maps for rider and destination view
-                                        </p>
-                                        {liveRouteUrl && (
-                                            <a
-                                                href={liveRouteUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-block mt-3 px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 transition-colors text-sm"
-                                            >
-                                                Open in Google Maps
-                                            </a>
-                                        )}
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-sm text-yellow-800">
-                                    <p>Your order is on the way. GPS tracking is not available for this delivery.</p>
-                                </div>
-                            )}
                         </div>
                     )}
 
