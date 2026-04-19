@@ -239,12 +239,18 @@ const DeliveryMap = () => {
 
     // Simple: This gets the google maps navigation url.
     const getGoogleMapsNavigationUrl = (delivery) => {
-        if (!Number.isFinite(delivery?.lat) || !Number.isFinite(delivery?.lng)) {
+        const hasCoordinates = Number.isFinite(delivery?.lat) && Number.isFinite(delivery?.lng);
+        const hasAddressText = Boolean(delivery?.address && delivery.address !== 'N/A');
+
+        if (!hasCoordinates && !hasAddressText) {
             return null;
         }
 
-        const destination = `${delivery.lat},${delivery.lng}`;
-        if (currentLocation?.lat && currentLocation?.lng) {
+        const destination = hasCoordinates
+            ? `${delivery.lat},${delivery.lng}`
+            : encodeURIComponent(delivery.address);
+
+        if (Number.isFinite(currentLocation?.lat) && Number.isFinite(currentLocation?.lng)) {
             return `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination}&travelmode=driving`;
         }
 

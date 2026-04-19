@@ -279,16 +279,24 @@ const DeliveryDashboard = () => {
 
     // Simple: This gets the google maps navigation url.
     const getGoogleMapsNavigationUrl = (delivery) => {
-        if (!Number.isFinite(delivery?.lat) || !Number.isFinite(delivery?.lng)) {
+        const hasCoordinates = Number.isFinite(delivery?.lat) && Number.isFinite(delivery?.lng);
+        const hasAddressText = Boolean(delivery?.address && delivery.address !== 'N/A');
+
+        if (!hasCoordinates && !hasAddressText) {
             return null;
         }
 
-        const destination = `${delivery.lat},${delivery.lng}`;
+        const destination = hasCoordinates
+            ? `${delivery.lat},${delivery.lng}`
+            : encodeURIComponent(delivery.address);
+
         if (Number.isFinite(currentLocation?.lat) && Number.isFinite(currentLocation?.lng)) {
             return `https://www.google.com/maps/dir/?api=1&origin=${currentLocation.lat},${currentLocation.lng}&destination=${destination}&travelmode=driving`;
         }
 
-        return `https://www.google.com/maps/search/?api=1&query=${destination}`;
+        return hasCoordinates
+            ? `https://www.google.com/maps/search/?api=1&query=${destination}`
+            : `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
     };
 
     return (

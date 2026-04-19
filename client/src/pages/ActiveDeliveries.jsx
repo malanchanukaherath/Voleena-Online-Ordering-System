@@ -112,11 +112,18 @@ const ActiveDeliveries = () => {
 
     // Simple: This gets the google maps navigation url.
     const getGoogleMapsNavigationUrl = (delivery) => {
-        if (!Number.isFinite(delivery?.lat) || !Number.isFinite(delivery?.lng)) {
+        const hasCoordinates = Number.isFinite(delivery?.lat) && Number.isFinite(delivery?.lng);
+        const hasAddressText = Boolean(delivery?.address && delivery.address !== 'N/A');
+
+        if (!hasCoordinates && !hasAddressText) {
             return null;
         }
 
-        return `https://www.google.com/maps/dir/?api=1&destination=${delivery.lat},${delivery.lng}&travelmode=driving`;
+        if (hasCoordinates) {
+            return `https://www.google.com/maps/dir/?api=1&destination=${delivery.lat},${delivery.lng}&travelmode=driving`;
+        }
+
+        return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(delivery.address)}&travelmode=driving`;
     };
 
     return (
