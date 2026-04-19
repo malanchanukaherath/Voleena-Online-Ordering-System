@@ -7,6 +7,7 @@ TARGET_BRANCH="${TARGET_BRANCH:-main}"
 COMPOSE_FILE_CHECK="${COMPOSE_FILE_CHECK:-/tmp/voleena-compose-check.yml}"
 DEPLOY_STRATEGY="${DEPLOY_STRATEGY:-auto}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
+DB_VOLUME_NAME="${DB_VOLUME_NAME:-voleena_mysql_data}"
 RUN_DB_MIGRATION_V26="${RUN_DB_MIGRATION_V26:-false}"
 MIGRATION_V26_FILE="${MIGRATION_V26_FILE:-database/migration_v2.6_preorder_addons_resume_safe.sql}"
 RUN_DB_MIGRATION_V27="${RUN_DB_MIGRATION_V27:-false}"
@@ -14,6 +15,7 @@ MIGRATION_V27_FILE="${MIGRATION_V27_FILE:-database/migration_v2.7_addon_admin_sa
 
 export DOCKER_CLIENT_TIMEOUT="${DOCKER_CLIENT_TIMEOUT:-900}"
 export COMPOSE_HTTP_TIMEOUT="${COMPOSE_HTTP_TIMEOUT:-900}"
+export DB_VOLUME_NAME
 
 echo "==> Deploy started at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "==> Repo: ${REPO_DIR}"
@@ -40,13 +42,18 @@ if [ "${DEPLOY_STRATEGY}" = "auto" ]; then
 fi
 
 echo "==> Deploy strategy: ${DEPLOY_STRATEGY}"
+echo "==> DB volume: ${DB_VOLUME_NAME}"
 
 echo "1) Backing up database..."
 mkdir -p backups
 BACKUP="backups/voleena_foods_db_$(date +%Y%m%d_%H%M%S).sql"
-docker exec mysql_db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --single-transaction --routines --triggers --databases "$MYSQL_DATABASE"' > "${BACKUP}"
-test -s "${BACKUP}"
-ls -lh "${BACKUP}"
+if docker ps --format '{{.Names}}' | grep -qx 'mysql_db'; then
+  docker exec mysql_db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --single-transaction --routines --triggers --databases "$MYSQL_DATABASE"' > "${BACKUP}"
+  test -s "${BACKUP}"
+  ls -lh "${BACKUP}"
+else
+  echo "No running mysql_db container found (likely first deploy). Skipping backup."
+fi
 
 echo "2) Checking EC2 repo state..."
 git status --short --untracked-files=no
@@ -69,11 +76,24 @@ fi
 echo "OK: docker_schema_patch is not referenced."
 
 echo "5) Starting DB and waiting for health..."
+if ! docker volume inspect "${DB_VOLUME_NAME}" >/dev/null 2>&1; then
+  echo "Creating persistent DB volume '${DB_VOLUME_NAME}'..."
+  docker volume create "${DB_VOLUME_NAME}" >/dev/null
+fi
+
 docker compose up -d db
 until [ "$(docker inspect -f '{{.State.Health.Status}}' mysql_db 2>/dev/null)" = "healthy" ]; do
   echo "Waiting for mysql_db to be healthy..."
   sleep 2
 done
+
+MYSQL_DATA_MOUNT="$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/var/lib/mysql"}}{{.Name}}{{end}}{{end}}' mysql_db)"
+if [ "${MYSQL_DATA_MOUNT}" != "${DB_VOLUME_NAME}" ]; then
+  echo "STOP: mysql_db is not using expected persistent volume '${DB_VOLUME_NAME}' (found '${MYSQL_DATA_MOUNT}')."
+  exit 1
+fi
+
+echo "OK: mysql_db is using persistent volume '${DB_VOLUME_NAME}'."
 
 if [ "${RUN_DB_SYNC:-false}" = "true" ]; then
   echo "6) Applying safe schema sync because RUN_DB_SYNC=true..."

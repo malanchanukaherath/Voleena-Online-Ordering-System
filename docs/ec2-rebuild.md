@@ -120,6 +120,12 @@ The account seed creates or updates:
 - `delivery@gmail.com` / `Delivery@123`
 - `sanjani@gmail.com` / `Sanjani@123`
 
+DB persistence guardrails:
+
+- Deploy script now pins MySQL data to a fixed Docker volume name: `voleena_mysql_data` (or `DB_VOLUME_NAME` override).
+- Do not use `docker compose down -v` in production, because `-v` deletes DB volumes.
+- Normal deploy flow (`./deploy-ec2.sh`) is safe for preserving existing DB data.
+
 ## 8. GitHub Actions setup
 
 This repo deploys from an EC2 self-hosted runner. Follow

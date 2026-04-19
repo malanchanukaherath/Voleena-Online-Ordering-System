@@ -143,6 +143,11 @@ This seeds:
 For normal deploys after that, leave `seed_accounts` as `false`. Pushes to
 `main` will deploy automatically.
 
+Important DB safety note:
+
+- The deploy script pins MySQL data to persistent volume `voleena_mysql_data` (or `DB_VOLUME_NAME` override).
+- Avoid `docker compose down -v` on EC2, because `-v` removes DB volumes and resets data.
+
 ## Manual fallback
 
 Run this on EC2 only if GitHub Actions is unavailable:
