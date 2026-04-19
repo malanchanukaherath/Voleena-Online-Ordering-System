@@ -10,6 +10,14 @@ import ImageUpload from '../components/ImageUpload';
 import { comboPackService, menuItemService } from '../services/menuService';
 import { resolveAssetUrl } from '../config/api';
 
+const getTodayDateOnlyString = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 // Simple: This shows the combo management section.
 const ComboManagement = () => {
     const [combos, setCombos] = useState([]);
@@ -208,6 +216,7 @@ const ComboManagement = () => {
         const newErrors = {};
         const parsedDiscount = formData.discount === '' ? 0 : parseFloat(formData.discount);
         const hasDiscountInValidation = Number.isFinite(parsedDiscount) && parsedDiscount > 0;
+        const todayDate = getTodayDateOnlyString();
 
         if (!formData.name.trim()) {
             newErrors.name = 'Combo name is required';
@@ -238,6 +247,10 @@ const ComboManagement = () => {
 
         if (!formData.endDate) {
             newErrors.endDate = 'End date is required';
+        }
+
+        if (formData.startDate && formData.startDate < todayDate) {
+            newErrors.startDate = 'Start date must be today or later';
         }
 
         if (formData.startDate && formData.endDate && new Date(formData.startDate) > new Date(formData.endDate)) {
@@ -578,6 +591,7 @@ const ComboManagement = () => {
                                 value={formData.startDate}
                                 onChange={handleChange}
                                 error={errors.startDate}
+                                min={getTodayDateOnlyString()}
                                 required
                             />
 
@@ -588,6 +602,7 @@ const ComboManagement = () => {
                                 value={formData.endDate}
                                 onChange={handleChange}
                                 error={errors.endDate}
+                                min={formData.startDate || getTodayDateOnlyString()}
                                 required
                             />
                         </div>

@@ -12,6 +12,25 @@ const toMoneyNumber = (value) => {
     return Number.isFinite(parsed) ? parsed : 0;
 };
 
+// Date-only values are expected in YYYY-MM-DD format from the combo schedule form.
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const toDateOnlyString = (value) => {
+    if (value instanceof Date && !Number.isNaN(value.getTime())) {
+        return value.toISOString().slice(0, 10);
+    }
+
+    return String(value || '').trim();
+};
+
+const getTodayDateOnlyString = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 // Simple: This handles enrich combo pricing logic.
 const enrichComboPricing = (comboData) => {
     const items = Array.isArray(comboData.items) ? comboData.items : [];
@@ -57,7 +76,20 @@ const createComboPack = async (req, res) => {
             return res.status(400).json({ error: 'Schedule dates are required' });
         }
 
-        if (new Date(ScheduleEndDate) < new Date(ScheduleStartDate)) {
+        const startDateOnly = toDateOnlyString(ScheduleStartDate);
+        const endDateOnly = toDateOnlyString(ScheduleEndDate);
+
+        if (!DATE_ONLY_PATTERN.test(startDateOnly) || !DATE_ONLY_PATTERN.test(endDateOnly)) {
+            await transaction.rollback();
+            return res.status(400).json({ error: 'Schedule dates must be in YYYY-MM-DD format' });
+        }
+
+        if (startDateOnly < getTodayDateOnlyString()) {
+            await transaction.rollback();
+            return res.status(400).json({ error: 'Start date must be today or later' });
+        }
+
+        if (endDateOnly < startDateOnly) {
             await transaction.rollback();
             return res.status(400).json({ error: 'End date must be after start date' });
         }
@@ -249,7 +281,28 @@ const updateComboPack = async (req, res) => {
             return res.status(400).json({ error: 'Price must be greater than 0' });
         }
 
-        if (ScheduleStartDate && ScheduleEndDate && new Date(ScheduleEndDate) < new Date(ScheduleStartDate)) {
+        const hasStartDateUpdate = ScheduleStartDate !== undefined;
+        const hasEndDateUpdate = ScheduleEndDate !== undefined;
+
+        const startDateOnly = hasStartDateUpdate
+            ? toDateOnlyString(ScheduleStartDate)
+            : toDateOnlyString(comboPack.ScheduleStartDate);
+        const endDateOnly = hasEndDateUpdate
+            ? toDateOnlyString(ScheduleEndDate)
+            : toDateOnlyString(comboPack.ScheduleEndDate);
+
+        if ((hasStartDateUpdate && !DATE_ONLY_PATTERN.test(startDateOnly))
+            || (hasEndDateUpdate && !DATE_ONLY_PATTERN.test(endDateOnly))) {
+            await transaction.rollback();
+            return res.status(400).json({ error: 'Schedule dates must be in YYYY-MM-DD format' });
+        }
+
+        if (hasStartDateUpdate && startDateOnly < getTodayDateOnlyString()) {
+            await transaction.rollback();
+            return res.status(400).json({ error: 'Start date must be today or later' });
+        }
+
+        if (DATE_ONLY_PATTERN.test(startDateOnly) && DATE_ONLY_PATTERN.test(endDateOnly) && endDateOnly < startDateOnly) {
             await transaction.rollback();
             return res.status(400).json({ error: 'End date must be after start date' });
         }
