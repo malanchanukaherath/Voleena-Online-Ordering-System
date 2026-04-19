@@ -10,7 +10,7 @@ import { StripePaymentModal } from '../components/payment/StripePaymentModal';
 import { getCart, clearCart, updateCartItem } from '../utils/cartStorage';
 import { calculateDeliveryFeeByDistance, confirmCardPayment, createOrder, initiatePayment, validateDeliveryDistance } from '../services/orderApi';
 import { getCustomerAddresses, getCustomerProfile } from '../services/profileService';
-import { menuItemService } from '../services/menuService';
+import { comboPackService, menuItemService } from '../services/menuService';
 import { usePublicSettings } from '../hooks/usePublicSettings';
 
 const RESTAURANT_LOCATION = {
@@ -73,6 +73,35 @@ const normalizeCheckoutAddOnOptions = (addOns) => {
         })
         .filter(Boolean)
         .sort((left, right) => left.id.localeCompare(right.id));
+};
+
+const intersectCheckoutAddOnOptions = (collections) => {
+    const safeCollections = (collections || []).filter((entry) => Array.isArray(entry));
+    if (safeCollections.length === 0) {
+        return [];
+    }
+
+    const [first, ...rest] = safeCollections;
+    const accumulator = new Map(
+        normalizeCheckoutAddOnOptions(first).map((entry) => [entry.id, { ...entry }])
+    );
+
+    for (const optionList of rest) {
+        const currentById = new Map(normalizeCheckoutAddOnOptions(optionList).map((entry) => [entry.id, entry]));
+
+        for (const [id, normalized] of accumulator.entries()) {
+            const matching = currentById.get(id);
+            if (!matching) {
+                accumulator.delete(id);
+                continue;
+            }
+
+            normalized.price = Math.min(Number(normalized.price || 0), Number(matching.price || 0));
+            normalized.maxQuantity = Math.min(Number(normalized.maxQuantity || 1), Number(matching.maxQuantity || 1));
+        }
+    }
+
+    return [...accumulator.values()].sort((left, right) => left.id.localeCompare(right.id));
 };
 
 const mapItemSelections = (item) => {
@@ -177,6 +206,7 @@ const Checkout = () => {
     const [gpsDetectedAddress, setGpsDetectedAddress] = useState('');
     const [cartItems, setCartItems] = useState(() => getCart());
     const [addOnOptionsByMenuItemId, setAddOnOptionsByMenuItemId] = useState({});
+    const [addOnOptionsByComboId, setAddOnOptionsByComboId] = useState({});
     const [editableSelectionsByCartItemKey, setEditableSelectionsByCartItemKey] = useState({});
     const { settings: publicSettings } = usePublicSettings();
     const googleMapsApiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -230,7 +260,7 @@ const Checkout = () => {
     }, []);
 
     useEffect(() => {
-        const loadMenuItemAddOnOptions = async () => {
+        const loadAddOnOptions = async () => {
             const menuItemIds = [...new Set(
                 cartItems
                     .filter((item) => item.type === 'menu')
@@ -239,47 +269,120 @@ const Checkout = () => {
                     .map((id) => String(id))
             )];
 
+            const comboIds = [...new Set(
+                cartItems
+                    .filter((item) => item.type === 'combo')
+                    .map((item) => item.comboId || item.id)
+                    .filter(Boolean)
+                    .map((id) => String(id))
+            )];
+
             if (menuItemIds.length === 0) {
-                setAddOnOptionsByMenuItemId({});
+                if (Object.keys(addOnOptionsByMenuItemId).length > 0) {
+                    setAddOnOptionsByMenuItemId({});
+                }
+            }
+
+            if (comboIds.length === 0) {
+                if (Object.keys(addOnOptionsByComboId).length > 0) {
+                    setAddOnOptionsByComboId({});
+                }
+            }
+
+            if (menuItemIds.length === 0 && comboIds.length === 0) {
                 return;
             }
 
-            const allCached = menuItemIds.every((menuItemId) => Array.isArray(addOnOptionsByMenuItemId[String(menuItemId)]));
-            if (allCached) {
+            const allMenuCached = menuItemIds.every((menuItemId) => Array.isArray(addOnOptionsByMenuItemId[String(menuItemId)]));
+            const allComboCached = comboIds.every((comboId) => Array.isArray(addOnOptionsByComboId[String(comboId)]));
+            if (allMenuCached && allComboCached) {
                 return;
             }
 
-            const results = await Promise.all(
-                menuItemIds.map(async (menuItemId) => {
-                    try {
-                        const response = await menuItemService.getById(menuItemId);
-                        const payload = response?.data || {};
-                        return {
-                            menuItemId,
-                            options: normalizeCheckoutAddOnOptions(payload.AvailableAddOns)
-                        };
-                    } catch {
-                        return {
-                            menuItemId,
-                            options: []
-                        };
-                    }
-                })
-            );
+            const [menuResults, comboResults] = await Promise.all([
+                Promise.all(
+                    menuItemIds.map(async (menuItemId) => {
+                        try {
+                            const response = await menuItemService.getById(menuItemId);
+                            const payload = response?.data || {};
+                            return {
+                                menuItemId,
+                                options: normalizeCheckoutAddOnOptions(payload.AvailableAddOns)
+                            };
+                        } catch {
+                            return {
+                                menuItemId,
+                                options: []
+                            };
+                        }
+                    })
+                ),
+                Promise.all(
+                    comboIds.map(async (comboId) => {
+                        try {
+                            const comboResponse = await comboPackService.getById(comboId);
+                            const comboData = comboResponse?.data || {};
+                            const comboItems = Array.isArray(comboData?.items) ? comboData.items : [];
+                            const componentMenuItemIds = [...new Set(
+                                comboItems
+                                    .map((entry) => entry.MenuItemID || entry.menuItem?.MenuItemID || entry.menuItem?.ItemID)
+                                    .filter(Boolean)
+                                    .map((id) => String(id))
+                            )];
 
-            const nextOptions = results.reduce((accumulator, entry) => {
+                            if (componentMenuItemIds.length === 0) {
+                                return { comboId, options: [] };
+                            }
+
+                            const addOnCollections = await Promise.all(
+                                componentMenuItemIds.map(async (menuItemId) => {
+                                    try {
+                                        const menuResponse = await menuItemService.getById(menuItemId);
+                                        return normalizeCheckoutAddOnOptions(menuResponse?.data?.AvailableAddOns);
+                                    } catch {
+                                        return [];
+                                    }
+                                })
+                            );
+
+                            return {
+                                comboId,
+                                options: intersectCheckoutAddOnOptions(addOnCollections)
+                            };
+                        } catch {
+                            return { comboId, options: [] };
+                        }
+                    })
+                )
+            ]);
+
+            const nextMenuOptions = menuResults.reduce((accumulator, entry) => {
                 accumulator[String(entry.menuItemId)] = entry.options;
                 return accumulator;
             }, {});
 
-            setAddOnOptionsByMenuItemId((previous) => ({
-                ...previous,
-                ...nextOptions
-            }));
+            const nextComboOptions = comboResults.reduce((accumulator, entry) => {
+                accumulator[String(entry.comboId)] = entry.options;
+                return accumulator;
+            }, {});
+
+            if (Object.keys(nextMenuOptions).length > 0) {
+                setAddOnOptionsByMenuItemId((previous) => ({
+                    ...previous,
+                    ...nextMenuOptions
+                }));
+            }
+
+            if (Object.keys(nextComboOptions).length > 0) {
+                setAddOnOptionsByComboId((previous) => ({
+                    ...previous,
+                    ...nextComboOptions
+                }));
+            }
         };
 
-        loadMenuItemAddOnOptions();
-    }, [addOnOptionsByMenuItemId, cartItems]);
+        loadAddOnOptions();
+    }, [addOnOptionsByComboId, addOnOptionsByMenuItemId, cartItems]);
 
     useEffect(() => {
         const nextSelections = cartItems.reduce((accumulator, item) => {
@@ -603,16 +706,21 @@ const Checkout = () => {
     };
 
     const getAvailableAddOnOptionsForItem = useCallback((item) => {
-        if (!item || item.type !== 'menu') {
+        if (!item) {
             return [];
+        }
+
+        if (item.type === 'combo') {
+            const comboId = String(item.comboId || item.id || '');
+            return normalizeCheckoutAddOnOptions(addOnOptionsByComboId[comboId]);
         }
 
         const menuItemId = String(item.menuItemId || item.id || '');
         return normalizeCheckoutAddOnOptions(addOnOptionsByMenuItemId[menuItemId]);
-    }, [addOnOptionsByMenuItemId]);
+    }, [addOnOptionsByComboId, addOnOptionsByMenuItemId]);
 
     const applyCheckoutAddOnSelections = useCallback((item, nextSelectionMap) => {
-        if (!item || item.type !== 'menu') {
+        if (!item) {
             return;
         }
 
@@ -640,7 +748,7 @@ const Checkout = () => {
     }, [cartItems, getAvailableAddOnOptionsForItem]);
 
     const setCheckoutAddOnEnabled = useCallback((item, addOnId, isEnabled) => {
-        if (!item || item.type !== 'menu') {
+        if (!item) {
             return;
         }
 
@@ -657,7 +765,7 @@ const Checkout = () => {
     }, [applyCheckoutAddOnSelections, editableSelectionsByCartItemKey]);
 
     const adjustCheckoutAddOnQuantity = useCallback((item, addOnId, requestedQuantity, maxQuantity) => {
-        if (!item || item.type !== 'menu') {
+        if (!item) {
             return;
         }
 
@@ -954,11 +1062,6 @@ const Checkout = () => {
         cartItems.forEach((item, index) => {
             const selectedAddOns = normalizeCheckoutAddOns(item?.addOns);
             if (selectedAddOns.length === 0) {
-                return;
-            }
-
-            if (item.type !== 'menu') {
-                newErrors.cart = `Add-ons are supported only for menu items. Please remove add-ons from ${getCheckoutItemLabel(item, index)}.`;
                 return;
             }
 
@@ -1633,7 +1736,7 @@ const Checkout = () => {
                                                 <p className="font-medium text-gray-800">{item.name} x {item.quantity}</p>
                                                 <p className="font-semibold">LKR {(Number(item.price || 0) * Number(item.quantity || 0)).toFixed(2)}</p>
                                             </div>
-                                            {item.type === 'menu' && itemOptions.length > 0 && (
+                                            {itemOptions.length > 0 && (
                                                 <div className="mt-2 space-y-2 rounded bg-gray-50 p-2">
                                                     <p className="text-xs font-semibold text-gray-700">Choose add-ons</p>
                                                     {itemOptions.map((entry) => {

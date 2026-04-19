@@ -7,6 +7,54 @@ import { addToCart } from '../utils/cartStorage';
 import { comboPackService, menuItemService } from '../services/menuService';
 import { resolveAssetUrl } from '../config/api';
 
+const normalizeDetailAddOnOptions = (entries) => {
+    return (Array.isArray(entries) ? entries : [])
+        .map((entry) => {
+            const id = String(entry?.id || '').trim();
+            if (!id) {
+                return null;
+            }
+
+            const maxQuantity = Number(entry?.maxQuantity);
+            return {
+                id,
+                name: String(entry?.name || id),
+                price: Number(entry?.price || 0),
+                maxQuantity: Number.isFinite(maxQuantity) && maxQuantity > 0 ? Math.floor(maxQuantity) : 1
+            };
+        })
+        .filter(Boolean);
+};
+
+const intersectDetailAddOnOptions = (collections) => {
+    const safeCollections = (collections || []).filter((entry) => Array.isArray(entry));
+    if (safeCollections.length === 0) {
+        return [];
+    }
+
+    const [first, ...rest] = safeCollections;
+    const accumulator = new Map(
+        normalizeDetailAddOnOptions(first).map((entry) => [entry.id, { ...entry }])
+    );
+
+    for (const optionList of rest) {
+        const currentById = new Map(normalizeDetailAddOnOptions(optionList).map((entry) => [entry.id, entry]));
+
+        for (const [id, normalized] of accumulator.entries()) {
+            const matching = currentById.get(id);
+            if (!matching) {
+                accumulator.delete(id);
+                continue;
+            }
+
+            normalized.price = Math.min(Number(normalized.price || 0), Number(matching.price || 0));
+            normalized.maxQuantity = Math.min(Number(normalized.maxQuantity || 1), Number(matching.maxQuantity || 1));
+        }
+    }
+
+    return [...accumulator.values()].sort((left, right) => left.id.localeCompare(right.id));
+};
+
 const MenuItemDetail = () => {
     const { itemId, itemType } = useParams();
     const isComboPath = String(itemType || '').toLowerCase() === 'combo';
@@ -33,19 +81,48 @@ const MenuItemDetail = () => {
         })) : []
     }), []);
 
-    const mapComboItem = useCallback((data) => ({
+    const mapComboItem = useCallback((data, availableAddOns = []) => ({
         id: data.ComboID || data.ComboPackID,
         name: data.Name,
         description: data.Description || 'No description available',
         price: parseFloat(data.Price),
+        basePrice: parseFloat(data.Price),
         originalPrice: data.OriginalPrice ? parseFloat(data.OriginalPrice) : null,
         discount: data.DiscountPercentage ? parseFloat(data.DiscountPercentage) : 0,
         categoryName: 'Combo Pack',
         image: resolveAssetUrl(data.ImageURL || data.Image_URL || null),
         stockQuantity: null,
         isAvailable: data.IsAvailable !== undefined ? !!data.IsAvailable : true,
+        availableAddOns,
         type: 'combo'
     }), []);
+
+    const loadComboAddOnOptions = useCallback(async (comboData) => {
+        const comboItems = Array.isArray(comboData?.items) ? comboData.items : [];
+        const componentMenuItemIds = [...new Set(
+            comboItems
+                .map((entry) => entry.MenuItemID || entry.menuItem?.MenuItemID || entry.menuItem?.ItemID)
+                .filter(Boolean)
+                .map((entry) => String(entry))
+        )];
+
+        if (componentMenuItemIds.length === 0) {
+            return [];
+        }
+
+        const optionCollections = await Promise.all(
+            componentMenuItemIds.map(async (menuId) => {
+                try {
+                    const response = await menuItemService.getById(menuId);
+                    return normalizeDetailAddOnOptions(response?.data?.AvailableAddOns);
+                } catch {
+                    return [];
+                }
+            })
+        );
+
+        return intersectDetailAddOnOptions(optionCollections);
+    }, []);
 
     useEffect(() => {
         let isMounted = true;
@@ -58,8 +135,9 @@ const MenuItemDetail = () => {
                 try {
                     const comboResponse = await comboPackService.getById(itemId);
                     if (comboResponse.success && comboResponse.data) {
+                        const availableAddOns = await loadComboAddOnOptions(comboResponse.data);
                         if (isMounted) {
-                            setItem(mapComboItem(comboResponse.data));
+                            setItem(mapComboItem(comboResponse.data, availableAddOns));
                         }
                         return;
                     }
@@ -72,7 +150,8 @@ const MenuItemDetail = () => {
                         );
 
                         if (foundCombo && isMounted) {
-                            setItem(mapComboItem(foundCombo));
+                            const availableAddOns = await loadComboAddOnOptions(foundCombo);
+                            setItem(mapComboItem(foundCombo, availableAddOns));
                             return;
                         }
                     } catch (fallbackError) {
@@ -134,15 +213,13 @@ const MenuItemDetail = () => {
         return () => {
             isMounted = false;
         };
-    }, [isComboPath, itemId, mapComboItem, mapMenuItem]);
+    }, [isComboPath, itemId, loadComboAddOnOptions, mapComboItem, mapMenuItem]);
 
     useEffect(() => {
         setAddOnSelections({});
     }, [item?.id]);
 
-    const availableAddOns = item?.type === 'combo'
-        ? []
-        : (Array.isArray(item?.availableAddOns) ? item.availableAddOns : []);
+    const availableAddOns = Array.isArray(item?.availableAddOns) ? item.availableAddOns : [];
 
     const selectedAddOns = availableAddOns
         .filter((entry) => Number(addOnSelections[entry.id] || 0) > 0)
@@ -160,7 +237,7 @@ const MenuItemDetail = () => {
         });
 
     const addOnsPerUnit = Number(selectedAddOns.reduce((sum, entry) => sum + Number(entry.total || 0), 0).toFixed(2));
-    const effectiveUnitPrice = Number(((item?.type === 'combo' ? item?.price : (item?.basePrice || item?.price || 0)) + addOnsPerUnit).toFixed(2));
+    const effectiveUnitPrice = Number((((item?.basePrice || item?.price || 0)) + addOnsPerUnit).toFixed(2));
 
     const setAddOnEnabled = (addOnId, isEnabled) => {
         setAddOnSelections((previous) => {
@@ -248,70 +325,68 @@ const MenuItemDetail = () => {
                             </div>
                         ) : null}
                         <p className="text-3xl font-bold text-primary-600">LKR {effectiveUnitPrice.toFixed(2)}</p>
-                        {item.type !== 'combo' && addOnsPerUnit > 0 && (
+                        {addOnsPerUnit > 0 && (
                             <p className="mt-2 text-sm text-gray-600">
                                 Base LKR {(item.basePrice || item.price).toFixed(2)} + Add-ons LKR {addOnsPerUnit.toFixed(2)}
                             </p>
                         )}
                     </div>
 
-                    {item.type !== 'combo' && (
-                        <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
-                            <h2 className="text-lg font-semibold text-gray-900 mb-3">Customize Add-ons</h2>
-                            {availableAddOns.length > 0 ? (
-                                <div className="space-y-3">
-                                    {availableAddOns.map((addOn) => {
-                                        const currentQty = Number(addOnSelections[addOn.id] || 0);
-                                        const isEnabled = currentQty > 0;
+                    <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <h2 className="text-lg font-semibold text-gray-900 mb-3">Customize Add-ons</h2>
+                        {availableAddOns.length > 0 ? (
+                            <div className="space-y-3">
+                                {availableAddOns.map((addOn) => {
+                                    const currentQty = Number(addOnSelections[addOn.id] || 0);
+                                    const isEnabled = currentQty > 0;
 
-                                        return (
-                                            <div key={addOn.id} className="rounded border border-gray-200 bg-white p-3">
-                                                <div className="flex items-start justify-between gap-3">
-                                                    <label className="flex items-start gap-2">
-                                                        <input
-                                                            type="checkbox"
-                                                            className="mt-1"
-                                                            checked={isEnabled}
-                                                            onChange={(event) => setAddOnEnabled(addOn.id, event.target.checked)}
-                                                        />
-                                                        <span>
-                                                            <span className="block font-medium text-gray-900">{addOn.name}</span>
-                                                            <span className="block text-xs text-gray-600">+ LKR {Number(addOn.price || 0).toFixed(2)} each (max {addOn.maxQuantity})</span>
-                                                        </span>
-                                                    </label>
+                                    return (
+                                        <div key={addOn.id} className="rounded border border-gray-200 bg-white p-3">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <label className="flex items-start gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        className="mt-1"
+                                                        checked={isEnabled}
+                                                        onChange={(event) => setAddOnEnabled(addOn.id, event.target.checked)}
+                                                    />
+                                                    <span>
+                                                        <span className="block font-medium text-gray-900">{addOn.name}</span>
+                                                        <span className="block text-xs text-gray-600">+ LKR {Number(addOn.price || 0).toFixed(2)} each (max {addOn.maxQuantity})</span>
+                                                    </span>
+                                                </label>
 
-                                                    {isEnabled && (
-                                                        <div className="flex items-center rounded border border-gray-300">
-                                                            <button
-                                                                type="button"
-                                                                className="px-3 py-1 hover:bg-gray-100"
-                                                                onClick={() => adjustAddOnQuantity(addOn.id, currentQty - 1, addOn.maxQuantity)}
-                                                            >
-                                                                -
-                                                            </button>
-                                                            <span className="border-x border-gray-300 px-3 py-1 text-sm">{currentQty}</span>
-                                                            <button
-                                                                type="button"
-                                                                className="px-3 py-1 hover:bg-gray-100"
-                                                                onClick={() => adjustAddOnQuantity(addOn.id, currentQty + 1, addOn.maxQuantity)}
-                                                                disabled={currentQty >= Number(addOn.maxQuantity || 1)}
-                                                            >
-                                                                +
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                {isEnabled && (
+                                                    <div className="flex items-center rounded border border-gray-300">
+                                                        <button
+                                                            type="button"
+                                                            className="px-3 py-1 hover:bg-gray-100"
+                                                            onClick={() => adjustAddOnQuantity(addOn.id, currentQty - 1, addOn.maxQuantity)}
+                                                        >
+                                                            -
+                                                        </button>
+                                                        <span className="border-x border-gray-300 px-3 py-1 text-sm">{currentQty}</span>
+                                                        <button
+                                                            type="button"
+                                                            className="px-3 py-1 hover:bg-gray-100"
+                                                            onClick={() => adjustAddOnQuantity(addOn.id, currentQty + 1, addOn.maxQuantity)}
+                                                            disabled={currentQty >= Number(addOn.maxQuantity || 1)}
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                )}
                                             </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                                    No add-ons are configured for this menu item right now.
-                                </div>
-                            )}
-                        </div>
-                    )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        ) : (
+                            <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                                No add-ons are configured for this item right now.
+                            </div>
+                        )}
+                    </div>
                     <button
                         onClick={handleAddToCart}
                         className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50"

@@ -12,7 +12,7 @@ const { sendOrderConfirmationSMS, sendOrderStatusUpdateSMS } = require('./smsSer
 const systemSettingsService = require('./systemSettingsService');
 const appNotificationService = require('./appNotificationService');
 const {
-    getAllowedAddOnsForOrderItem,
+    getAllowedAddOnsForMenuItem,
     normalizeAddOnSelections,
     getAddOnsPerUnitTotal,
     serializeOrderItemNotes,
@@ -92,6 +92,77 @@ const canSendOrderSMS = (runtimeSettings, customer, eventSettingKey) => {
 
     const preference = normalizeNotificationPreference(customer.PreferredNotification);
     return preference === 'SMS' || preference === 'BOTH';
+};
+
+const intersectAllowedAddOns = (collections) => {
+    const safeCollections = (collections || []).filter((entry) => Array.isArray(entry));
+    if (safeCollections.length === 0) {
+        return [];
+    }
+
+    const [first, ...rest] = safeCollections;
+    const accumulator = new Map(
+        first
+            .filter((entry) => entry && entry.id)
+            .map((entry) => [String(entry.id), {
+                id: String(entry.id),
+                name: String(entry.name || entry.id),
+                price: toMoney(entry.price),
+                maxQuantity: Number.isFinite(Number(entry.maxQuantity)) && Number(entry.maxQuantity) > 0
+                    ? Math.floor(Number(entry.maxQuantity))
+                    : 1
+            }])
+    );
+
+    for (const optionList of rest) {
+        const currentById = new Map(
+            (optionList || [])
+                .filter((entry) => entry && entry.id)
+                .map((entry) => [String(entry.id), entry])
+        );
+
+        for (const [id, normalized] of accumulator.entries()) {
+            const matching = currentById.get(id);
+            if (!matching) {
+                accumulator.delete(id);
+                continue;
+            }
+
+            const matchingPrice = toMoney(matching.price);
+            const matchingMaxQty = Number.isFinite(Number(matching.maxQuantity)) && Number(matching.maxQuantity) > 0
+                ? Math.floor(Number(matching.maxQuantity))
+                : 1;
+
+            normalized.price = Math.min(normalized.price, matchingPrice);
+            normalized.maxQuantity = Math.min(normalized.maxQuantity, matchingMaxQty);
+        }
+    }
+
+    return [...accumulator.values()].sort((left, right) => left.id.localeCompare(right.id));
+};
+
+const getAllowedAddOnsForCombo = async (comboId, transaction) => {
+    const comboComponents = await ComboPackItem.findAll({
+        where: { ComboID: comboId },
+        attributes: ['MenuItemID'],
+        transaction
+    });
+
+    const menuItemIds = [...new Set(
+        comboComponents
+            .map((component) => Number.parseInt(component.MenuItemID, 10))
+            .filter((menuItemId) => Number.isInteger(menuItemId) && menuItemId > 0)
+    )];
+
+    if (menuItemIds.length === 0) {
+        return [];
+    }
+
+    const allowedCollections = await Promise.all(
+        menuItemIds.map((menuItemId) => getAllowedAddOnsForMenuItem(menuItemId))
+    );
+
+    return intersectAllowedAddOns(allowedCollections);
 };
 
 /**
@@ -349,7 +420,7 @@ class OrderService {
                         throw new Error(`Menu item ${menuItemId} is not available`);
                     }
 
-                    const allowedAddOns = await getAllowedAddOnsForOrderItem({ MenuItemID: menuItemId });
+                    const allowedAddOns = await getAllowedAddOnsForMenuItem(menuItemId);
                     const normalizedAddOns = normalizeAddOnSelections(requestedAddOns, allowedAddOns);
                     const addOnsPerUnit = getAddOnsPerUnitTotal(normalizedAddOns);
                     const baseUnitPrice = toMoney(menuItem.Price);
@@ -378,21 +449,26 @@ class OrderService {
                         throw new Error(`Combo pack ${comboId} is not available`);
                     }
 
-                    if (requestedAddOns.length > 0) {
-                        throw new Error('Add-ons are not supported for combo packs');
-                    }
+                    const allowedAddOns = await getAllowedAddOnsForCombo(comboId, transaction);
+                    const normalizedAddOns = normalizeAddOnSelections(requestedAddOns, allowedAddOns);
+                    const addOnsPerUnit = getAddOnsPerUnitTotal(normalizedAddOns);
+                    const comboBaseUnitPrice = toMoney(combo.Price);
+                    const comboUnitPrice = toMoney(comboBaseUnitPrice + addOnsPerUnit);
+                    const serializedItemNotes = serializeOrderItemNotes({
+                        customerNotes: safeCustomerNotes,
+                        baseUnitPrice: comboBaseUnitPrice,
+                        addOns: normalizedAddOns
+                    });
 
-                    if (safeCustomerNotes.length > 255) {
+                    if (serializedItemNotes && serializedItemNotes.length > 255) {
                         throw new Error(`Item notes are too long for "${combo.Name}"`);
                     }
-
-                    const comboUnitPrice = toMoney(combo.Price);
 
                     orderItems.push({
                         ComboID: comboId,
                         Quantity: item.quantity,
                         UnitPrice: comboUnitPrice,
-                        ItemNotes: safeCustomerNotes || null
+                        ItemNotes: serializedItemNotes
                     });
 
                     totalAmount += comboUnitPrice * item.quantity;
