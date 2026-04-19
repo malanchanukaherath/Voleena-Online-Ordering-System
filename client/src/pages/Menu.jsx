@@ -202,6 +202,7 @@ const Menu = () => {
     }, []);
 
     useEffect(() => {
+        // Support direct links like /menu?category=<id> from Home category cards.
         const params = new URLSearchParams(location.search);
         const queryCategory = params.get('category');
         setSelectedCategory(queryCategory || '');
@@ -238,6 +239,7 @@ const Menu = () => {
         const categoryValue = nextCategory || '';
         setSelectedCategory(categoryValue);
 
+        // Keep URL and UI filter state aligned for refresh/share/back-forward behavior.
         const params = new URLSearchParams(location.search);
         if (categoryValue) {
             params.set('category', categoryValue);

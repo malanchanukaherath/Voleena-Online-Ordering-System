@@ -28,6 +28,8 @@ const Home = () => {
             try {
                 const response = await menuItemService.getAll({ isActive: 'true' });
                 if (response.success && Array.isArray(response.data)) {
+                    // Build a lightweight category ranking from existing menu payload.
+                    // This keeps the feature frontend-only (no DB or API changes required).
                     const categoryMap = new Map();
 
                     response.data.forEach((item) => {
@@ -66,6 +68,7 @@ const Home = () => {
                         })
                         .slice(0, 6);
 
+                    // Show a focused list of top categories on Home for quick navigation.
                     setTopCategories(rankedCategories);
 
                     const items = response.data.slice(0, 4).map(item => ({
