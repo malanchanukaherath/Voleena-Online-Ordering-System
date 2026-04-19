@@ -41,7 +41,7 @@ const DEFAULT_PUBLIC_SETTINGS = {
     }
 };
 
-// Code Review: Function mergeBusinessHours in client\src\services\publicSettingsApi.js. Used in: client/src/services/publicSettingsApi.js.
+// Simple: This combines or filters the business hours.
 const mergeBusinessHours = (incomingHours = {}) => {
     const defaults = DEFAULT_PUBLIC_SETTINGS.businessHours;
     return Object.keys(defaults).reduce((acc, day) => {
@@ -53,7 +53,7 @@ const mergeBusinessHours = (incomingHours = {}) => {
     }, {});
 };
 
-// Code Review: Function normalizePublicSettings in client\src\services\publicSettingsApi.js. Used in: client/src/services/publicSettingsApi.js.
+// Simple: This cleans or formats the public settings.
 export const normalizePublicSettings = (incoming = {}) => ({
     ...DEFAULT_PUBLIC_SETTINGS,
     ...incoming,
@@ -72,7 +72,7 @@ export const normalizePublicSettings = (incoming = {}) => ({
     businessHours: mergeBusinessHours(incoming.businessHours || {})
 });
 
-// Code Review: Function getPublicSettings in client\src\services\publicSettingsApi.js. Used in: client/src/hooks/usePublicSettings.js, client/src/services/publicSettingsApi.js, server/routes/settings.js.
+// Simple: This gets the public settings.
 export const getPublicSettings = async ({ forceRefresh = false } = {}) => {
     const now = Date.now();
 
@@ -93,11 +93,11 @@ export const getPublicSettings = async ({ forceRefresh = false } = {}) => {
     return normalized;
 };
 
-// Code Review: Function invalidatePublicSettingsCache in client\src\services\publicSettingsApi.js. Used in: client/src/pages/Settings.jsx, client/src/services/publicSettingsApi.js.
+// Simple: This handles invalidate public settings cache logic.
 export const invalidatePublicSettingsCache = () => {
     cachedSettings = null;
     cachedAt = 0;
 };
 
-// Code Review: Function getDefaultPublicSettings in client\src\services\publicSettingsApi.js. Used in: client/src/hooks/usePublicSettings.js, client/src/services/publicSettingsApi.js.
+// Simple: This gets the default public settings.
 export const getDefaultPublicSettings = () => normalizePublicSettings();

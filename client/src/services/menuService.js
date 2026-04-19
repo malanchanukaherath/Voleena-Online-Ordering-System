@@ -3,7 +3,7 @@ import { API_BASE_URL as API_ROOT_URL, API_V1_BASE_URL } from '../config/api';
 
 const API_BASE_URL = API_V1_BASE_URL;
 
-// Code Review: Function getAuthHeader in client\src\services\menuService.js. Used in: client/src/services/menuService.js.
+// Simple: This gets the auth header.
 const getAuthHeader = () => {
     const token = localStorage.getItem('token');
     return token ? { Authorization: `Bearer ${token}` } : {};

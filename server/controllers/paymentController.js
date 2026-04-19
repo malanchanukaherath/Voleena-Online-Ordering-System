@@ -17,22 +17,22 @@ const STRIPE_WEBHOOK_EVENTS = new Set([
   'payment_intent.processing'
 ]);
 
-// Code Review: Function normalizePaymentMethod in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
+// Simple: This cleans or formats the payment method.
 function normalizePaymentMethod(paymentMethod) {
   return typeof paymentMethod === 'string' ? paymentMethod.trim().toUpperCase() : '';
 }
 
-// Code Review: Function hasConfiguredStripeValue in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js, server/utils/paymentService.js.
+// Simple: This checks whether configured stripe value is available.
 function hasConfiguredStripeValue(value, prefix) {
   return typeof value === 'string' && value.trim().startsWith(prefix) && !value.includes('your_');
 }
 
-// Code Review: Function amountsMatch in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
+// Simple: This handles amounts match logic.
 function amountsMatch(left, right) {
   return Math.abs(Number(left) - Number(right)) <= 0.01;
 }
 
-// Code Review: Function buildGatewayStatus in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js, server/utils/paymentService.js.
+// Simple: This creates the gateway status.
 function buildGatewayStatus(status, detail) {
   return [status, detail]
     .filter(Boolean)
@@ -43,7 +43,7 @@ function buildGatewayStatus(status, detail) {
     .slice(0, 50);
 }
 
-// Code Review: Function cancelOrderAfterPaymentFailure in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
+// Simple: This removes or clears the order after payment failure.
 async function cancelOrderAfterPaymentFailure(order, reason) {
   if (!order || ['CANCELLED', 'DELIVERED'].includes(order.Status)) {
     return;
@@ -57,7 +57,7 @@ async function cancelOrderAfterPaymentFailure(order, reason) {
   );
 }
 
-// Code Review: Function notifyPaymentUpdate in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
+// Simple: This sends or records the payment update.
 async function notifyPaymentUpdate(order, payment, nextStatus) {
   try {
     if (!order || !payment) {
@@ -137,7 +137,7 @@ async function notifyPaymentUpdate(order, payment, nextStatus) {
   }
 }
 
-// Code Review: Function findStripePaymentRecord in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
+// Simple: This gets the stripe payment record.
 async function findStripePaymentRecord(intent) {
   const metadataPaymentId = Number.parseInt(intent.metadata?.paymentId, 10);
 
@@ -148,7 +148,7 @@ async function findStripePaymentRecord(intent) {
   return Payment.findOne({ where: { TransactionID: intent.id } });
 }
 
-// Code Review: Function verifyPayHereSignature in server\controllers\paymentController.js. Used in: server/controllers/paymentController.js.
+// Simple: This checks if the pay here signature is correct.
 function verifyPayHereSignature(payload) {
   const merchantSecret = process.env.PAYHERE_MERCHANT_SECRET;
   if (!merchantSecret) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getDefaultPublicSettings, getPublicSettings } from '../services/publicSettingsApi';
 
-// Code Review: Function usePublicSettings in client\src\hooks\usePublicSettings.js. Used in: client/src/components/layout/Footer.jsx, client/src/components/layout/Header.jsx, client/src/hooks/usePublicSettings.js.
+// Simple: This helps manage the public settings.
 export const usePublicSettings = () => {
     const [settings, setSettings] = useState(getDefaultPublicSettings());
     const [loading, setLoading] = useState(true);
@@ -10,7 +10,7 @@ export const usePublicSettings = () => {
     useEffect(() => {
         let isMounted = true;
 
-        // Code Review: Function loadSettings in client\src\hooks\usePublicSettings.js. Used in: client/src/hooks/usePublicSettings.js, client/src/pages/Settings.jsx.
+        // Simple: This gets the settings.
         const loadSettings = async (forceRefresh = false) => {
             try {
                 setLoading(true);
@@ -32,7 +32,7 @@ export const usePublicSettings = () => {
 
         loadSettings();
 
-        // Code Review: Function handleRefresh in client\src\hooks\usePublicSettings.js. Used in: client/src/hooks/usePublicSettings.js.
+        // Simple: This handles what happens when refresh is triggered.
         const handleRefresh = () => {
             loadSettings(true);
         };

@@ -10,7 +10,7 @@ const STAGE_BUFFER_MINUTES = {
     OUT_FOR_DELIVERY: 0
 };
 
-// Code Review: Function getTravelMinutes in server\utils\deliveryEta.js. Used in: server/utils/deliveryEta.js.
+// Simple: This gets the travel minutes.
 function getTravelMinutes({ durationSeconds, distanceKm }) {
     if (Number.isFinite(durationSeconds) && durationSeconds > 0) {
         return Math.ceil(durationSeconds / 60);
@@ -23,12 +23,12 @@ function getTravelMinutes({ durationSeconds, distanceKm }) {
     return null;
 }
 
-// Code Review: Function getStageBufferMinutes in server\utils\deliveryEta.js. Used in: server/utils/deliveryEta.js.
+// Simple: This gets the stage buffer minutes.
 function getStageBufferMinutes(stage) {
     return STAGE_BUFFER_MINUTES[stage] || 0;
 }
 
-// Code Review: Function calculateEstimatedDeliveryTime in server\utils\deliveryEta.js. Used in: server/controllers/adminController.js, server/controllers/deliveryController.js, server/services/orderService.js.
+// Simple: This calculates the estimated delivery time.
 function calculateEstimatedDeliveryTime({ stage, durationSeconds, distanceKm, baseTime = new Date() }) {
     const travelMinutes = getTravelMinutes({ durationSeconds, distanceKm });
 

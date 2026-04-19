@@ -5,7 +5,7 @@ import Card from './Card';
 import Modal from './Modal';
 import { FaBell } from 'react-icons/fa';
 
-// Code Review: Function NotificationCenter in client\src\components\ui\NotificationCenter.jsx. Used in: client/src/components/layout/Header.jsx, client/src/components/ui/NotificationCenter.jsx.
+// Simple: This shows the notification center section.
 const NotificationCenter = () => {
   const { 
     notifications, 
@@ -18,7 +18,7 @@ const NotificationCenter = () => {
   
   const [isOpen, setIsOpen] = useState(false);
 
-  // Code Review: Function formatTime in client\src\components\ui\NotificationCenter.jsx. Used in: client/src/components/ui/NotificationCenter.jsx, client/src/pages/ResetPassword.jsx, client/src/pages/VerifyAccount.jsx.
+  // Simple: This cleans or formats the time.
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     const now = new Date();
@@ -30,7 +30,7 @@ const NotificationCenter = () => {
     return date.toLocaleDateString();
   };
 
-  // Code Review: Function getPriorityColor in client\src\components\ui\NotificationCenter.jsx. Used in: client/src/components/ui/NotificationCenter.jsx.
+  // Simple: This gets the priority color.
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high': return 'border-l-red-500';
@@ -39,7 +39,7 @@ const NotificationCenter = () => {
     }
   };
 
-  // Code Review: Function getTypeIcon in client\src\components\ui\NotificationCenter.jsx. Used in: client/src/components/ui/NotificationCenter.jsx.
+  // Simple: This gets the type icon.
   const getTypeIcon = (type) => {
     switch (type) {
       case 'order_update':

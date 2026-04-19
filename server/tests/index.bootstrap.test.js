@@ -1,7 +1,7 @@
 const express = require('express');
 const request = require('supertest');
 
-// Code Review: Function mockCreateRouter in server\tests\index.bootstrap.test.js. Used in: server/tests/index.bootstrap.test.js.
+// Simple: This handles mock create router logic.
 function mockCreateRouter() {
   const router = express.Router();
   router.get('/__ping', (req, res) => {

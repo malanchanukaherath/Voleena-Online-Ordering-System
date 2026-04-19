@@ -300,7 +300,7 @@ describe('cashier routes', () => {
     expect(mockOrder.findAll).toHaveBeenCalled();
 
     const findAllArgs = mockOrder.findAll.mock.calls[0][0];
-    // Code Review: Function includeAliases in server\tests\cashier.routes.test.js. Used in: server/tests/cashier.routes.test.js.
+    // Simple: This handles include aliases logic.
     const includeAliases = (findAllArgs.include || []).map((entry) => entry.as);
 
     expect(includeAliases).toContain('customer');

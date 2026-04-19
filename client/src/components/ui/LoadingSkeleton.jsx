@@ -1,8 +1,8 @@
 import React from 'react';
 
-// Code Review: Function LoadingSkeleton in client\src\components\ui\LoadingSkeleton.jsx. Used in: client/src/components/ui/LoadingSkeleton.jsx, client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx.
+// Simple: This shows the loading skeleton section.
 const LoadingSkeleton = ({ type = 'card', count = 1, rows = 5 }) => {
-    // Code Review: Function renderCardSkeleton in client\src\components\ui\LoadingSkeleton.jsx. Used in: client/src/components/ui/LoadingSkeleton.jsx.
+    // Simple: This shows the card skeleton.
     const renderCardSkeleton = () => (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 animate-pulse dark:bg-slate-800 dark:border-slate-700">
             <div className="h-44 bg-gray-200 rounded-xl mb-4 dark:bg-slate-700"></div>
@@ -12,7 +12,7 @@ const LoadingSkeleton = ({ type = 'card', count = 1, rows = 5 }) => {
         </div>
     );
 
-    // Code Review: Function renderTableSkeleton in client\src\components\ui\LoadingSkeleton.jsx. Used in: client/src/components/ui/LoadingSkeleton.jsx.
+    // Simple: This shows the table skeleton.
     const renderTableSkeleton = () => (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden dark:bg-slate-800 dark:border-slate-700">
             <table className="min-w-full">
@@ -40,7 +40,7 @@ const LoadingSkeleton = ({ type = 'card', count = 1, rows = 5 }) => {
         </div>
     );
 
-    // Code Review: Function renderListSkeleton in client\src\components\ui\LoadingSkeleton.jsx. Used in: client/src/components/ui/LoadingSkeleton.jsx.
+    // Simple: This shows the list skeleton.
     const renderListSkeleton = () => (
         <div className="space-y-4">
             {Array.from({ length: rows }).map((_, i) => (
@@ -57,7 +57,7 @@ const LoadingSkeleton = ({ type = 'card', count = 1, rows = 5 }) => {
         </div>
     );
 
-    // Code Review: Function renderFormSkeleton in client\src\components\ui\LoadingSkeleton.jsx. Used in: client/src/components/ui/LoadingSkeleton.jsx.
+    // Simple: This shows the form skeleton.
     const renderFormSkeleton = () => (
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4 animate-pulse dark:bg-slate-800 dark:border-slate-700">
             {Array.from({ length: rows }).map((_, i) => (
@@ -70,7 +70,7 @@ const LoadingSkeleton = ({ type = 'card', count = 1, rows = 5 }) => {
         </div>
     );
 
-    // Code Review: Function renderSkeleton in client\src\components\ui\LoadingSkeleton.jsx. Used in: client/src/components/ui/LoadingSkeleton.jsx.
+    // Simple: This shows the skeleton.
     const renderSkeleton = () => {
         switch (type) {
             case 'table':

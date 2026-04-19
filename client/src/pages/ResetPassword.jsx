@@ -7,7 +7,7 @@ import Toast from '../components/ui/Toast';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import authService from '../services/authService';
 
-// Code Review: Function ResetPassword in client\src\pages\ResetPassword.jsx. Used in: client/src/components/ui/NotificationCenter.jsx, client/src/pages/Profile.jsx, client/src/pages/ResetPassword.jsx.
+// Simple: This removes or clears the password.
 const ResetPassword = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -37,14 +37,14 @@ const ResetPassword = () => {
         }
     }, [timeLeft, step]);
 
-    // Code Review: Function formatTime in client\src\pages\ResetPassword.jsx. Used in: client/src/components/ui/NotificationCenter.jsx, client/src/pages/ResetPassword.jsx, client/src/pages/VerifyAccount.jsx.
+    // Simple: This cleans or formats the time.
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // Code Review: Function handleChange in client\src\pages\ResetPassword.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when change is triggered.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -53,7 +53,7 @@ const ResetPassword = () => {
         }
     };
 
-    // Code Review: Function handleResendOTP in client\src\pages\ResetPassword.jsx. Used in: client/src/pages/ResetPassword.jsx, client/src/pages/VerifyAccount.jsx.
+    // Simple: This handles what happens when resend otp is triggered.
     const handleResendOTP = () => {
         setTimeLeft(300);
         const email = identifier?.trim();
@@ -67,7 +67,7 @@ const ResetPassword = () => {
         });
     };
 
-    // Code Review: Function validateOTP in client\src\pages\ResetPassword.jsx. Used in: client/src/pages/ResetPassword.jsx.
+    // Simple: This checks if the otp is correct.
     const validateOTP = () => {
         const newErrors = {};
         if (!formData.otp.trim()) {
@@ -77,7 +77,7 @@ const ResetPassword = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function handleOTPSubmit in client\src\pages\ResetPassword.jsx. Used in: client/src/pages/ResetPassword.jsx.
+    // Simple: This handles what happens when otp submit is triggered.
     const handleOTPSubmit = async (e) => {
         e.preventDefault();
         if (!validateOTP()) return;
@@ -93,7 +93,7 @@ const ResetPassword = () => {
         setStep(2);
     };
 
-    // Code Review: Function validatePassword in client\src\pages\ResetPassword.jsx. Used in: client/src/pages/ResetPassword.jsx.
+    // Simple: This checks if the password is correct.
     const validatePassword = () => {
         const newErrors = {};
         if (!formData.newPassword) {
@@ -110,7 +110,7 @@ const ResetPassword = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function handlePasswordSubmit in client\src\pages\ResetPassword.jsx. Used in: client/src/pages/Profile.jsx, client/src/pages/ResetPassword.jsx.
+    // Simple: This handles what happens when password submit is triggered.
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         if (!validatePassword()) return;

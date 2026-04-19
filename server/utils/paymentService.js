@@ -4,17 +4,17 @@ const crypto = require('crypto');
 
 const SUPPORTED_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
 
-// Code Review: Function hasConfiguredStripeValue in server\utils\paymentService.js. Used in: server/controllers/paymentController.js, server/utils/paymentService.js.
+// Simple: This checks whether configured stripe value is available.
 function hasConfiguredStripeValue(value, prefix) {
     return typeof value === 'string' && value.trim().startsWith(prefix) && !value.includes('your_');
 }
 
-// Code Review: Function hasConfiguredPayHereValue in server\utils\paymentService.js. Used in: server/utils/paymentService.js.
+// Simple: This checks whether configured pay here value is available.
 function hasConfiguredPayHereValue(value) {
     return typeof value === 'string' && value.trim().length > 0 && !value.includes('your_');
 }
 
-// Code Review: Function isValidHttpUrl in server\utils\paymentService.js. Used in: server/utils/paymentService.js.
+// Simple: This checks whether valid http url is true.
 function isValidHttpUrl(value) {
     if (typeof value !== 'string' || !value.trim()) {
         return false;
@@ -28,7 +28,7 @@ function isValidHttpUrl(value) {
     }
 }
 
-// Code Review: Function toMinorUnits in server\utils\paymentService.js. Used in: server/utils/paymentService.js.
+// Simple: This handles to minor units logic.
 function toMinorUnits(amount) {
     const numericAmount = Number(amount);
 
@@ -39,7 +39,7 @@ function toMinorUnits(amount) {
     return Math.round(numericAmount * 100);
 }
 
-// Code Review: Function buildGatewayStatus in server\utils\paymentService.js. Used in: server/controllers/paymentController.js, server/utils/paymentService.js.
+// Simple: This creates the gateway status.
 function buildGatewayStatus(status, detail) {
     return [status, detail]
         .filter(Boolean)

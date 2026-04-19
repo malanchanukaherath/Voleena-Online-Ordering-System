@@ -5,7 +5,7 @@ const ALLOWED_EXTENSIONS = /\.jpe?g|\.png|\.webp$/i;
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 // File filter - only images
-// Code Review: Function fileFilter in server\middleware\upload.js. Used in: server/middleware/upload.js.
+// Simple: This handles file filter logic.
 const fileFilter = (req, file, cb) => {
     const normalizedName = (file.originalname || '').toLowerCase();
     const extname = ALLOWED_EXTENSIONS.test(normalizedName);

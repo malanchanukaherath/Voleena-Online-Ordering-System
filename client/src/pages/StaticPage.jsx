@@ -64,7 +64,7 @@ const pageContent = {
   }
 };
 
-// Code Review: Function StaticPage in client\src\pages\StaticPage.jsx. Used in: client/src/pages/StaticPage.jsx, client/src/routes/AppRoutes.jsx.
+// Simple: This shows the static page section.
 const StaticPage = ({ page }) => {
   const content = pageContent[page] || pageContent.about;
 

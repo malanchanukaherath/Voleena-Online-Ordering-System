@@ -173,7 +173,7 @@ const ERROR_CODES = {
 /**
  * Create standardized error response
  */
-// Code Review: Function createErrorResponse in server\utils\errorConstants.js. Used in: server/utils/errorConstants.js.
+// Simple: This creates the error response.
 function createErrorResponse(errorCode, additionalDetails = null) {
   const error = ERROR_CODES[errorCode];
   

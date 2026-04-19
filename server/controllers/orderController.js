@@ -5,10 +5,10 @@ const { Order, OrderItem, MenuItem, ComboPack, Customer, Delivery, Address, Staf
 const orderService = require('../services/orderService');
 
 const ALLOWED_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
-// Code Review: Function normalizePhone in server\controllers\orderController.js. Used in: server/controllers/orderController.js, server/routes/customers.js, server/services/orderService.js.
+// Simple: This cleans or formats the phone.
 const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
 
-// Code Review: Function isAddressTableMissingError in server\controllers\orderController.js. Used in: server/controllers/cashierController.js, server/controllers/deliveryController.js, server/controllers/orderController.js.
+// Simple: This checks whether address table missing error is true.
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
     const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]

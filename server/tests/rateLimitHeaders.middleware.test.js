@@ -1,7 +1,7 @@
 const rateLimitHeadersMiddleware = require('../middleware/rateLimitHeaders');
 
 describe('rateLimitHeaders middleware', () => {
-  // Code Review: Function buildResponseHarness in server\tests\rateLimitHeaders.middleware.test.js. Used in: server/tests/rateLimitHeaders.middleware.test.js.
+  // Simple: This creates the response harness.
   function buildResponseHarness() {
     const headers = {};
     const res = {

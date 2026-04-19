@@ -5,7 +5,7 @@ import Card from '../components/ui/Card';
 import Toast from '../components/ui/Toast';
 import authService from '../services/authService';
 
-// Code Review: Function VerifyAccount in client\src\pages\VerifyAccount.jsx. Used in: client/src/components/ui/NotificationCenter.jsx, client/src/pages/ResetPassword.jsx, client/src/pages/VerifyAccount.jsx.
+// Simple: This checks if the account is correct.
 const VerifyAccount = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -27,14 +27,14 @@ const VerifyAccount = () => {
         }
     }, [timeLeft]);
 
-    // Code Review: Function formatTime in client\src\pages\VerifyAccount.jsx. Used in: client/src/components/ui/NotificationCenter.jsx, client/src/pages/ResetPassword.jsx, client/src/pages/VerifyAccount.jsx.
+    // Simple: This cleans or formats the time.
     const formatTime = (seconds) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // Code Review: Function handleOtpChange in client\src\pages\VerifyAccount.jsx. Used in: client/src/pages/VerifyAccount.jsx.
+    // Simple: This handles what happens when otp change is triggered.
     const handleOtpChange = (index, value) => {
         // Only allow numbers
         if (value && !/^\d$/.test(value)) return;
@@ -50,7 +50,7 @@ const VerifyAccount = () => {
         }
     };
 
-    // Code Review: Function handleKeyDown in client\src\pages\VerifyAccount.jsx. Used in: client/src/pages/VerifyAccount.jsx.
+    // Simple: This handles what happens when key down is triggered.
     const handleKeyDown = (index, e) => {
         // Handle backspace
         if (e.key === 'Backspace' && !otp[index] && index > 0) {
@@ -58,7 +58,7 @@ const VerifyAccount = () => {
         }
     };
 
-    // Code Review: Function handlePaste in client\src\pages\VerifyAccount.jsx. Used in: client/src/pages/VerifyAccount.jsx.
+    // Simple: This handles what happens when paste is triggered.
     const handlePaste = (e) => {
         e.preventDefault();
         const pastedData = e.clipboardData.getData('text').slice(0, 6);
@@ -72,7 +72,7 @@ const VerifyAccount = () => {
         document.getElementById(`otp-${lastIndex}`)?.focus();
     };
 
-    // Code Review: Function handleResendOTP in client\src\pages\VerifyAccount.jsx. Used in: client/src/pages/ResetPassword.jsx, client/src/pages/VerifyAccount.jsx.
+    // Simple: This handles what happens when resend otp is triggered.
     const handleResendOTP = () => {
         setTimeLeft(300);
         setOtp(['', '', '', '', '', '']);
@@ -85,7 +85,7 @@ const VerifyAccount = () => {
         }
     };
 
-    // Code Review: Function handleVerify in client\src\pages\VerifyAccount.jsx. Used in: client/src/pages/VerifyAccount.jsx.
+    // Simple: This handles what happens when verify is triggered.
     const handleVerify = async () => {
         const enteredOtp = otp.join('');
 

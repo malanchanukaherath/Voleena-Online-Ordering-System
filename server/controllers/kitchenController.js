@@ -4,13 +4,13 @@
 const { Order, OrderItem, MenuItem, DailyStock, OrderStatusHistory, Payment, sequelize } = require('../models');
 const orderService = require('../services/orderService');
 
-// Code Review: Function hasConfiguredStripeSecret in server\controllers\kitchenController.js. Used in: server/controllers/kitchenController.js.
+// Simple: This checks whether configured stripe secret is available.
 const hasConfiguredStripeSecret = () => {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   return typeof secretKey === 'string' && secretKey.trim().startsWith('sk_') && !secretKey.includes('your_');
 };
 
-// Code Review: Function trySyncCardPaymentStatus in server\controllers\kitchenController.js. Used in: server/controllers/kitchenController.js.
+// Simple: This handles try sync card payment status logic.
 const trySyncCardPaymentStatus = async (payment) => {
   if (!payment || payment.Method !== 'CARD' || payment.Status === 'PAID' || !payment.TransactionID) {
     return false;
@@ -39,7 +39,7 @@ const trySyncCardPaymentStatus = async (payment) => {
   return false;
 };
 
-// Code Review: Function requiresSettledPayment in server\controllers\kitchenController.js. Used in: server/controllers/kitchenController.js.
+// Simple: This handles requires settled payment logic.
 const requiresSettledPayment = (payment) => {
   return !!payment && ['CARD', 'ONLINE', 'WALLET'].includes(payment.Method);
 };

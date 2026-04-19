@@ -1,6 +1,6 @@
 const express = require('express');
 
-// Code Review: Function createTestApp in server\tests\helpers\createTestApp.js. Used in: server/tests/auth.routes.test.js, server/tests/cart.routes.test.js, server/tests/cashier.routes.test.js.
+// Simple: This creates the test app.
 function createTestApp(prefix, router) {
   const app = express();
 

@@ -12,7 +12,7 @@ import MainLayout from './components/layout/MainLayout';
 import AppRoutes from './routes/AppRoutes';
 
 // Inner component so it can access ThemeContext for the toast theme
-// Code Review: Function AppInner in client\src\App.jsx. Used in: client/src/App.jsx.
+// Simple: This shows the app inner section.
 const AppInner = () => {
   const { theme } = useTheme();
   return (
@@ -37,7 +37,7 @@ const AppInner = () => {
   );
 };
 
-// Code Review: Function App in client\src\App.jsx. Used in: client/src/App.jsx, client/src/main.jsx.
+// Simple: This shows the app section.
 function App() {
   return (
     <BrowserRouter

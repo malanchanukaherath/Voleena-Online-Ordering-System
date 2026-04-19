@@ -72,7 +72,7 @@ jest.mock('../services/appNotificationService', () => mockAppNotificationService
 
 const adminController = require('../controllers/adminController');
 
-// Code Review: Function createResponse in server\tests\admin.delivery-assignment.test.js. Used in: server/tests/admin.delivery-assignment.test.js.
+// Simple: This creates the response.
 const createResponse = () => {
   const res = {
     statusCode: 200,
@@ -93,7 +93,7 @@ const createResponse = () => {
   return res;
 };
 
-// Code Review: Function createBaseDeliveryRecord in server\tests\admin.delivery-assignment.test.js. Used in: server/tests/admin.delivery-assignment.test.js.
+// Simple: This creates the base delivery record.
 const createBaseDeliveryRecord = () => ({
   DeliveryID: 501,
   OrderID: 101,

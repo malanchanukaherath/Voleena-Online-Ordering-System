@@ -4,7 +4,7 @@ import { cashierService } from '../services/dashboardService';
 import authService from '../services/authService';
 import { buildReceiptFromOrder, openReceiptPrintWindow } from '../utils/posReceiptPrint';
 
-// Code Review: Function CashierOrders in client\src\pages\CashierOrders.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/CashierOrders.jsx, client/src/routes/AppRoutes.jsx.
+// Simple: This shows the cashier orders section.
 const CashierOrders = () => {
     const [orders, setOrders] = useState([]);
     const [error, setError] = useState('');
@@ -141,7 +141,7 @@ const CashierOrders = () => {
     useEffect(() => {
         let isActive = true;
 
-        // Code Review: Function loadOrdersSafely in client\src\pages\CashierOrders.jsx. Used in: client/src/pages/CashierOrders.jsx, client/src/pages/KitchenOrders.jsx, client/src/pages/OrderManagement.jsx.
+        // Simple: This gets the orders safely.
         const loadOrdersSafely = async () => {
             if (!isActive) return;
             await loadOrders();

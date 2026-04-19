@@ -6,7 +6,7 @@ const resolvedBaseUrl =
 export const API_BASE_URL = resolvedBaseUrl.replace(/\/+$/, '');
 export const API_V1_BASE_URL = `${API_BASE_URL}/api/v1`;
 
-// Code Review: Function resolveAssetUrl in client\src\config\api.js. Used in: client/src/components/ComboPackCard.jsx, client/src/config/api.js, client/src/pages/CategoryManagement.jsx.
+// Simple: This cleans or formats the asset url.
 export const resolveAssetUrl = (assetPath) => {
     if (!assetPath) {
         return null;

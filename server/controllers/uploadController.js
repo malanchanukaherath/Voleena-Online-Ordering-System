@@ -5,14 +5,14 @@ const { uploadImageFile, ALLOWED_FOLDERS } = require('../services/uploadService'
 
 const STAFF_MANAGED_FOLDERS = new Set(['menu', 'category', 'combo']);
 
-// Code Review: Function getRequestedFolder in server\controllers\uploadController.js. Used in: server/controllers/uploadController.js.
+// Simple: This gets the requested folder.
 const getRequestedFolder = (body) => {
     return typeof body?.folder === 'string' && body.folder.trim()
         ? body.folder.trim()
         : 'menu';
 };
 
-// Code Review: Function canUploadToFolder in server\controllers\uploadController.js. Used in: server/controllers/uploadController.js.
+// Simple: This checks whether upload to folder is allowed.
 const canUploadToFolder = (user, folder) => {
     if (folder === 'profile') {
         return true;
@@ -21,7 +21,7 @@ const canUploadToFolder = (user, folder) => {
     return user?.type === 'Staff' && STAFF_MANAGED_FOLDERS.has(folder);
 };
 
-// Code Review: Function uploadImage in server\controllers\uploadController.js. Used in: client/src/components/ImageUpload.jsx, client/src/services/menuService.js, server/controllers/comboPackController.js.
+// Simple: This handles upload image logic.
 const uploadImage = async (req, res) => {
     try {
         if (!req.file) {
@@ -53,7 +53,7 @@ const uploadImage = async (req, res) => {
     }
 };
 
-// Code Review: Function getUploadFolders in server\controllers\uploadController.js. Used in: server/controllers/uploadController.js, server/routes/uploadRoutes.js, server/tests/route-contracts.test.js.
+// Simple: This gets the upload folders.
 const getUploadFolders = (req, res) => {
     if (req.user?.type === 'Customer') {
         return res.json({

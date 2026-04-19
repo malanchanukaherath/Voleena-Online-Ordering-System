@@ -3,7 +3,7 @@ import Modal from './ui/Modal';
 import Button from './ui/Button';
 import { FaCreditCard, FaLock, FaSpinner } from 'react-icons/fa';
 
-// Code Review: Function PaymentGatewayModal in client\src\components\PaymentGatewayModal.jsx. Used in: client/src/components/PaymentGatewayModal.jsx.
+// Simple: This shows the payment gateway modal section.
 const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFailure }) => {
     const [processing, setProcessing] = useState(false);
     const [cardDetails, setCardDetails] = useState({
@@ -14,7 +14,7 @@ const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFa
     });
     const [errors, setErrors] = useState({});
 
-    // Code Review: Function handleChange in client\src\components\PaymentGatewayModal.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when change is triggered.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setCardDetails(prev => ({ ...prev, [name]: value }));
@@ -23,7 +23,7 @@ const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFa
         }
     };
 
-    // Code Review: Function validateCard in client\src\components\PaymentGatewayModal.jsx. Used in: client/src/components/PaymentGatewayModal.jsx.
+    // Simple: This checks if the card is correct.
     const validateCard = () => {
         const newErrors = {};
         if (!cardDetails.cardNumber || cardDetails.cardNumber.length < 16) {
@@ -42,7 +42,7 @@ const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFa
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function handlePayment in client\src\components\PaymentGatewayModal.jsx. Used in: client/src/components/PaymentGatewayModal.jsx.
+    // Simple: This handles what happens when payment is triggered.
     const handlePayment = () => {
         if (!validateCard()) return;
 
@@ -72,7 +72,7 @@ const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFa
         }, 2500);
     };
 
-    // Code Review: Function formatCardNumber in client\src\components\PaymentGatewayModal.jsx. Used in: client/src/components/PaymentGatewayModal.jsx.
+    // Simple: This cleans or formats the card number.
     const formatCardNumber = (value) => {
         return value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
     };

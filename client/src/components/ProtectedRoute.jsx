@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext';
  * Protected Route Component
  * Restricts access based on authentication and role
  */
-// Code Review: Function ProtectedRoute in client\src\components\ProtectedRoute.jsx. Used in: client/src/components/ProtectedRoute.jsx, client/src/routes/AppRoutes.jsx, client/src/routes/ProtectedRoute.jsx.
+// Simple: This shows the protected route section.
 const ProtectedRoute = ({ children, allowedRoles = [], requireAuth = true }) => {
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
@@ -48,7 +48,7 @@ const ProtectedRoute = ({ children, allowedRoles = [], requireAuth = true }) => 
 /**
  * Get redirect path based on user role
  */
-// Code Review: Function getRoleBasedRedirect in client\src\components\ProtectedRoute.jsx. Used in: client/src/components/ProtectedRoute.jsx.
+// Simple: This gets the role based redirect.
 const getRoleBasedRedirect = (role) => {
   const roleRedirects = {
     'Admin': '/admin/dashboard',
@@ -64,7 +64,7 @@ const getRoleBasedRedirect = (role) => {
 /**
  * Redirect authenticated users away from auth pages
  */
-// Code Review: Function PublicRoute in client\src\components\ProtectedRoute.jsx. Used in: client/src/components/ProtectedRoute.jsx, client/src/routes/AppRoutes.jsx.
+// Simple: This shows the public route section.
 export const PublicRoute = ({ children }) => {
   const { isAuthenticated, user } = useAuth();
 

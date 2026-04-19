@@ -18,7 +18,7 @@ import { cashierService } from '../services/dashboardService';
 import authService from '../services/authService';
 import { buildReceiptFromOrder, openReceiptPrintWindow } from '../utils/posReceiptPrint';
 
-// Code Review: Function parseApiArray in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This cleans or formats the api array.
 const parseApiArray = (response) => {
     if (Array.isArray(response)) {
         return response;
@@ -35,7 +35,7 @@ const parseApiArray = (response) => {
     return [];
 };
 
-// Code Review: Function parseApiObject in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This cleans or formats the api object.
 const parseApiObject = (response) => {
     if (response && typeof response === 'object' && !Array.isArray(response)) {
         if (response.stats && typeof response.stats === 'object') {
@@ -50,31 +50,31 @@ const parseApiObject = (response) => {
     return {};
 };
 
-// Code Review: Function getMenuItemId in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This gets the menu item id.
 const getMenuItemId = (menuItem) => Number.parseInt(menuItem?.MenuItemID ?? menuItem?.menuItemId, 10);
-// Code Review: Function getMenuItemName in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This gets the menu item name.
 const getMenuItemName = (menuItem) => menuItem?.Name ?? menuItem?.name ?? 'Unknown Item';
-// Code Review: Function getMenuItemPrice in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This gets the menu item price.
 const getMenuItemPrice = (menuItem) => Number.parseFloat(menuItem?.Price ?? menuItem?.price ?? 0);
-// Code Review: Function getMenuItemStockQuantity in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This gets the menu item stock quantity.
 const getMenuItemStockQuantity = (menuItem) => {
     const stockQuantity = menuItem?.StockQuantity ?? menuItem?.stockQuantity;
     return Number.isFinite(stockQuantity) ? stockQuantity : null;
 };
 
-// Code Review: Function isMenuItemActive in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This checks whether menu item active is true.
 const isMenuItemActive = (menuItem) => {
     const isActive = menuItem?.IsActive ?? menuItem?.isActive;
     return isActive !== false;
 };
 
-// Code Review: Function isMenuItemAvailable in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This checks whether menu item available is true.
 const isMenuItemAvailable = (menuItem) => {
     const availability = menuItem?.IsAvailable ?? menuItem?.isAvailable;
     return availability !== false;
 };
 
-// Code Review: Function normalizeMenuItemsForPos in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This cleans or formats the menu items for pos.
 const normalizeMenuItemsForPos = (menuResponse) => {
     const items = parseApiArray(menuResponse);
 
@@ -92,9 +92,9 @@ const normalizeMenuItemsForPos = (menuResponse) => {
         .filter((item) => item.IsActive && item.IsAvailable);
 };
 
-// Code Review: Function getComboPackId in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This gets the combo pack id.
 const getComboPackId = (combo) => Number.parseInt(combo?.ComboID ?? combo?.ComboPackID ?? combo?.comboId, 10);
-// Code Review: Function normalizeComboPacksForPos in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This cleans or formats the combo packs for pos.
 const normalizeComboPacksForPos = (comboResponse) => {
     const combos = parseApiArray(comboResponse);
 
@@ -113,9 +113,9 @@ const normalizeComboPacksForPos = (comboResponse) => {
 };
 
 const DEFAULT_GUEST_CUSTOMER_NAME = 'Walk-in Customer';
-// Code Review: Function getCustomerId in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This gets the customer id.
 const getCustomerId = (customer) => Number.parseInt(customer?.CustomerID ?? customer?.customerId, 10);
-// Code Review: Function normalizeCustomersForLookup in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This cleans or formats the customers for lookup.
 const normalizeCustomersForLookup = (customerResponse) => {
     const customers = parseApiArray(customerResponse);
 
@@ -133,7 +133,7 @@ const normalizeCustomersForLookup = (customerResponse) => {
         .filter((customer) => customer.Name !== DEFAULT_GUEST_CUSTOMER_NAME);
 };
 
-// Code Review: Function createPosEntryKey in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This creates the pos entry key.
 const createPosEntryKey = (item) => {
     if (item.type === 'combo') {
         return `combo:${item.ComboID}`;
@@ -142,7 +142,7 @@ const createPosEntryKey = (item) => {
     return `menu:${item.MenuItemID}`;
 };
 
-// Code Review: Function createOrderEntryKey in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This creates the order entry key.
 const createOrderEntryKey = (item) => {
     if (item.type === 'combo' || item.comboId) {
         return `combo:${item.comboId}`;
@@ -151,7 +151,7 @@ const createOrderEntryKey = (item) => {
     return `menu:${item.menuItemId}`;
 };
 
-// Code Review: Function getCatalogStockLimit in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This gets the catalog stock limit.
 const getCatalogStockLimit = (item) => {
     if (item?.type !== 'menu') {
         return null;
@@ -169,7 +169,7 @@ const POS_QUANTITY_KEYPAD_ROWS = [
 
 const POS_QUICK_CASH_AMOUNTS = [500, 1000, 2000, 5000];
 
-// Code Review: Function sanitizeNumericInput in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+// Simple: This cleans or formats the numeric input.
 const sanitizeNumericInput = (rawValue, allowDecimal = true) => {
     let sanitized = String(rawValue ?? '').replace(allowDecimal ? /[^0-9.]/g : /[^0-9]/g, '');
 
@@ -195,9 +195,9 @@ const STANDARD_CALCULATOR_ROWS = [
     ['0', '.', 'BACK', '=']
 ];
 
-// Code Review: Function CashierDashboard in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx, client/src/routes/AppRoutes.jsx.
+// Simple: This shows the cashier dashboard section.
 const CashierDashboard = ({ posOnly = false }) => {
-    // Code Review: Function getViewportSize in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+    // Simple: This gets the viewport size.
     const getViewportSize = () => ({
         width: typeof window !== 'undefined' ? window.innerWidth : 1366,
         height: typeof window !== 'undefined' ? window.innerHeight : 768
@@ -622,7 +622,7 @@ const CashierDashboard = ({ posOnly = false }) => {
     }, []);
 
     useEffect(() => {
-        // Code Review: Function onFullscreenChange in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+        // Simple: This handles what happens when fullscreen change is triggered.
         const onFullscreenChange = () => {
             setIsPosFullscreen(Boolean(document.fullscreenElement));
         };
@@ -636,7 +636,7 @@ const CashierDashboard = ({ posOnly = false }) => {
     }, []);
 
     useEffect(() => {
-        // Code Review: Function onResize in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+        // Simple: This handles what happens when resize is triggered.
         const onResize = () => {
             setViewportSize(getViewportSize());
         };
@@ -654,7 +654,7 @@ const CashierDashboard = ({ posOnly = false }) => {
             return undefined;
         }
 
-        // Code Review: Function onKeyDown in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx, client/src/pages/Checkout.jsx, client/src/pages/Menu.jsx.
+        // Simple: This handles what happens when key down is triggered.
         const onKeyDown = (event) => {
             const activeTag = document.activeElement?.tagName;
             const isTyping = activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement?.isContentEditable;
@@ -731,7 +731,7 @@ const CashierDashboard = ({ posOnly = false }) => {
     useEffect(() => {
         let isMounted = true;
 
-        // Code Review: Function loadDashboardData in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+        // Simple: This gets the dashboard data.
         const loadDashboardData = async () => {
             try {
                 if (isMounted) {
@@ -768,7 +768,7 @@ const CashierDashboard = ({ posOnly = false }) => {
 
         let isActive = true;
 
-        // Code Review: Function refreshMenu in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+        // Simple: This handles refresh menu logic.
         const refreshMenu = async () => {
             try {
                 if (!isActive) {
@@ -840,7 +840,7 @@ const CashierDashboard = ({ posOnly = false }) => {
         };
     }, [customerSearchTerm, posOnly, selectedCustomer?.CustomerID]);
 
-    // Code Review: Function addToWalkInOrder in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+    // Simple: This creates the to walk in order.
     const addToWalkInOrder = (catalogItem) => {
         setWalkInError('');
         setWalkInSuccess('');
@@ -906,7 +906,7 @@ const CashierDashboard = ({ posOnly = false }) => {
             .filter((item) => item.quantity > 0));
     }, [posItems]);
 
-    // Code Review: Function updateWalkInQuantity in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+    // Simple: This updates the walk in quantity.
     const updateWalkInQuantity = (entryKey, delta) => {
         setWalkInError('');
         const currentItem = currentWalkInOrder.find((item) => createOrderEntryKey(item) === entryKey);
@@ -917,7 +917,7 @@ const CashierDashboard = ({ posOnly = false }) => {
         setWalkInQuantity(entryKey, currentItem.quantity + delta);
     };
 
-    // Code Review: Function clearWalkInOrder in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+    // Simple: This removes or clears the walk in order.
     const clearWalkInOrder = () => {
         setCurrentWalkInOrder([]);
         setCashAmountReceived('');
@@ -996,7 +996,7 @@ const CashierDashboard = ({ posOnly = false }) => {
         openReceiptPrintWindow(receiptPayload);
     }, []);
 
-    // Code Review: Function selectCustomerForWalkInOrder in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+    // Simple: This handles select customer for walk in order logic.
     const selectCustomerForWalkInOrder = (customer) => {
         setSelectedCustomer(customer);
         setCustomerSearchTerm('');
@@ -1006,7 +1006,7 @@ const CashierDashboard = ({ posOnly = false }) => {
         setWalkInSuccess('');
     };
 
-    // Code Review: Function resetWalkInCustomer in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+    // Simple: This removes or clears the walk in customer.
     const resetWalkInCustomer = () => {
         setSelectedCustomer(null);
         setCustomerSearchTerm('');
@@ -1014,7 +1014,7 @@ const CashierDashboard = ({ posOnly = false }) => {
         setCustomerSearchError('');
     };
 
-    // Code Review: Function sendWalkInOrder in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+    // Simple: This sends or records the walk in order.
     const sendWalkInOrder = async () => {
         if (currentWalkInOrder.length === 0) {
             setWalkInError('Add at least one item before sending to kitchen.');
@@ -1087,7 +1087,7 @@ const CashierDashboard = ({ posOnly = false }) => {
         }
     };
 
-    // Code Review: Function reprintLastReceipt in client\src\pages\CashierDashboard.jsx. Used in: client/src/pages/CashierDashboard.jsx.
+    // Simple: This handles reprint last receipt logic.
     const reprintLastReceipt = () => {
         if (!lastReceipt) {
             setWalkInError('No receipt available to reprint yet.');

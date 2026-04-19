@@ -1,26 +1,26 @@
 import backendApi from './backendApi';
 
-// Code Review: Function submitFeedback in client\src\services\feedbackService.js. Used in: client/src/pages/Feedback.jsx, client/src/services/feedbackService.js, server/controllers/feedbackController.js.
+// Simple: This handles submit feedback logic.
 export const submitFeedback = async (payload) => {
   return backendApi.post('/api/v1/feedback', payload);
 };
 
-// Code Review: Function getOrderFeedback in client\src\services\feedbackService.js. Used in: client/src/services/feedbackService.js.
+// Simple: This gets the order feedback.
 export const getOrderFeedback = async (orderId) => {
   return backendApi.get('/api/v1/feedback/me', { params: { orderId } });
 };
 
-// Code Review: Function getMyFeedback in client\src\services\feedbackService.js. Used in: client/src/services/feedbackService.js, server/controllers/feedbackController.js, server/routes/feedback.js.
+// Simple: This gets the my feedback.
 export const getMyFeedback = async () => {
   return backendApi.get('/api/v1/feedback/me');
 };
 
-// Code Review: Function getAdminFeedback in client\src\services\feedbackService.js. Used in: client/src/pages/FeedbackManagement.jsx, client/src/services/feedbackService.js, server/controllers/feedbackController.js.
+// Simple: This gets the admin feedback.
 export const getAdminFeedback = async () => {
   return backendApi.get('/api/v1/admin/feedback');
 };
 
-// Code Review: Function respondToFeedback in client\src\services\feedbackService.js. Used in: client/src/pages/FeedbackManagement.jsx, client/src/services/feedbackService.js, server/controllers/feedbackController.js.
+// Simple: This handles respond to feedback logic.
 export const respondToFeedback = async (feedbackId, response) => {
   return backendApi.patch(`/api/v1/admin/feedback/${feedbackId}/respond`, { response });
 };

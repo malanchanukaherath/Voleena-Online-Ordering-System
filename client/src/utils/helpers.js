@@ -1,14 +1,14 @@
 // Utility functions for the application
 
 // Format currency
-// Code Review: Function formatCurrency in client\src\utils\helpers.js. Used in: client/src/pages/SalesAnalytics.jsx, client/src/utils/helpers.js, client/src/utils/posReceiptPrint.js.
+// Simple: This cleans or formats the currency.
 export const formatCurrency = (amount) => {
   // Always format as LKR and round to nearest integer for food prices
   return `LKR ${Math.round(amount)}`;
 };
 
 // Format date
-// Code Review: Function formatDate in client\src\utils\helpers.js. Used in: client/src/components/ComboPackCard.jsx, client/src/pages/CustomerManagement.jsx, client/src/pages/StaffManagement.jsx.
+// Simple: This cleans or formats the date.
 export const formatDate = (date) => {
   return new Date(date).toLocaleDateString('en-LK', {
     year: 'numeric',
@@ -18,7 +18,7 @@ export const formatDate = (date) => {
 };
 
 // Format time
-// Code Review: Function formatTime in client\src\utils\helpers.js. Used in: client/src/components/ui/NotificationCenter.jsx, client/src/pages/ResetPassword.jsx, client/src/pages/VerifyAccount.jsx.
+// Simple: This cleans or formats the time.
 export const formatTime = (date) => {
   return new Date(date).toLocaleTimeString('en-LK', {
     hour: '2-digit',
@@ -27,7 +27,7 @@ export const formatTime = (date) => {
 };
 
 // Format date and time
-// Code Review: Function formatDateTime in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js, client/src/utils/posReceiptPrint.js.
+// Simple: This cleans or formats the date time.
 export const formatDateTime = (date) => {
   return new Date(date).toLocaleString('en-LK', {
     year: 'numeric',
@@ -39,21 +39,21 @@ export const formatDateTime = (date) => {
 };
 
 // Validate email
-// Code Review: Function validateEmail in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js, server/utils/validationUtils.js.
+// Simple: This checks if the email is correct.
 export const validateEmail = (email) => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
 };
 
 // Validate phone number
-// Code Review: Function validatePhone in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js.
+// Simple: This checks if the phone is correct.
 export const validatePhone = (phone) => {
   const phoneRegex = /^[+]?[1-9][\d]{0,15}$/;
   return phoneRegex.test(phone.replace(/\s/g, ''));
 };
 
 // Calculate delivery fee
-// Code Review: Function calculateDeliveryFee in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js, server/controllers/deliveryController.js, server/routes/deliveryRoutes.js.
+// Simple: This calculates the delivery fee.
 export const calculateDeliveryFee = (distance) => {
   // Use LKR values for delivery fee
   if (distance <= 2) return 100;
@@ -62,17 +62,17 @@ export const calculateDeliveryFee = (distance) => {
 };
 
 // Generate order number
-// Code Review: Function generateOrderNumber in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js, server/services/orderService.js.
+// Simple: This creates the order number.
 export const generateOrderNumber = () => {
   return Math.floor(Math.random() * 1000000) + 100000;
 };
 
 // Debounce function
-// Code Review: Function debounce in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js.
+// Simple: This handles debounce logic.
 export const debounce = (func, wait) => {
   let timeout;
   return function executedFunction(...args) {
-    // Code Review: Function later in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js, server/middleware/rateLimiter.js, server/routes/customers.js.
+    // Simple: This handles later logic.
     const later = () => {
       clearTimeout(timeout);
       func(...args);
@@ -83,7 +83,7 @@ export const debounce = (func, wait) => {
 };
 
 // Throttle function
-// Code Review: Function throttle in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js.
+// Simple: This handles throttle logic.
 export const throttle = (func, limit) => {
   let inThrottle;
   return function() {
@@ -126,7 +126,7 @@ export const storage = {
 };
 
 // Scroll to top
-// Code Review: Function scrollToTop in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js.
+// Simple: This handles scroll to top logic.
 export const scrollToTop = () => {
   window.scrollTo({
     top: 0,
@@ -135,7 +135,7 @@ export const scrollToTop = () => {
 };
 
 // Copy to clipboard
-// Code Review: Function copyToClipboard in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js.
+// Simple: This handles copy to clipboard logic.
 export const copyToClipboard = async (text) => {
   try {
     await navigator.clipboard.writeText(text);
@@ -147,7 +147,7 @@ export const copyToClipboard = async (text) => {
 };
 
 // Get order status color
-// Code Review: Function getOrderStatusColor in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js.
+// Simple: This gets the order status color.
 export const getOrderStatusColor = (status) => {
   const colors = {
     pending: 'text-yellow-600 bg-yellow-100',
@@ -160,7 +160,7 @@ export const getOrderStatusColor = (status) => {
 };
 
 // Get order status text
-// Code Review: Function getOrderStatusText in client\src\utils\helpers.js. Used in: client/src/utils/helpers.js.
+// Simple: This gets the order status text.
 export const getOrderStatusText = (status) => {
   const texts = {
     pending: 'Order Received',

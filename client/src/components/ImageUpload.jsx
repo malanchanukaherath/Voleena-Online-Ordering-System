@@ -19,7 +19,7 @@ const ImageUpload = ({
         setPreview(currentImage || null);
     }, [currentImage]);
 
-    // Code Review: Function handleDrag in client\src\components\ImageUpload.jsx. Used in: client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when drag is triggered.
     const handleDrag = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -30,7 +30,7 @@ const ImageUpload = ({
         }
     };
 
-    // Code Review: Function handleDrop in client\src\components\ImageUpload.jsx. Used in: client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when drop is triggered.
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -41,7 +41,7 @@ const ImageUpload = ({
         }
     };
 
-    // Code Review: Function handleChange in client\src\components\ImageUpload.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when change is triggered.
     const handleChange = (e) => {
         e.preventDefault();
         if (e.target.files && e.target.files[0]) {
@@ -49,7 +49,7 @@ const ImageUpload = ({
         }
     };
 
-    // Code Review: Function handleFile in client\src\components\ImageUpload.jsx. Used in: client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when file is triggered.
     const handleFile = async (file) => {
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         const maxSize = 5 * 1024 * 1024;
@@ -97,12 +97,12 @@ const ImageUpload = ({
         }
     };
 
-    // Code Review: Function handleClick in client\src\components\ImageUpload.jsx. Used in: client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when click is triggered.
     const handleClick = () => {
         fileInputRef.current?.click();
     };
 
-    // Code Review: Function handleRemove in client\src\components\ImageUpload.jsx. Used in: client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when remove is triggered.
     const handleRemove = (e) => {
         e.stopPropagation();
         setPreview(null);

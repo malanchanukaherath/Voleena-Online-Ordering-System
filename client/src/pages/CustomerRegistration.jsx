@@ -5,7 +5,7 @@ import Button from '../components/ui/Button';
 import Toast from '../components/ui/Toast';
 import { customerApi } from '../services/staffCustomerApi';
 
-// Code Review: Function CustomerRegistration in client\src\pages\CustomerRegistration.jsx. Used in: client/src/pages/CustomerRegistration.jsx, client/src/routes/AppRoutes.jsx.
+// Simple: This shows the customer registration section.
 const CustomerRegistration = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
@@ -25,7 +25,7 @@ const CustomerRegistration = () => {
     const [toastMessage, setToastMessage] = useState('');
     const [toastType, setToastType] = useState('success');
 
-    // Code Review: Function handleChange in client\src\pages\CustomerRegistration.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when change is triggered.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -35,7 +35,7 @@ const CustomerRegistration = () => {
         }
     };
 
-    // Code Review: Function validateForm in client\src\pages\CustomerRegistration.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/Checkout.jsx.
+    // Simple: This checks if the form is correct.
     const validateForm = () => {
         const newErrors = {};
 
@@ -78,7 +78,7 @@ const CustomerRegistration = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function handleSubmit in client\src\pages\CustomerRegistration.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
+    // Simple: This handles what happens when submit is triggered.
     const handleSubmit = async (e) => {
         e.preventDefault();
 

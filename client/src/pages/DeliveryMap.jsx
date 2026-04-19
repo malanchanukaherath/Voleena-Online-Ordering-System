@@ -3,7 +3,7 @@ import { GoogleMap, LoadScript, Marker, InfoWindow, Polyline } from '@react-goog
 import { FaMapMarkerAlt, FaTruck, FaPhone, FaClock, FaMapPin, FaExternalLinkAlt } from 'react-icons/fa';
 import { deliveryService } from '../services/dashboardService';
 
-// Code Review: Function DeliveryMap in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx, client/src/pages/DeliveryMap.jsx.
+// Simple: This shows the delivery map section.
 const DeliveryMap = () => {
     const [deliveries, setDeliveries] = useState([]);
     const [selectedDelivery, setSelectedDelivery] = useState(null);
@@ -47,7 +47,7 @@ const DeliveryMap = () => {
         ]
     };
 
-    // Code Review: Function toFiniteNumber in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/DeliveryMap.jsx, client/src/pages/OrderTracking.jsx, client/src/utils/posReceiptPrint.js.
+    // Simple: This handles to finite number logic.
     const toFiniteNumber = (value, fallback = null) => {
         if (value === null || value === undefined || value === '') {
             return fallback;
@@ -57,13 +57,13 @@ const DeliveryMap = () => {
         return Number.isFinite(parsed) ? parsed : fallback;
     };
 
-    // Code Review: Function formatDistanceKm in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/DeliveryMap.jsx.
+    // Simple: This cleans or formats the distance km.
     const formatDistanceKm = (distanceKm) => {
         const normalizedDistance = toFiniteNumber(distanceKm);
         return normalizedDistance === null ? 'N/A' : normalizedDistance.toFixed(2);
     };
 
-    // Code Review: Function normalizeSpecialInstructions in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/CashierOrders.jsx, client/src/pages/DeliveryDashboard.jsx.
+    // Simple: This cleans or formats the special instructions.
     const normalizeSpecialInstructions = (order) => {
         const rawValue = order?.SpecialInstructions ?? order?.specialInstructions ?? order?.special_instructions ?? '';
         const normalized = String(rawValue || '').trim();
@@ -110,7 +110,7 @@ const DeliveryMap = () => {
 
     // Fetch active deliveries
     useEffect(() => {
-        // Code Review: Function fetchDeliveries in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/DeliveryMap.jsx.
+        // Simple: This gets the deliveries.
         const fetchDeliveries = async () => {
             try {
                 setLoading(true);
@@ -171,7 +171,7 @@ const DeliveryMap = () => {
     useEffect(() => {
         if (!currentLocation || deliveries.length === 0) return;
 
-        // Code Review: Function broadcastLocation in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/DeliveryDashboard.jsx, client/src/pages/DeliveryMap.jsx.
+        // Simple: This handles broadcast location logic.
         const broadcastLocation = async () => {
             const activeDeliveries = deliveries.filter(d =>
                 ['ASSIGNED', 'PICKED_UP', 'IN_TRANSIT'].includes(d.status)
@@ -193,13 +193,13 @@ const DeliveryMap = () => {
         return () => clearInterval(locationInterval);
     }, [deliveries, currentLocation]);
 
-    // Code Review: Function createDotMarkerSvg in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/DeliveryMap.jsx.
+    // Simple: This creates the dot marker svg.
     const createDotMarkerSvg = (fillColor, strokeColor = 'white') => {
         const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="${fillColor}" stroke="${strokeColor}" stroke-width="2"/></svg>`;
         return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
     };
 
-    // Code Review: Function getMarkerColor in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/DeliveryMap.jsx.
+    // Simple: This gets the marker color.
     const getMarkerColor = (status) => {
         switch (status) {
             case 'ASSIGNED':    return createDotMarkerSvg('#FBBF24'); // yellow-400
@@ -214,7 +214,7 @@ const DeliveryMap = () => {
     const MARKER_CURRENT_LOC  = createDotMarkerSvg('#A78BFA');  // purple-400
     const MARKER_DRIVER       = createDotMarkerSvg('#A78BFA');  // purple-400
 
-    // Code Review: Function getStatusColor in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/DeliveryMap.jsx.
+    // Simple: This gets the status color.
     const getStatusColor = (status) => {
         switch (status) {
             case 'ASSIGNED':
@@ -230,14 +230,14 @@ const DeliveryMap = () => {
         }
     };
 
-    // Code Review: Function handleMarkerClick in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/DeliveryMap.jsx.
+    // Simple: This handles what happens when marker click is triggered.
     const handleMarkerClick = (delivery) => {
         setSelectedDelivery(delivery);
         setSelectedRestaurant(false);
         setShowCurrentLocation(false);
     };
 
-    // Code Review: Function getGoogleMapsNavigationUrl in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx, client/src/pages/DeliveryMap.jsx.
+    // Simple: This gets the google maps navigation url.
     const getGoogleMapsNavigationUrl = (delivery) => {
         if (!Number.isFinite(delivery?.lat) || !Number.isFinite(delivery?.lng)) {
             return null;
@@ -251,7 +251,7 @@ const DeliveryMap = () => {
         return `https://www.google.com/maps/dir/?api=1&destination=${destination}&travelmode=driving`;
     };
 
-    // Code Review: Function calculateBounds in client\src\pages\DeliveryMap.jsx. Used in: client/src/pages/DeliveryMap.jsx.
+    // Simple: This calculates the bounds.
     const calculateBounds = () => {
         if (deliveries.length === 0 && !currentLocation) return null;
 

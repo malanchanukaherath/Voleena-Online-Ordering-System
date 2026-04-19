@@ -8,7 +8,7 @@ import { addToCart } from '../utils/cartStorage';
 import { toast } from 'react-toastify';
 import { resolveAssetUrl } from '../config/api';
 
-// Code Review: Function Home in client\src\pages\Home.jsx. Used in: client/src/components/ComboPackCard.jsx, client/src/components/layout/Footer.jsx, client/src/components/layout/Header.jsx.
+// Simple: This shows the home section.
 const Home = () => {
     const { isAuthenticated } = useAuth();
     const [featuredItems, setFeaturedItems] = useState([]);
@@ -17,7 +17,7 @@ const Home = () => {
     const [comboSpecials, setComboSpecials] = useState([]);
     const [isLoadingCombos, setIsLoadingCombos] = useState(true);
 
-    // Code Review: Function resolveImageUrl in client\src\pages\Home.jsx. Used in: client/src/components/ComboPackCard.jsx, client/src/pages/Home.jsx, client/src/pages/Menu.jsx.
+    // Simple: This cleans or formats the image url.
     const resolveImageUrl = (imagePath) => {
         if (!imagePath) {
             return null;
@@ -26,7 +26,7 @@ const Home = () => {
     };
 
     useEffect(() => {
-        // Code Review: Function loadFeatured in client\src\pages\Home.jsx. Used in: client/src/pages/Home.jsx.
+        // Simple: This gets the featured.
         const loadFeatured = async () => {
             try {
                 const response = await menuItemService.getAll({ isActive: 'true' });
@@ -101,7 +101,7 @@ const Home = () => {
     }, []);
 
     useEffect(() => {
-        // Code Review: Function loadCombos in client\src\pages\Home.jsx. Used in: client/src/pages/Home.jsx.
+        // Simple: This gets the combos.
         const loadCombos = async () => {
             try {
                 const response = await comboPackService.getActive();
@@ -120,7 +120,7 @@ const Home = () => {
         loadCombos();
     }, []);
 
-    // Code Review: Function handleAddComboToCart in client\src\pages\Home.jsx. Used in: client/src/pages/Home.jsx.
+    // Simple: This handles what happens when add combo to cart is triggered.
     const handleAddComboToCart = (combo) => {
         try {
             addToCart({
@@ -138,7 +138,7 @@ const Home = () => {
         }
     };
 
-    // Code Review: Function handleAddToCart in client\src\pages\Home.jsx. Used in: client/src/pages/Home.jsx, client/src/pages/Menu.jsx, client/src/pages/MenuItemDetail.jsx.
+    // Simple: This handles what happens when add to cart is triggered.
     const handleAddToCart = (item) => {
         if (!item.isAvailable) {
             toast.error('This item is not available right now');

@@ -10,7 +10,7 @@ import ImageUpload from '../components/ImageUpload';
 import { categoryService, menuItemService } from '../services/menuService';
 import { resolveAssetUrl } from '../config/api';
 
-// Code Review: Function CategoryManagement in client\src\pages\CategoryManagement.jsx. Used in: client/src/components/ui/LoadingSkeleton.jsx, client/src/config/api.js, client/src/pages/AddOnManagement.jsx.
+// Simple: This shows the category management section.
 const CategoryManagement = () => {
     const [categories, setCategories] = useState([]);
     const [menuItems, setMenuItems] = useState([]);
@@ -39,20 +39,20 @@ const CategoryManagement = () => {
         return counts;
     }, [menuItems]);
 
-    // Code Review: Function fetchCategories in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/CategoryManagement.jsx, client/src/pages/Menu.jsx, client/src/pages/MenuManagement.jsx.
+    // Simple: This gets the categories.
     const fetchCategories = async () => {
         const response = await categoryService.getAll({ includeInactive: true });
         setCategories(response.data || []);
     };
 
-    // Code Review: Function fetchMenuItems in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx, client/src/pages/Menu.jsx.
+    // Simple: This gets the menu items.
     const fetchMenuItems = async () => {
         const response = await menuItemService.getAll();
         setMenuItems(response.data || []);
     };
 
     useEffect(() => {
-        // Code Review: Function loadData in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/CashierDashboard.jsx, client/src/pages/CategoryManagement.jsx.
+        // Simple: This gets the data.
         const loadData = async () => {
             try {
                 setLoading(true);
@@ -69,12 +69,12 @@ const CategoryManagement = () => {
         loadData();
     }, []);
 
-    // Code Review: Function showToast in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx.
+    // Simple: This shows the toast.
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
     };
 
-    // Code Review: Function openModal in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx.
+    // Simple: This creates the modal.
     const openModal = (category = null) => {
         if (category) {
             setEditingCategory(category);
@@ -99,7 +99,7 @@ const CategoryManagement = () => {
         setShowModal(true);
     };
 
-    // Code Review: Function closeModal in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx.
+    // Simple: This handles close modal logic.
     const closeModal = () => {
         setShowModal(false);
         setEditingCategory(null);
@@ -113,7 +113,7 @@ const CategoryManagement = () => {
         setErrors({});
     };
 
-    // Code Review: Function validateForm in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/Checkout.jsx.
+    // Simple: This checks if the form is correct.
     const validateForm = () => {
         const newErrors = {};
 
@@ -129,7 +129,7 @@ const CategoryManagement = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function handleSubmit in client\src\pages\CategoryManagement.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
+    // Simple: This handles what happens when submit is triggered.
     const handleSubmit = async (event) => {
         event.preventDefault();
         if (!validateForm()) return;
@@ -151,7 +151,7 @@ const CategoryManagement = () => {
         }
     };
 
-    // Code Review: Function handleToggleActive in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/MenuManagement.jsx.
+    // Simple: This handles what happens when toggle active is triggered.
     const handleToggleActive = async (category) => {
         try {
             await categoryService.update(category.CategoryID, { IsActive: !category.IsActive });
@@ -163,7 +163,7 @@ const CategoryManagement = () => {
         }
     };
 
-    // Code Review: Function handleDelete in client\src\pages\CategoryManagement.jsx. Used in: client/src/pages/CategoryManagement.jsx, client/src/pages/ComboManagement.jsx, client/src/pages/MenuManagement.jsx.
+    // Simple: This handles what happens when delete is triggered.
     const handleDelete = async (category) => {
         if (!window.confirm(`Deactivate "${category.Name}"?`)) return;
 
@@ -177,7 +177,7 @@ const CategoryManagement = () => {
         }
     };
 
-    // Code Review: Function handleChange in client\src\pages\CategoryManagement.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when change is triggered.
     const handleChange = (event) => {
         const { name, value, type, checked } = event.target;
         setFormData(prev => ({

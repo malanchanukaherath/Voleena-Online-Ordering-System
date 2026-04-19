@@ -11,10 +11,10 @@ import { toast } from 'react-toastify';
 import { addToCart } from '../utils/cartStorage';
 import { resolveAssetUrl } from '../config/api';
 
-// Code Review: Function normalizeItemText in client\src\pages\Menu.jsx. Used in: client/src/pages/Menu.jsx.
+// Simple: This cleans or formats the item text.
 const normalizeItemText = (value) => String(value || '').trim().toLowerCase();
 
-// Code Review: Function dedupeDisplayItems in client\src\pages\Menu.jsx. Used in: client/src/pages/Menu.jsx.
+// Simple: This combines or filters the display items.
 const dedupeDisplayItems = (items) => {
     const seenEntityKeys = new Set();
     const seenSignatures = new Set();
@@ -51,7 +51,7 @@ const dedupeDisplayItems = (items) => {
     });
 };
 
-// Code Review: Function Menu in client\src\pages\Menu.jsx. Used in: client/src/components/ComboPackCard.jsx, client/src/components/layout/Footer.jsx, client/src/components/layout/Header.jsx.
+// Simple: This shows the menu section.
 const Menu = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -63,7 +63,7 @@ const Menu = () => {
     const [categories, setCategories] = useState([]);
     const [, setError] = useState(null);
 
-    // Code Review: Function resolveImageUrl in client\src\pages\Menu.jsx. Used in: client/src/components/ComboPackCard.jsx, client/src/pages/Home.jsx, client/src/pages/Menu.jsx.
+    // Simple: This cleans or formats the image url.
     const resolveImageUrl = (imagePath) => {
         if (!imagePath) {
             return null;
@@ -145,7 +145,7 @@ const Menu = () => {
     useEffect(() => {
         let isActive = true;
 
-        // Code Review: Function loadInitialMenu in client\src\pages\Menu.jsx. Used in: client/src/pages/Menu.jsx.
+        // Simple: This gets the initial menu.
         const loadInitialMenu = async () => {
             if (!isActive) {
                 return;
@@ -159,7 +159,7 @@ const Menu = () => {
 
         loadInitialMenu();
 
-        // Code Review: Function refreshVisibleMenu in client\src\pages\Menu.jsx. Used in: client/src/pages/Menu.jsx.
+        // Simple: This handles refresh visible menu logic.
         const refreshVisibleMenu = async () => {
             if (!isActive || document.hidden) {
                 return;
@@ -184,7 +184,7 @@ const Menu = () => {
     }, [fetchCombos, fetchMenuItems]);
 
     useEffect(() => {
-        // Code Review: Function fetchCategories in client\src\pages\Menu.jsx. Used in: client/src/pages/CategoryManagement.jsx, client/src/pages/Menu.jsx, client/src/pages/MenuManagement.jsx.
+        // Simple: This gets the categories.
         const fetchCategories = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
@@ -294,14 +294,14 @@ const Menu = () => {
 
     const hasActiveFilters = Boolean(searchTerm || selectedCategory);
 
-    // Code Review: Function clearFilters in client\src\pages\Menu.jsx. Used in: client/src/pages/Menu.jsx, client/src/pages/MenuManagement.jsx, client/src/pages/OrderHistory.jsx.
+    // Simple: This removes or clears the filters.
     const clearFilters = () => {
         setSearchTerm('');
         updateCategoryFilter('');
     };
 
     // Get stock badge info
-    // Code Review: Function getStockBadge in client\src\pages\Menu.jsx. Used in: client/src/pages/Menu.jsx.
+    // Simple: This gets the stock badge.
     const getStockBadge = (item) => {
         if (item.stockQuantity === null || item.stockQuantity === undefined) {
             return null;
@@ -315,7 +315,7 @@ const Menu = () => {
         return null;
     };
 
-    // Code Review: Function handleAddToCart in client\src\pages\Menu.jsx. Used in: client/src/pages/Home.jsx, client/src/pages/Menu.jsx, client/src/pages/MenuItemDetail.jsx.
+    // Simple: This handles what happens when add to cart is triggered.
     const handleAddToCart = (item) => {
         if (!item.isAvailable) {
             toast.error('This item is not available right now');

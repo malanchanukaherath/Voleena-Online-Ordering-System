@@ -11,7 +11,7 @@ import AddCustomerModal from '../components/AddCustomerModal';
 import { customerApi } from '../services/staffCustomerApi';
 import { useAuth } from '../contexts/AuthContext';
 
-// Code Review: Function mapAddress in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx, client/src/pages/Profile.jsx.
+// Simple: This cleans or formats the address.
 const mapAddress = (address = {}) => ({
     AddressID: address.AddressID ?? address.address_id ?? address.id,
     AddressLine1: address.AddressLine1 ?? address.addressLine1 ?? '',
@@ -21,7 +21,7 @@ const mapAddress = (address = {}) => ({
     PostalCode: address.PostalCode ?? address.postalCode ?? ''
 });
 
-// Code Review: Function CustomerManagement in client\src\pages\CustomerManagement.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/ComboPackCard.jsx, client/src/contexts/AuthContext.jsx.
+// Simple: This shows the customer management section.
 const CustomerManagement = () => {
     const { isAdmin } = useAuth();
     const canAdminManageAddress = isAdmin();
@@ -61,7 +61,7 @@ const CustomerManagement = () => {
         fetchCustomers();
     }, []);
 
-    // Code Review: Function fetchCustomers in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This gets the customers.
     const fetchCustomers = async () => {
         try {
             setLoading(true);
@@ -76,7 +76,7 @@ const CustomerManagement = () => {
         }
     };
 
-    // Code Review: Function handleAddCustomer in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This handles what happens when add customer is triggered.
     const handleAddCustomer = async (customerData) => {
         try {
             const result = await customerApi.create(customerData);
@@ -102,7 +102,7 @@ const CustomerManagement = () => {
         }
     };
 
-    // Code Review: Function handleEdit in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This handles what happens when edit is triggered.
     const handleEdit = (customer) => {
         setSelectedCustomer(customer);
         setEditFormData({
@@ -138,7 +138,7 @@ const CustomerManagement = () => {
             });
     };
 
-    // Code Review: Function handleEditChange in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This handles what happens when edit change is triggered.
     const handleEditChange = (e) => {
         const { name, value, type, checked } = e.target;
         setEditFormData(prev => ({
@@ -150,7 +150,7 @@ const CustomerManagement = () => {
         }
     };
 
-    // Code Review: Function validateEditForm in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This checks if the edit form is correct.
     const validateEditForm = () => {
         const newErrors = {};
 
@@ -170,7 +170,7 @@ const CustomerManagement = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function handleSaveEdit in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This handles what happens when save edit is triggered.
     const handleSaveEdit = async () => {
         if (!validateEditForm()) return;
 
@@ -193,7 +193,7 @@ const CustomerManagement = () => {
         }
     };
 
-    // Code Review: Function handleAddressInputChange in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This handles what happens when address input change is triggered.
     const handleAddressInputChange = (e) => {
         const { name, value } = e.target;
         setNewAddressData((prev) => ({ ...prev, [name]: value }));
@@ -202,7 +202,7 @@ const CustomerManagement = () => {
         }
     };
 
-    // Code Review: Function validateAddressPayload in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This checks if the address payload is correct.
     const validateAddressPayload = (payload) => {
         const errs = {};
         if (!payload.addressLine1 || !payload.addressLine1.trim()) {
@@ -214,7 +214,7 @@ const CustomerManagement = () => {
         return errs;
     };
 
-    // Code Review: Function handleCreateAddress in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This handles what happens when create address is triggered.
     const handleCreateAddress = async () => {
         if (!selectedCustomer?.CustomerID) return;
 
@@ -261,7 +261,7 @@ const CustomerManagement = () => {
         }
     };
 
-    // Code Review: Function handleExistingAddressChange in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This handles what happens when existing address change is triggered.
     const handleExistingAddressChange = (addressId, field, value) => {
         setCustomerAddresses((prev) => prev.map((addr) => {
             if (addr.AddressID !== addressId) return addr;
@@ -269,7 +269,7 @@ const CustomerManagement = () => {
         }));
     };
 
-    // Code Review: Function handleUpdateAddress in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This handles what happens when update address is triggered.
     const handleUpdateAddress = async (address) => {
         if (!canAdminManageAddress || !selectedCustomer?.CustomerID || !address?.AddressID) return;
 
@@ -304,7 +304,7 @@ const CustomerManagement = () => {
         }
     };
 
-    // Code Review: Function handleDeleteAddress in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx, client/src/pages/Profile.jsx.
+    // Simple: This handles what happens when delete address is triggered.
     const handleDeleteAddress = async (addressId) => {
         if (!canAdminManageAddress || !selectedCustomer?.CustomerID || !addressId) return;
 
@@ -333,12 +333,12 @@ const CustomerManagement = () => {
         customer.Phone?.includes(searchTerm)
     );
 
-    // Code Review: Function clearSearch in client\src\pages\CustomerManagement.jsx. Used in: client/src/pages/CustomerManagement.jsx.
+    // Simple: This removes or clears the search.
     const clearSearch = () => {
         setSearchTerm('');
     };
 
-    // Code Review: Function formatDate in client\src\pages\CustomerManagement.jsx. Used in: client/src/components/ComboPackCard.jsx, client/src/pages/CustomerManagement.jsx, client/src/pages/StaffManagement.jsx.
+    // Simple: This cleans or formats the date.
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const parsedDate = new Date(dateString);

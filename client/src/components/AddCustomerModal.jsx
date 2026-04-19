@@ -3,7 +3,7 @@ import { FaTimes } from 'react-icons/fa';
 import Button from './ui/Button';
 import Input from './ui/Input';
 
-// Code Review: Function AddCustomerModal in client\src\components\AddCustomerModal.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/pages/CustomerManagement.jsx.
+// Simple: This creates the customer modal.
 const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
     const [formData, setFormData] = useState({
         name: '',
@@ -32,7 +32,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
         };
     }, [isOpen]);
 
-    // Code Review: Function handleChange in client\src\components\AddCustomerModal.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when change is triggered.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -41,7 +41,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
         }
     };
 
-    // Code Review: Function validate in client\src\components\AddCustomerModal.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/pages/Cart.jsx.
+    // Simple: This checks if the input is correct.
     const validate = () => {
         const newErrors = {};
 
@@ -75,7 +75,7 @@ const AddCustomerModal = ({ isOpen, onClose, onSubmit }) => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function handleSubmit in client\src\components\AddCustomerModal.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
+    // Simple: This handles what happens when submit is triggered.
     const handleSubmit = async (e) => {
         e.preventDefault();
 

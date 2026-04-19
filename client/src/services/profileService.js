@@ -1,46 +1,46 @@
 import backendApi from './backendApi';
 
-// Code Review: Function getCustomerProfile in client\src\services\profileService.js. Used in: client/src/pages/Checkout.jsx, client/src/pages/Profile.jsx, client/src/services/profileService.js.
+// Simple: This gets the customer profile.
 export const getCustomerProfile = async () => {
   return backendApi.get('/api/v1/customers/me');
 };
 
-// Code Review: Function updateCustomerProfile in client\src\services\profileService.js. Used in: client/src/pages/Profile.jsx, client/src/services/profileService.js.
+// Simple: This updates the customer profile.
 export const updateCustomerProfile = async (payload) => {
   return backendApi.put('/api/v1/customers/me', payload);
 };
 
-// Code Review: Function changeCustomerPassword in client\src\services\profileService.js. Used in: client/src/pages/Profile.jsx, client/src/services/profileService.js.
+// Simple: This updates the customer password.
 export const changeCustomerPassword = async (payload) => {
   return backendApi.put('/api/v1/customers/me/password', payload);
 };
 
-// Code Review: Function getCustomerAddresses in client\src\services\profileService.js. Used in: client/src/pages/Checkout.jsx, client/src/pages/Profile.jsx, client/src/services/profileService.js.
+// Simple: This gets the customer addresses.
 export const getCustomerAddresses = async () => {
   return backendApi.get('/api/v1/customers/me/addresses');
 };
 
-// Code Review: Function createCustomerAddress in client\src\services\profileService.js. Used in: client/src/pages/Profile.jsx, client/src/services/profileService.js.
+// Simple: This creates the customer address.
 export const createCustomerAddress = async (payload) => {
   return backendApi.post('/api/v1/customers/me/addresses', payload);
 };
 
-// Code Review: Function updateCustomerAddress in client\src\services\profileService.js. Used in: client/src/pages/Profile.jsx, client/src/services/profileService.js.
+// Simple: This updates the customer address.
 export const updateCustomerAddress = async (addressId, payload) => {
   return backendApi.put(`/api/v1/customers/me/addresses/${addressId}`, payload);
 };
 
-// Code Review: Function deleteCustomerAddress in client\src\services\profileService.js. Used in: client/src/pages/Profile.jsx, client/src/services/profileService.js.
+// Simple: This removes or clears the customer address.
 export const deleteCustomerAddress = async (addressId) => {
   return backendApi.delete(`/api/v1/customers/me/addresses/${addressId}`);
 };
 
-// Code Review: Function requestPhoneVerificationOTP in client\src\services\profileService.js. Used in: client/src/pages/Profile.jsx, client/src/services/profileService.js.
+// Simple: This handles request phone verification otp logic.
 export const requestPhoneVerificationOTP = async () => {
   return backendApi.post('/api/v1/customers/me/phone-verification/request');
 };
 
-// Code Review: Function verifyPhoneVerificationOTP in client\src\services\profileService.js. Used in: client/src/pages/Profile.jsx, client/src/services/profileService.js.
+// Simple: This checks if the phone verification otp is correct.
 export const verifyPhoneVerificationOTP = async (otp) => {
   return backendApi.post('/api/v1/customers/me/phone-verification/verify', { otp });
 };

@@ -5,7 +5,7 @@ jest.mock('../middleware/upload', () => ({
   single: () => (req, res, next) => next()
 }));
 
-// Code Review: Function mockOkHandler in server\tests\route-contracts.test.js. Used in: server/tests/route-contracts.test.js.
+// Simple: This handles mock ok handler logic.
 function mockOkHandler(req, res) {
   res.status(200).json({ success: true, route: req.path, method: req.method });
 }

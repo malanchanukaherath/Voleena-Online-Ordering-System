@@ -9,7 +9,7 @@
 
 const { sequelize, Staff, Role } = require('./models');
 
-// Code Review: Function initializeDeliveryStaffAvailability in server\init_delivery_staff_availability.js. Used in: server/init_delivery_staff_availability.js.
+// Simple: This creates the delivery staff availability.
 async function initializeDeliveryStaffAvailability() {
     try {
         console.log('🚚 Initializing delivery staff availability...\n');

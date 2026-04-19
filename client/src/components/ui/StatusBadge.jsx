@@ -1,8 +1,8 @@
 import React from 'react';
 
-// Code Review: Function StatusBadge in client\src\components\ui\StatusBadge.jsx. Used in: client/src/components/ui/StatusBadge.jsx, client/src/pages/ActiveDeliveries.jsx, client/src/pages/AdminDashboard.jsx.
+// Simple: This shows the status badge section.
 const StatusBadge = ({ status, type = 'order' }) => {
-    // Code Review: Function getOrderStatusConfig in client\src\components\ui\StatusBadge.jsx. Used in: client/src/components/ui/StatusBadge.jsx.
+    // Simple: This gets the order status config.
     const getOrderStatusConfig = (status) => {
         const normalized = status?.toUpperCase().replace(/_/g, '_');
 
@@ -22,7 +22,7 @@ const StatusBadge = ({ status, type = 'order' }) => {
         return configs[normalized] || { bg: 'bg-gray-50 dark:bg-slate-800', text: 'text-gray-600 dark:text-slate-400', border: 'border-gray-200 dark:border-slate-600', dot: 'bg-gray-400' };
     };
 
-    // Code Review: Function getPaymentStatusConfig in client\src\components\ui\StatusBadge.jsx. Used in: client/src/components/ui/StatusBadge.jsx.
+    // Simple: This gets the payment status config.
     const getPaymentStatusConfig = (status) => {
         const configs = {
             PENDING:  { bg: 'bg-amber-50 dark:bg-amber-950/40',  text: 'text-amber-700 dark:text-amber-300',  border: 'border-amber-200 dark:border-amber-800/70',  dot: 'bg-amber-500'  },
@@ -34,7 +34,7 @@ const StatusBadge = ({ status, type = 'order' }) => {
         return configs[status?.toUpperCase()] || { bg: 'bg-gray-50 dark:bg-slate-800', text: 'text-gray-600 dark:text-slate-400', border: 'border-gray-200 dark:border-slate-600', dot: 'bg-gray-400' };
     };
 
-    // Code Review: Function getDeliveryStatusConfig in client\src\components\ui\StatusBadge.jsx. Used in: client/src/components/ui/StatusBadge.jsx.
+    // Simple: This gets the delivery status config.
     const getDeliveryStatusConfig = (status) => {
         const configs = {
             PENDING:    { bg: 'bg-amber-50 dark:bg-amber-950/40',   text: 'text-amber-700 dark:text-amber-300',  border: 'border-amber-200 dark:border-amber-800/70',  dot: 'bg-amber-500'  },
@@ -48,7 +48,7 @@ const StatusBadge = ({ status, type = 'order' }) => {
         return configs[status?.toUpperCase()] || { bg: 'bg-gray-50 dark:bg-slate-800', text: 'text-gray-600 dark:text-slate-400', border: 'border-gray-200 dark:border-slate-600', dot: 'bg-gray-400' };
     };
 
-    // Code Review: Function getConfig in client\src\components\ui\StatusBadge.jsx. Used in: client/src/components/ui/StatusBadge.jsx.
+    // Simple: This gets the config.
     const getConfig = () => {
         switch (type) {
             case 'payment':  return getPaymentStatusConfig(status);
@@ -58,7 +58,7 @@ const StatusBadge = ({ status, type = 'order' }) => {
         }
     };
 
-    // Code Review: Function formatStatus in client\src\components\ui\StatusBadge.jsx. Used in: client/src/components/ui/StatusBadge.jsx.
+    // Simple: This cleans or formats the status.
     const formatStatus = (status) => {
         if (!status) return 'Unknown';
         return status.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());

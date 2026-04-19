@@ -15,7 +15,7 @@ const verificationMessages = {
   EMAIL_CHANGE_CONFLICT: 'This email is already used by another account.'
 };
 
-// Code Review: Function VerifyEmail in client\src\pages\VerifyEmail.jsx. Used in: client/src/pages/Login.jsx, client/src/pages/VerifyEmail.jsx, client/src/routes/AppRoutes.jsx.
+// Simple: This checks if the email is correct.
 const VerifyEmail = () => {
   const [searchParams] = useSearchParams();
   const token = useMemo(() => searchParams.get('token') || '', [searchParams]);
@@ -25,7 +25,7 @@ const VerifyEmail = () => {
   const [email, setEmail] = useState('');
   const [resending, setResending] = useState(false);
 
-  // Code Review: Function buildRetryMessage in client\src\pages\VerifyEmail.jsx. Used in: client/src/pages/Login.jsx, client/src/pages/VerifyEmail.jsx.
+  // Simple: This creates the retry message.
   const buildRetryMessage = (result, fallbackMessage) => {
     if (result?.retryAfterSeconds) {
       return `${fallbackMessage} Try again in ${result.retryAfterSeconds} seconds.`;
@@ -35,7 +35,7 @@ const VerifyEmail = () => {
   };
 
   useEffect(() => {
-    // Code Review: Function verify in client\src\pages\VerifyEmail.jsx. Used in: client/src/pages/Cart.jsx, client/src/pages/Checkout.jsx, client/src/pages/Login.jsx.
+    // Simple: This checks if the input is correct.
     const verify = async () => {
       if (!token) {
         setStatus('error');
@@ -60,7 +60,7 @@ const VerifyEmail = () => {
     verify();
   }, [token]);
 
-  // Code Review: Function handleResend in client\src\pages\VerifyEmail.jsx. Used in: client/src/pages/VerifyEmail.jsx.
+  // Simple: This handles what happens when resend is triggered.
   const handleResend = async () => {
     if (!email.trim()) {
       setMessage('Enter your email to resend verification.');

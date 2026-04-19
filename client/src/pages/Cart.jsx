@@ -8,7 +8,7 @@ import { getCart, setCart, updateCartItem, removeCartItem } from '../utils/cartS
 import { toast } from 'react-toastify';
 import { API_BASE_URL } from '../config/api';
 
-// Code Review: Function Cart in client\src\pages\Cart.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ComboPackCard.jsx.
+// Simple: This shows the cart section.
 const Cart = () => {
     const navigate = useNavigate();
     const { isAuthenticated } = useAuth();
@@ -18,7 +18,7 @@ const Cart = () => {
     const [estimatedBaseDeliveryFee, setEstimatedBaseDeliveryFee] = useState(100);
 
     useEffect(() => {
-        // Code Review: Function validateCartStock in client\src\pages\Cart.jsx. Used in: client/src/pages/Cart.jsx.
+        // Simple: This checks if the cart stock is correct.
         const validateCartStock = async () => {
             const rawCartItems = getCart();
             setCartItems(rawCartItems);
@@ -66,7 +66,7 @@ const Cart = () => {
     }, []);
 
     useEffect(() => {
-        // Code Review: Function fetchDeliveryFeeConfig in client\src\pages\Cart.jsx. Used in: client/src/pages/Cart.jsx.
+        // Simple: This gets the delivery fee config.
         const fetchDeliveryFeeConfig = async () => {
             try {
                 const response = await fetch(`${API_BASE_URL}/api/v1/delivery/fee-config`);
@@ -83,19 +83,19 @@ const Cart = () => {
         fetchDeliveryFeeConfig();
     }, []);
 
-    // Code Review: Function hasFiniteStockLimit in client\src\pages\Cart.jsx. Used in: client/src/pages/Cart.jsx, client/src/utils/cartStorage.js.
+    // Simple: This checks whether finite stock limit is available.
     const hasFiniteStockLimit = (item) => Number.isFinite(item?.stockQuantity) && item.stockQuantity >= 0;
 
-    // Code Review: Function isOutOfStock in client\src\pages\Cart.jsx. Used in: client/src/pages/Cart.jsx.
+    // Simple: This checks whether out of stock is true.
     const isOutOfStock = (item) => hasFiniteStockLimit(item) && item.stockQuantity === 0;
 
-    // Code Review: Function isQuantityOverStock in client\src\pages\Cart.jsx. Used in: client/src/pages/Cart.jsx.
+    // Simple: This checks whether quantity over stock is true.
     const isQuantityOverStock = (item) => hasFiniteStockLimit(item) && item.stockQuantity > 0 && item.quantity > item.stockQuantity;
 
-    // Code Review: Function hasItemStockIssue in client\src\pages\Cart.jsx. Used in: client/src/pages/Cart.jsx.
+    // Simple: This checks whether item stock issue is available.
     const hasItemStockIssue = (item) => item.isAvailable === false || isOutOfStock(item) || isQuantityOverStock(item);
 
-    // Code Review: Function updateQuantity in client\src\pages\Cart.jsx. Used in: client/src/pages/Cart.jsx.
+    // Simple: This updates the quantity.
     const updateQuantity = (id, type, delta, cartItemKey) => {
         const currentItem = cartItems.find((item) => {
             if (cartItemKey) {
@@ -135,13 +135,13 @@ const Cart = () => {
         updateCartItem(id, type, { quantity: nextQuantity }, cartItemKey);
     };
 
-    // Code Review: Function removeItem in client\src\pages\Cart.jsx. Used in: client/src/pages/Cart.jsx, client/src/services/authService.js, client/src/services/backendApi.js.
+    // Simple: This removes or clears the item.
     const removeItem = (id, type, cartItemKey) => {
         const nextItems = removeCartItem(id, type, cartItemKey);
         setCartItems(nextItems);
     };
 
-    // Code Review: Function handleCheckout in client\src\pages\Cart.jsx. Used in: client/src/pages/Cart.jsx.
+    // Simple: This handles what happens when checkout is triggered.
     const handleCheckout = () => {
         if (hasStockIssues()) {
             fixStockIssues();
@@ -161,12 +161,12 @@ const Cart = () => {
         navigate('/checkout');
     };
 
-    // Code Review: Function hasStockIssues in client\src\pages\Cart.jsx. Used in: client/src/pages/Cart.jsx.
+    // Simple: This checks whether stock issues is available.
     const hasStockIssues = () => {
         return cartItems.some(hasItemStockIssue);
     };
 
-    // Code Review: Function fixStockIssues in client\src\pages\Cart.jsx. Used in: client/src/pages/Cart.jsx.
+    // Simple: This handles fix stock issues logic.
     const fixStockIssues = () => {
         let removedCount = 0;
         let adjustedCount = 0;

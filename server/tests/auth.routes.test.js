@@ -57,7 +57,7 @@ jest.mock('../services/emailService', () => ({
 }));
 
 jest.mock('../middleware/rateLimiter', () => {
-  // Code Review: Function passThrough in server\tests\auth.routes.test.js. Used in: server/tests/auth.routes.test.js, server/tests/customers.routes.test.js, server/tests/orders.routes.test.js.
+  // Simple: This handles pass through logic.
   const passThrough = (req, res, next) => next();
   return {
     authLimiter: passThrough,
@@ -80,7 +80,7 @@ const router = require('../routes/authRoutes');
 
 const app = createTestApp('/api/v1/auth', router);
 
-// Code Review: Function makeAccessToken in server\tests\auth.routes.test.js. Used in: server/tests/auth.routes.test.js.
+// Simple: This creates the access token.
 function makeAccessToken(payload) {
   return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '30m' });
 }

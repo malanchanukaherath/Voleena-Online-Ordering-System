@@ -12,7 +12,7 @@ const RESTAURANT_LAT = parseFloat(process.env.RESTAURANT_LATITUDE || '7.12003569
 const RESTAURANT_LNG = parseFloat(process.env.RESTAURANT_LONGITUDE || '80.05250172082567');
 const DEFAULT_MAX_DISTANCE_KM = parseFloat(process.env.MAX_DELIVERY_DISTANCE_KM || '15');
 
-// Code Review: Function getConfiguredMaxDistanceKm in server\utils\distanceValidator.js. Used in: local scope / same file.
+// Simple: This gets the configured max distance km.
 async function getConfiguredMaxDistanceKm() {
     try {
         const settings = await systemSettingsService.getRuntimeSettings();
@@ -49,7 +49,7 @@ const SRI_LANKAN_CITIES = {
     'mathara': { lat: 5.7489, lng: 80.5392 }
 };
 
-// Code Review: Function geocodeAddressWithNominatim in server\utils\distanceValidator.js. Used in: local scope / same file.
+// Simple: This handles geocode address with nominatim logic.
 async function geocodeAddressWithNominatim(address, city) {
     const query = [address, city, 'Sri Lanka'].filter(Boolean).join(', ');
 
@@ -97,7 +97,7 @@ async function geocodeAddressWithNominatim(address, city) {
  * @param {string} city - City name
  * @returns {{lat: number, lng: number} | null} Coordinates or null if not found
  */
-// Code Review: Function getApproximateCityCoordinates in server\utils\distanceValidator.js. Used in: local scope / same file.
+// Simple: This gets the approximate city coordinates.
 function getApproximateCityCoordinates(city) {
     if (!city) return null;
 
@@ -113,7 +113,7 @@ function getApproximateCityCoordinates(city) {
  * @param {number} customerLng - Customer address longitude
  * @returns {Promise<{isValid: boolean, distance: number, duration: number, maxDistance: number}>}
  */
-// Code Review: Function validateDeliveryDistance in server\utils\distanceValidator.js. Used in: client/src/pages/Checkout.jsx, client/src/services/orderApi.js, server/controllers/deliveryController.js.
+// Simple: This checks if the delivery distance is correct.
 async function validateDeliveryDistance(customerLat, customerLng) {
     if (!GOOGLE_MAPS_API_KEY) {
         throw new Error('Google Maps API key not configured');
@@ -182,7 +182,7 @@ async function validateDeliveryDistance(customerLat, customerLng) {
  * @param {string} city - City name for fallback
  * @returns {Promise<{lat: number, lng: number, formattedAddress: string}>}
  */
-// Code Review: Function geocodeAddress in server\utils\distanceValidator.js. Used in: server/controllers/deliveryController.js, server/services/orderService.js, server/tests/customers.routes.test.js.
+// Simple: This handles geocode address logic.
 async function geocodeAddress(address, city) {
     // If Google Maps API key is not configured, try fallback geocoding
     if (!GOOGLE_MAPS_API_KEY) {
@@ -270,7 +270,7 @@ async function geocodeAddress(address, city) {
  * @param {number} lon2 - Second point longitude
  * @returns {number} Distance in kilometers
  */
-// Code Review: Function calculateStraightLineDistance in server\utils\distanceValidator.js. Used in: local scope / same file.
+// Simple: This calculates the straight line distance.
 function calculateStraightLineDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth's radius in kilometers
     const dLat = toRadians(lat2 - lat1);
@@ -287,7 +287,7 @@ function calculateStraightLineDistance(lat1, lon1, lat2, lon2) {
     return parseFloat(distance.toFixed(2));
 }
 
-// Code Review: Function toRadians in server\utils\distanceValidator.js. Used in: local scope / same file.
+// Simple: This handles to radians logic.
 function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
@@ -300,7 +300,7 @@ function toRadians(degrees) {
  * @param {number} customerLng - Customer address longitude
  * @returns {Promise<{isValid: boolean, distance: number, duration?: number, maxDistance: number, method: string}>}
  */
-// Code Review: Function validateDeliveryDistanceWithFallback in server\utils\distanceValidator.js. Used in: server/controllers/deliveryController.js, server/services/orderService.js, server/tests/delivery.routes.test.js.
+// Simple: This checks if the delivery distance with fallback is correct.
 async function validateDeliveryDistanceWithFallback(customerLat, customerLng) {
     const maxDistanceKm = await getConfiguredMaxDistanceKm();
 

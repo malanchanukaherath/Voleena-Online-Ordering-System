@@ -6,13 +6,13 @@ const { Op, literal } = require('sequelize');
 const db = require('../models');
 const { uploadImageFile, deleteImageByUrl } = require('../services/uploadService');
 
-// Code Review: Function toMoneyNumber in server\controllers\comboPackController.js. Used in: server/controllers/comboPackController.js.
+// Simple: This handles to money number logic.
 const toMoneyNumber = (value) => {
     const parsed = Number.parseFloat(value);
     return Number.isFinite(parsed) ? parsed : 0;
 };
 
-// Code Review: Function enrichComboPricing in server\controllers\comboPackController.js. Used in: server/controllers/comboPackController.js.
+// Simple: This handles enrich combo pricing logic.
 const enrichComboPricing = (comboData) => {
     const items = Array.isArray(comboData.items) ? comboData.items : [];
     const originalPrice = items.reduce((sum, item) => {
@@ -35,7 +35,7 @@ const enrichComboPricing = (comboData) => {
     };
 };
 
-// Code Review: Function createComboPack in server\controllers\comboPackController.js. Used in: server/controllers/comboPackController.js, server/routes/comboPacks.js, server/tests/route-contracts.test.js.
+// Simple: This creates the combo pack.
 const createComboPack = async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
@@ -122,7 +122,7 @@ const createComboPack = async (req, res) => {
     }
 };
 
-// Code Review: Function getAllComboPacks in server\controllers\comboPackController.js. Used in: server/controllers/comboPackController.js, server/routes/comboPacks.js, server/tests/route-contracts.test.js.
+// Simple: This gets the all combo packs.
 const getAllComboPacks = async (req, res) => {
     try {
         const { isActive } = req.query;
@@ -158,7 +158,7 @@ const getAllComboPacks = async (req, res) => {
     }
 };
 
-// Code Review: Function getActiveComboPacks in server\controllers\comboPackController.js. Used in: server/controllers/comboPackController.js, server/routes/comboPacks.js, server/tests/route-contracts.test.js.
+// Simple: This gets the active combo packs.
 const getActiveComboPacks = async (req, res) => {
     try {
         const today = new Date().toISOString().split('T')[0];
@@ -193,7 +193,7 @@ const getActiveComboPacks = async (req, res) => {
     }
 };
 
-// Code Review: Function getComboPack in server\controllers\comboPackController.js. Used in: server/controllers/comboPackController.js, server/routes/comboPacks.js, server/tests/route-contracts.test.js.
+// Simple: This gets the combo pack.
 const getComboPack = async (req, res) => {
     try {
         const { id } = req.params;
@@ -223,7 +223,7 @@ const getComboPack = async (req, res) => {
     }
 };
 
-// Code Review: Function updateComboPack in server\controllers\comboPackController.js. Used in: server/controllers/comboPackController.js, server/routes/comboPacks.js, server/tests/route-contracts.test.js.
+// Simple: This updates the combo pack.
 const updateComboPack = async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
@@ -336,7 +336,7 @@ const updateComboPack = async (req, res) => {
     }
 };
 
-// Code Review: Function deleteComboPack in server\controllers\comboPackController.js. Used in: server/controllers/comboPackController.js, server/routes/comboPacks.js, server/tests/route-contracts.test.js.
+// Simple: This removes or clears the combo pack.
 const deleteComboPack = async (req, res) => {
     try {
         const { id } = req.params;
@@ -363,7 +363,7 @@ const deleteComboPack = async (req, res) => {
     }
 };
 
-// Code Review: Function uploadImage in server\controllers\comboPackController.js. Used in: client/src/components/ImageUpload.jsx, client/src/services/menuService.js, server/controllers/comboPackController.js.
+// Simple: This handles upload image logic.
 const uploadImage = async (req, res) => {
     try {
         const { id } = req.params;

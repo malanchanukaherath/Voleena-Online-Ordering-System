@@ -13,7 +13,7 @@
  * @param {string} phone - Phone number to validate
  * @returns {boolean} True if valid Sri Lankan phone number
  */
-// Code Review: Function validateSriLankanPhone in server\utils\validationUtils.js. Used in: server/utils/validationUtils.js.
+// Simple: This checks if the sri lankan phone is correct.
 function validateSriLankanPhone(phone) {
     if (!phone || typeof phone !== 'string') {
         return false;
@@ -35,7 +35,7 @@ function validateSriLankanPhone(phone) {
  * @param {string} email - Email to validate
  * @returns {boolean} True if valid email format
  */
-// Code Review: Function validateEmail in server\utils\validationUtils.js. Used in: client/src/utils/helpers.js, server/utils/validationUtils.js.
+// Simple: This checks if the email is correct.
 function validateEmail(email) {
     if (!email || typeof email !== 'string') {
         return false;
@@ -52,7 +52,7 @@ function validateEmail(email) {
  * @param {string} postalCode - Postal code to validate
  * @returns {boolean} True if valid postal code
  */
-// Code Review: Function validatePostalCode in server\utils\validationUtils.js. Used in: server/utils/validationUtils.js.
+// Simple: This checks if the postal code is correct.
 function validatePostalCode(postalCode) {
     if (!postalCode) {
         return true; // Optional field
@@ -72,7 +72,7 @@ function validatePostalCode(postalCode) {
  * @param {string} address - Address line to validate
  * @returns {boolean} True if valid address
  */
-// Code Review: Function validateAddressLine in server\utils\validationUtils.js. Used in: server/controllers/deliveryController.js, server/tests/delivery.routes.test.js, server/utils/validationUtils.js.
+// Simple: This checks if the address line is correct.
 function validateAddressLine(address) {
     if (!address || typeof address !== 'string') {
         return false;
@@ -90,7 +90,7 @@ function validateAddressLine(address) {
  * @param {number} longitude - Longitude value
  * @returns {boolean} True if valid coordinates
  */
-// Code Review: Function validateCoordinates in server\utils\validationUtils.js. Used in: server/controllers/deliveryController.js, server/tests/delivery.routes.test.js, server/utils/validationUtils.js.
+// Simple: This checks if the coordinates is correct.
 function validateCoordinates(latitude, longitude) {
     if (latitude === null || latitude === undefined || longitude === null || longitude === undefined) {
         return false;
@@ -113,7 +113,7 @@ function validateCoordinates(latitude, longitude) {
  * @param {string} input - Input to sanitize
  * @returns {string} Sanitized input
  */
-// Code Review: Function sanitizeText in server\utils\validationUtils.js. Used in: server/utils/validationUtils.js.
+// Simple: This cleans or formats the text.
 function sanitizeText(input) {
     if (!input || typeof input !== 'string') {
         return '';
@@ -131,7 +131,7 @@ function sanitizeText(input) {
  * @param {number} quantity - Quantity value
  * @returns {boolean} True if valid quantity
  */
-// Code Review: Function validateQuantity in server\utils\validationUtils.js. Used in: server/utils/validationUtils.js.
+// Simple: This checks if the quantity is correct.
 function validateQuantity(quantity) {
     const qty = parseInt(quantity, 10);
     return !isNaN(qty) && qty > 0 && qty <= 999;
@@ -143,7 +143,7 @@ function validateQuantity(quantity) {
  * @param {string} orderType - Order type (ONLINE, DELIVERY, TAKEAWAY, WALK_IN)
  * @returns {boolean} True if valid order type
  */
-// Code Review: Function validateOrderType in server\utils\validationUtils.js. Used in: server/utils/validationUtils.js.
+// Simple: This checks if the order type is correct.
 function validateOrderType(orderType) {
     return ['ONLINE', 'DELIVERY', 'TAKEAWAY', 'WALK_IN'].includes(orderType);
 }
@@ -154,7 +154,7 @@ function validateOrderType(orderType) {
  * @param {string} method - Payment method
  * @returns {boolean} True if valid payment method
  */
-// Code Review: Function validatePaymentMethod in server\utils\validationUtils.js. Used in: server/utils/validationUtils.js.
+// Simple: This checks if the payment method is correct.
 function validatePaymentMethod(method) {
     return ['CASH', 'CARD', 'ONLINE', 'WALLET'].includes(method);
 }
@@ -165,7 +165,7 @@ function validatePaymentMethod(method) {
  * @param {Array} items - Cart items array
  * @returns {Object} {isValid: boolean, errors: string[]}
  */
-// Code Review: Function validateCartItems in server\utils\validationUtils.js. Used in: server/controllers/cartController.js, server/tests/cart.routes.test.js, server/utils/validationUtils.js.
+// Simple: This checks if the cart items is correct.
 function validateCartItems(items) {
     const errors = [];
 

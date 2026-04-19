@@ -7,7 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 
 const SIDEBAR_VISIBILITY_STORAGE_KEY = 'dashboardSidebarVisible';
 
-// Code Review: Function MainLayout in client\src\components\layout\MainLayout.jsx. Used in: client/src/App.jsx, client/src/components/layout/Footer.jsx, client/src/components/layout/MainLayout.jsx.
+// Simple: This shows the main layout section.
 const MainLayout = ({ children }) => {
     const { isAuthenticated } = useAuth();
     const location = useLocation();
@@ -23,7 +23,7 @@ const MainLayout = ({ children }) => {
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     // Determine if we should show sidebar (for dashboard pages)
-    // Code Review: Function isDashboardRoute in client\src\components\layout\MainLayout.jsx. Used in: client/src/components/layout/MainLayout.jsx.
+    // Simple: This checks whether dashboard route is true.
     const isDashboardRoute = () => {
         const dashboardPaths = ['/admin', '/cashier', '/kitchen', '/delivery'];
         return dashboardPaths.some(path => location.pathname.startsWith(path));
@@ -70,7 +70,7 @@ const MainLayout = ({ children }) => {
             return undefined;
         }
 
-        // Code Review: Function handleEscapeKey in client\src\components\layout\MainLayout.jsx. Used in: client/src/components/layout/MainLayout.jsx.
+        // Simple: This handles what happens when escape key is triggered.
         const handleEscapeKey = (event) => {
             if (event.key === 'Escape') {
                 setIsMobileSidebarOpen(false);
@@ -85,7 +85,7 @@ const MainLayout = ({ children }) => {
     }, [showSidebar, isMobileSidebarOpen]);
 
     useEffect(() => {
-        // Code Review: Function handleFullscreenChange in client\src\components\layout\MainLayout.jsx. Used in: client/src/components/layout/MainLayout.jsx.
+        // Simple: This handles what happens when fullscreen change is triggered.
         const handleFullscreenChange = () => {
             setIsFullscreen(Boolean(document.fullscreenElement));
         };

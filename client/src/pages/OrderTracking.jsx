@@ -26,7 +26,7 @@ import { resolveAssetUrl } from '../config/api';
 
 const ORDER_ADDON_NOTES_PREFIX = '__VOLEENA_ADDONS__:';
 
-// Code Review: Function toMoney in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/OrderTracking.jsx, client/src/utils/cartStorage.js, server/services/orderService.js.
+// Simple: This handles to money logic.
 const toMoney = (value) => {
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) {
@@ -36,7 +36,7 @@ const toMoney = (value) => {
     return Number(parsed.toFixed(2));
 };
 
-// Code Review: Function toFiniteNumber in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/DeliveryMap.jsx, client/src/pages/OrderTracking.jsx, client/src/utils/posReceiptPrint.js.
+// Simple: This handles to finite number logic.
 const toFiniteNumber = (value, fallback = null) => {
     if (value === null || value === undefined || value === '') {
         return fallback;
@@ -46,7 +46,7 @@ const toFiniteNumber = (value, fallback = null) => {
     return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-// Code Review: Function parseOrderItemAddOnsFromNotes in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/OrderTracking.jsx.
+// Simple: This cleans or formats the order item add ons from notes.
 const parseOrderItemAddOnsFromNotes = (rawNotes, fallbackUnitPrice) => {
     const notes = String(rawNotes || '').trim();
     const safeFallback = toMoney(fallbackUnitPrice);
@@ -87,7 +87,7 @@ const parseOrderItemAddOnsFromNotes = (rawNotes, fallbackUnitPrice) => {
     }
 };
 
-// Code Review: Function formatTimeLabel in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/OrderTracking.jsx.
+// Simple: This cleans or formats the time label.
 const formatTimeLabel = (value) => {
     if (!value) {
         return '';
@@ -101,7 +101,7 @@ const formatTimeLabel = (value) => {
     return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 };
 
-// Code Review: Function formatEtaCountdown in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/OrderTracking.jsx.
+// Simple: This cleans or formats the eta countdown.
 const formatEtaCountdown = (value) => {
     if (!value) {
         return null;
@@ -124,7 +124,7 @@ const formatEtaCountdown = (value) => {
     return `About ${minutesRemaining} minutes`;
 };
 
-// Code Review: Function paymentMethodLabel in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/OrderTracking.jsx.
+// Simple: This handles payment method label logic.
 const paymentMethodLabel = (paymentMethod) => {
     const normalized = String(paymentMethod || '').toUpperCase();
     if (normalized === 'ONLINE') {
@@ -137,7 +137,7 @@ const paymentMethodLabel = (paymentMethod) => {
     return 'Cash on Delivery';
 };
 
-// Code Review: Function OrderTracking in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/DeliveryMap.jsx, client/src/pages/OrderTracking.jsx, client/src/routes/AppRoutes.jsx.
+// Simple: This shows the order tracking section.
 const OrderTracking = () => {
     const { orderId } = useParams();
 
@@ -352,7 +352,7 @@ const OrderTracking = () => {
     useEffect(() => {
         let isMounted = true;
 
-        // Code Review: Function loadOrderState in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/OrderTracking.jsx.
+        // Simple: This gets the order state.
         const loadOrderState = async () => {
             await fetchOrder();
         };
@@ -385,7 +385,7 @@ const OrderTracking = () => {
 
         let isMounted = true;
 
-        // Code Review: Function fetchLiveLocation in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/OrderTracking.jsx.
+        // Simple: This gets the live location.
         const fetchLiveLocation = async () => {
             try {
                 const response = await getDeliveryLocation(deliveryId);
@@ -430,14 +430,14 @@ const OrderTracking = () => {
         };
     }, [order?.deliveryId, order?.deliveryPerson?.name, order?.deliveryPerson?.phone, order?.orderType, order?.status]);
 
-    // Code Review: Function canCancelOrder in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/OrderTracking.jsx.
+    // Simple: This checks whether cancel order is allowed.
     const canCancelOrder = () => {
         const cancellableStatuses = ['CONFIRMED', 'PREORDER_PENDING', 'PREORDER_CONFIRMED'];
         const isNotCancelled = order?.status !== 'CANCELLED';
         return cancellableStatuses.includes(order?.status) && isNotCancelled;
     };
 
-    // Code Review: Function getDeliveryEtaText in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/OrderTracking.jsx.
+    // Simple: This gets the delivery eta text.
     const getDeliveryEtaText = () => {
         if (!order || order.orderType !== 'DELIVERY' || order.status === 'CANCELLED' || order.status === 'DELIVERED') {
             return null;
@@ -480,7 +480,7 @@ const OrderTracking = () => {
         return countdown ? `Estimated delivery ${countdown.toLowerCase()}` : 'Estimated delivery updating';
     };
 
-    // Code Review: Function getTimelineTime in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/OrderTracking.jsx.
+    // Simple: This gets the timeline time.
     const getTimelineTime = (status) => {
         if (!order) {
             return '';
@@ -526,7 +526,7 @@ const OrderTracking = () => {
                 ? `https://www.google.com/maps/search/?api=1&query=${liveLat},${liveLng}`
                 : null;
 
-    // Code Review: Function handleCancelOrder in client\src\pages\OrderTracking.jsx. Used in: client/src/pages/OrderTracking.jsx.
+    // Simple: This handles what happens when cancel order is triggered.
     const handleCancelOrder = async () => {
         if (!order) {
             return;

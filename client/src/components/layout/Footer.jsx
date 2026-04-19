@@ -14,7 +14,7 @@ const DAY_LABELS = {
     sunday: 'Sunday'
 };
 
-// Code Review: Function formatBusinessHour in client\src\components\layout\Footer.jsx. Used in: client/src/components/layout/Footer.jsx.
+// Simple: This cleans or formats the business hour.
 const formatBusinessHour = (value) => {
     if (!value || typeof value !== 'string') return '--';
     const [hours, minutes] = value.split(':').map(Number);
@@ -24,7 +24,7 @@ const formatBusinessHour = (value) => {
     return `${normalizedHour}:${String(minutes).padStart(2, '0')} ${period}`;
 };
 
-// Code Review: Function Footer in client\src\components\layout\Footer.jsx. Used in: client/src/components/layout/Footer.jsx, client/src/components/layout/MainLayout.jsx.
+// Simple: This shows the footer section.
 const Footer = () => {
     const currentYear = new Date().getFullYear();
     const { settings } = usePublicSettings();

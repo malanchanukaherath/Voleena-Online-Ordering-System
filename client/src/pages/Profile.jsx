@@ -19,7 +19,7 @@ import {
 
 const NOTIFICATION_OPTIONS = ['EMAIL', 'SMS', 'BOTH'];
 
-// Code Review: Function mapCustomerProfile in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+// Simple: This cleans or formats the customer profile.
 const mapCustomerProfile = (profile = {}) => {
     const name = profile.Name ?? profile.name ?? '';
     const email = profile.Email ?? profile.email ?? '';
@@ -40,12 +40,12 @@ const mapCustomerProfile = (profile = {}) => {
     };
 };
 
-// Code Review: Function getApiErrorMessage in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+// Simple: This gets the api error message.
 const getApiErrorMessage = (error, fallback) => {
     return error?.response?.data?.error || fallback;
 };
 
-// Code Review: Function mapAddress in client\src\pages\Profile.jsx. Used in: client/src/pages/CustomerManagement.jsx, client/src/pages/Profile.jsx.
+// Simple: This cleans or formats the address.
 const mapAddress = (address = {}) => ({
     id: address.AddressID ?? address.address_id ?? address.id,
     addressLine1: address.AddressLine1 ?? address.addressLine1 ?? '',
@@ -57,7 +57,7 @@ const mapAddress = (address = {}) => ({
     longitude: address.Longitude ?? address.longitude ?? null
 });
 
-// Code Review: Function Profile in client\src\pages\Profile.jsx. Used in: client/src/components/layout/Header.jsx, client/src/pages/Checkout.jsx, client/src/pages/CustomerManagement.jsx.
+// Simple: This shows the profile section.
 const Profile = () => {
     const { user, updateUser } = useAuth();
 
@@ -100,7 +100,7 @@ const Profile = () => {
     const [addresses, setAddresses] = useState([]);
     const [editingAddressId, setEditingAddressId] = useState(null);
 
-    // Code Review: Function handleChange in client\src\pages\Profile.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when change is triggered.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -112,7 +112,7 @@ const Profile = () => {
         }
     };
 
-    // Code Review: Function handlePasswordChange in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This handles what happens when password change is triggered.
     const handlePasswordChange = (e) => {
         const { name, value } = e.target;
         setPasswordData(prev => ({ ...prev, [name]: value }));
@@ -121,7 +121,7 @@ const Profile = () => {
         }
     };
 
-    // Code Review: Function handleAddressChange in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This handles what happens when address change is triggered.
     const handleAddressChange = (e) => {
         const { name, value } = e.target;
         setAddressForm((prev) => ({ ...prev, [name]: value }));
@@ -130,7 +130,7 @@ const Profile = () => {
         }
     };
 
-    // Code Review: Function validateProfileForm in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This checks if the profile form is correct.
     const validateProfileForm = () => {
         const newErrors = {};
         const normalizedCurrentEmail = String(originalEmail || '').trim().toLowerCase();
@@ -167,7 +167,7 @@ const Profile = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function validatePasswordForm in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This checks if the password form is correct.
     const validatePasswordForm = () => {
         const newErrors = {};
         if (!passwordData.currentPassword) newErrors.currentPassword = 'Current password is required';
@@ -186,7 +186,7 @@ const Profile = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function validateAddressForm in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This checks if the address form is correct.
     const validateAddressForm = () => {
         const newErrors = {};
 
@@ -204,7 +204,7 @@ const Profile = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function loadAddresses in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This gets the addresses.
     const loadAddresses = async () => {
         setIsAddressLoading(true);
 
@@ -226,7 +226,7 @@ const Profile = () => {
         }
     };
 
-    // Code Review: Function handleAddressSubmit in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This handles what happens when address submit is triggered.
     const handleAddressSubmit = async (e) => {
         e.preventDefault();
         if (!validateAddressForm()) return;
@@ -278,7 +278,7 @@ const Profile = () => {
         }
     };
 
-    // Code Review: Function handleStartAddressEdit in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This handles what happens when start address edit is triggered.
     const handleStartAddressEdit = (address) => {
         setEditingAddressId(address.id || null);
         setAddressForm({
@@ -290,7 +290,7 @@ const Profile = () => {
         });
     };
 
-    // Code Review: Function handleCancelAddressEdit in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This handles what happens when cancel address edit is triggered.
     const handleCancelAddressEdit = () => {
         setEditingAddressId(null);
         setAddressForm({
@@ -302,7 +302,7 @@ const Profile = () => {
         });
     };
 
-    // Code Review: Function handleDeleteAddress in client\src\pages\Profile.jsx. Used in: client/src/pages/CustomerManagement.jsx, client/src/pages/Profile.jsx.
+    // Simple: This handles what happens when delete address is triggered.
     const handleDeleteAddress = async (addressId) => {
         if (!addressId) return;
 
@@ -332,7 +332,7 @@ const Profile = () => {
         }
     };
 
-    // Code Review: Function handleRequestPhoneVerificationOtp in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This handles what happens when request phone verification otp is triggered.
     const handleRequestPhoneVerificationOtp = async () => {
         if (!formData.phone.trim()) {
             setToastMessage('Add a phone number first, then request OTP verification.');
@@ -361,7 +361,7 @@ const Profile = () => {
         }
     };
 
-    // Code Review: Function handleVerifyPhoneOtp in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This handles what happens when verify phone otp is triggered.
     const handleVerifyPhoneOtp = async () => {
         const otp = phoneVerificationOtp.trim();
         if (!/^\d{6}$/.test(otp)) {
@@ -395,7 +395,7 @@ const Profile = () => {
         }
     };
 
-    // Code Review: Function handleProfileSubmit in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+    // Simple: This handles what happens when profile submit is triggered.
     const handleProfileSubmit = async (e) => {
         e.preventDefault();
         if (!validateProfileForm()) return;
@@ -452,7 +452,7 @@ const Profile = () => {
         }
     };
 
-    // Code Review: Function handlePasswordSubmit in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx, client/src/pages/ResetPassword.jsx.
+    // Simple: This handles what happens when password submit is triggered.
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         if (!validatePasswordForm()) return;
@@ -500,7 +500,7 @@ const Profile = () => {
     useEffect(() => {
         let isMounted = true;
 
-        // Code Review: Function loadProfile in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+        // Simple: This gets the profile.
         const loadProfile = async () => {
             try {
                 setIsProfileLoading(true);
@@ -556,7 +556,7 @@ const Profile = () => {
     useEffect(() => {
         let isMounted = true;
 
-        // Code Review: Function loadStats in client\src\pages\Profile.jsx. Used in: client/src/pages/Profile.jsx.
+        // Simple: This gets the stats.
         const loadStats = async () => {
             try {
                 const response = await getOrders();

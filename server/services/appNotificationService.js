@@ -16,10 +16,10 @@ try {
 const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 30;
 
-// Code Review: Function toRecipientType in server\services\appNotificationService.js. Used in: server/services/appNotificationService.js.
+// Simple: This handles to recipient type logic.
 const toRecipientType = (userType) => userType === 'Customer' ? 'CUSTOMER' : 'STAFF';
 
-// Code Review: Function toRecipientRole in server\services\appNotificationService.js. Used in: server/services/appNotificationService.js.
+// Simple: This handles to recipient role logic.
 const toRecipientRole = (user) => {
     if (!user) {
         return null;
@@ -36,7 +36,7 @@ const toRecipientRole = (user) => {
     return 'STAFF';
 };
 
-// Code Review: Function normalizePriority in server\services\appNotificationService.js. Used in: server/services/appNotificationService.js.
+// Simple: This cleans or formats the priority.
 const normalizePriority = (priority = 'MEDIUM') => {
     const normalized = String(priority || 'MEDIUM').trim().toUpperCase();
     return ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(normalized) ? normalized : 'MEDIUM';

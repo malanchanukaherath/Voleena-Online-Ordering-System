@@ -19,7 +19,7 @@ const OnScreenNumpad = ({
 }) => {
   const currentValue = String(value || '');
 
-  // Code Review: Function handleKeyPress in client\src\components\ui\OnScreenNumpad.jsx. Used in: client/src/components/ui/OnScreenNumpad.jsx.
+  // Simple: This handles what happens when key press is triggered.
   const handleKeyPress = (key) => {
     if (key === '.' && !allowDecimal) {
       return;

@@ -4,7 +4,7 @@ import Button from './ui/Button';
 import Input from './ui/Input';
 import Select from './ui/Select';
 
-// Code Review: Function AddStaffModal in client\src\components\AddStaffModal.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/pages/StaffManagement.jsx.
+// Simple: This creates the staff modal.
 const AddStaffModal = ({ isOpen, onClose, onSubmit, roles }) => {
     const [formData, setFormData] = useState({
         name: '',
@@ -29,7 +29,7 @@ const AddStaffModal = ({ isOpen, onClose, onSubmit, roles }) => {
         };
     }, [isOpen]);
 
-    // Code Review: Function handleChange in client\src\components\AddStaffModal.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/ImageUpload.jsx.
+    // Simple: This handles what happens when change is triggered.
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
@@ -39,7 +39,7 @@ const AddStaffModal = ({ isOpen, onClose, onSubmit, roles }) => {
         }
     };
 
-    // Code Review: Function validate in client\src\components\AddStaffModal.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/pages/Cart.jsx.
+    // Simple: This checks if the input is correct.
     const validate = () => {
         const newErrors = {};
 
@@ -75,7 +75,7 @@ const AddStaffModal = ({ isOpen, onClose, onSubmit, roles }) => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function handleSubmit in client\src\components\AddStaffModal.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
+    // Simple: This handles what happens when submit is triggered.
     const handleSubmit = async (e) => {
         e.preventDefault();
 

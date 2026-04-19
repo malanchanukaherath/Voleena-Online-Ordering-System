@@ -9,7 +9,7 @@ import FilterResetButton from '../components/ui/FilterResetButton';
 import AddStaffModal from '../components/AddStaffModal';
 import { staffApi } from '../services/staffCustomerApi';
 
-// Code Review: Function StaffManagement in client\src\pages\StaffManagement.jsx. Used in: client/src/components/AddStaffModal.jsx, client/src/components/ComboPackCard.jsx, client/src/pages/ComboManagement.jsx.
+// Simple: This shows the staff management section.
 const StaffManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [roleFilter, setRoleFilter] = useState('');
@@ -25,7 +25,7 @@ const StaffManagement = () => {
         fetchRoles();
     }, []);
 
-    // Code Review: Function fetchStaff in client\src\pages\StaffManagement.jsx. Used in: client/src/pages/StaffManagement.jsx.
+    // Simple: This gets the staff.
     const fetchStaff = async () => {
         try {
             setLoading(true);
@@ -40,7 +40,7 @@ const StaffManagement = () => {
         }
     };
 
-    // Code Review: Function fetchRoles in client\src\pages\StaffManagement.jsx. Used in: client/src/pages/StaffManagement.jsx.
+    // Simple: This gets the roles.
     const fetchRoles = async () => {
         try {
             const data = await staffApi.getRoles();
@@ -50,7 +50,7 @@ const StaffManagement = () => {
         }
     };
 
-    // Code Review: Function handleAddStaff in client\src\pages\StaffManagement.jsx. Used in: client/src/pages/StaffManagement.jsx.
+    // Simple: This handles what happens when add staff is triggered.
     const handleAddStaff = async (staffData) => {
         try {
             const result = await staffApi.create(staffData);
@@ -73,7 +73,7 @@ const StaffManagement = () => {
         }
     };
 
-    // Code Review: Function handleToggleStatus in client\src\pages\StaffManagement.jsx. Used in: client/src/pages/ComboManagement.jsx, client/src/pages/StaffManagement.jsx.
+    // Simple: This handles what happens when toggle status is triggered.
     const handleToggleStatus = async (staffId, currentStatus) => {
         if (confirm(`Are you sure you want to ${currentStatus ? 'deactivate' : 'activate'} this staff member?`)) {
             try {
@@ -99,13 +99,13 @@ const StaffManagement = () => {
 
     const hasActiveFilters = Boolean(searchTerm || roleFilter);
 
-    // Code Review: Function clearFilters in client\src\pages\StaffManagement.jsx. Used in: client/src/pages/Menu.jsx, client/src/pages/MenuManagement.jsx, client/src/pages/OrderHistory.jsx.
+    // Simple: This removes or clears the filters.
     const clearFilters = () => {
         setSearchTerm('');
         setRoleFilter('');
     };
 
-    // Code Review: Function getRoleBadgeColor in client\src\pages\StaffManagement.jsx. Used in: client/src/pages/StaffManagement.jsx.
+    // Simple: This gets the role badge color.
     const getRoleBadgeColor = (role) => {
         const colors = {
             Admin: 'bg-purple-100 text-purple-800',
@@ -116,7 +116,7 @@ const StaffManagement = () => {
         return colors[role] || 'bg-gray-100 text-gray-800';
     };
 
-    // Code Review: Function formatDate in client\src\pages\StaffManagement.jsx. Used in: client/src/components/ComboPackCard.jsx, client/src/pages/CustomerManagement.jsx, client/src/pages/StaffManagement.jsx.
+    // Simple: This cleans or formats the date.
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const parsedDate = new Date(dateString);

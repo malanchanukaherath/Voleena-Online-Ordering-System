@@ -6,13 +6,13 @@ const DEFAULT_STORE = {
 
 const DEFAULT_TERMINAL_ID = import.meta.env.VITE_POS_TERMINAL_ID || 'WEB-POS-1';
 
-// Code Review: Function toFiniteNumber in client\src\utils\posReceiptPrint.js. Used in: client/src/pages/DeliveryMap.jsx, client/src/pages/OrderTracking.jsx, client/src/utils/posReceiptPrint.js.
+// Simple: This handles to finite number logic.
 const toFiniteNumber = (value, fallback = 0) => {
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
-// Code Review: Function escapeHtml in client\src\utils\posReceiptPrint.js. Used in: client/src/pages/SalesAnalytics.jsx, client/src/utils/posReceiptPrint.js.
+// Simple: This handles escape html logic.
 const escapeHtml = (unsafeValue) => String(unsafeValue ?? '')
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
@@ -20,10 +20,10 @@ const escapeHtml = (unsafeValue) => String(unsafeValue ?? '')
   .replace(/"/g, '&quot;')
   .replace(/'/g, '&#039;');
 
-// Code Review: Function formatCurrency in client\src\utils\posReceiptPrint.js. Used in: client/src/pages/SalesAnalytics.jsx, client/src/utils/helpers.js, client/src/utils/posReceiptPrint.js.
+// Simple: This cleans or formats the currency.
 const formatCurrency = (value) => `LKR ${toFiniteNumber(value, 0).toFixed(2)}`;
 
-// Code Review: Function formatDateTime in client\src\utils\posReceiptPrint.js. Used in: client/src/utils/helpers.js, client/src/utils/posReceiptPrint.js.
+// Simple: This cleans or formats the date time.
 const formatDateTime = (value) => {
   const date = value ? new Date(value) : new Date();
   if (Number.isNaN(date.getTime())) {
@@ -41,7 +41,7 @@ const formatDateTime = (value) => {
   }).format(date);
 };
 
-// Code Review: Function buildReceiptFromOrder in client\src\utils\posReceiptPrint.js. Used in: client/src/pages/CashierDashboard.jsx, client/src/pages/CashierOrders.jsx, client/src/utils/posReceiptPrint.js.
+// Simple: This creates the receipt from order.
 export const buildReceiptFromOrder = (order, options = {}) => {
   if (!order || typeof order !== 'object') {
     return null;
@@ -106,9 +106,9 @@ export const buildReceiptFromOrder = (order, options = {}) => {
   };
 };
 
-// Code Review: Function buildReceiptHtml in client\src\utils\posReceiptPrint.js. Used in: client/src/utils/posReceiptPrint.js.
+// Simple: This creates the receipt html.
 const buildReceiptHtml = (receipt) => {
-  // Code Review: Function itemRows in client\src\utils\posReceiptPrint.js. Used in: client/src/utils/posReceiptPrint.js.
+  // Simple: This handles item rows logic.
   const itemRows = (receipt.items || []).map((item) => {
     return `
       <tr>
@@ -311,7 +311,7 @@ const buildReceiptHtml = (receipt) => {
   `;
 };
 
-// Code Review: Function openReceiptPrintWindow in client\src\utils\posReceiptPrint.js. Used in: client/src/pages/CashierDashboard.jsx, client/src/pages/CashierOrders.jsx, client/src/utils/posReceiptPrint.js.
+// Simple: This creates the receipt print window.
 export const openReceiptPrintWindow = (receiptInput) => {
   if (!receiptInput) {
     throw new Error('No receipt data available to print');

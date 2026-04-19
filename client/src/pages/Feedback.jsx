@@ -9,7 +9,7 @@ import { getOrderById } from '../services/orderApi';
 const POSITIVE_TAGS = ['Good taste', 'Fast delivery'];
 const ISSUE_TAGS = ['Late delivery', 'Wrong item', 'Poor packaging'];
 
-// Code Review: Function Feedback in client\src\pages\Feedback.jsx. Used in: client/src/components/layout/Header.jsx, client/src/components/layout/Sidebar.jsx, client/src/pages/Feedback.jsx.
+// Simple: This shows the feedback section.
 const Feedback = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -37,7 +37,7 @@ const Feedback = () => {
     }, [orderIdParam]);
 
     useEffect(() => {
-        // Code Review: Function loadOrder in client\src\pages\Feedback.jsx. Used in: client/src/pages/Feedback.jsx, client/src/pages/OrderConfirmation.jsx.
+        // Simple: This gets the order.
         const loadOrder = async () => {
             if (!orderId) {
                 setOrderError('Feedback must be linked to a delivered order.');
@@ -73,7 +73,7 @@ const Feedback = () => {
         loadOrder();
     }, [orderId]);
 
-    // Code Review: Function handleRating in client\src\pages\Feedback.jsx. Used in: client/src/pages/Feedback.jsx.
+    // Simple: This handles what happens when rating is triggered.
     const handleRating = (rating) => {
         setFormData((prev) => ({ ...prev, rating }));
         if (errors.rating) {
@@ -81,7 +81,7 @@ const Feedback = () => {
         }
     };
 
-    // Code Review: Function toggleTag in client\src\pages\Feedback.jsx. Used in: client/src/pages/Feedback.jsx.
+    // Simple: This updates the tag.
     const toggleTag = (group, value) => {
         setFormData((prev) => {
             const current = prev[group];
@@ -93,7 +93,7 @@ const Feedback = () => {
         });
     };
 
-    // Code Review: Function validateForm in client\src\pages\Feedback.jsx. Used in: client/src/pages/AddOnManagement.jsx, client/src/pages/CategoryManagement.jsx, client/src/pages/Checkout.jsx.
+    // Simple: This checks if the form is correct.
     const validateForm = () => {
         const newErrors = {};
         if (!formData.rating) {
@@ -103,7 +103,7 @@ const Feedback = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Code Review: Function handleSubmit in client\src\pages\Feedback.jsx. Used in: client/src/components/AddCustomerModal.jsx, client/src/components/AddStaffModal.jsx, client/src/components/payment/StripePaymentModal.jsx.
+    // Simple: This handles what happens when submit is triggered.
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!validateForm() || !orderId || !order) {
@@ -130,7 +130,7 @@ const Feedback = () => {
         }
     };
 
-    // Code Review: Function renderOrderItems in client\src\pages\Feedback.jsx. Used in: client/src/pages/Feedback.jsx.
+    // Simple: This shows the order items.
     const renderOrderItems = () => {
         const items = Array.isArray(order?.items) ? order.items : [];
         if (items.length === 0) {

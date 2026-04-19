@@ -27,7 +27,7 @@ const DEFAULT_MENU_ADDON_CATALOG = [
     }
 ];
 
-// Code Review: Function toMoney in server\utils\orderAddOnUtils.js. Used in: client/src/pages/OrderTracking.jsx, client/src/utils/cartStorage.js, server/services/orderService.js.
+// Simple: This handles to money logic.
 const toMoney = (value) => {
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) {
@@ -37,7 +37,7 @@ const toMoney = (value) => {
     return Number(numeric.toFixed(2));
 };
 
-// Code Review: Function toBoolean in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This handles to boolean logic.
 const toBoolean = (value, fallback = false) => {
     if (value === undefined || value === null) {
         return fallback;
@@ -59,7 +59,7 @@ const toBoolean = (value, fallback = false) => {
     return fallback;
 };
 
-// Code Review: Function toPositiveInteger in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This handles to positive integer logic.
 const toPositiveInteger = (value, fallback = 1) => {
     const numeric = Number(value);
     if (!Number.isFinite(numeric)) {
@@ -74,13 +74,13 @@ const toPositiveInteger = (value, fallback = 1) => {
     return floored;
 };
 
-// Code Review: Function normalizeCode in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This cleans or formats the code.
 const normalizeCode = (value) => String(value || '').trim().toLowerCase().replace(/\s+/g, '_');
 
-// Code Review: Function slugFromName in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This handles slug from name logic.
 const slugFromName = (name) => normalizeCode(name).replace(/[^a-z0-9_-]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
 
-// Code Review: Function isAddOnSchemaUnavailableError in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This checks whether add on schema unavailable error is true.
 const isAddOnSchemaUnavailableError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code || error?.code;
     const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -96,7 +96,7 @@ const isAddOnSchemaUnavailableError = (error) => {
         .some((token) => message.includes(token));
 };
 
-// Code Review: Function normalizeCatalogEntry in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This cleans or formats the catalog entry.
 const normalizeCatalogEntry = (entry) => {
     const id = String(entry?.id || '').trim();
     const name = String(entry?.name || '').trim();
@@ -118,7 +118,7 @@ const normalizeCatalogEntry = (entry) => {
     };
 };
 
-// Code Review: Function toPublicCatalogEntry in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This handles to public catalog entry logic.
 const toPublicCatalogEntry = (entry, maxQuantityOverride = null) => {
     if (!entry) {
         return null;
@@ -147,25 +147,25 @@ const toPublicCatalogEntry = (entry, maxQuantityOverride = null) => {
     };
 };
 
-// Code Review: Function buildDefaultConfig in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This creates the default config.
 const buildDefaultConfig = () => ({
     catalog: DEFAULT_MENU_ADDON_CATALOG.map((entry) => normalizeCatalogEntry(entry)).filter(Boolean),
     menuAssignments: {}
 });
 
-// Code Review: Function writeConfig in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This handles write config logic.
 const writeConfig = (config) => {
     fs.writeFileSync(MENU_ADDON_CONFIG_PATH, JSON.stringify(config, null, 2));
 };
 
-// Code Review: Function ensureConfigFile in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This handles ensure config file logic.
 const ensureConfigFile = () => {
     if (!fs.existsSync(MENU_ADDON_CONFIG_PATH)) {
         writeConfig(buildDefaultConfig());
     }
 };
 
-// Code Review: Function readConfig in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This gets the config.
 const readConfig = () => {
     ensureConfigFile();
 
@@ -207,7 +207,7 @@ const readConfig = () => {
     }
 };
 
-// Code Review: Function listFileCatalog in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This gets the file catalog.
 const listFileCatalog = ({ includeInactive = false } = {}) => {
     const config = readConfig();
     return config.catalog
@@ -224,7 +224,7 @@ const listFileCatalog = ({ includeInactive = false } = {}) => {
         .filter(Boolean);
 };
 
-// Code Review: Function normalizeCatalogPayload in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This cleans or formats the catalog payload.
 const normalizeCatalogPayload = (payload, { isCreate = false } = {}) => {
     const source = payload && typeof payload === 'object' ? payload : {};
     const trimmedName = source.name !== undefined ? String(source.name || '').trim() : undefined;
@@ -270,7 +270,7 @@ const normalizeCatalogPayload = (payload, { isCreate = false } = {}) => {
     return normalized;
 };
 
-// Code Review: Function createCatalogEntryInFile in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This creates the catalog entry in file.
 const createCatalogEntryInFile = (payload) => {
     const normalized = normalizeCatalogPayload(payload, { isCreate: true });
     const config = readConfig();
@@ -299,7 +299,7 @@ const createCatalogEntryInFile = (payload) => {
     return normalizeCatalogEntry(next);
 };
 
-// Code Review: Function updateCatalogEntryInFile in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This updates the catalog entry in file.
 const updateCatalogEntryInFile = (id, payload) => {
     const safeId = normalizeCode(id);
     if (!safeId) {
@@ -335,12 +335,12 @@ const updateCatalogEntryInFile = (id, payload) => {
     return normalizeCatalogEntry(next);
 };
 
-// Code Review: Function deactivateCatalogEntryInFile in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This handles deactivate catalog entry in file logic.
 const deactivateCatalogEntryInFile = (id) => {
     return updateCatalogEntryInFile(id, { isActive: false });
 };
 
-// Code Review: Function recordAuditSafe in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This handles record audit safe logic.
 const recordAuditSafe = async ({ addOnOptionId, action, changedBy = null, contextType = 'CATALOG', contextId = null, changeSummary = null, payloadJSON = null }) => {
     try {
         if (!AddonOptionAudit || !addOnOptionId) {
@@ -363,7 +363,7 @@ const recordAuditSafe = async ({ addOnOptionId, action, changedBy = null, contex
     }
 };
 
-// Code Review: Function getCatalogFromDatabase in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This gets the catalog from database.
 const getCatalogFromDatabase = async ({ includeInactive = false } = {}) => {
     const where = includeInactive ? {} : { IsActive: true };
     const rows = await AddonOption.findAll({
@@ -380,7 +380,7 @@ const getCatalogFromDatabase = async ({ includeInactive = false } = {}) => {
         .filter(Boolean);
 };
 
-// Code Review: Function getConfiguredAddOnIdsFromDatabase in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This gets the configured add on ids from database.
 const getConfiguredAddOnIdsFromDatabase = async (menuItemId) => {
     const numericMenuItemId = Number.parseInt(menuItemId, 10);
     if (!Number.isInteger(numericMenuItemId) || numericMenuItemId < 1) {
@@ -413,7 +413,7 @@ const getConfiguredAddOnIdsFromDatabase = async (menuItemId) => {
         .filter(Boolean))];
 };
 
-// Code Review: Function getAllowedAddOnsForMenuItemFromDatabase in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This gets the allowed add ons for menu item from database.
 const getAllowedAddOnsForMenuItemFromDatabase = async (menuItemId) => {
     const numericMenuItemId = Number.parseInt(menuItemId, 10);
     if (!Number.isInteger(numericMenuItemId) || numericMenuItemId < 1) {
@@ -448,7 +448,7 @@ const getAllowedAddOnsForMenuItemFromDatabase = async (menuItemId) => {
     return getCatalogFromDatabase({ includeInactive: false });
 };
 
-// Code Review: Function setConfiguredAddOnIdsInDatabase in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This updates the configured add on ids in database.
 const setConfiguredAddOnIdsInDatabase = async (menuItemId, addOnIds, actorId = null) => {
     const numericMenuItemId = Number.parseInt(menuItemId, 10);
     if (!Number.isInteger(numericMenuItemId) || numericMenuItemId < 1) {
@@ -520,7 +520,7 @@ const setConfiguredAddOnIdsInDatabase = async (menuItemId, addOnIds, actorId = n
     return safeIds;
 };
 
-// Code Review: Function createCatalogEntryInDatabase in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This creates the catalog entry in database.
 const createCatalogEntryInDatabase = async (payload, actorId = null) => {
     const normalized = normalizeCatalogPayload(payload, { isCreate: true });
 
@@ -560,7 +560,7 @@ const createCatalogEntryInDatabase = async (payload, actorId = null) => {
     return toPublicCatalogEntry(created);
 };
 
-// Code Review: Function updateCatalogEntryInDatabase in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This updates the catalog entry in database.
 const updateCatalogEntryInDatabase = async (id, payload, actorId = null) => {
     const safeId = normalizeCode(id);
     if (!safeId) {
@@ -613,7 +613,7 @@ const updateCatalogEntryInDatabase = async (id, payload, actorId = null) => {
     return toPublicCatalogEntry(target);
 };
 
-// Code Review: Function deactivateCatalogEntryInDatabase in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This handles deactivate catalog entry in database logic.
 const deactivateCatalogEntryInDatabase = async (id, actorId = null) => {
     const target = await AddonOption.findOne({ where: { Code: normalizeCode(id) } });
     if (!target) {
@@ -638,7 +638,7 @@ const deactivateCatalogEntryInDatabase = async (id, actorId = null) => {
     return toPublicCatalogEntry(target);
 };
 
-// Code Review: Function getConfiguredAddOnIdsForMenuItem in server\utils\orderAddOnUtils.js. Used in: server/controllers/menuItemController.js, server/utils/orderAddOnUtils.js.
+// Simple: This gets the configured add on ids for menu item.
 const getConfiguredAddOnIdsForMenuItem = async (menuItemId) => {
     const safeMenuItemId = String(menuItemId || '').trim();
     if (!safeMenuItemId) {
@@ -661,7 +661,7 @@ const getConfiguredAddOnIdsForMenuItem = async (menuItemId) => {
     }
 };
 
-// Code Review: Function setConfiguredAddOnIdsForMenuItem in server\utils\orderAddOnUtils.js. Used in: server/controllers/menuItemController.js, server/utils/orderAddOnUtils.js.
+// Simple: This updates the configured add on ids for menu item.
 const setConfiguredAddOnIdsForMenuItem = async (menuItemId, addOnIds, actorId = null) => {
     const safeMenuItemId = String(menuItemId || '').trim();
     if (!safeMenuItemId) {
@@ -702,7 +702,7 @@ const setConfiguredAddOnIdsForMenuItem = async (menuItemId, addOnIds, actorId = 
     return [...safeIds];
 };
 
-// Code Review: Function getDefaultMenuAddOns in server\utils\orderAddOnUtils.js. Used in: server/controllers/menuItemController.js, server/utils/orderAddOnUtils.js.
+// Simple: This gets the default menu add ons.
 const getDefaultMenuAddOns = async () => {
     try {
         return await getCatalogFromDatabase({ includeInactive: false });
@@ -715,7 +715,7 @@ const getDefaultMenuAddOns = async () => {
     }
 };
 
-// Code Review: Function getAllowedAddOnsForMenuItem in server\utils\orderAddOnUtils.js. Used in: server/controllers/menuItemController.js, server/services/orderService.js, server/utils/orderAddOnUtils.js.
+// Simple: This gets the allowed add ons for menu item.
 const getAllowedAddOnsForMenuItem = async (menuItemId) => {
     const safeMenuItemId = String(menuItemId || '').trim();
     if (!safeMenuItemId) {
@@ -752,7 +752,7 @@ const getAllowedAddOnsForMenuItem = async (menuItemId) => {
         .filter(Boolean);
 };
 
-// Code Review: Function listAddOnCatalog in server\utils\orderAddOnUtils.js. Used in: server/controllers/menuItemController.js, server/utils/orderAddOnUtils.js.
+// Simple: This gets the add on catalog.
 const listAddOnCatalog = async ({ includeInactive = false } = {}) => {
     try {
         return await getCatalogFromDatabase({ includeInactive });
@@ -765,7 +765,7 @@ const listAddOnCatalog = async ({ includeInactive = false } = {}) => {
     }
 };
 
-// Code Review: Function createAddOnCatalogEntry in server\utils\orderAddOnUtils.js. Used in: server/controllers/menuItemController.js, server/utils/orderAddOnUtils.js.
+// Simple: This creates the add on catalog entry.
 const createAddOnCatalogEntry = async (payload, actorId = null) => {
     try {
         return await createCatalogEntryInDatabase(payload, actorId);
@@ -778,7 +778,7 @@ const createAddOnCatalogEntry = async (payload, actorId = null) => {
     }
 };
 
-// Code Review: Function updateAddOnCatalogEntry in server\utils\orderAddOnUtils.js. Used in: server/controllers/menuItemController.js, server/utils/orderAddOnUtils.js.
+// Simple: This updates the add on catalog entry.
 const updateAddOnCatalogEntry = async (id, payload, actorId = null) => {
     try {
         return await updateCatalogEntryInDatabase(id, payload, actorId);
@@ -791,7 +791,7 @@ const updateAddOnCatalogEntry = async (id, payload, actorId = null) => {
     }
 };
 
-// Code Review: Function deactivateAddOnCatalogEntry in server\utils\orderAddOnUtils.js. Used in: server/controllers/menuItemController.js, server/utils/orderAddOnUtils.js.
+// Simple: This handles deactivate add on catalog entry logic.
 const deactivateAddOnCatalogEntry = async (id, actorId = null) => {
     try {
         return await deactivateCatalogEntryInDatabase(id, actorId);
@@ -804,7 +804,7 @@ const deactivateAddOnCatalogEntry = async (id, actorId = null) => {
     }
 };
 
-// Code Review: Function parseOrderItemNotes in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This cleans or formats the order item notes.
 const parseOrderItemNotes = (rawNotes) => {
     const notes = String(rawNotes || '').trim();
     if (!notes) {
@@ -843,7 +843,7 @@ const parseOrderItemNotes = (rawNotes) => {
     }
 };
 
-// Code Review: Function serializeOrderItemNotes in server\utils\orderAddOnUtils.js. Used in: server/services/orderService.js, server/utils/orderAddOnUtils.js.
+// Simple: This handles serialize order item notes logic.
 const serializeOrderItemNotes = ({ customerNotes = '', baseUnitPrice = null, addOns = [] }) => {
     const safeCustomerNotes = String(customerNotes || '').trim();
     const safeAddOns = Array.isArray(addOns) ? addOns.filter((entry) => entry && entry.id) : [];
@@ -869,7 +869,7 @@ const serializeOrderItemNotes = ({ customerNotes = '', baseUnitPrice = null, add
     })}`;
 };
 
-// Code Review: Function getAllowedAddOnsForOrderItem in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This gets the allowed add ons for order item.
 const getAllowedAddOnsForOrderItem = async (orderItem) => {
     if (!orderItem || orderItem.ComboID || orderItem.combo || orderItem.ComboID === 0) {
         return [];
@@ -879,7 +879,7 @@ const getAllowedAddOnsForOrderItem = async (orderItem) => {
     return await getAllowedAddOnsForMenuItem(menuItemId);
 };
 
-// Code Review: Function normalizeAddOnSelections in server\utils\orderAddOnUtils.js. Used in: server/services/orderService.js, server/utils/orderAddOnUtils.js.
+// Simple: This cleans or formats the add on selections.
 const normalizeAddOnSelections = (selections, allowedAddOns) => {
     const allowedById = new Map((allowedAddOns || []).map((entry) => [entry.id, entry]));
     const mergedById = new Map();
@@ -918,14 +918,14 @@ const normalizeAddOnSelections = (selections, allowedAddOns) => {
     return [...mergedById.values()];
 };
 
-// Code Review: Function getAddOnsPerUnitTotal in server\utils\orderAddOnUtils.js. Used in: server/services/orderService.js, server/utils/orderAddOnUtils.js.
+// Simple: This gets the add ons per unit total.
 const getAddOnsPerUnitTotal = (normalizedAddOns) => {
     return toMoney(
         (normalizedAddOns || []).reduce((sum, entry) => sum + toMoney(entry.unitPrice) * Number(entry.quantity || 0), 0)
     );
 };
 
-// Code Review: Function buildOrderItemAddOnState in server\utils\orderAddOnUtils.js. Used in: server/utils/orderAddOnUtils.js.
+// Simple: This creates the order item add on state.
 const buildOrderItemAddOnState = (orderItem, allowedAddOns) => {
     const parsed = parseOrderItemNotes(orderItem?.ItemNotes);
     const normalizedSelectedAddOns = normalizeAddOnSelections(parsed.addOns, allowedAddOns);

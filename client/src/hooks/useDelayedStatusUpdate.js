@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const DEFAULT_DELAY_MS = 5000;
 
-// Code Review: Function removeKey in client\src\hooks\useDelayedStatusUpdate.js. Used in: client/src/hooks/useDelayedStatusUpdate.js.
+// Simple: This removes or clears the key.
 const removeKey = (obj, key) => {
   const copy = { ...obj };
   delete copy[key];

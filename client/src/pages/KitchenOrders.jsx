@@ -4,18 +4,18 @@ import Button from '../components/ui/Button';
 import { kitchenService } from '../services/dashboardService';
 import useDelayedStatusUpdate from '../hooks/useDelayedStatusUpdate';
 
-// Code Review: Function KitchenOrders in client\src\pages\KitchenOrders.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/CashierOrders.jsx, client/src/pages/DeliveryDashboard.jsx.
+// Simple: This shows the kitchen orders section.
 const KitchenOrders = () => {
     const [orders, setOrders] = useState([]);
     const [error, setError] = useState('');
 
-    // Code Review: Function getOrderTimestamp in client\src\pages\KitchenOrders.jsx. Used in: client/src/pages/KitchenOrders.jsx.
+    // Simple: This gets the order timestamp.
     const getOrderTimestamp = (value) => {
         const timestamp = new Date(value || 0).getTime();
         return Number.isNaN(timestamp) ? 0 : timestamp;
     };
 
-    // Code Review: Function normalizeSpecialInstructions in client\src\pages\KitchenOrders.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/CashierOrders.jsx, client/src/pages/DeliveryDashboard.jsx.
+    // Simple: This cleans or formats the special instructions.
     const normalizeSpecialInstructions = (order) => {
         const rawValue = order?.SpecialInstructions ?? order?.specialInstructions ?? order?.special_instructions ?? '';
         const normalized = String(rawValue || '').trim();
@@ -49,7 +49,7 @@ const KitchenOrders = () => {
     useEffect(() => {
         let isActive = true;
 
-        // Code Review: Function loadOrdersSafely in client\src\pages\KitchenOrders.jsx. Used in: client/src/pages/CashierOrders.jsx, client/src/pages/KitchenOrders.jsx, client/src/pages/OrderManagement.jsx.
+        // Simple: This gets the orders safely.
         const loadOrdersSafely = async () => {
             if (!isActive) return;
             await loadOrders();
@@ -66,7 +66,7 @@ const KitchenOrders = () => {
         };
     }, [loadOrders]);
 
-    // Code Review: Function getNextStatus in client\src\pages\KitchenOrders.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx, client/src/pages/KitchenOrders.jsx.
+    // Simple: This gets the next status.
     const getNextStatus = (status) => {
         const map = {
             CONFIRMED: 'PREPARING',
@@ -75,7 +75,7 @@ const KitchenOrders = () => {
         return map[status];
     };
 
-    // Code Review: Function getActionLabel in client\src\pages\KitchenOrders.jsx. Used in: client/src/pages/ActiveDeliveries.jsx, client/src/pages/DeliveryDashboard.jsx, client/src/pages/KitchenOrders.jsx.
+    // Simple: This gets the action label.
     const getActionLabel = (status) => {
         if (status === 'CONFIRMED') return 'Start Preparing';
         if (status === 'PREPARING') return 'Mark Ready';
@@ -98,7 +98,7 @@ const KitchenOrders = () => {
         },
     });
 
-    // Code Review: Function handleQueueStatusUpdate in client\src\pages\KitchenOrders.jsx. Used in: client/src/pages/KitchenOrders.jsx.
+    // Simple: This handles what happens when queue status update is triggered.
     const handleQueueStatusUpdate = (order) => {
         const nextStatus = getNextStatus(order.status);
         if (!nextStatus) return;

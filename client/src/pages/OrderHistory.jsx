@@ -8,7 +8,7 @@ import Button from '../components/ui/Button';
 import FilterResetButton from '../components/ui/FilterResetButton';
 import { getOrders } from '../services/orderApi';
 
-// Code Review: Function OrderHistory in client\src\pages\OrderHistory.jsx. Used in: client/src/pages/Menu.jsx, client/src/pages/MenuManagement.jsx, client/src/pages/OrderHistory.jsx.
+// Simple: This shows the order history section.
 const OrderHistory = () => {
     const [statusFilter, setStatusFilter] = useState('');
 
@@ -23,7 +23,7 @@ const OrderHistory = () => {
             }
 
             const response = await getOrders();
-            // Code Review: Function mapped in client\src\pages\OrderHistory.jsx. Used in: client/src/contexts/NotificationContext.jsx, client/src/pages/ActiveDeliveries.jsx, client/src/pages/CashierOrders.jsx.
+            // Simple: This handles mapped logic.
             const mapped = (response.data?.data || []).map((order) => {
                 // Handle both CreatedAt (PascalCase) and createdAt (camelCase) for compatibility
                 const createdAtValue = order.CreatedAt || order.createdAt || order.created_at;
@@ -62,7 +62,7 @@ const OrderHistory = () => {
     useEffect(() => {
         let isActive = true;
 
-        // Code Review: Function fetchOrdersSafely in client\src\pages\OrderHistory.jsx. Used in: client/src/pages/OrderHistory.jsx.
+        // Simple: This gets the orders safely.
         const fetchOrdersSafely = async (options = {}) => {
             if (!isActive) return;
             await fetchOrders(options);
@@ -99,12 +99,12 @@ const OrderHistory = () => {
 
     const hasActiveFilters = Boolean(statusFilter);
 
-    // Code Review: Function clearFilters in client\src\pages\OrderHistory.jsx. Used in: client/src/pages/Menu.jsx, client/src/pages/MenuManagement.jsx, client/src/pages/OrderHistory.jsx.
+    // Simple: This removes or clears the filters.
     const clearFilters = () => {
         setStatusFilter('');
     };
 
-    // Code Review: Function handleReorder in client\src\pages\OrderHistory.jsx. Used in: client/src/pages/OrderHistory.jsx.
+    // Simple: This handles what happens when reorder is triggered.
     const handleReorder = () => {
         alert('Items added to cart!');
     };

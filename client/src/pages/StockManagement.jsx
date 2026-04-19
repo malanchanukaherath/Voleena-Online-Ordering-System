@@ -9,7 +9,7 @@ import Select from '../components/ui/Select';
 import { menuItemService } from '../services/menuService';
 import { API_BASE_URL } from '../config/api';
 
-// Code Review: Function StockManagement in client\src\pages\StockManagement.jsx. Used in: client/src/contexts/AuthContext.jsx, client/src/pages/StockManagement.jsx, client/src/routes/AppRoutes.jsx.
+// Simple: This shows the stock management section.
 const StockManagement = () => {
     const { user } = useAuth();
     const apiBaseUrl = API_BASE_URL;
@@ -68,7 +68,7 @@ const StockManagement = () => {
     }, [fetchStock]);
 
     useEffect(() => {
-        // Code Review: Function loadMenuItems in client\src\pages\StockManagement.jsx. Used in: client/src/pages/StockManagement.jsx.
+        // Simple: This gets the menu items.
         const loadMenuItems = async () => {
             try {
                 const response = await menuItemService.getAll({ isActive: 'true' });
@@ -88,7 +88,7 @@ const StockManagement = () => {
         }
     }, [canEditStock]);
 
-    // Code Review: Function handleUpdateOpening in client\src\pages\StockManagement.jsx. Used in: client/src/pages/StockManagement.jsx.
+    // Simple: This handles what happens when update opening is triggered.
     const handleUpdateOpening = async (stockId, newQuantity) => {
         if (!canEditStock) {
             toast.error('Only admins or kitchen staff can update stock');
@@ -123,7 +123,7 @@ const StockManagement = () => {
         }
     };
 
-    // Code Review: Function handleManualAdjust in client\src\pages\StockManagement.jsx. Used in: client/src/pages/StockManagement.jsx.
+    // Simple: This handles what happens when manual adjust is triggered.
     const handleManualAdjust = async (stockId, adjustment, reason) => {
         if (!canEditStock) {
             toast.error('Only admins or kitchen staff can update stock');
@@ -170,7 +170,7 @@ const StockManagement = () => {
         }
     };
 
-    // Code Review: Function handleAddStockItem in client\src\pages\StockManagement.jsx. Used in: client/src/pages/StockManagement.jsx.
+    // Simple: This handles what happens when add stock item is triggered.
     const handleAddStockItem = async () => {
         if (!canEditStock) {
             toast.error('Only admins or kitchen staff can update stock');
@@ -220,7 +220,7 @@ const StockManagement = () => {
         }
     };
 
-    // Code Review: Function handleRemoveStockItem in client\src\pages\StockManagement.jsx. Used in: client/src/pages/StockManagement.jsx.
+    // Simple: This handles what happens when remove stock item is triggered.
     const handleRemoveStockItem = async (stockId) => {
         if (!canEditStock) {
             toast.error('Only admins or kitchen staff can update stock');

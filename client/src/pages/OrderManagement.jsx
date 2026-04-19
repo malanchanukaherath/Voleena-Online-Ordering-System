@@ -36,13 +36,13 @@ const validStatusTransitions = {
     CANCELLED: [],
 };
 
-// Code Review: Function getStatusOptionsForOrder in client\src\pages\OrderManagement.jsx. Used in: client/src/pages/OrderManagement.jsx.
+// Simple: This gets the status options for order.
 const getStatusOptionsForOrder = (status) => {
     const allowedStatuses = new Set([status, ...(validStatusTransitions[status] || [])]);
     return orderStatusOptions.filter((option) => allowedStatuses.has(option.value));
 };
 
-// Code Review: Function OrderManagement in client\src\pages\OrderManagement.jsx. Used in: client/src/pages/CashierOrders.jsx, client/src/pages/KitchenOrders.jsx, client/src/pages/OrderManagement.jsx.
+// Simple: This shows the order management section.
 const OrderManagement = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
@@ -96,7 +96,7 @@ const OrderManagement = () => {
     useEffect(() => {
         let isActive = true;
 
-        // Code Review: Function loadOrdersSafely in client\src\pages\OrderManagement.jsx. Used in: client/src/pages/CashierOrders.jsx, client/src/pages/KitchenOrders.jsx, client/src/pages/OrderManagement.jsx.
+        // Simple: This gets the orders safely.
         const loadOrdersSafely = async (options = {}) => {
             if (!isActive) return;
             await loadOrders(options);
@@ -132,13 +132,13 @@ const OrderManagement = () => {
 
     const hasActiveFilters = Boolean(searchTerm || statusFilter);
 
-    // Code Review: Function clearFilters in client\src\pages\OrderManagement.jsx. Used in: client/src/pages/Menu.jsx, client/src/pages/MenuManagement.jsx, client/src/pages/OrderHistory.jsx.
+    // Simple: This removes or clears the filters.
     const clearFilters = () => {
         setSearchTerm('');
         setStatusFilter('');
     };
 
-    // Code Review: Function handleStatusUpdate in client\src\pages\OrderManagement.jsx. Used in: client/src/pages/OrderManagement.jsx.
+    // Simple: This handles what happens when status update is triggered.
     const handleStatusUpdate = async (orderId, newStatus) => {
         try {
             await backendApi.patch(`/api/v1/orders/${orderId}/status`, { status: newStatus });
@@ -177,14 +177,14 @@ const OrderManagement = () => {
         },
     });
 
-    // Code Review: Function getSelectedStatus in client\src\pages\OrderManagement.jsx. Used in: client/src/pages/OrderManagement.jsx.
+    // Simple: This gets the selected status.
     const getSelectedStatus = (order) => {
         const pending = getPendingUpdate(order.id);
         if (pending) return pending.toStatus;
         return draftStatuses[order.id] || order.status;
     };
 
-    // Code Review: Function handleDraftStatusChange in client\src\pages\OrderManagement.jsx. Used in: client/src/pages/OrderManagement.jsx.
+    // Simple: This handles what happens when draft status change is triggered.
     const handleDraftStatusChange = (orderId, status) => {
         setDraftStatuses((prev) => ({
             ...prev,
@@ -192,7 +192,7 @@ const OrderManagement = () => {
         }));
     };
 
-    // Code Review: Function resetDraftStatus in client\src\pages\OrderManagement.jsx. Used in: client/src/pages/OrderManagement.jsx.
+    // Simple: This removes or clears the draft status.
     const resetDraftStatus = (order) => {
         setDraftStatuses((prev) => {
             if (!Object.prototype.hasOwnProperty.call(prev, order.id)) {
@@ -205,7 +205,7 @@ const OrderManagement = () => {
         });
     };
 
-    // Code Review: Function queueOrderStatusUpdate in client\src\pages\OrderManagement.jsx. Used in: client/src/pages/OrderManagement.jsx.
+    // Simple: This handles queue order status update logic.
     const queueOrderStatusUpdate = (order) => {
         const selectedStatus = getSelectedStatus(order);
         if (!selectedStatus || selectedStatus === order.status) return;

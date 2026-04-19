@@ -19,7 +19,7 @@ const {
     toMoney
 } = require('../utils/orderAddOnUtils');
 
-// Code Review: Function isAddressTableMissingError in server\services\orderService.js. Used in: server/controllers/cashierController.js, server/controllers/deliveryController.js, server/controllers/orderController.js.
+// Simple: This checks whether address table missing error is true.
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
     const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -32,7 +32,7 @@ const isAddressTableMissingError = (error) => {
         || (message.includes("doesn't exist") && message.includes('address'));
 };
 
-// Code Review: Function markAddressUnavailableError in server\services\orderService.js. Used in: server/services/orderService.js.
+// Simple: This updates the address unavailable error.
 const markAddressUnavailableError = (error) => {
     if (isAddressTableMissingError(error)) {
         error.code = 'ADDRESS_TABLE_UNAVAILABLE';
@@ -42,10 +42,10 @@ const markAddressUnavailableError = (error) => {
 };
 
 const CUSTOMER_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
-// Code Review: Function normalizePhone in server\services\orderService.js. Used in: server/controllers/orderController.js, server/routes/customers.js, server/services/orderService.js.
+// Simple: This cleans or formats the phone.
 const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
 
-// Code Review: Function isUsableCoordinatePair in server\services\orderService.js. Used in: server/services/orderService.js.
+// Simple: This checks whether usable coordinate pair is true.
 const isUsableCoordinatePair = (latitude, longitude) => {
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
         return false;
@@ -63,7 +63,7 @@ const isUsableCoordinatePair = (latitude, longitude) => {
     return true;
 };
 
-// Code Review: Function notifySafely in server\services\orderService.js. Used in: server/services/orderService.js.
+// Simple: This sends or records an update.
 const notifySafely = async (action, context) => {
     try {
         await action();
@@ -72,7 +72,7 @@ const notifySafely = async (action, context) => {
     }
 };
 
-// Code Review: Function normalizeNotificationPreference in server\services\orderService.js. Used in: server/controllers/deliveryController.js, server/services/orderService.js.
+// Simple: This cleans or formats the notification preference.
 const normalizeNotificationPreference = (preference) => {
     const normalized = String(preference || 'BOTH').trim().toUpperCase();
     if (['EMAIL', 'SMS', 'BOTH'].includes(normalized)) {
@@ -82,7 +82,7 @@ const normalizeNotificationPreference = (preference) => {
     return 'BOTH';
 };
 
-// Code Review: Function canSendOrderEmail in server\services\orderService.js. Used in: server/services/orderService.js.
+// Simple: This checks whether send order email is allowed.
 const canSendOrderEmail = (runtimeSettings, customer, eventSettingKey) => {
     if (!runtimeSettings?.emailNotifications || !runtimeSettings?.[eventSettingKey] || !customer?.Email) {
         return false;
@@ -92,7 +92,7 @@ const canSendOrderEmail = (runtimeSettings, customer, eventSettingKey) => {
     return preference === 'EMAIL' || preference === 'BOTH';
 };
 
-// Code Review: Function canSendOrderSMS in server\services\orderService.js. Used in: server/services/orderService.js.
+// Simple: This checks whether send order sms is allowed.
 const canSendOrderSMS = (runtimeSettings, customer, eventSettingKey) => {
     if (!runtimeSettings?.smsNotifications || !runtimeSettings?.[eventSettingKey] || !customer?.Phone) {
         return false;
@@ -102,9 +102,9 @@ const canSendOrderSMS = (runtimeSettings, customer, eventSettingKey) => {
     return preference === 'SMS' || preference === 'BOTH';
 };
 
-// Code Review: Function intersectAllowedAddOns in server\services\orderService.js. Used in: server/services/orderService.js.
+// Simple: This combines or filters the allowed add ons.
 const intersectAllowedAddOns = (collections) => {
-    // Code Review: Function safeCollections in server\services\orderService.js. Used in: client/src/pages/Checkout.jsx, client/src/pages/MenuItemDetail.jsx, server/services/orderService.js.
+    // Simple: This handles safe collections logic.
     const safeCollections = (collections || []).filter((entry) => Array.isArray(entry));
     if (safeCollections.length === 0) {
         return [];
@@ -151,7 +151,7 @@ const intersectAllowedAddOns = (collections) => {
     return [...accumulator.values()].sort((left, right) => left.id.localeCompare(right.id));
 };
 
-// Code Review: Function getAllowedAddOnsForCombo in server\services\orderService.js. Used in: server/services/orderService.js.
+// Simple: This gets the allowed add ons for combo.
 const getAllowedAddOnsForCombo = async (comboId, transaction) => {
     const comboComponents = await ComboPackItem.findAll({
         where: { ComboID: comboId },
@@ -184,7 +184,7 @@ class OrderService {
     async buildStockItemsFromOrderItems(orderItems, transaction) {
         const requiredByMenuItem = new Map();
 
-        // Code Review: Function addRequirement in server\services\orderService.js. Used in: server/services/orderService.js.
+        // Simple: This creates the requirement.
         const addRequirement = (menuItemId, quantity) => {
             if (!Number.isInteger(menuItemId) || !Number.isFinite(quantity) || quantity <= 0) {
                 return;

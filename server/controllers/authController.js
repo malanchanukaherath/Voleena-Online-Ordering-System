@@ -29,7 +29,7 @@ const PASSWORD_RESET_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
 /**
  * Generate JWT Token with 30-minute expiry
  */
-// Code Review: Function generateToken in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This creates the token.
 const generateToken = (payload) => {
   if (typeof generateAccessToken === 'function') {
     return generateAccessToken(payload);
@@ -39,7 +39,7 @@ const generateToken = (payload) => {
   });
 };
 
-// Code Review: Function generateRefreshToken in server\controllers\authController.js. Used in: server/controllers/authController.js, server/utils/jwtUtils.js.
+// Simple: This creates the refresh token.
 const generateRefreshToken = (payload) => {
   if (typeof generateRefreshJwt === 'function') {
     return generateRefreshJwt(payload);
@@ -49,28 +49,28 @@ const generateRefreshToken = (payload) => {
   });
 };
 
-// Code Review: Function hashVerificationToken in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This handles hash verification token logic.
 const hashVerificationToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex');
 };
 
-// Code Review: Function hashOtpCode in server\controllers\authController.js. Used in: server/controllers/authController.js, server/routes/customers.js.
+// Simple: This handles hash otp code logic.
 const hashOtpCode = (otpCode) => {
   return crypto.createHash('sha256').update(String(otpCode).trim()).digest('hex');
 };
 
-// Code Review: Function generateEmailVerificationToken in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This creates the email verification token.
 const generateEmailVerificationToken = () => {
   return crypto.randomBytes(32).toString('hex');
 };
 
-// Code Review: Function buildEmailVerificationUrl in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This creates the email verification url.
 const buildEmailVerificationUrl = (token) => {
   const frontendBase = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
   return `${frontendBase}/verify-email?token=${encodeURIComponent(token)}`;
 };
 
-// Code Review: Function createEmailVerificationToken in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This creates the email verification token.
 const createEmailVerificationToken = async (customerId, invalidateExisting = true) => {
   if (invalidateExisting) {
     await sequelize.query(
@@ -103,7 +103,7 @@ const createEmailVerificationToken = async (customerId, invalidateExisting = tru
   };
 };
 
-// Code Review: Function markEmailVerificationTokenUsed in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This updates the email verification token used.
 const markEmailVerificationTokenUsed = async (tokenHash) => {
   await sequelize.query(
     `UPDATE email_verification_token
@@ -116,7 +116,7 @@ const markEmailVerificationTokenUsed = async (tokenHash) => {
   );
 };
 
-// Code Review: Function issueVerificationEmail in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This handles issue verification email logic.
 const issueVerificationEmail = async (customer, options = {}) => {
   const { enforceCooldown = false } = options;
 
@@ -166,21 +166,21 @@ const issueVerificationEmail = async (customer, options = {}) => {
 /**
  * Validate email format
  */
-// Code Review: Function isValidEmail in server\controllers\authController.js. Used in: server/controllers/authController.js, server/routes/Auth.js.
+// Simple: This checks whether valid email is true.
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 /**
  * Validate password strength
  */
-// Code Review: Function isValidPassword in server\controllers\authController.js. Used in: server/controllers/authController.js, server/routes/Auth.js.
+// Simple: This checks whether valid password is true.
 const isValidPassword = (password) => password && password.length >= 8;
 
-// Code Review: Function isSuccessfulDeliveryResult in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This checks whether successful delivery result is true.
 const isSuccessfulDeliveryResult = (deliveryResult) => {
   return Boolean(deliveryResult && deliveryResult.success === true && deliveryResult.skipped !== true);
 };
 
-// Code Review: Function verifyRegistrationEmailToken in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This checks if the registration email token is correct.
 const verifyRegistrationEmailToken = async (rawToken, res) => {
   const transaction = await sequelize.transaction();
 
@@ -281,7 +281,7 @@ const verifyRegistrationEmailToken = async (rawToken, res) => {
   }
 };
 
-// Code Review: Function verifyCustomerEmailChangeToken in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This checks if the customer email change token is correct.
 const verifyCustomerEmailChangeToken = async (rawToken, res) => {
   let decoded;
 
@@ -383,7 +383,7 @@ const verifyCustomerEmailChangeToken = async (rawToken, res) => {
   }
 };
 
-// Code Review: Function isPasswordResetTableMissingError in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This checks whether password reset table missing error is true.
 const isPasswordResetTableMissingError = (error) => {
   const mysqlCode = error?.original?.code || error?.parent?.code;
   const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -396,7 +396,7 @@ const isPasswordResetTableMissingError = (error) => {
     || (message.includes("doesn't exist") && message.includes('password_reset'));
 };
 
-// Code Review: Function buildRefreshPayloadFromCurrentUser in server\controllers\authController.js. Used in: server/controllers/authController.js.
+// Simple: This creates the refresh payload from current user.
 const buildRefreshPayloadFromCurrentUser = async (decoded) => {
   if (decoded.type === 'Customer') {
     const customer = await Customer.findOne({

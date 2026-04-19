@@ -244,12 +244,12 @@ const endpoints = [
   { folder: 'Upload', method: 'POST', path: '/api/v1/upload/image', auth: 'Bearer token', query: '-', body: 'multipart: image, folder?', success: '200 upload result', errors: '400, 401, 500', sampleBody: null }
 ];
 
-// Code Review: Function escapePipe in server\scripts\generate-api-artifacts.js. Used in: server/scripts/generate-api-artifacts.js.
+// Simple: This handles escape pipe logic.
 function escapePipe(value) {
   return String(value).replace(/\|/g, '\\|');
 }
 
-// Code Review: Function markdownTable in server\scripts\generate-api-artifacts.js. Used in: server/scripts/generate-api-artifacts.js.
+// Simple: This handles markdown table logic.
 function markdownTable(rows) {
   return [
     '| Method | Endpoint | Auth | Query | Request Body | Success Response | Error Responses |',
@@ -258,7 +258,7 @@ function markdownTable(rows) {
   ].join('\n');
 }
 
-// Code Review: Function groupByFolder in server\scripts\generate-api-artifacts.js. Used in: server/scripts/generate-api-artifacts.js.
+// Simple: This combines or filters the by folder.
 function groupByFolder(items) {
   return items.reduce((acc, item) => {
     acc[item.folder] = acc[item.folder] || [];
@@ -267,7 +267,7 @@ function groupByFolder(items) {
   }, {});
 }
 
-// Code Review: Function createCollectionItem in server\scripts\generate-api-artifacts.js. Used in: server/scripts/generate-api-artifacts.js.
+// Simple: This creates the collection item.
 function createCollectionItem(endpoint) {
   const rawUrl = `{{baseUrl}}${endpoint.path.replace(/:([A-Za-z0-9_]+)/g, '{{$1}}')}`;
   const url = {
@@ -318,18 +318,18 @@ function createCollectionItem(endpoint) {
   };
 }
 
-// Code Review: Function ensureDir in server\scripts\generate-api-artifacts.js. Used in: server/scripts/generate-api-artifacts.js.
+// Simple: This handles ensure dir logic.
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
-// Code Review: Function writeFile in server\scripts\generate-api-artifacts.js. Used in: server/scripts/generate-api-artifacts.js.
+// Simple: This handles write file logic.
 function writeFile(targetPath, content) {
   ensureDir(path.dirname(targetPath));
   fs.writeFileSync(targetPath, content, 'utf8');
 }
 
-// Code Review: Function buildApiDocumentation in server\scripts\generate-api-artifacts.js. Used in: server/scripts/generate-api-artifacts.js.
+// Simple: This creates the api documentation.
 function buildApiDocumentation() {
   const grouped = groupByFolder(endpoints);
   const sections = Object.keys(grouped)
@@ -339,17 +339,17 @@ function buildApiDocumentation() {
   return `# API Documentation\n\nThis document covers the active versioned API surface mounted under /api/v1. Legacy /api/* aliases exist for backward compatibility but are intentionally omitted here.\n\n## Feature Inventory\n\n${featureGroups.map((group) => `### ${group.name}\n${group.features.map((feature) => `- ${feature}`).join('\n')}`).join('\n\n')}\n\n## Database Entities\n\n${entities.map((entity) => `- ${entity}`).join('\n')}\n\n${sections}\n`;
 }
 
-// Code Review: Function buildTestPlanAndAudit in server\scripts\generate-api-artifacts.js. Used in: server/scripts/generate-api-artifacts.js.
+// Simple: This creates the test plan and audit.
 function buildTestPlanAndAudit() {
   return `# API Test Plan And Audit\n\n## Automated Test Implementation\n\nThe current Jest + Supertest suite covers:\n- Auth flows in server/tests/auth.routes.test.js\n- Customer and address flows in server/tests/customers.routes.test.js\n- Cart validation and summary in server/tests/cart.routes.test.js\n- Order create/list/confirm/cancel flows in server/tests/orders.routes.test.js\n- Payment initiation and webhook validation in server/tests/payments.routes.test.js\n- Delivery fee, distance, location, and availability flows in server/tests/delivery.routes.test.js\n- Category route validation and side effects in server/tests/categories.routes.test.js\n- Contract coverage for the remaining mounted route surface in server/tests/route-contracts.test.js\n\n## Single Command Execution\n\n- Workspace root: npm test\n- Server direct: npm --prefix server test\n\n## Test Strategy\n\n- Route-contract coverage guarantees the mounted API surface remains reachable with the expected authorization gates.\n- Behavior-focused tests target the highest-risk stateful flows: auth, customers, ordering, delivery, and payments.\n- Database side effects are verified through model and service mocks so the suite stays deterministic and fast in CI.\n- Public lookup endpoints are exercised separately from authenticated role-based endpoints.\n\n## Simulated User Flow Coverage\n\n- User registration\n- Email verification failure handling\n- Customer login\n- Token verification and logout\n- Customer address creation\n- Cart validation and summary\n- Order creation\n- Order confirmation and cancellation\n- Payment initiation and webhook validation\n- Delivery fee calculation and location lookup\n- Category CRUD and image cleanup side effects\n\n## Audit Findings\n\n| Severity | Status | Finding | Files |\n| --- | --- | --- | --- |\n${auditFindings.map((finding) => `| ${finding.severity} | ${finding.status} | ${escapePipe(finding.issue)} | ${escapePipe(finding.files)} |`).join('\n')}\n\n## Recommended Next Refactors\n\n- Standardize all API responses to a single envelope: success, data, message, error.\n- Remove or archive server/routes/Auth.js to eliminate dead legacy auth code.\n- Batch stock and automated job queries to reduce loop-driven database access under load.\n- Add dedicated controller-level tests for admin, cashier, kitchen, stock, upload, menu item, and combo pack business logic once response formats are standardized.\n`;
 }
 
-// Code Review: Function buildFeatureChecklist in server\scripts\generate-api-artifacts.js. Used in: server/scripts/generate-api-artifacts.js.
+// Simple: This creates the feature checklist.
 function buildFeatureChecklist() {
   return `# Feature Testing Checklist\n\n## Authentication\n- [ ] Register a customer with valid details\n- [ ] Reject registration with duplicate email or phone\n- [ ] Reject customer login before email verification\n- [ ] Verify access token and logout successfully\n- [ ] Request, verify, and complete password reset\n\n## Customer Profile\n- [ ] Staff creates a new customer manually\n- [ ] Staff sees duplicate customer match instead of a duplicate insert\n- [ ] Customer reads profile and address list\n- [ ] Customer creates an address with direct coordinates\n- [ ] Customer creates an address that requires geocoding\n\n## Catalog\n- [ ] Public menu listing returns active items\n- [ ] Authorized users fetch menu item detail\n- [ ] Admin or kitchen creates and updates a menu item\n- [ ] Admin creates, updates, and deactivates categories\n- [ ] Admin creates and updates combo packs\n- [ ] Admin uploads menu and combo images\n\n## Cart And Orders\n- [ ] Public cart validation rejects invalid payloads\n- [ ] Public cart summary calculates totals correctly\n- [ ] Customer places takeaway order\n- [ ] Customer places delivery order with address\n- [ ] Customer retrieves own orders only\n- [ ] Cashier confirms an order\n- [ ] Staff updates order status\n- [ ] Customer cancels an eligible order\n\n## Payments\n- [ ] Customer initiates card payment for own order\n- [ ] Reject payment initiation for foreign or cancelled orders\n- [ ] Reject duplicate pending or paid payment creation\n- [ ] Validate PayHere webhook signature and amount\n- [ ] Reject Stripe webhook when configuration is missing or invalid\n\n## Delivery\n- [ ] Public delivery distance validation works with GPS coordinates\n- [ ] Public delivery distance validation works with address geocoding\n- [ ] Public fee calculation rejects invalid distance\n- [ ] Delivery staff reads dashboard and assigned deliveries\n- [ ] Delivery staff updates availability\n- [ ] Delivery staff tracks live location\n- [ ] Customer reads own delivery location\n- [ ] Admin lists available delivery staff\n\n## Operations\n- [ ] Admin dashboard and reports load\n- [ ] Admin staff CRUD works\n- [ ] Admin assigns delivery staff to an order\n- [ ] Kitchen dashboard, queue, and stock endpoints load\n- [ ] Cashier dashboard, orders, and customer management endpoints load\n- [ ] Stock update, adjustment, movement, and legacy endpoints are accessible to admin/kitchen roles\n`;
 }
 
-// Code Review: Function buildCollection in server\scripts\generate-api-artifacts.js. Used in: server/scripts/generate-api-artifacts.js.
+// Simple: This creates the collection.
 function buildCollection() {
   const grouped = groupByFolder(endpoints);
 

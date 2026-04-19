@@ -50,7 +50,7 @@ const DEFAULT_SETTINGS = {
     minimumCashChange: 100,
 };
 
-// Code Review: Function mergeSettings in client\src\pages\Settings.jsx. Used in: client/src/pages/Settings.jsx.
+// Simple: This combines or filters the settings.
 const mergeSettings = (incoming = {}) => {
     const incomingBusinessHours = incoming.businessHours || {};
     const businessHours = Object.keys(DEFAULT_SETTINGS.businessHours).reduce((acc, day) => {
@@ -69,7 +69,7 @@ const mergeSettings = (incoming = {}) => {
     };
 };
 
-// Code Review: Function Settings in client\src\pages\Settings.jsx. Used in: client/src/components/layout/Sidebar.jsx, client/src/hooks/usePublicSettings.js, client/src/pages/Login.jsx.
+// Simple: This shows the settings section.
 const Settings = () => {
     const [activeTab, setActiveTab] = useState('general');
     const [settings, setSettings] = useState(DEFAULT_SETTINGS);
@@ -83,7 +83,7 @@ const Settings = () => {
     useEffect(() => {
         let isMounted = true;
 
-        // Code Review: Function loadSettings in client\src\pages\Settings.jsx. Used in: client/src/hooks/usePublicSettings.js, client/src/pages/Settings.jsx.
+        // Simple: This gets the settings.
         const loadSettings = async () => {
             setIsLoading(true);
             setLoadError('');
@@ -114,7 +114,7 @@ const Settings = () => {
         };
     }, []);
 
-    // Code Review: Function handleInputChange in client\src\pages\Settings.jsx. Used in: client/src/pages/Login.jsx, client/src/pages/Register.jsx, client/src/pages/Settings.jsx.
+    // Simple: This handles what happens when input change is triggered.
     const handleInputChange = (field, value) => {
         setSettings(prev => ({
             ...prev,
@@ -122,7 +122,7 @@ const Settings = () => {
         }));
     };
 
-    // Code Review: Function handleBusinessHoursChange in client\src\pages\Settings.jsx. Used in: client/src/pages/Settings.jsx.
+    // Simple: This handles what happens when business hours change is triggered.
     const handleBusinessHoursChange = (day, field, value) => {
         setSettings(prev => ({
             ...prev,
@@ -136,7 +136,7 @@ const Settings = () => {
         }));
     };
 
-    // Code Review: Function handleSave in client\src\pages\Settings.jsx. Used in: client/src/pages/Settings.jsx.
+    // Simple: This handles what happens when save is triggered.
     const handleSave = async () => {
         setIsSaving(true);
         setSaveError('');

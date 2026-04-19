@@ -14,7 +14,7 @@ const JWT_REFRESH_EXPIRE = process.env.JWT_REFRESH_EXPIRE || '7d';
 /**
  * Generate access token
  */
-// Code Review: Function generateAccessToken in server\utils\jwtUtils.js. Used in: server/controllers/authController.js, server/utils/jwtUtils.js.
+// Simple: This creates the access token.
 function generateAccessToken(payload) {
     return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRE });
 }
@@ -22,7 +22,7 @@ function generateAccessToken(payload) {
 /**
  * Generate refresh token
  */
-// Code Review: Function generateRefreshToken in server\utils\jwtUtils.js. Used in: server/controllers/authController.js, server/utils/jwtUtils.js.
+// Simple: This creates the refresh token.
 function generateRefreshToken(payload) {
     return jwt.sign(payload, JWT_REFRESH_SECRET, { expiresIn: JWT_REFRESH_EXPIRE });
 }
@@ -30,7 +30,7 @@ function generateRefreshToken(payload) {
 /**
  * Verify access token
  */
-// Code Review: Function verifyAccessToken in server\utils\jwtUtils.js. Used in: server/controllers/authController.js, server/middleware/auth.js, server/tests/auth.routes.test.js.
+// Simple: This checks if the access token is correct.
 function verifyAccessToken(token) {
     try {
         return jwt.verify(token, JWT_SECRET);
@@ -45,7 +45,7 @@ function verifyAccessToken(token) {
 /**
  * Verify refresh token
  */
-// Code Review: Function verifyRefreshToken in server\utils\jwtUtils.js. Used in: server/controllers/authController.js, server/tests/auth.routes.test.js, server/utils/jwtUtils.js.
+// Simple: This checks if the refresh token is correct.
 function verifyRefreshToken(token) {
     try {
         return jwt.verify(token, JWT_REFRESH_SECRET);
@@ -60,7 +60,7 @@ function verifyRefreshToken(token) {
 /**
  * Hash token for blacklist storage
  */
-// Code Review: Function hashToken in server\utils\jwtUtils.js. Used in: server/controllers/authController.js, server/tests/auth.routes.test.js, server/utils/jwtUtils.js.
+// Simple: This handles hash token logic.
 function hashToken(token) {
     return crypto.createHash('sha256').update(token).digest('hex');
 }
@@ -68,7 +68,7 @@ function hashToken(token) {
 /**
  * Check if token is blacklisted
  */
-// Code Review: Function isTokenBlacklisted in server\utils\jwtUtils.js. Used in: server/middleware/auth.js, server/tests/auth.routes.test.js, server/utils/jwtUtils.js.
+// Simple: This checks whether token blacklisted is true.
 async function isTokenBlacklisted(token) {
     if (!TokenBlacklist) {
         return false;
@@ -83,7 +83,7 @@ async function isTokenBlacklisted(token) {
 /**
  * Blacklist a token
  */
-// Code Review: Function blacklistToken in server\utils\jwtUtils.js. Used in: server/utils/jwtUtils.js.
+// Simple: This handles blacklist token logic.
 async function blacklistToken(token, userType, userId, reason = 'LOGOUT') {
     if (!TokenBlacklist) {
         return;
@@ -109,7 +109,7 @@ async function blacklistToken(token, userType, userId, reason = 'LOGOUT') {
 /**
  * Clean expired blacklisted tokens (run periodically)
  */
-// Code Review: Function cleanExpiredBlacklistedTokens in server\utils\jwtUtils.js. Used in: server/utils/jwtUtils.js.
+// Simple: This handles clean expired blacklisted tokens logic.
 async function cleanExpiredBlacklistedTokens() {
     if (!TokenBlacklist) {
         return 0;

@@ -3,9 +3,9 @@ import { FaTag, FaClock } from 'react-icons/fa';
 import Button from './ui/Button';
 import { resolveAssetUrl } from '../config/api';
 
-// Code Review: Function ComboPackCard in client\src\components\ComboPackCard.jsx. Used in: client/src/components/ComboPackCard.jsx.
+// Simple: This shows the combo pack card section.
 const ComboPackCard = ({ combo, onAddToCart }) => {
-    // Code Review: Function resolveImageUrl in client\src\components\ComboPackCard.jsx. Used in: client/src/components/ComboPackCard.jsx, client/src/pages/Home.jsx, client/src/pages/Menu.jsx.
+    // Simple: This cleans or formats the image url.
     const resolveImageUrl = (imagePath) => {
         if (!imagePath) {
             return null;
@@ -13,7 +13,7 @@ const ComboPackCard = ({ combo, onAddToCart }) => {
         return resolveAssetUrl(imagePath);
     };
 
-    // Code Review: Function formatDate in client\src\components\ComboPackCard.jsx. Used in: client/src/components/ComboPackCard.jsx, client/src/pages/CustomerManagement.jsx, client/src/pages/StaffManagement.jsx.
+    // Simple: This cleans or formats the date.
     const formatDate = (dateString) => {
         return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',

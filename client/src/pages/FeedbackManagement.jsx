@@ -4,7 +4,7 @@ import Textarea from '../components/ui/Textarea';
 import Button from '../components/ui/Button';
 import { getAdminFeedback, respondToFeedback } from '../services/feedbackService';
 
-// Code Review: Function FeedbackManagement in client\src\pages\FeedbackManagement.jsx. Used in: client/src/pages/FeedbackManagement.jsx, client/src/routes/AppRoutes.jsx.
+// Simple: This shows the feedback management section.
 const FeedbackManagement = () => {
     const [feedbacks, setFeedbacks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -13,7 +13,7 @@ const FeedbackManagement = () => {
     const [responseDraft, setResponseDraft] = useState('');
     const [isSubmittingResponse, setIsSubmittingResponse] = useState(false);
 
-    // Code Review: Function loadFeedback in client\src\pages\FeedbackManagement.jsx. Used in: client/src/pages/FeedbackManagement.jsx.
+    // Simple: This gets the feedback.
     const loadFeedback = async () => {
         try {
             setIsLoading(true);
@@ -35,27 +35,27 @@ const FeedbackManagement = () => {
     const filteredFeedback = useMemo(() => {
         return feedbacks;
     }, [feedbacks]);
-    // Code Review: Function renderStars in client\src\pages\FeedbackManagement.jsx. Used in: client/src/pages/FeedbackManagement.jsx.
+    // Simple: This shows the stars.
     const renderStars = (rating) => {
         return [...Array(5)].map((_, i) => (
             <FaStar key={i} className={`inline w-4 h-4 ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`} />
         ));
     };
 
-    // Code Review: Function formatFeedbackDate in client\src\pages\FeedbackManagement.jsx. Used in: client/src/pages/FeedbackManagement.jsx.
+    // Simple: This cleans or formats the feedback date.
     const formatFeedbackDate = (value) => {
         if (!value) return 'N/A';
         const date = new Date(value);
         return Number.isNaN(date.getTime()) ? 'N/A' : date.toLocaleString();
     };
 
-    // Code Review: Function handleOpenReply in client\src\pages\FeedbackManagement.jsx. Used in: client/src/pages/FeedbackManagement.jsx.
+    // Simple: This handles what happens when open reply is triggered.
     const handleOpenReply = (feedback) => {
         setExpandedResponseId(feedback.FeedbackID);
         setResponseDraft(feedback.AdminResponse || '');
     };
 
-    // Code Review: Function handleSubmitReply in client\src\pages\FeedbackManagement.jsx. Used in: client/src/pages/FeedbackManagement.jsx.
+    // Simple: This handles what happens when submit reply is triggered.
     const handleSubmitReply = async (feedbackId) => {
         if (!responseDraft.trim()) {
             return;
