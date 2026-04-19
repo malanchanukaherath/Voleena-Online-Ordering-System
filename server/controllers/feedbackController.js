@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_CONTROLLER_FEEDBACKCONTROLLER
+// PURPOSE: Handles incoming requests, processes logic, and returns responses.
+// SEARCH_HINT: Look here for request handling logic and data processing.
 const { Feedback, Order, Customer, Staff } = require('../models');
 
 const getFeedbackErrorMessage = (error, fallback) => {

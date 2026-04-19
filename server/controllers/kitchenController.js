@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_CONTROLLER_KITCHENCONTROLLER
+// PURPOSE: Handles incoming requests, processes logic, and returns responses.
+// SEARCH_HINT: Look here for request handling logic and data processing.
 const { Order, OrderItem, MenuItem, DailyStock, OrderStatusHistory, Payment, sequelize } = require('../models');
 const orderService = require('../services/orderService');
 

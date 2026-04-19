@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_JWT_UTILS
+// PURPOSE: Generate, verify, hash, and blacklist JWT tokens.
+// SEARCH_HINT: Use this for token lifecycle explanation.
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { TokenBlacklist } = require('../models');

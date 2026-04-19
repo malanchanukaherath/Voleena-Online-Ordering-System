@@ -1,3 +1,6 @@
+// CODEMAP: FRONTEND_API_CLIENT
+// PURPOSE: Central axios client with auth token and 401 handling.
+// SEARCH_HINT: Start here when tracing any frontend API request.
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
 

@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_ORDER_SERVICE
+// PURPOSE: Central business logic for order lifecycle and stock/payment checks.
+// SEARCH_HINT: Main file for understanding order rules and side effects.
 const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, ComboPackItem, Delivery, DeliveryStaffAvailability, Payment, Address, PreorderApprovalLog, sequelize } = require('../models');
 const { Transaction, Op } = require('sequelize');
 const stockService = require('./stockService');

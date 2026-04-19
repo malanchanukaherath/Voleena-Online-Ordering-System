@@ -1,3 +1,6 @@
+// CODEMAP: FRONTEND_APP_SHELL
+// PURPOSE: Compose router, providers, layout, and global toast UI.
+// SEARCH_HINT: Start here to explain frontend composition.
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
@@ -27,8 +30,6 @@ const AppInner = () => {
         draggable
         pauseOnHover
         theme={theme}
-        toastClassName={() => 'rounded-xl border border-gray-200 shadow-lg dark:border-slate-700'}
-        bodyClassName={() => 'text-sm font-medium text-gray-800 dark:text-slate-200'}
         progressClassName="!bg-primary-500"
       />
     </>

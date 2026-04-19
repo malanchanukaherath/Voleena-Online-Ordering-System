@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_CONTROLLER_CASHIERCONTROLLER
+// PURPOSE: Handles incoming requests, processes logic, and returns responses.
+// SEARCH_HINT: Look here for request handling logic and data processing.
 const { Order, Customer, OrderItem, MenuItem, ComboPack, Delivery, Address, OrderStatusHistory, Payment, Staff, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
 const crypto = require('crypto');

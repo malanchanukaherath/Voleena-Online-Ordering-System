@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_CONTROLLER_MENUITEMCONTROLLER
+// PURPOSE: Handles incoming requests, processes logic, and returns responses.
+// SEARCH_HINT: Look here for request handling logic and data processing.
 const { MenuItem, Category, Staff, DailyStock } = require('../models');
 const { Op, col, literal } = require('sequelize');
 const { uploadImageFile, deleteImageByUrl } = require('../services/uploadService');

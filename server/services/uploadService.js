@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_SERVICE_UPLOADSERVICE
+// PURPOSE: Contains business logic and interacts with databases or external APIs.
+// SEARCH_HINT: Look here for core business logic and data access patterns.
 const crypto = require('crypto');
 const path = require('path');
 const { cloudinary, assertCloudinaryConfigured, isCloudinaryConfigured } = require('../config/cloudinary');

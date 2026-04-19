@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_CONTROLLER_CARTCONTROLLER
+// PURPOSE: Handles incoming requests, processes logic, and returns responses.
+// SEARCH_HINT: Look here for request handling logic and data processing.
 /**
  * Cart Controller
  * Handles cart validation and checkout preparation

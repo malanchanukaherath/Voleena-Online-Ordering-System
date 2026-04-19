@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_SERVICE_AUTOMATEDJOBS
+// PURPOSE: Contains business logic and interacts with databases or external APIs.
+// SEARCH_HINT: Look here for core business logic and data access patterns.
 const cron = require('node-cron');
 const { ComboPack, DailyStock, MenuItem, Order, Delivery, TokenBlacklist, sequelize } = require('../models');
 const { Op } = require('sequelize');

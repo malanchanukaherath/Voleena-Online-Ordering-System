@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_ROUTE_CART
+// PURPOSE: Defines API endpoints and links them to controller functions.
+// SEARCH_HINT: Look here for route definitions and middleware application.
 /**
  * Cart Routes
  * Handles shopping cart validation and summary endpoints

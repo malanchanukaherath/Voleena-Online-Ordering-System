@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_AUTH_MIDDLEWARE
+// PURPOSE: Authenticate JWT and enforce role-based access control.
+// SEARCH_HINT: Start here for backend security flow explanation.
 const { verifyAccessToken, isTokenBlacklisted } = require('../utils/jwtUtils');
 const { Customer, Staff, Role } = require('../models');
 

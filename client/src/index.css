@@ -480,6 +480,26 @@ html.dark .bg-blue-50 {
 }
 
 /* ============================================
+   React-Toastify Appearance Overrides
+   Use Toastify's own class names so we don't strip its internal layout.
+   ============================================ */
+.Toastify__toast {
+  border-radius: 0.75rem !important;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 16px -2px rgba(0,0,0,0.10), 0 2px 8px -2px rgba(0,0,0,0.05) !important;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+html.dark .Toastify__toast {
+  border-color: #334155;
+}
+
+.Toastify__progress-bar--success {
+  background: #16a34a !important;
+}
+
+/* ============================================
    Custom Scrollbar
    ============================================ */
 .custom-scrollbar::-webkit-scrollbar {

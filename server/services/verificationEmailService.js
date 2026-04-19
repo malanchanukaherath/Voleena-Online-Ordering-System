@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_SERVICE_VERIFICATIONEMAILSERVICE
+// PURPOSE: Contains business logic and interacts with databases or external APIs.
+// SEARCH_HINT: Look here for core business logic and data access patterns.
 const { Resend } = require('resend');
 
 const resendApiKey = process.env.RESEND_API_KEY;

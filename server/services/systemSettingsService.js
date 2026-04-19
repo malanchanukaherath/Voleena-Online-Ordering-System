@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_SERVICE_SYSTEMSETTINGSSERVICE
+// PURPOSE: Contains business logic and interacts with databases or external APIs.
+// SEARCH_HINT: Look here for core business logic and data access patterns.
 const ADMIN_SETTINGS_KEY = 'admin_settings_payload_v1';
 const ADMIN_SETTINGS_DESCRIPTION = 'Admin system settings payload (JSON)';
 const SETTINGS_CACHE_TTL_MS = Number.parseInt(process.env.ADMIN_SETTINGS_CACHE_TTL_MS || '30000', 10);

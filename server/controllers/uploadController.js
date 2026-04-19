@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_CONTROLLER_UPLOADCONTROLLER
+// PURPOSE: Handles incoming requests, processes logic, and returns responses.
+// SEARCH_HINT: Look here for request handling logic and data processing.
 const { uploadImageFile, ALLOWED_FOLDERS } = require('../services/uploadService');
 
 const STAFF_MANAGED_FOLDERS = new Set(['menu', 'category', 'combo']);

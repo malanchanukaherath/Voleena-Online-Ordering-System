@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_SERVICE_EMAILSERVICE
+// PURPOSE: Contains business logic and interacts with databases or external APIs.
+// SEARCH_HINT: Look here for core business logic and data access patterns.
 const nodemailer = require('nodemailer');
 const { Resend } = require('resend');
 const { Notification } = require('../models');

@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_ENTRY
+// PURPOSE: Create Express app, register middleware/routes, and startup jobs.
+// FLOW: index.js -> routes -> controllers -> services -> models.
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');

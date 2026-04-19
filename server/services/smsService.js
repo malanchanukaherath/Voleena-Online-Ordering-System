@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_SERVICE_SMSSERVICE
+// PURPOSE: Contains business logic and interacts with databases or external APIs.
+// SEARCH_HINT: Look here for core business logic and data access patterns.
 const twilio = require('twilio');
 const { Notification } = require('../models');
 

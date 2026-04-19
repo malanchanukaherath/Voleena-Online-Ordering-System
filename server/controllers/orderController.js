@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_ORDER_CONTROLLER
+// PURPOSE: Handle HTTP request/response for order operations.
+// SEARCH_HINT: Read this after routes, then jump to orderService.
 const { Order, OrderItem, MenuItem, ComboPack, Customer, Delivery, Address, Staff, sequelize } = require('../models');
 const orderService = require('../services/orderService');
 

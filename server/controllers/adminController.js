@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_CONTROLLER_ADMINCONTROLLER
+// PURPOSE: Handles incoming requests, processes logic, and returns responses.
+// SEARCH_HINT: Look here for request handling logic and data processing.
 const {
   Staff,
   Customer,

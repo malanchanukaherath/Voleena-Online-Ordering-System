@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_CONTROLLER_DELIVERYCONTROLLER
+// PURPOSE: Handles incoming requests, processes logic, and returns responses.
+// SEARCH_HINT: Look here for request handling logic and data processing.
 const { Delivery, Order, OrderItem, MenuItem, Address, Customer, Staff, DeliveryStaffAvailability, OrderStatusHistory, sequelize } = require('../models');
 const { validateDeliveryDistanceWithFallback, geocodeAddress } = require('../utils/distanceValidator');
 const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');

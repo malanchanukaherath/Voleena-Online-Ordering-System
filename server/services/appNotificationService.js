@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_SERVICE_APPNOTIFICATIONSERVICE
+// PURPOSE: Contains business logic and interacts with databases or external APIs.
+// SEARCH_HINT: Look here for core business logic and data access patterns.
 let AppNotification;
 let Staff;
 let Role;

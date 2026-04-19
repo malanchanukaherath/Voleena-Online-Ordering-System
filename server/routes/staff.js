@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_ROUTE_STAFF
+// PURPOSE: Defines API endpoints and links them to controller functions.
+// SEARCH_HINT: Look here for route definitions and middleware application.
 const express = require('express');
 const router = express.Router();
 const { Staff, Role, Customer } = require('../models');

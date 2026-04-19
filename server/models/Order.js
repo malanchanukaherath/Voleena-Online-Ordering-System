@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_ORDER_MODEL
+// PURPOSE: Sequelize schema for Order table fields and computed values.
+// SEARCH_HINT: Use this file to explain order data structure.
 const { DataTypes } = require('sequelize');
 
 module.exports = (sequelize) => {

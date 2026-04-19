@@ -1,3 +1,6 @@
+// CODEMAP: FRONTEND_ROUTE_MAP
+// PURPOSE: Map URL paths to pages and protect routes by role.
+// SEARCH_HINT: Review this file to explain user/staff navigation flow.
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute, { PublicRoute } from '../components/ProtectedRoute';

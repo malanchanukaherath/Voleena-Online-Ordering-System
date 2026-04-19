@@ -1,3 +1,6 @@
+// CODEMAP: BACKEND_ORDER_ROUTES
+// PURPOSE: Define order endpoints and attach auth/validation/rate-limit middleware.
+// SEARCH_HINT: Start here to trace order API path handling.
 const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
