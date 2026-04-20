@@ -5,8 +5,53 @@ const { Order, OrderItem, MenuItem, ComboPack, Customer, Delivery, Address, Staf
 const orderService = require('../services/orderService');
 
 const ALLOWED_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
+const CASHIER_ALLOWED_TRANSITIONS = new Set([
+    'PENDING->CONFIRMED',
+    'PENDING->CANCELLED',
+    'PREORDER_PENDING->PREORDER_CONFIRMED',
+    'PREORDER_PENDING->CANCELLED',
+    'PREORDER_CONFIRMED->CONFIRMED',
+    'PREORDER_CONFIRMED->CANCELLED',
+    'CONFIRMED->CANCELLED'
+]);
+const KITCHEN_ALLOWED_TRANSITIONS = new Set([
+    'CONFIRMED->PREPARING',
+    'PREPARING->READY'
+]);
+
 // Simple: This cleans or formats the phone.
 const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
+
+// Simple: This converts query values to booleans.
+const toBooleanQuery = (value) => {
+    if (typeof value !== 'string') return undefined;
+
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true') return true;
+    if (normalized === 'false') return false;
+
+    return undefined;
+};
+
+// Simple: This checks whether staff can change this status.
+const canStaffTransitionStatus = (role, fromStatus, toStatus) => {
+    if (role === 'Admin') {
+        return true;
+    }
+
+    const transitionKey = `${fromStatus}->${toStatus}`;
+
+    if (role === 'Cashier') {
+        return CASHIER_ALLOWED_TRANSITIONS.has(transitionKey);
+    }
+
+    if (role === 'Kitchen') {
+        return KITCHEN_ALLOWED_TRANSITIONS.has(transitionKey);
+    }
+
+    // Delivery staff should use delivery-specific routes.
+    return false;
+};
 
 // Simple: This checks whether address table missing error is true.
 const isAddressTableMissingError = (error) => {
@@ -127,8 +172,17 @@ exports.createOrder = async (req, res) => {
 // Get all orders (with role-based filtering)
 exports.getAllOrders = async (req, res) => {
     try {
-        const { status, orderType, startDate, endDate } = req.query;
+        const { status, orderType, startDate, endDate, approvalStatus, limit, offset } = req.query;
         const where = {};
+        const parsedLimit = Number.parseInt(limit, 10);
+        const parsedOffset = Number.parseInt(offset, 10);
+        const safeLimit = Number.isInteger(parsedLimit)
+            ? Math.min(Math.max(parsedLimit, 1), 200)
+            : 50;
+        const safeOffset = Number.isInteger(parsedOffset)
+            ? Math.max(parsedOffset, 0)
+            : 0;
+        const isPreorderFilter = toBooleanQuery(req.query.isPreorder);
 
         // Customer can only see their own orders
         if (req.user.type === 'Customer') {
@@ -137,6 +191,8 @@ exports.getAllOrders = async (req, res) => {
 
         if (status) where.Status = status;
         if (orderType) where.OrderType = orderType;
+        if (approvalStatus) where.ApprovalStatus = String(approvalStatus).toUpperCase();
+        if (isPreorderFilter !== undefined) where.IsPreorder = isPreorderFilter;
         if (startDate && endDate) {
             where.created_at = {
                 [sequelize.Op.between]: [new Date(startDate), new Date(endDate)]
@@ -163,12 +219,18 @@ exports.getAllOrders = async (req, res) => {
                 // Then show newest orders first
                 ['created_at', 'DESC']
             ],
-            limit: 50 // Performance Bug Fix: Prevent server crash by limiting items to 50 at a time
+            limit: safeLimit,
+            offset: safeOffset
         });
 
         res.json({
             success: true,
-            data: orders
+            data: orders,
+            meta: {
+                limit: safeLimit,
+                offset: safeOffset,
+                returnedCount: orders.length
+            }
         });
 
     } catch (error) {
@@ -298,7 +360,33 @@ exports.updateOrderStatus = async (req, res) => {
         const { id } = req.params;
         const { status, notes } = req.body;
 
-        const order = await orderService.updateOrderStatus(id, status, req.user.id, notes);
+        const normalizedStatus = typeof status === 'string' ? status.trim().toUpperCase() : '';
+        if (!normalizedStatus) {
+            return res.status(400).json({
+                success: false,
+                message: 'Status is required'
+            });
+        }
+
+        const orderToUpdate = await Order.findByPk(id, {
+            attributes: ['OrderID', 'Status']
+        });
+
+        if (!orderToUpdate) {
+            return res.status(404).json({
+                success: false,
+                message: 'Order not found'
+            });
+        }
+
+        if (!canStaffTransitionStatus(req.user.role, orderToUpdate.Status, normalizedStatus)) {
+            return res.status(403).json({
+                success: false,
+                message: `Role ${req.user.role} cannot change status from ${orderToUpdate.Status} to ${normalizedStatus}`
+            });
+        }
+
+        const order = await orderService.updateOrderStatus(id, normalizedStatus, req.user.id, notes);
 
         res.json({
             success: true,

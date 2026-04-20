@@ -202,6 +202,7 @@ const AdminDashboard = () => {
                             { to: '/admin/menu', icon: FaShoppingBag, label: 'Manage Menu' },
                             { to: '/admin/addons', icon: FaTags, label: 'Manage Add-ons' },
                             { to: '/admin/orders', icon: FaClipboardList, label: 'View Orders' },
+                            { to: '/admin/preorders', icon: FaClipboardList, label: 'View Preorders' },
                             { to: '/admin/customers', icon: FaUsers, label: 'Customers' },
                             { to: '/admin/analytics', icon: FaChartLine, label: 'Analytics' },
                             { to: '/delivery/map', icon: FaTruck, label: 'Live Map' },

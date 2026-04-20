@@ -1,3 +1,6 @@
+// CODEMAP: FRONTEND_PAGE_CHECKOUT
+// PURPOSE: Customer checkout screen for order type, address, preorder schedule, payment, and final order placement.
+// SEARCH_HINT: Start here for color/text changes on checkout UI and all checkout form validation behavior.
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaSpinner } from 'react-icons/fa';
@@ -1027,7 +1030,7 @@ const Checkout = () => {
         await validateCoordinatesForDelivery(lat, lng, 'Selected searched location');
     };
 
-    // Simple: This checks if the form is correct.
+    // Simple: Validate all checkout fields before any API call is sent.
     const validateForm = () => {
         const newErrors = {};
         const normalizedEmail = formData.email.trim();
@@ -1116,7 +1119,7 @@ const Checkout = () => {
         return Object.keys(newErrors).length === 0;
     };
 
-    // Simple: This handles what happens when submit is triggered.
+    // Simple: Build final order payload and place order after validation succeeds.
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -1355,7 +1358,7 @@ const Checkout = () => {
                                     Planning ahead or ordering in larger quantities? Use preorder scheduling and add your bulk details in Special Instructions.
                                 </p>
                                 <p className="mt-1">
-                                    If current stock is not enough for immediate processing, you can still place it as a preorder request.
+                                    If current stock is not enough for immediate processing, you can still place it as a scheduled preorder.
                                 </p>
                             </div>
                             <label className="flex items-center gap-3 mb-4">

@@ -42,8 +42,8 @@ const OrderHistory = () => {
                     total: parseFloat(order.FinalAmount || order.TotalAmount || 0),
                     status: order.Status,
                     orderType: order.OrderType,
-                    isPreorder: Boolean(order.IsPreorder || order.isPreorder),
-                    scheduledDatetime: order.ScheduledDatetime || order.scheduledDatetime || null
+                    isPreorder: Boolean(order.IsPreorder || order.isPreorder || String(order.Status || '').startsWith('PREORDER_') || order.ScheduledDatetime || order.scheduledDatetime),
+                    scheduledDatetime: order.ScheduledDatetime || order.scheduledDatetime || order.scheduled_datetime || null
                 };
             });
 
@@ -121,7 +121,7 @@ const OrderHistory = () => {
                     <span className="font-semibold">Need advance or bulk ordering?</span> Use preorder at checkout and add quantity/event notes in Special Instructions.
                 </p>
                 <p className="text-xs text-indigo-700 mt-1 dark:text-indigo-400">
-                    If immediate stock is unavailable for your requested quantity, place it as a preorder request.
+                    If immediate stock is unavailable for your requested quantity, place it as a scheduled preorder.
                 </p>
             </div>
 

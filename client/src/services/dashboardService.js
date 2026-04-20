@@ -1,9 +1,12 @@
+// CODEMAP: FRONTEND_SERVICE_DASHBOARD
+// PURPOSE: Frontend API layer for admin, cashier, kitchen, and delivery dashboard actions.
+// SEARCH_HINT: Start here to trace which backend endpoint a dashboard button or widget calls.
 import { API_BASE_URL } from '../config/api';
 
 /**
  * Get authentication headers
  */
-// Simple: This gets the auth headers.
+// Simple: Build auth headers for protected backend endpoints.
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
   return {
@@ -15,7 +18,7 @@ const getAuthHeaders = () => {
 /**
  * Handle API response
  */
-// Simple: This handles what happens when response is triggered.
+// Simple: Standardize error handling for all dashboard fetch calls.
 const handleResponse = async (response) => {
   const data = await response.json();
 
@@ -33,6 +36,7 @@ const handleResponse = async (response) => {
  * Admin Dashboard Service
  */
 class AdminService {
+  // Simple: Load top dashboard counters for admin home.
   async getDashboardStats() {
     const response = await fetch(`${API_BASE_URL}/api/v1/admin/dashboard/stats`, {
       headers: getAuthHeaders()
@@ -40,6 +44,7 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Get sales report using either custom date range or month/year filters.
   async getSalesReport(params = {}) {
     const query = new URLSearchParams();
 
@@ -58,10 +63,12 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Convenience wrapper for monthly sales view.
   async getMonthlySalesReport(year, month) {
     return this.getSalesReport({ year, month });
   }
 
+  // Simple: Get top-selling items with optional date filter.
   async getBestSellingItems(limit = 10, startDate, endDate) {
     let url = `${API_BASE_URL}/api/v1/admin/reports/best-selling?limit=${encodeURIComponent(limit)}`;
     if (startDate && endDate) {
@@ -71,6 +78,7 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Get customer retention metrics for analytics screen.
   async getCustomerRetention(params = {}) {
     const query = new URLSearchParams();
 
@@ -89,6 +97,7 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Get full business summary report for admin exports and charts.
   async getBusinessSummaryReport(params = {}) {
     const query = new URLSearchParams();
 
@@ -107,6 +116,7 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Read current admin system settings.
   async getSettings() {
     const response = await fetch(`${API_BASE_URL}/api/v1/admin/settings`, {
       headers: getAuthHeaders()
@@ -114,6 +124,7 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Save admin system settings changes.
   async updateSettings(settings) {
     const response = await fetch(`${API_BASE_URL}/api/v1/admin/settings`, {
       method: 'PUT',
@@ -123,6 +134,7 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Fetch all staff records for admin management page.
   async getAllStaff() {
     const response = await fetch(`${API_BASE_URL}/api/v1/admin/staff`, {
       headers: getAuthHeaders()
@@ -130,6 +142,7 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Create a new staff account.
   async createStaff(staffData) {
     const response = await fetch(`${API_BASE_URL}/api/v1/admin/staff`, {
       method: 'POST',
@@ -139,6 +152,7 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Update one staff account by ID.
   async updateStaff(id, staffData) {
     const response = await fetch(`${API_BASE_URL}/api/v1/admin/staff/${id}`, {
       method: 'PUT',
@@ -148,6 +162,7 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Remove one staff account by ID.
   async deleteStaff(id) {
     const response = await fetch(`${API_BASE_URL}/api/v1/admin/staff/${id}`, {
       method: 'DELETE',
@@ -156,6 +171,7 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Get list of available role definitions.
   async getAllRoles() {
     const response = await fetch(`${API_BASE_URL}/api/v1/admin/roles`, {
       headers: getAuthHeaders()
@@ -163,6 +179,7 @@ class AdminService {
     return handleResponse(response);
   }
 
+  // Simple: Manually assign a delivery rider to an order.
   async assignDeliveryStaff(orderId, staffId) {
     const response = await fetch(`${API_BASE_URL}/api/v1/admin/delivery/assign`, {
       method: 'POST',
@@ -177,6 +194,7 @@ class AdminService {
  * Cashier Dashboard Service
  */
 class CashierService {
+  // Simple: Load cashier dashboard counters.
   async getDashboardStats() {
     const response = await fetch(`${API_BASE_URL}/api/v1/cashier/dashboard/stats`, {
       headers: getAuthHeaders()
@@ -184,6 +202,7 @@ class CashierService {
     return handleResponse(response);
   }
 
+  // Simple: Load cashier order list with optional filters and paging.
   async getAllOrders(filters = {}) {
     const query = new URLSearchParams();
 
@@ -203,6 +222,7 @@ class CashierService {
     return handleResponse(response);
   }
 
+  // Simple: Get printable receipt data for one order.
   async getOrderReceipt(orderId, terminalId = '') {
     const query = new URLSearchParams();
     if (terminalId) {
@@ -216,6 +236,7 @@ class CashierService {
     return handleResponse(response);
   }
 
+  // Simple: Create a walk-in order from POS.
   async createWalkInOrder(orderData) {
     const response = await fetch(`${API_BASE_URL}/api/v1/cashier/walkin-order`, {
       method: 'POST',
@@ -225,6 +246,7 @@ class CashierService {
     return handleResponse(response);
   }
 
+  // Simple: Load menu items shown in POS.
   async getMenuItemsForPos() {
     const response = await fetch(`${API_BASE_URL}/api/v1/menu?isActive=true&_=${Date.now()}`, {
       headers: getAuthHeaders(),
@@ -233,6 +255,7 @@ class CashierService {
     return handleResponse(response);
   }
 
+  // Simple: Load combo packs shown in POS.
   async getComboPacksForPos() {
     const response = await fetch(`${API_BASE_URL}/api/v1/combos/active?_=${Date.now()}`, {
       headers: getAuthHeaders(),
@@ -241,6 +264,7 @@ class CashierService {
     return handleResponse(response);
   }
 
+  // Simple: Confirm an order from cashier flow.
   async confirmOrder(orderId) {
     const response = await fetch(`${API_BASE_URL}/api/v1/cashier/orders/${orderId}/confirm`, {
       method: 'PUT',
@@ -249,6 +273,7 @@ class CashierService {
     return handleResponse(response);
   }
 
+  // Simple: Cancel an order from cashier flow with reason.
   async cancelOrder(orderId, reason) {
     const response = await fetch(`${API_BASE_URL}/api/v1/cashier/orders/${orderId}/cancel`, {
       method: 'PUT',
@@ -258,6 +283,7 @@ class CashierService {
     return handleResponse(response);
   }
 
+  // Simple: Search customers from cashier screen.
   async getAllCustomers(search = '', limit = 50) {
     const query = new URLSearchParams({
       search,
@@ -271,6 +297,7 @@ class CashierService {
     return handleResponse(response);
   }
 
+  // Simple: Get one customer profile by ID.
   async getCustomerById(customerId) {
     const response = await fetch(`${API_BASE_URL}/api/v1/cashier/customers/${customerId}`, {
       headers: getAuthHeaders()
@@ -278,6 +305,7 @@ class CashierService {
     return handleResponse(response);
   }
 
+  // Simple: Register a new customer from cashier flow.
   async registerCustomer(customerData) {
     const response = await fetch(`${API_BASE_URL}/api/v1/cashier/customers`, {
       method: 'POST',
@@ -287,6 +315,7 @@ class CashierService {
     return handleResponse(response);
   }
 
+  // Simple: Update customer profile from cashier flow.
   async updateCustomer(customerId, customerData) {
     const response = await fetch(`${API_BASE_URL}/api/v1/cashier/customers/${customerId}`, {
       method: 'PUT',
@@ -301,6 +330,7 @@ class CashierService {
  * Kitchen Dashboard Service
  */
 class KitchenService {
+  // Simple: Load kitchen dashboard counters.
   async getDashboardStats() {
     const response = await fetch(`${API_BASE_URL}/api/v1/kitchen/dashboard/stats`, {
       headers: getAuthHeaders()
@@ -308,6 +338,7 @@ class KitchenService {
     return handleResponse(response);
   }
 
+  // Simple: Load kitchen order queue, optionally by status.
   async getAssignedOrders(status = '') {
     let url = `${API_BASE_URL}/api/v1/kitchen/orders`;
     if (status) url += `?status=${status}`;
@@ -316,6 +347,7 @@ class KitchenService {
     return handleResponse(response);
   }
 
+  // Simple: Update kitchen order status (for example confirmed to preparing).
   async updateOrderStatus(orderId, status) {
     const response = await fetch(`${API_BASE_URL}/api/v1/kitchen/orders/${orderId}/status`, {
       method: 'PUT',
@@ -325,6 +357,7 @@ class KitchenService {
     return handleResponse(response);
   }
 
+  // Simple: Load all menu items relevant for kitchen stock operations.
   async getAllMenuItems() {
     const response = await fetch(`${API_BASE_URL}/api/v1/kitchen/menu-items`, {
       headers: getAuthHeaders()
@@ -332,6 +365,7 @@ class KitchenService {
     return handleResponse(response);
   }
 
+  // Simple: Load daily stock records, optionally for a selected date.
   async getDailyStock(date = '') {
     let url = `${API_BASE_URL}/api/v1/kitchen/stock/daily`;
     if (date) url += `?date=${date}`;
@@ -340,6 +374,7 @@ class KitchenService {
     return handleResponse(response);
   }
 
+  // Simple: Update one daily stock record.
   async updateDailyStock(stockData) {
     const response = await fetch(`${API_BASE_URL}/api/v1/kitchen/stock/daily`, {
       method: 'POST',
@@ -349,6 +384,7 @@ class KitchenService {
     return handleResponse(response);
   }
 
+  // Simple: Update many daily stock records in one request.
   async bulkUpdateDailyStock(items) {
     const response = await fetch(`${API_BASE_URL}/api/v1/kitchen/stock/daily/bulk`, {
       method: 'POST',
@@ -363,6 +399,7 @@ class KitchenService {
  * Delivery Dashboard Service
  */
 class DeliveryService {
+  // Simple: Load delivery dashboard counters.
   async getDashboardStats() {
     const response = await fetch(`${API_BASE_URL}/api/v1/delivery/dashboard/stats`, {
       headers: getAuthHeaders()
@@ -370,6 +407,7 @@ class DeliveryService {
     return handleResponse(response);
   }
 
+  // Simple: Load rider deliveries, optionally filtered by status.
   async getMyDeliveries(status = '') {
     let url = `${API_BASE_URL}/api/v1/delivery/deliveries`;
     if (status) url += `?status=${status}`;
@@ -378,6 +416,7 @@ class DeliveryService {
     return handleResponse(response);
   }
 
+  // Simple: Get one delivery record by ID.
   async getDeliveryById(deliveryId) {
     const response = await fetch(`${API_BASE_URL}/api/v1/delivery/deliveries/${deliveryId}`, {
       headers: getAuthHeaders()
@@ -385,6 +424,7 @@ class DeliveryService {
     return handleResponse(response);
   }
 
+  // Simple: Update delivery status (picked up, in transit, delivered, failed).
   async updateDeliveryStatus(deliveryId, statusData) {
     const response = await fetch(`${API_BASE_URL}/api/v1/delivery/deliveries/${deliveryId}/status`, {
       method: 'PUT',
@@ -394,6 +434,7 @@ class DeliveryService {
     return handleResponse(response);
   }
 
+  // Simple: Load delivery history with paging.
   async getDeliveryHistory(limit = 50, offset = 0) {
     const response = await fetch(
       `${API_BASE_URL}/api/v1/delivery/history?limit=${limit}&offset=${offset}`,
@@ -402,6 +443,7 @@ class DeliveryService {
     return handleResponse(response);
   }
 
+  // Simple: Set rider availability for new assignments.
   async updateAvailability(isAvailable) {
     const response = await fetch(`${API_BASE_URL}/api/v1/delivery/availability`, {
       method: 'PUT',
@@ -411,6 +453,7 @@ class DeliveryService {
     return handleResponse(response);
   }
 
+  // Simple: Get rider availability state.
   async getAvailability() {
     const response = await fetch(`${API_BASE_URL}/api/v1/delivery/availability`, {
       headers: getAuthHeaders()

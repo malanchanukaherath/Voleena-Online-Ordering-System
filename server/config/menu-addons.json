@@ -5,22 +5,41 @@
       "name": "Extra Chicken Piece",
       "price": 350,
       "maxQuantity": 3,
-      "isActive": true
+      "isActive": true,
+      "description": null,
+      "addonGroup": null,
+      "displayOrder": 0
     },
     {
       "id": "add_cheese",
       "name": "Add Cheese",
       "price": 120,
       "maxQuantity": 3,
-      "isActive": true
+      "isActive": true,
+      "description": null,
+      "addonGroup": null,
+      "displayOrder": 0
     },
     {
       "id": "extra_sauce",
       "name": "Extra Sauce",
       "price": 80,
       "maxQuantity": 4,
-      "isActive": true
+      "isActive": true,
+      "description": null,
+      "addonGroup": null,
+      "displayOrder": 0
     }
   ],
-  "menuAssignments": {}
+  "menuAssignments": {
+    "8": [
+      "extra_sauce"
+    ],
+    "11": [
+      "add_cheese"
+    ],
+    "12": [
+      "add_cheese"
+    ]
+  }
 }

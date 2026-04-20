@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import {
     FaTachometerAlt,
     FaClipboardList,
+    FaCalendarAlt,
     FaUsers,
     FaUserTie,
     FaUtensils,
@@ -34,6 +35,7 @@ const Sidebar = ({ className = '', onNavigate }) => {
                 return [
                     { path: '/admin', label: 'Dashboard', icon: FaTachometerAlt, group: 'Overview' },
                     { path: '/admin/orders', label: 'Orders', icon: FaClipboardList, group: 'Operations' },
+                    { path: '/admin/preorders', label: 'Preorders', icon: FaCalendarAlt, group: 'Operations' },
                     { path: '/admin/customers', label: 'Customers', icon: FaUsers, group: 'Operations' },
                     { path: '/admin/staff', label: 'Staff', icon: FaUserTie, group: 'Operations' },
                     { path: '/admin/menu', label: 'Menu', icon: FaUtensils, group: 'Menu & Inventory' },

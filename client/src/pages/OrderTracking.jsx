@@ -186,7 +186,13 @@ const OrderTracking = () => {
             orderNumber: data.OrderNumber,
             status: data.Status,
             orderType: data.OrderType,
-            isPreorder: Boolean(data.IsPreorder ?? data.isPreorder),
+            isPreorder: Boolean(
+                data.IsPreorder
+                || data.isPreorder
+                || String(data.Status || '').startsWith('PREORDER_')
+                || data.ScheduledDatetime
+                || data.scheduledDatetime
+            ),
             scheduledDatetime: data.ScheduledDatetime || data.scheduledDatetime || null,
             approvalStatus: data.ApprovalStatus || data.approvalStatus || null,
             approvalNotes: data.ApprovalNotes || data.approvalNotes || null,
@@ -370,8 +376,6 @@ const OrderTracking = () => {
     }, [openToast]);
 
     useEffect(() => {
-        let isMounted = true;
-
         // Simple: This gets the order state.
         const loadOrderState = async () => {
             await fetchOrder();
@@ -384,7 +388,6 @@ const OrderTracking = () => {
         }, 5000);
 
         return () => {
-            isMounted = false;
             clearInterval(intervalId);
         };
     }, [fetchOrder]);

@@ -192,7 +192,7 @@ const CashierOrders = () => {
             </div>
             <div className="bg-blue-50 dark:bg-blue-950/30 border-l-4 border-blue-500 dark:border-blue-700 p-4 mb-4">
                 <p className="text-sm text-blue-700 dark:text-blue-400">
-                    <strong>Note:</strong> All orders, including preorders, are auto-confirmed when placed.
+                    <strong>Note:</strong> All orders are auto-confirmed when placed, and preorders are auto-approved with their scheduled time.
                 </p>
             </div>
             <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-4 mb-4">

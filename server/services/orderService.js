@@ -832,6 +832,18 @@ class OrderService {
             // Validate status transition
             this.validateStatusTransition(oldStatus, newStatus);
 
+            // Require settled non-cash payments before preparation starts.
+            if (['PREPARING', 'READY'].includes(newStatus) && order.OrderType !== 'WALK_IN') {
+                if (!order.payment) {
+                    throw new Error('Cannot start preparation: payment record is missing');
+                }
+
+                const requiresSettledPayment = ['CARD', 'ONLINE', 'WALLET'].includes(order.payment.Method);
+                if (requiresSettledPayment && order.payment.Status !== 'PAID') {
+                    throw new Error('Cannot start preparation: online payment not completed');
+                }
+            }
+
             // Update order
             order.Status = newStatus;
 

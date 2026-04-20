@@ -21,6 +21,7 @@ import Profile from '../pages/Profile';
 import Feedback from '../pages/Feedback';
 import AdminDashboard from '../pages/AdminDashboard';
 import OrderManagement from '../pages/OrderManagement';
+import PreorderManagement from '../pages/PreorderManagement';
 import CustomerManagement from '../pages/CustomerManagement';
 import StaffManagement from '../pages/StaffManagement';
 import MenuManagement from '../pages/MenuManagement';
@@ -117,6 +118,7 @@ const AppRoutes = () => {
       <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['Admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="/admin/orders" element={<ProtectedRoute allowedRoles={['Admin']}><OrderManagement /></ProtectedRoute>} />
+      <Route path="/admin/preorders" element={<ProtectedRoute allowedRoles={['Admin']}><PreorderManagement /></ProtectedRoute>} />
       <Route path="/admin/customers" element={<ProtectedRoute allowedRoles={['Admin']}><CustomerManagement /></ProtectedRoute>} />
       <Route path="/admin/staff" element={<ProtectedRoute allowedRoles={['Admin']}><StaffManagement /></ProtectedRoute>} />
       <Route path="/admin/menu" element={<ProtectedRoute allowedRoles={['Admin']}><MenuManagement /></ProtectedRoute>} />
