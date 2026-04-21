@@ -468,18 +468,18 @@ const CustomerManagement = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {customer.AccountStatus === 'ACTIVE' ? (
-                                                <span className="text-green-600 text-sm">??? Active</span>
+                                                <span className="text-green-600 text-sm">Active</span>
                                             ) : (
-                                                <span className="text-gray-400 text-sm">??? {customer.AccountStatus}</span>
+                                                <span className="text-gray-400 text-sm">{customer.AccountStatus}</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <div className="flex flex-col gap-1">
                                                 {customer.IsEmailVerified && (
-                                                    <span className="text-xs text-green-600">??? Email</span>
+                                                    <span className="text-xs text-green-600">Email Verified</span>
                                                 )}
                                                 {customer.IsPhoneVerified && (
-                                                    <span className="text-xs text-green-600">??? Phone</span>
+                                                    <span className="text-xs text-green-600">Phone Verified</span>
                                                 )}
                                                 {!customer.IsEmailVerified && !customer.IsPhoneVerified && (
                                                     <span className="text-xs text-gray-400">Not verified</span>

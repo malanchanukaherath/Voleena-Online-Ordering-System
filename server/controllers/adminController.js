@@ -21,7 +21,7 @@ const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 const systemSettingsService = require('../services/systemSettingsService');
 const appNotificationService = require('../services/appNotificationService');
 
-// Frontend page map for non-technical review:
+
 // - AdminDashboard page: quick counts (orders, revenue, active staff/customers/deliveries)
 // - SalesAnalytics page: charts/reports (sales trend, top items, retention, full summary)
 // - StaffManagement page: create/update/deactivate staff and load role options

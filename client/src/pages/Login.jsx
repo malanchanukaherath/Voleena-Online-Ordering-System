@@ -13,7 +13,7 @@ import authService from '../services/authService';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
 import Toast from '../components/ui/Toast';
-import { FaEye, FaEyeSlash, FaUtensils } from 'react-icons/fa';
+import { FaEye, FaEyeSlash, FaUtensils, FaCheckCircle, FaCalendarAlt, FaTruck } from 'react-icons/fa';
 
 // Simple: This shows the login section.
 const Login = () => {
@@ -179,13 +179,13 @@ const Login = () => {
 
           <div className="mt-10 flex flex-col gap-4">
             {[
-              { icon: '????', text: 'Traditional Sri Lankan meals' },
-              { icon: '????', text: 'Special Sunday combo offers' },
-              { icon: '????', text: 'Delivery within 15km radius' },
+              { icon: FaCheckCircle, text: 'Traditional Sri Lankan meals' },
+              { icon: FaCalendarAlt, text: 'Special Sunday combo offers' },
+              { icon: FaTruck, text: 'Delivery within 15km radius' },
             ].map((item) => (
               <div key={item.text} className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center text-lg shrink-0">
-                  {item.icon}
+                  <item.icon className="w-4 h-4" aria-hidden="true" />
                 </div>
                 <span className="text-primary-100 text-sm">{item.text}</span>
               </div>
@@ -196,7 +196,7 @@ const Login = () => {
         {/* Bottom tagline */}
         <div className="relative z-10">
           <p className="text-primary-200 text-sm">
-            ?? {new Date().getFullYear()} Voleena Foods. All rights reserved.
+            (c) {new Date().getFullYear()} Voleena Foods. All rights reserved.
           </p>
         </div>
       </div>
@@ -264,7 +264,7 @@ const Login = () => {
                   onChange={handleInputChange}
                   error={errors.password}
                   required
-                  placeholder="????????????????????????"
+                  placeholder="Enter your password"
                 />
                 <button
                   type="button"

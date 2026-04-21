@@ -111,7 +111,7 @@ const OrderConfirmation = () => {
                 )}
                 <div className="inline-flex items-center gap-2 rounded-full bg-white dark:bg-green-900/30 border border-green-200 dark:border-green-700/50 px-4 py-1.5 text-sm">
                     <span className="text-gray-500 dark:text-slate-400">Order Number:</span>
-                    <span className="font-bold text-gray-900 dark:text-slate-100 tracking-wide">{order?.OrderNumber || '???'}</span>
+                    <span className="font-bold text-gray-900 dark:text-slate-100 tracking-wide">{order?.OrderNumber || 'N/A'}</span>
                 </div>
             </div>
 

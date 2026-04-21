@@ -1182,7 +1182,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                         ))}
                     </div>
                     <Link to="/cashier/orders" className="block mt-4 text-primary-600 hover:text-primary-700">
-                        View All ???
+                        View All ->
                     </Link>
                 </div>
 
@@ -1288,7 +1288,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                                 <p className="font-semibold">{selectedCustomer.Name}</p>
                                 <p className="mt-1 text-green-800">
                                     {selectedCustomer.Phone}
-                                    {selectedCustomer.Email ? ` ??? ${selectedCustomer.Email}` : ''}
+                                    {selectedCustomer.Email ? ` - ${selectedCustomer.Email}` : ''}
                                 </p>
                                 <p className="mt-1 text-xs text-green-700">
                                     This order will be stored under the selected customer account.
@@ -1328,7 +1328,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                                                     <p className="font-medium">{customer.Name}</p>
                                                     <p className="mt-1 text-xs text-gray-500">
                                                         {customer.Phone}
-                                                        {customer.Email ? ` ??? ${customer.Email}` : ''}
+                                                        {customer.Email ? ` - ${customer.Email}` : ''}
                                                     </p>
                                                 </div>
                                                 <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${isSelectable
@@ -1355,7 +1355,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                 <h4 className="font-semibold">POS Catalog</h4>
                                 <div className="text-xs text-gray-500">
-                                    Cashier: <span className="font-semibold text-gray-700">{getCashierName()}</span> ??? Terminal: <span className="font-semibold text-gray-700">{getTerminalId()}</span>
+                                    Cashier: <span className="font-semibold text-gray-700">{getCashierName()}</span> | Terminal: <span className="font-semibold text-gray-700">{getTerminalId()}</span>
                                 </div>
                             </div>
 
@@ -1551,7 +1551,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                                 </div>
                                 {walkInPaymentMethod === 'CASH' && (
                                     <div className="mt-2 text-sm text-gray-700">
-                                        Received: <span className="font-semibold">LKR {parsedCashAmountReceived.toFixed(2)}</span> ??? Change: <span className="font-semibold text-green-700">LKR {cashChangeDue.toFixed(2)}</span>
+                                        Received: <span className="font-semibold">LKR {parsedCashAmountReceived.toFixed(2)}</span> | Change: <span className="font-semibold text-green-700">LKR {cashChangeDue.toFixed(2)}</span>
                                     </div>
                                 )}
                             </div>
@@ -1700,7 +1700,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                             {STANDARD_CALCULATOR_ROWS.flat().map((key) => {
                                 const isOperatorKey = ['/', '*', '-', '+', '='].includes(key);
                                 const isUtilityKey = ['AC', '+/-', '%', 'BACK'].includes(key);
-                                const label = key === 'BACK' ? '???' : key === '/' ? '??' : key === '*' ? '??' : key;
+                                const label = key === 'BACK' ? 'Back' : key === '/' ? '/' : key === '*' ? '*' : key;
 
                                 return (
                                     <button

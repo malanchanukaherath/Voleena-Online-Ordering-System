@@ -343,7 +343,7 @@ const Menu = () => {
                 isAvailable: item.isAvailable
             }, 1);
 
-            toast.success(`??? ${item.name} added to cart!`);
+            toast.success(`${item.name} added to cart!`);
         } catch (error) {
             toast.error(error.message || 'Unable to add item to cart');
         }

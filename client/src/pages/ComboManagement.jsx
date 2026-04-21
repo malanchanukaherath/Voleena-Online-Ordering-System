@@ -443,9 +443,9 @@ const ComboManagement = () => {
                                         <td className="px-6 py-4">
                                             <div className="flex flex-col gap-1">
                                                 {combo.isActive ? (
-                                                    <span className="text-green-600 text-sm">??? Active</span>
+                                                    <span className="text-green-600 text-sm">Active</span>
                                                 ) : (
-                                                    <span className="text-gray-400 text-sm">??? Inactive</span>
+                                                    <span className="text-gray-400 text-sm">Inactive</span>
                                                 )}
                                                 {isComboActiveNow(combo) && (
                                                     <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Live Now</span>
@@ -466,7 +466,7 @@ const ComboManagement = () => {
                                                     className="text-yellow-600 hover:text-yellow-900"
                                                     title={combo.isActive ? 'Deactivate' : 'Activate'}
                                                 >
-                                                    {combo.isActive ? '???' : '???'}
+                                                    {combo.isActive ? 'Deactivate' : 'Activate'}
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(combo.id)}

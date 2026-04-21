@@ -133,7 +133,7 @@ const KitchenDashboard = () => {
                                         )}
                                     </div>
                                     <p className="text-sm text-gray-600 dark:text-slate-400">
-                                        {order.items} items ??? {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
+                                        {order.items} items | {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
                                     </p>
                                     {order.specialInstructions && (
                                         <p className="mt-1 text-xs text-amber-800 dark:text-amber-400 break-words">
@@ -147,7 +147,7 @@ const KitchenDashboard = () => {
                     ))}
                 </div>
                 <Link to="/kitchen/orders" className="block mt-4 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
-                    View All Orders ???
+                    View All Orders ->
                 </Link>
             </div>
         </div>

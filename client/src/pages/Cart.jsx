@@ -376,7 +376,7 @@ const Cart = () => {
                     {/* Continue Shopping */}
                     <div className="mt-6">
                         <Link to="/menu">
-                            <Button variant="outline">??? Continue Shopping</Button>
+                            <Button variant="outline">Back to Menu</Button>
                         </Link>
                     </div>
                 </div>
