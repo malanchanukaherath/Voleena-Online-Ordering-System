@@ -17,6 +17,23 @@ export DOCKER_CLIENT_TIMEOUT="${DOCKER_CLIENT_TIMEOUT:-900}"
 export COMPOSE_HTTP_TIMEOUT="${COMPOSE_HTTP_TIMEOUT:-900}"
 export DB_VOLUME_NAME
 
+dump_app_start_diagnostics() {
+  echo "---- docker compose ps ----"
+  docker compose ps || true
+  echo "---- backend_app logs (tail 200) ----"
+  docker logs --tail=200 backend_app || true
+  echo "---- frontend_app logs (tail 120) ----"
+  docker logs --tail=120 frontend_app || true
+}
+
+start_app_services() {
+  if ! docker compose up -d --no-build backend frontend; then
+    echo "ERROR: Failed to start backend/frontend containers. Collecting diagnostics..."
+    dump_app_start_diagnostics
+    exit 1
+  fi
+}
+
 echo "==> Deploy started at $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 echo "==> Repo: ${REPO_DIR}"
 echo "==> Branch: ${TARGET_BRANCH}"
@@ -148,7 +165,7 @@ case "${DEPLOY_STRATEGY}" in
 
     echo "Pulling ${BACKEND_IMAGE} and ${FRONTEND_IMAGE}..."
     docker compose pull backend frontend
-    docker compose up -d --no-build backend frontend
+    start_app_services
     ;;
   build)
     echo "NOTE: Local Docker builds can be slow on t3.micro. For faster deploys, use DEPLOY_STRATEGY=pull DOCKERHUB_USERNAME=<dockerhub-user>."
@@ -156,7 +173,7 @@ case "${DEPLOY_STRATEGY}" in
     docker compose --progress=plain build backend
     echo "Building frontend image on EC2..."
     docker compose --progress=plain build frontend
-    docker compose up -d --no-build backend frontend
+    start_app_services
     ;;
   *)
     echo "STOP: Unknown DEPLOY_STRATEGY='${DEPLOY_STRATEGY}'. Use 'build' or 'pull'."

@@ -1,30 +1,9 @@
 const { Sequelize } = require('sequelize');
-
-// CODEMAP: BACKEND_SERVER_CONFIG_DATABASE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { Sequelize } = require('sequelize');
-
-// CODEMAP: BACKEND_SERVER_CONFIG_DATABASE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { Sequelize } = require('sequelize');
-
-// CODEMAP: BACKEND_SERVER_CONFIG_DATABASE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { Sequelize } = require('sequelize');
-module.exports = sequelize;
-// CODEMAP: BACKEND_SERVER_CONFIG_DATABASE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { Sequelize } = require('sequelize');
 require('dotenv').config();
-const crypto = require('crypto');
 
 // Validate required environment variables
 const requiredEnvVars = ['DB_HOST', 'DB_USER', 'DB_NAME', 'JWT_SECRET', 'FRONTEND_URL'];
-const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
   throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
@@ -35,7 +14,7 @@ if (process.env.JWT_SECRET === 'change-me' || process.env.JWT_SECRET.length < 32
   throw new Error('JWT_SECRET must be at least 32 characters long and not the default value');
 }
 
-// Validate JWT_SECRET has sufficient entropy (at least 20% non-alphanumeric)
+// Validate JWT secret has sufficient entropy (at least 15% non-alphanumeric)
 const specialChars = process.env.JWT_SECRET.match(/[^a-zA-Z0-9]/g) || [];
 if (specialChars.length < Math.floor(process.env.JWT_SECRET.length * 0.15)) {
   throw new Error('JWT_SECRET must contain special characters for sufficient entropy');
@@ -61,12 +40,11 @@ const sequelize = new Sequelize(
     dialect: 'mysql',
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
     pool: {
-      // Production-optimized connection pool settings
-      // For 100 concurrent users, keep pool small but responsive
-      max: parseInt(process.env.DB_POOL_MAX) || 20,  // Max 20 connections
-      min: parseInt(process.env.DB_POOL_MIN) || 5,   // Keep 5 warm
-      acquire: 30000,  // Max 30s to acquire a connection
-      idle: 30000      // Keep connections 30s before release
+      // Keep pool bounded for stable behavior in small EC2 instances.
+      max: Number.parseInt(process.env.DB_POOL_MAX || '20', 10),
+      min: Number.parseInt(process.env.DB_POOL_MIN || '5', 10),
+      acquire: 30000,
+      idle: 30000
     },
     connectTimeout: 5000,
     timezone: process.env.DB_TIMEZONE || '+05:30',
@@ -78,8 +56,6 @@ const sequelize = new Sequelize(
   }
 );
 
-// Export sequelize instance
-// Connection will be tested when server starts
 module.exports = sequelize;
 
 
