@@ -6,6 +6,7 @@ const { v4: uuidv4 } = require('uuid');
  * Returns X-Request-ID header in all responses
  */
 // Simple: This handles request id middleware logic.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 function requestIdMiddleware(req, res, next) {
     // Check for existing request ID (from load balancer or client)
     const requestId = req.headers['x-request-id'] || uuidv4();

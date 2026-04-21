@@ -1,3 +1,4 @@
+// Frontend connection: Defines database structure used by customer/staff/admin features.
 module.exports = (sequelize, DataTypes) => {
     const Role = sequelize.define('Role', {
         RoleID: {
@@ -26,6 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         updatedAt: false
     });
 
+    // Frontend connection: Defines database structure used by customer/staff/admin features.
     Role.associate = function (models) {
         Role.hasMany(models.Staff, {
             foreignKey: 'RoleID',

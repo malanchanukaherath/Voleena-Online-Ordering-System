@@ -4,6 +4,7 @@ const { body, param, query, validationResult } = require('express-validator');
  * Handle validation errors
  */
 // Simple: This handles what happens when validation errors is triggered.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 function handleValidationErrors(req, res, next) {
     const errors = validationResult(req);
 
@@ -455,10 +456,12 @@ const validateDeliveryAssignment = [
  * Sanitize user input to prevent XSS
  */
 // Simple: This cleans or formats the input.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 function sanitizeInput(req, res, next) {
     const DOMPurify = require('isomorphic-dompurify');
 
     // Simple: This cleans or formats the object.
+    // Frontend connection: Applies shared security/validation rules across customer and staff flows.
     const sanitizeObject = (obj) => {
         for (let key in obj) {
             if (typeof obj[key] === 'string') {

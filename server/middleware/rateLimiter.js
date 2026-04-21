@@ -23,6 +23,7 @@ try {
  * Helper to create a RedisStore using the rate-limit-redis v4 API (sendCommand)
  */
 // Simple: This creates the redis store.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 function makeRedisStore(prefix) {
     if (!redisClient) return undefined;
     return new RedisStore({

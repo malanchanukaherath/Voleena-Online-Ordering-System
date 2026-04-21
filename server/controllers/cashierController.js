@@ -13,12 +13,14 @@ const DEFAULT_STORE_CONTACT = process.env.POS_STORE_CONTACT || 'N/A';
 const DEFAULT_TERMINAL_ID = process.env.POS_TERMINAL_ID || 'WEB-POS-1';
 
 // Simple: This handles to finite number logic.
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 const toFiniteNumber = (value, fallback = 0) => {
   const parsed = Number.parseFloat(value);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 
 // Simple: This handles to positive number or null logic.
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 const toPositiveNumberOrNull = (value) => {
   if (value === null || value === undefined || value === '') {
     return null;
@@ -33,9 +35,11 @@ const toPositiveNumberOrNull = (value) => {
 };
 
 // Simple: This gets the order created at.
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 const getOrderCreatedAt = (order) => order?.created_at || order?.CreatedAt || order?.createdAt || new Date();
 
 // Simple: This creates the receipt payload.
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 const buildReceiptPayload = (order, options = {}) => {
   const subtotal = toFiniteNumber(order?.TotalAmount, 0);
   const discount = toFiniteNumber(order?.DiscountAmount, 0);
@@ -106,6 +110,7 @@ const buildReceiptPayload = (order, options = {}) => {
 };
 
 // Simple: This checks whether address table missing error is true.
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 const isAddressTableMissingError = (error) => {
   const mysqlCode = error?.original?.code || error?.parent?.code;
   const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -233,6 +238,7 @@ async function notifyCashierOrderStatusChange(order, newStatus, options = {}) {
 /**
  * Get cashier dashboard statistics
  */
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 exports.getDashboardStats = async (req, res) => {
   try {
     const { Op } = sequelize.Sequelize;
@@ -313,6 +319,7 @@ exports.getDashboardStats = async (req, res) => {
 /**
  * Create walk-in order from cashier dashboard
  */
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 exports.createWalkInOrder = async (req, res) => {
   try {
     const {
@@ -469,6 +476,7 @@ exports.createWalkInOrder = async (req, res) => {
 /**
  * Get all orders with customer details
  */
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 exports.getAllOrders = async (req, res) => {
   try {
     const { status, startDate, endDate, limit, offset, page, search = '', includeItems = 'true' } = req.query;
@@ -609,6 +617,7 @@ exports.getAllOrders = async (req, res) => {
 /**
  * Get full receipt data for a specific order id (manual reprint support)
  */
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 exports.getOrderReceipt = async (req, res) => {
   try {
     const parsedOrderId = Number.parseInt(req.params.orderId, 10);
@@ -675,6 +684,7 @@ exports.getOrderReceipt = async (req, res) => {
  * Accept/Confirm an order
  * NOTE: Orders are now auto-confirmed on creation. This endpoint is maintained for backward compatibility.
  */
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 exports.confirmOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -750,6 +760,7 @@ exports.confirmOrder = async (req, res) => {
 /**
  * Reject/Cancel an order (before preparation)
  */
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 exports.cancelOrder = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -795,6 +806,7 @@ exports.cancelOrder = async (req, res) => {
 /**
  * Register new customer manually
  */
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 exports.registerCustomer = async (req, res) => {
   try {
     const { name, email, phone, password, address } = req.body;
@@ -861,6 +873,7 @@ exports.registerCustomer = async (req, res) => {
 /**
  * Update customer details
  */
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 exports.updateCustomer = async (req, res) => {
   try {
     const { customerId } = req.params;
@@ -924,6 +937,7 @@ exports.updateCustomer = async (req, res) => {
 /**
  * Get all customers
  */
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 exports.getAllCustomers = async (req, res) => {
   try {
     const { search, limit = 50 } = req.query;
@@ -968,6 +982,7 @@ exports.getAllCustomers = async (req, res) => {
 /**
  * Get customer by ID
  */
+// Frontend connection: CashierDashboard, CashierOrders, and CustomerRegistration pages (cashier/admin operations).
 exports.getCustomerById = async (req, res) => {
   try {
     const { customerId } = req.params;

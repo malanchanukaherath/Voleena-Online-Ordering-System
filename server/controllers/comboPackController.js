@@ -7,6 +7,7 @@ const db = require('../models');
 const { uploadImageFile, deleteImageByUrl } = require('../services/uploadService');
 
 // Simple: This handles to money number logic.
+// Frontend connection: Home/Menu customer combo browsing and ComboManagement admin page.
 const toMoneyNumber = (value) => {
     const parsed = Number.parseFloat(value);
     return Number.isFinite(parsed) ? parsed : 0;
@@ -15,6 +16,7 @@ const toMoneyNumber = (value) => {
 // Date-only values are expected in YYYY-MM-DD format from the combo schedule form.
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
+// Frontend connection: Home/Menu customer combo browsing and ComboManagement admin page.
 const toDateOnlyString = (value) => {
     if (value instanceof Date && !Number.isNaN(value.getTime())) {
         return value.toISOString().slice(0, 10);
@@ -23,6 +25,7 @@ const toDateOnlyString = (value) => {
     return String(value || '').trim();
 };
 
+// Frontend connection: Home/Menu customer combo browsing and ComboManagement admin page.
 const getTodayDateOnlyString = () => {
     const now = new Date();
     const year = now.getFullYear();
@@ -32,6 +35,7 @@ const getTodayDateOnlyString = () => {
 };
 
 // Simple: This handles enrich combo pricing logic.
+// Frontend connection: Home/Menu customer combo browsing and ComboManagement admin page.
 const enrichComboPricing = (comboData) => {
     const items = Array.isArray(comboData.items) ? comboData.items : [];
     const originalPrice = items.reduce((sum, item) => {
@@ -55,6 +59,7 @@ const enrichComboPricing = (comboData) => {
 };
 
 // Simple: This creates the combo pack.
+// Frontend connection: Home/Menu customer combo browsing and ComboManagement admin page.
 const createComboPack = async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
@@ -155,6 +160,7 @@ const createComboPack = async (req, res) => {
 };
 
 // Simple: This gets the all combo packs.
+// Frontend connection: Home/Menu customer combo browsing and ComboManagement admin page.
 const getAllComboPacks = async (req, res) => {
     try {
         const { isActive } = req.query;
@@ -191,6 +197,7 @@ const getAllComboPacks = async (req, res) => {
 };
 
 // Simple: This gets the active combo packs.
+// Frontend connection: Home/Menu customer combo browsing and ComboManagement admin page.
 const getActiveComboPacks = async (req, res) => {
     try {
         const today = new Date().toISOString().split('T')[0];
@@ -226,6 +233,7 @@ const getActiveComboPacks = async (req, res) => {
 };
 
 // Simple: This gets the combo pack.
+// Frontend connection: Home/Menu customer combo browsing and ComboManagement admin page.
 const getComboPack = async (req, res) => {
     try {
         const { id } = req.params;
@@ -256,6 +264,7 @@ const getComboPack = async (req, res) => {
 };
 
 // Simple: This updates the combo pack.
+// Frontend connection: Home/Menu customer combo browsing and ComboManagement admin page.
 const updateComboPack = async (req, res) => {
     const transaction = await db.sequelize.transaction();
 
@@ -390,6 +399,7 @@ const updateComboPack = async (req, res) => {
 };
 
 // Simple: This removes or clears the combo pack.
+// Frontend connection: Home/Menu customer combo browsing and ComboManagement admin page.
 const deleteComboPack = async (req, res) => {
     try {
         const { id } = req.params;
@@ -417,6 +427,7 @@ const deleteComboPack = async (req, res) => {
 };
 
 // Simple: This handles upload image logic.
+// Frontend connection: Home/Menu customer combo browsing and ComboManagement admin page.
 const uploadImage = async (req, res) => {
     try {
         const { id } = req.params;

@@ -15,6 +15,7 @@ const stockService = require('../services/stockService');
  * PART 3 & 2: Get today's stock for all items
  * Admin: Full details | Kitchen: Read-only with low-stock alerts
  */
+// Frontend connection: StockManagement admin page and kitchen stock update flow.
 exports.getTodayStock = async (req, res) => {
     try {
         const stocks = await stockService.getDailyStockWithAlerts();
@@ -44,6 +45,7 @@ exports.getTodayStock = async (req, res) => {
  *   "openingQuantity": 50  // New opening quantity
  * }
  */
+// Frontend connection: StockManagement admin page and kitchen stock update flow.
 exports.updateOpeningQuantity = async (req, res) => {
     try {
         const { stockId } = req.params;
@@ -114,6 +116,7 @@ exports.updateOpeningQuantity = async (req, res) => {
  *   "reason": "Damaged during delivery"
  * }
  */
+// Frontend connection: StockManagement admin page and kitchen stock update flow.
 exports.manualAdjustStock = async (req, res) => {
     try {
         const { stockId } = req.params;
@@ -195,6 +198,7 @@ exports.manualAdjustStock = async (req, res) => {
  * Delete a stock record (admin + kitchen only)
  * Only allowed if no sales have been recorded for the day
  */
+// Frontend connection: StockManagement admin page and kitchen stock update flow.
 exports.deleteStockRecord = async (req, res) => {
     const transaction = await sequelize.transaction();
 
@@ -264,6 +268,7 @@ exports.deleteStockRecord = async (req, res) => {
  * PART 3: Get stock movements (audit trail)
  * Available to all staff roles
  */
+// Frontend connection: StockManagement admin page and kitchen stock update flow.
 exports.getStockMovements = async (req, res) => {
     try {
         const { menuItemId, startDate, endDate, changeType } = req.query;
@@ -308,6 +313,7 @@ exports.getStockMovements = async (req, res) => {
  * LEGACY: Set opening stock for an item
  * Kept for backward compatibility, use updateOpeningQuantity instead
  */
+// Frontend connection: StockManagement admin page and kitchen stock update flow.
 exports.setOpeningStock = async (req, res) => {
     try {
         const { menuItemId, quantity, stockDate } = req.body;
@@ -376,6 +382,7 @@ exports.setOpeningStock = async (req, res) => {
  * LEGACY: Adjust stock (add or remove)
  * Kept for backward compatibility, use manualAdjustStock instead
  */
+// Frontend connection: StockManagement admin page and kitchen stock update flow.
 exports.adjustStock = async (req, res) => {
     const transaction = await sequelize.transaction();
 
@@ -440,6 +447,7 @@ exports.adjustStock = async (req, res) => {
 /**
  * LEGACY: Bulk set opening stock for multiple items
  */
+// Frontend connection: StockManagement admin page and kitchen stock update flow.
 exports.bulkSetOpeningStock = async (req, res) => {
     const transaction = await sequelize.transaction();
 

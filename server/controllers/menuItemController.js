@@ -16,6 +16,7 @@ const {
 } = require('../utils/orderAddOnUtils');
 
 // Simple: This creates the menu item.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const createMenuItem = async (req, res) => {
     try {
         const { Name, Description, Price, CategoryID, IsActive, ImageURL } = req.body;
@@ -58,6 +59,7 @@ const createMenuItem = async (req, res) => {
 };
 
 // Simple: This gets the all menu items.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const getAllMenuItems = async (req, res) => {
     try {
         const { categoryId, isActive, search } = req.query;
@@ -132,6 +134,7 @@ const getAllMenuItems = async (req, res) => {
 };
 
 // Simple: This gets the menu item.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const getMenuItem = async (req, res) => {
     try {
         const { id } = req.params;
@@ -162,6 +165,7 @@ const getMenuItem = async (req, res) => {
 };
 
 // Simple: This updates the menu item.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const updateMenuItem = async (req, res) => {
     try {
         const { id } = req.params;
@@ -222,6 +226,7 @@ const updateMenuItem = async (req, res) => {
 };
 
 // Simple: This removes or clears the menu item.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const deleteMenuItem = async (req, res) => {
     try {
         const { id } = req.params;
@@ -244,6 +249,7 @@ const deleteMenuItem = async (req, res) => {
 };
 
 // Simple: This handles upload image logic.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const uploadImage = async (req, res) => {
     try {
         const { id } = req.params;
@@ -290,6 +296,7 @@ const uploadImage = async (req, res) => {
 };
 
 // Simple: This gets the menu item add on config.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const getMenuItemAddOnConfig = async (req, res) => {
     try {
         const { id } = req.params;
@@ -321,6 +328,7 @@ const getMenuItemAddOnConfig = async (req, res) => {
 };
 
 // Simple: This updates the menu item add on config.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const updateMenuItemAddOnConfig = async (req, res) => {
     try {
         const { id } = req.params;
@@ -354,6 +362,7 @@ const updateMenuItemAddOnConfig = async (req, res) => {
 };
 
 // Simple: This gets the add on catalog.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const getAddOnCatalog = async (req, res) => {
     try {
         const includeInactive = String(req.query?.includeInactive || '').toLowerCase() === 'true';
@@ -371,6 +380,7 @@ const getAddOnCatalog = async (req, res) => {
 };
 
 // Simple: This creates the add on catalog item.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const createAddOnCatalogItem = async (req, res) => {
     try {
         const created = await createAddOnCatalogEntry(req.body || {}, req.user?.id || null);
@@ -388,6 +398,7 @@ const createAddOnCatalogItem = async (req, res) => {
 };
 
 // Simple: This updates the add on catalog item.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const updateAddOnCatalogItem = async (req, res) => {
     try {
         const updated = await updateAddOnCatalogEntry(req.params.id, req.body || {}, req.user?.id || null);
@@ -411,6 +422,7 @@ const updateAddOnCatalogItem = async (req, res) => {
 };
 
 // Simple: This handles deactivate add on catalog item logic.
+// Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const deactivateAddOnCatalogItem = async (req, res) => {
     try {
         const deactivated = await deactivateAddOnCatalogEntry(req.params.id, req.user?.id || null);

@@ -3,6 +3,7 @@
 // SEARCH_HINT: Use this file to explain order data structure.
 const { DataTypes } = require('sequelize');
 
+// Frontend connection: Defines database structure used by customer/staff/admin features.
 module.exports = (sequelize) => {
     const Order = sequelize.define('Order', {
         OrderID: {

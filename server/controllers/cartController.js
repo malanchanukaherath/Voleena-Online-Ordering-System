@@ -36,6 +36,7 @@ const systemSettingsService = require('../services/systemSettingsService');
  *   }
  * }
  */
+// Frontend connection: Cart and Checkout pages (customer cart validation and totals).
 exports.validateCart = async (req, res) => {
     try {
         const { items } = req.body;
@@ -226,6 +227,7 @@ exports.validateCart = async (req, res) => {
  * 
  * POST /api/v1/cart/summary
  */
+// Frontend connection: Cart and Checkout pages (customer cart validation and totals).
 exports.getCartSummary = async (req, res) => {
     try {
         const { items, orderType } = req.body;

@@ -34,9 +34,11 @@ if (shouldUseTwilio && (hasApiKeyCredentials || hasLegacyCredentials)) {
 }
 
 // Simple: This cleans or formats the phone.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const normalizePhone = (phone) => String(phone || '').trim();
 
 // Simple: This creates the invalid phone error.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const buildInvalidPhoneError = (rawPhone) => {
     const error = new Error('Recipient phone number must be in international format (E.164).');
     error.code = 'INVALID_RECIPIENT_PHONE';
@@ -46,6 +48,7 @@ const buildInvalidPhoneError = (rawPhone) => {
 };
 
 // Simple: This cleans or formats the phone for sms.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const normalizePhoneForSms = (phone) => {
     const rawPhone = normalizePhone(phone);
     if (!rawPhone) {
@@ -83,6 +86,7 @@ const normalizePhoneForSms = (phone) => {
 };
 
 // Simple: This cleans or formats the provider phone error.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const mapProviderPhoneError = (error, rawPhone) => {
     const code = String(error?.code || '');
     const message = String(error?.message || '').toLowerCase();
@@ -105,6 +109,7 @@ const mapProviderPhoneError = (error, rawPhone) => {
 };
 
 // Simple: This creates the auditable message.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const buildAuditableMessage = (message, containsSensitiveContent) => {
     if (containsSensitiveContent) {
         return '[REDACTED] Sensitive SMS content';
@@ -114,6 +119,7 @@ const buildAuditableMessage = (message, containsSensitiveContent) => {
 };
 
 // Simple: This sends or records the notification.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function logNotification(payload) {
     if (!Notification || typeof Notification.create !== 'function') {
         return false;
@@ -133,6 +139,7 @@ async function logNotification(payload) {
  * Send SMS message
  */
 // Simple: This sends or records the sms.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendSMS(to, message, relatedOrderId = null, options = {}) {
     const containsSensitiveContent = Boolean(options.containsSensitiveContent);
     const recipientId = Number.isInteger(options.recipientId) && options.recipientId > 0
@@ -250,6 +257,7 @@ async function sendSMS(to, message, relatedOrderId = null, options = {}) {
  * Send OTP via SMS (FR28)
  */
 // Simple: This sends or records the otpsms.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendOTPSMS(phone, otp, purpose, metadata = {}) {
     const purposeMessages = {
         EMAIL_VERIFICATION: 'email verification',
@@ -271,6 +279,7 @@ async function sendOTPSMS(phone, otp, purpose, metadata = {}) {
  * Send order confirmation SMS (FR15)
  */
 // Simple: This sends or records the order confirmation sms.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendOrderConfirmationSMS(phone, orderNumber, metadata = {}) {
     const message = `Your Voleena Foods order #${orderNumber} has been confirmed. You will receive updates as it progresses. Thank you!`;
 
@@ -284,6 +293,7 @@ async function sendOrderConfirmationSMS(phone, orderNumber, metadata = {}) {
  * Send order status update SMS (FR15)
  */
 // Simple: This sends or records the order status update sms.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendOrderStatusUpdateSMS(phone, orderNumber, status, metadata = {}) {
     const statusMessages = {
         CONFIRMED: 'confirmed',
@@ -306,6 +316,7 @@ async function sendOrderStatusUpdateSMS(phone, orderNumber, status, metadata = {
  * Send delivery notification SMS
  */
 // Simple: This sends or records the delivery notification sms.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendDeliveryNotificationSMS(phone, orderNumber, estimatedTime, metadata = {}) {
     const message = `Your order #${orderNumber} is on the way! Estimated delivery: ${estimatedTime} minutes. Our delivery staff will contact you shortly.`;
 

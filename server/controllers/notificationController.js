@@ -4,6 +4,7 @@
 const appNotificationService = require('../services/appNotificationService');
 
 // Simple: This cleans or formats the boolean.
+// Frontend connection: In-app notification panels for customer, admin, cashier, kitchen, and delivery users.
 const parseBoolean = (value) => {
     if (typeof value === 'boolean') {
         return value;
@@ -13,6 +14,7 @@ const parseBoolean = (value) => {
     return normalized === 'true' || normalized === '1';
 };
 
+// Frontend connection: In-app notification panels for customer, admin, cashier, kitchen, and delivery users.
 exports.getMyNotifications = async (req, res) => {
     try {
         const result = await appNotificationService.listForUser(req.user, {
@@ -39,6 +41,7 @@ exports.getMyNotifications = async (req, res) => {
     }
 };
 
+// Frontend connection: In-app notification panels for customer, admin, cashier, kitchen, and delivery users.
 exports.getUnreadCount = async (req, res) => {
     try {
         const unreadCount = await appNotificationService.countUnreadForUser(req.user);
@@ -58,6 +61,7 @@ exports.getUnreadCount = async (req, res) => {
     }
 };
 
+// Frontend connection: In-app notification panels for customer, admin, cashier, kitchen, and delivery users.
 exports.markOneAsRead = async (req, res) => {
     try {
         const notificationId = Number.parseInt(req.params.id, 10);
@@ -91,6 +95,7 @@ exports.markOneAsRead = async (req, res) => {
     }
 };
 
+// Frontend connection: In-app notification panels for customer, admin, cashier, kitchen, and delivery users.
 exports.markAllAsRead = async (req, res) => {
     try {
         const updatedCount = await appNotificationService.markAllAsReadForUser(req.user);
@@ -110,6 +115,7 @@ exports.markAllAsRead = async (req, res) => {
     }
 };
 
+// Frontend connection: In-app notification panels for customer, admin, cashier, kitchen, and delivery users.
 exports.deleteOne = async (req, res) => {
     try {
         const notificationId = Number.parseInt(req.params.id, 10);
@@ -143,6 +149,7 @@ exports.deleteOne = async (req, res) => {
     }
 };
 
+// Frontend connection: In-app notification panels for customer, admin, cashier, kitchen, and delivery users.
 exports.clearAll = async (req, res) => {
     try {
         const deletedCount = await appNotificationService.clearAllForUser(req.user);

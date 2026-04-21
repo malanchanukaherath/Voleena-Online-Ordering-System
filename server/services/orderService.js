@@ -1,4 +1,4 @@
-// CODEMAP: BACKEND_ORDER_SERVICE
+﻿// CODEMAP: BACKEND_ORDER_SERVICE
 // PURPOSE: Central business logic for order lifecycle and stock/payment checks.
 // SEARCH_HINT: Main file for understanding order rules and side effects.
 const { Order, OrderItem, OrderStatusHistory, Customer, MenuItem, ComboPack, ComboPackItem, Delivery, DeliveryStaffAvailability, Payment, Address, PreorderApprovalLog, sequelize } = require('../models');
@@ -20,6 +20,7 @@ const {
 } = require('../utils/orderAddOnUtils');
 
 // Simple: This checks whether address table missing error is true.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
     const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -33,6 +34,7 @@ const isAddressTableMissingError = (error) => {
 };
 
 // Simple: This updates the address unavailable error.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const markAddressUnavailableError = (error) => {
     if (isAddressTableMissingError(error)) {
         error.code = 'ADDRESS_TABLE_UNAVAILABLE';
@@ -44,9 +46,11 @@ const markAddressUnavailableError = (error) => {
 const CUSTOMER_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
 const DELIVERY_DESTINATION_PIN_PREFIX = '__VOLEENA_DEST_PIN__:';
 // Simple: This cleans or formats the phone.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
 
 // Simple: This checks whether usable coordinate pair is true.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const isUsableCoordinatePair = (latitude, longitude) => {
     if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
         return false;
@@ -65,6 +69,7 @@ const isUsableCoordinatePair = (latitude, longitude) => {
 };
 
 // Simple: This sends or records an update.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const notifySafely = async (action, context) => {
     try {
         await action();
@@ -74,6 +79,7 @@ const notifySafely = async (action, context) => {
 };
 
 // Simple: This cleans or formats the notification preference.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const normalizeNotificationPreference = (preference) => {
     const normalized = String(preference || 'BOTH').trim().toUpperCase();
     if (['EMAIL', 'SMS', 'BOTH'].includes(normalized)) {
@@ -84,6 +90,7 @@ const normalizeNotificationPreference = (preference) => {
 };
 
 // Simple: This checks whether send order email is allowed.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const canSendOrderEmail = (runtimeSettings, customer, eventSettingKey) => {
     if (!runtimeSettings?.emailNotifications || !runtimeSettings?.[eventSettingKey] || !customer?.Email) {
         return false;
@@ -94,6 +101,7 @@ const canSendOrderEmail = (runtimeSettings, customer, eventSettingKey) => {
 };
 
 // Simple: This checks whether send order sms is allowed.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const canSendOrderSMS = (runtimeSettings, customer, eventSettingKey) => {
     if (!runtimeSettings?.smsNotifications || !runtimeSettings?.[eventSettingKey] || !customer?.Phone) {
         return false;
@@ -104,8 +112,10 @@ const canSendOrderSMS = (runtimeSettings, customer, eventSettingKey) => {
 };
 
 // Simple: This combines or filters the allowed add ons.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const intersectAllowedAddOns = (collections) => {
     // Simple: This handles safe collections logic.
+    // Frontend connection: Supports business logic behind customer/staff/admin page actions.
     const safeCollections = (collections || []).filter((entry) => Array.isArray(entry));
     if (safeCollections.length === 0) {
         return [];
@@ -153,6 +163,7 @@ const intersectAllowedAddOns = (collections) => {
 };
 
 // Simple: This gets the allowed add ons for combo.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const getAllowedAddOnsForCombo = async (comboId, transaction) => {
     const comboComponents = await ComboPackItem.findAll({
         where: { ComboID: comboId },
@@ -186,6 +197,7 @@ class OrderService {
         const requiredByMenuItem = new Map();
 
         // Simple: This creates the requirement.
+        // Frontend connection: Supports business logic behind customer/staff/admin page actions.
         const addRequirement = (menuItemId, quantity) => {
             if (!Number.isInteger(menuItemId) || !Number.isFinite(quantity) || quantity <= 0) {
                 return;

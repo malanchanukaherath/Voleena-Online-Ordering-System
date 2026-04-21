@@ -9,15 +9,18 @@ const { Customer, Staff, Role } = require('../models');
 
 // Helper: Validate email format
 // Simple: This checks whether valid email is true.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 // Helper: Validate password strength
 // Simple: This checks whether valid password is true.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const isValidPassword = (password) => {
   return password && password.length >= 8;
 };
 
 // Simple: This gets the jwt secret.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const getJwtSecret = () => {
   if (!process.env.JWT_SECRET) {
     throw new Error('JWT_SECRET is not configured');

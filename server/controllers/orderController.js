@@ -20,9 +20,11 @@ const KITCHEN_ALLOWED_TRANSITIONS = new Set([
 ]);
 
 // Simple: This cleans or formats the phone.
+// Frontend connection: Checkout, OrderConfirmation, OrderHistory, OrderTracking, and staff/admin order workflows.
 const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
 
 // Simple: This converts query values to booleans.
+// Frontend connection: Checkout, OrderConfirmation, OrderHistory, OrderTracking, and staff/admin order workflows.
 const toBooleanQuery = (value) => {
     if (typeof value !== 'string') return undefined;
 
@@ -34,6 +36,7 @@ const toBooleanQuery = (value) => {
 };
 
 // Simple: This checks whether staff can change this status.
+// Frontend connection: Checkout, OrderConfirmation, OrderHistory, OrderTracking, and staff/admin order workflows.
 const canStaffTransitionStatus = (role, fromStatus, toStatus) => {
     if (role === 'Admin') {
         return true;
@@ -54,6 +57,7 @@ const canStaffTransitionStatus = (role, fromStatus, toStatus) => {
 };
 
 // Simple: This checks whether address table missing error is true.
+// Frontend connection: Checkout, OrderConfirmation, OrderHistory, OrderTracking, and staff/admin order workflows.
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
     const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -68,6 +72,7 @@ const isAddressTableMissingError = (error) => {
 };
 
 // Create new order
+// Frontend connection: Checkout, OrderConfirmation, OrderHistory, OrderTracking, and staff/admin order workflows.
 exports.createOrder = async (req, res) => {
     try {
         const {
@@ -170,6 +175,7 @@ exports.createOrder = async (req, res) => {
 };
 
 // Get all orders (with role-based filtering)
+// Frontend connection: Checkout, OrderConfirmation, OrderHistory, OrderTracking, and staff/admin order workflows.
 exports.getAllOrders = async (req, res) => {
     try {
         const { status, orderType, startDate, endDate, approvalStatus, limit, offset } = req.query;
@@ -243,6 +249,7 @@ exports.getAllOrders = async (req, res) => {
 };
 
 // Get single order
+// Frontend connection: Checkout, OrderConfirmation, OrderHistory, OrderTracking, and staff/admin order workflows.
 exports.getOrderById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -333,6 +340,7 @@ exports.getOrderById = async (req, res) => {
 
 // Confirm order (Admin/Cashier only)
 // CRITICAL: Uses SERIALIZABLE isolation level to prevent race conditions
+// Frontend connection: Checkout, OrderConfirmation, OrderHistory, OrderTracking, and staff/admin order workflows.
 exports.confirmOrder = async (req, res) => {
     try {
         const { id } = req.params;
@@ -355,6 +363,7 @@ exports.confirmOrder = async (req, res) => {
 };
 
 // Update order status
+// Frontend connection: Checkout, OrderConfirmation, OrderHistory, OrderTracking, and staff/admin order workflows.
 exports.updateOrderStatus = async (req, res) => {
     try {
         const { id } = req.params;
@@ -414,6 +423,7 @@ exports.updateOrderStatus = async (req, res) => {
 // CRITICAL: Must restore stock before changing order status
 // Uses SERIALIZABLE transaction to ensure atomicity
 // All validations done in middleware (validateOrderCancellation)
+// Frontend connection: Checkout, OrderConfirmation, OrderHistory, OrderTracking, and staff/admin order workflows.
 exports.cancelOrder = async (req, res) => {
     // Audit timestamp for logging
     const startTime = Date.now();

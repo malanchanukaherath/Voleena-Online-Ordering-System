@@ -17,9 +17,11 @@ const MAX_LIMIT = 100;
 const DEFAULT_LIMIT = 30;
 
 // Simple: This handles to recipient type logic.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const toRecipientType = (userType) => userType === 'Customer' ? 'CUSTOMER' : 'STAFF';
 
 // Simple: This handles to recipient role logic.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const toRecipientRole = (user) => {
     if (!user) {
         return null;
@@ -37,6 +39,7 @@ const toRecipientRole = (user) => {
 };
 
 // Simple: This cleans or formats the priority.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const normalizePriority = (priority = 'MEDIUM') => {
     const normalized = String(priority || 'MEDIUM').trim().toUpperCase();
     return ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(normalized) ? normalized : 'MEDIUM';

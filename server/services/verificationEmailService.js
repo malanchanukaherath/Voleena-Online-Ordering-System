@@ -7,16 +7,19 @@ const resendApiKey = process.env.RESEND_API_KEY;
 const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 // Simple: This gets the from address.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const getFromAddress = () => {
   return process.env.EMAIL_FROM || 'onboarding@resend.dev';
 };
 
 // Simple: This checks whether log verification link should happen.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const shouldLogVerificationLink = () => {
   return process.env.NODE_ENV !== 'production' && process.env.EMAIL_VERIFICATION_CONSOLE_LOG !== 'false';
 };
 
 // Simple: This sends or records the verification link.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const logVerificationLink = (email, verificationUrl, source = 'generated') => {
   if (!shouldLogVerificationLink()) {
     return;
@@ -26,6 +29,7 @@ const logVerificationLink = (email, verificationUrl, source = 'generated') => {
 };
 
 // Simple: This checks whether resend sandbox restriction is true.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const isResendSandboxRestriction = (message = '') => {
   return (
     /only send testing emails to your own email address/i.test(message) ||
@@ -34,6 +38,7 @@ const isResendSandboxRestriction = (message = '') => {
 };
 
 // Simple: This sends or records the email verification link.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendEmailVerificationLink(email, customerName, verificationUrl) {
   if (!resend) {
     if (process.env.NODE_ENV === 'production') {

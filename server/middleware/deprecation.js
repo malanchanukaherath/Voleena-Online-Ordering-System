@@ -7,6 +7,7 @@
 const deprecationWarnings = new Map();
 
 // Simple: This handles deprecation middleware logic.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 function deprecationMiddleware(newPath) {
   return (req, res, next) => {
     const key = `${req.method}:${req.path}`;

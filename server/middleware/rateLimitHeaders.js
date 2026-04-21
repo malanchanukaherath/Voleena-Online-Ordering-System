@@ -4,12 +4,14 @@
  * even when express-rate-limit doesn't set them
  */
 // Simple: This handles rate limit headers middleware logic.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 function rateLimitHeadersMiddleware(req, res, next) {
     // Set Rate-Limit headers if not already set by rate limiter
     const originalJson = res.json;
     const originalSend = res.send;
 
     // Simple: This creates the headers.
+    // Frontend connection: Applies shared security/validation rules across customer and staff flows.
     function addHeaders(data) {
         // Add rate limit info if available (from rate limiter)
         if (req.rateLimit) {

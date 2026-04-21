@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 
+// Frontend connection: Defines database structure used by customer/staff/admin features.
 module.exports = (sequelize, DataTypes) => {
   const Staff = sequelize.define('Staff', {
     StaffID: {
@@ -75,6 +76,7 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   // Simple: This handles hash password logic.
+  // Frontend connection: Defines database structure used by customer/staff/admin features.
   const hashPassword = async (staff) => {
     if (staff.changed('Password')) {
       staff.Password = await bcrypt.hash(staff.Password, 10);
@@ -90,6 +92,7 @@ module.exports = (sequelize, DataTypes) => {
     return values;
   };
 
+  // Frontend connection: Defines database structure used by customer/staff/admin features.
   Staff.associate = function (models) {
     Staff.belongsTo(models.Role, {
       foreignKey: 'RoleID',

@@ -7,6 +7,7 @@
 const { ActivityLog } = require('../models');
 
 // Simple: This handles audit log middleware logic.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 const auditLogMiddleware = async (req, res, next) => {
   // Only log state-changing operations
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
@@ -34,6 +35,7 @@ const auditLogMiddleware = async (req, res, next) => {
 };
 
 // Simple: This sends or records the activity.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 async function logActivity(req, res) {
   try {
     // Extract entity type and ID from route

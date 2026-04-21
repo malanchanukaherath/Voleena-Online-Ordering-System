@@ -9,6 +9,7 @@ let hasLoggedEmailNotConfiguredWarning = false;
 let hasLoggedResendNotConfiguredWarning = false;
 
 // Simple: This handles warn email not configured once logic.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const warnEmailNotConfiguredOnce = () => {
   if (hasLoggedEmailNotConfiguredWarning) {
     return;
@@ -19,6 +20,7 @@ const warnEmailNotConfiguredOnce = () => {
 };
 
 // Simple: This handles warn resend not configured once logic.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const warnResendNotConfiguredOnce = () => {
   if (hasLoggedResendNotConfiguredWarning) {
     return;
@@ -29,17 +31,20 @@ const warnResendNotConfiguredOnce = () => {
 };
 
 // Simple: This gets the preferred email provider.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const getPreferredEmailProvider = () => {
   return String(process.env.EMAIL_PROVIDER || 'smtp').trim().toLowerCase();
 };
 
 // Simple: This checks whether resend configured is true.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const isResendConfigured = () => {
   return Boolean(process.env.RESEND_API_KEY);
 };
 
 // Check if email service is properly configured
 // Simple: This checks whether email configured is true.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const isEmailConfigured = () => {
   return !!(
     process.env.SMTP_HOST &&
@@ -75,11 +80,13 @@ if (isEmailConfigured()) {
 const resend = isResendConfigured() ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Simple: This gets the email from address.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const getEmailFromAddress = () => {
   return process.env.EMAIL_FROM || process.env.SMTP_FROM || 'onboarding@resend.dev';
 };
 
 // Simple: This sends or records the via resend.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendViaResend(to, subject, html) {
   if (!resend || !isResendConfigured()) {
     throw new Error('Resend provider is not configured');
@@ -107,6 +114,7 @@ async function sendViaResend(to, subject, html) {
  * Send email and log notification
  */
 // Simple: This sends or records the email.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendEmail(to, subject, html, relatedOrderId = null, options = {}) {
   const messageForAudit = options.logMessage || html;
   const preferredProvider = getPreferredEmailProvider();
@@ -202,6 +210,7 @@ async function sendEmail(to, subject, html, relatedOrderId = null, options = {})
  * Send order confirmation email (FR15)
  */
 // Simple: This sends or records the order confirmation email.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendOrderConfirmationEmail(order, customer) {
   const subject = `Order Confirmed - #${order.OrderNumber}`;
   const html = `
@@ -253,6 +262,7 @@ async function sendOrderConfirmationEmail(order, customer) {
  * Send order status update email (FR15)
  */
 // Simple: This sends or records the order status update email.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendOrderStatusUpdateEmail(order, customer, newStatus) {
   const statusMessages = {
     CONFIRMED: 'Your order has been confirmed',
@@ -312,6 +322,7 @@ async function sendOrderStatusUpdateEmail(order, customer, newStatus) {
  * Send OTP verification email (FR28)
  */
 // Simple: This sends or records the otp email.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendOTPEmail(email, otp, purpose) {
   const purposeMessages = {
     EMAIL_VERIFICATION: 'Verify Your Email',
@@ -366,6 +377,7 @@ async function sendOTPEmail(email, otp, purpose) {
  * Send password reset email (FR27)
  */
 // Simple: This sends or records the password reset email.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendPasswordResetEmail(email, resetToken) {
   const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
   const subject = 'Password Reset Request';
@@ -415,6 +427,7 @@ async function sendPasswordResetEmail(email, resetToken) {
  * Send welcome email for new customers
  */
 // Simple: This sends or records the welcome email.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendWelcomeEmail(customer) {
   const subject = 'Welcome to Voleena Foods!';
   const html = `
@@ -458,6 +471,7 @@ async function sendWelcomeEmail(customer) {
  * CRITICAL: Ensures admins are notified of system failures that require manual intervention
  */
 // Simple: This sends or records the admin critical alert.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendAdminCriticalAlert(alertType, details, errorMessage = null) {
   // Get admin email from environment
   const adminEmails = (process.env.ADMIN_EMAIL || process.env.SMTP_USER || '').split(',').filter(e => e.trim());

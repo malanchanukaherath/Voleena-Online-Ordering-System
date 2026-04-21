@@ -30,6 +30,7 @@ const PASSWORD_RESET_TOKEN_PATTERN = /^[a-f0-9]{64}$/i;
  * Generate JWT Token with 30-minute expiry
  */
 // Simple: This creates the token.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const generateToken = (payload) => {
   if (typeof generateAccessToken === 'function') {
     return generateAccessToken(payload);
@@ -40,6 +41,7 @@ const generateToken = (payload) => {
 };
 
 // Simple: This creates the refresh token.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const generateRefreshToken = (payload) => {
   if (typeof generateRefreshJwt === 'function') {
     return generateRefreshJwt(payload);
@@ -50,27 +52,33 @@ const generateRefreshToken = (payload) => {
 };
 
 // Simple: This handles hash verification token logic.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const hashVerificationToken = (token) => {
   return crypto.createHash('sha256').update(token).digest('hex');
 };
 
 // Simple: This handles hash otp code logic.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const hashOtpCode = (otpCode) => {
   return crypto.createHash('sha256').update(String(otpCode).trim()).digest('hex');
 };
 
 // Simple: This creates the email verification token.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const generateEmailVerificationToken = () => {
   return crypto.randomBytes(32).toString('hex');
 };
 
 // Simple: This creates the email verification url.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const buildEmailVerificationUrl = (token) => {
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
   const frontendBase = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
   return `${frontendBase}/verify-email?token=${encodeURIComponent(token)}`;
 };
 
 // Simple: This creates the email verification token.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const createEmailVerificationToken = async (customerId, invalidateExisting = true) => {
   if (invalidateExisting) {
     await sequelize.query(
@@ -104,6 +112,7 @@ const createEmailVerificationToken = async (customerId, invalidateExisting = tru
 };
 
 // Simple: This updates the email verification token used.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const markEmailVerificationTokenUsed = async (tokenHash) => {
   await sequelize.query(
     `UPDATE email_verification_token
@@ -117,6 +126,7 @@ const markEmailVerificationTokenUsed = async (tokenHash) => {
 };
 
 // Simple: This handles issue verification email logic.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const issueVerificationEmail = async (customer, options = {}) => {
   const { enforceCooldown = false } = options;
 
@@ -167,20 +177,24 @@ const issueVerificationEmail = async (customer, options = {}) => {
  * Validate email format
  */
 // Simple: This checks whether valid email is true.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 /**
  * Validate password strength
  */
 // Simple: This checks whether valid password is true.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const isValidPassword = (password) => password && password.length >= 8;
 
 // Simple: This checks whether successful delivery result is true.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const isSuccessfulDeliveryResult = (deliveryResult) => {
   return Boolean(deliveryResult && deliveryResult.success === true && deliveryResult.skipped !== true);
 };
 
 // Simple: This checks if the registration email token is correct.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const verifyRegistrationEmailToken = async (rawToken, res) => {
   const transaction = await sequelize.transaction();
 
@@ -282,6 +296,7 @@ const verifyRegistrationEmailToken = async (rawToken, res) => {
 };
 
 // Simple: This checks if the customer email change token is correct.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const verifyCustomerEmailChangeToken = async (rawToken, res) => {
   let decoded;
 
@@ -384,6 +399,7 @@ const verifyCustomerEmailChangeToken = async (rawToken, res) => {
 };
 
 // Simple: This checks whether password reset table missing error is true.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const isPasswordResetTableMissingError = (error) => {
   const mysqlCode = error?.original?.code || error?.parent?.code;
   const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -397,6 +413,7 @@ const isPasswordResetTableMissingError = (error) => {
 };
 
 // Simple: This creates the refresh payload from current user.
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 const buildRefreshPayloadFromCurrentUser = async (decoded) => {
   if (decoded.type === 'Customer') {
     const customer = await Customer.findOne({
@@ -455,6 +472,7 @@ const buildRefreshPayloadFromCurrentUser = async (decoded) => {
 /**
  * Staff Login - Admin, Cashier, Kitchen, Delivery
  */
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.staffLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -523,6 +541,7 @@ exports.staffLogin = async (req, res) => {
 /**
  * Customer Login
  */
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.customerLogin = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -586,6 +605,7 @@ exports.customerLogin = async (req, res) => {
 /**
  * Customer Register
  */
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.register = async (req, res) => {
   try {
     const { name, email, phone, password, profileImageUrl, ProfileImageURL } = req.body;
@@ -666,6 +686,7 @@ exports.register = async (req, res) => {
  * Refresh Token - extends session by another 30 minutes AND issues new refresh token
  * CRITICAL: Implements token rotation to prevent token sliding attacks
  */
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.refreshToken = async (req, res) => {
   try {
     const authHeader = req.headers.authorization || '';
@@ -728,6 +749,7 @@ exports.refreshToken = async (req, res) => {
  * Logout - Server-side token blacklisting
  * CRITICAL: Blacklists the token to prevent reuse after logout
  */
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.logout = async (req, res) => {
   try {
     const authHeader = req.headers.authorization || '';
@@ -781,6 +803,7 @@ exports.logout = async (req, res) => {
 /**
  * Verify current token and return user info
  */
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.verifyToken = async (req, res) => {
   try {
     const authHeader = req.headers.authorization || '';
@@ -803,7 +826,9 @@ exports.verifyToken = async (req, res) => {
 /**
  * Verify email using one-time verification token
  */
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.verifyEmail = async (req, res) => {
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
   const rawToken = (req.body?.token || '').trim();
 
   if (!rawToken) {
@@ -823,8 +848,10 @@ exports.verifyEmail = async (req, res) => {
 /**
  * Resend email verification link
  */
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.resendEmailVerification = async (req, res) => {
   try {
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
     const email = (req.body?.email || '').trim().toLowerCase();
 
     if (!email || !isValidEmail(email)) {
@@ -870,6 +897,7 @@ exports.resendEmailVerification = async (req, res) => {
 /**
  * Request password reset - generates OTP
  */
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.requestPasswordReset = async (req, res) => {
   try {
     const { email, userType } = req.body; // userType: 'Customer' or 'Staff'
@@ -996,6 +1024,7 @@ exports.requestPasswordReset = async (req, res) => {
 /**
  * Verify OTP for password reset
  */
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.verifyResetOTP = async (req, res) => {
   try {
     const { email, otp, userType } = req.body;
@@ -1087,6 +1116,7 @@ exports.verifyResetOTP = async (req, res) => {
 /**
  * Reset password with OTP
  */
+// Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword, userType, resetToken } = req.body;

@@ -47,11 +47,13 @@ const DEFAULT_SETTINGS = Object.freeze({
 const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
 
 // Simple: This handles clone default settings logic.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function cloneDefaultSettings() {
     return JSON.parse(JSON.stringify(DEFAULT_SETTINGS));
 }
 
 // Simple: This cleans or formats the string.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function normalizeString(value, fallback) {
     if (typeof value !== 'string') {
         return fallback;
@@ -62,6 +64,7 @@ function normalizeString(value, fallback) {
 }
 
 // Simple: This cleans or formats the order prefix.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function normalizeOrderPrefix(value, fallback) {
     const normalized = normalizeString(value, fallback)
         .toUpperCase()
@@ -76,6 +79,7 @@ function normalizeOrderPrefix(value, fallback) {
 }
 
 // Simple: This cleans or formats the number.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function normalizeNumber(value, fallback, { min = Number.NEGATIVE_INFINITY, max = Number.POSITIVE_INFINITY, isInteger = false } = {}) {
     const parsed = Number(value);
 
@@ -92,6 +96,7 @@ function normalizeNumber(value, fallback, { min = Number.NEGATIVE_INFINITY, max 
 }
 
 // Simple: This cleans or formats the boolean.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function normalizeBoolean(value, fallback) {
     if (typeof value === 'boolean') {
         return value;
@@ -104,6 +109,7 @@ function normalizeBoolean(value, fallback) {
 }
 
 // Simple: This cleans or formats the business hours.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function normalizeBusinessHours(hours) {
     const defaults = cloneDefaultSettings().businessHours;
 
@@ -128,6 +134,7 @@ function normalizeBusinessHours(hours) {
 }
 
 // Simple: This cleans or formats the settings.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function normalizeSettings(rawSettings) {
     const defaults = cloneDefaultSettings();
     const source = rawSettings && typeof rawSettings === 'object' ? rawSettings : {};
@@ -162,6 +169,7 @@ function normalizeSettings(rawSettings) {
 }
 
 // Simple: This cleans or formats the cache ttl.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function normalizeCacheTtl() {
     if (!Number.isFinite(SETTINGS_CACHE_TTL_MS) || SETTINGS_CACHE_TTL_MS < 0) {
         return 30000;
@@ -170,12 +178,14 @@ function normalizeCacheTtl() {
 }
 
 // Simple: This handles invalidate settings cache logic.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function invalidateSettingsCache() {
     cachedAdminSettings = null;
     cachedAt = 0;
 }
 
 // Simple: This gets the public settings from admin settings.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function getPublicSettingsFromAdminSettings(settings) {
     return {
         restaurantName: settings.restaurantName,
@@ -207,6 +217,7 @@ function getPublicSettingsFromAdminSettings(settings) {
 }
 
 // Simple: This gets the system setting model.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function getSystemSettingModel() {
     try {
         const models = require('../models');
@@ -223,6 +234,7 @@ function getSystemSettingModel() {
 }
 
 // Simple: This checks whether system settings table missing error is true.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function isSystemSettingsTableMissingError(error) {
     const mysqlCode = error?.original?.code || error?.parent?.code;
     const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -238,6 +250,7 @@ function isSystemSettingsTableMissingError(error) {
 }
 
 // Simple: This cleans or formats the stored settings.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function parseStoredSettings(settingValue) {
     if (!settingValue || typeof settingValue !== 'string') {
         return {};
@@ -252,6 +265,7 @@ function parseStoredSettings(settingValue) {
 }
 
 // Simple: This gets the admin settings.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function getAdminSettings() {
     const ttlMs = normalizeCacheTtl();
     if (cachedAdminSettings && Date.now() - cachedAt < ttlMs) {
@@ -285,17 +299,20 @@ async function getAdminSettings() {
 }
 
 // Simple: This gets the runtime settings.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function getRuntimeSettings() {
     return getAdminSettings();
 }
 
 // Simple: This gets the public settings.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function getPublicSettings() {
     const settings = await getAdminSettings();
     return getPublicSettingsFromAdminSettings(settings);
 }
 
 // Simple: This updates the admin settings.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function updateAdminSettings(rawSettings, updatedBy = null) {
     if (!rawSettings || typeof rawSettings !== 'object' || Array.isArray(rawSettings)) {
         const validationError = new Error('Settings payload must be a JSON object');

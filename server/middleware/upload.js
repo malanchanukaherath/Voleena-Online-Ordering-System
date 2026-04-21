@@ -6,6 +6,7 @@ const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 // File filter - only images
 // Simple: This handles file filter logic.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 const fileFilter = (req, file, cb) => {
     const normalizedName = (file.originalname || '').toLowerCase();
     const extname = ALLOWED_EXTENSIONS.test(normalizedName);

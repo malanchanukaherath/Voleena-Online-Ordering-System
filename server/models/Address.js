@@ -1,5 +1,6 @@
 const { DataTypes } = require('sequelize');
 
+// Frontend connection: Defines database structure used by customer/staff/admin features.
 module.exports = (sequelize) => {
     const Address = sequelize.define('Address', {
         AddressID: {

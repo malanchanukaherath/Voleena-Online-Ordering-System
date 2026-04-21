@@ -21,7 +21,15 @@ const { calculateEstimatedDeliveryTime } = require('../utils/deliveryEta');
 const systemSettingsService = require('../services/systemSettingsService');
 const appNotificationService = require('../services/appNotificationService');
 
+// Frontend page map for non-technical review:
+// - AdminDashboard page: quick counts (orders, revenue, active staff/customers/deliveries)
+// - SalesAnalytics page: charts/reports (sales trend, top items, retention, full summary)
+// - StaffManagement page: create/update/deactivate staff and load role options
+// - Settings page: read and update business/system settings
+// - Admin Order/Delivery workflow pages: assign delivery staff to customer orders
+
 // Simple: This cleans or formats the analytics date range.
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 const parseAnalyticsDateRange = (query) => {
   const hasCustomRange = Boolean(query.startDate || query.endDate);
 
@@ -58,6 +66,7 @@ const parseAnalyticsDateRange = (query) => {
 };
 
 // Simple: This handles decode feedback payload logic.
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 const decodeFeedbackPayload = (rawComment) => {
   if (!rawComment || typeof rawComment !== 'string') {
     return {
@@ -84,6 +93,7 @@ const decodeFeedbackPayload = (rawComment) => {
 };
 
 // Simple: This handles increment counter logic.
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 const incrementCounter = (map, key) => {
   if (!key) {
     return;
@@ -93,6 +103,7 @@ const incrementCounter = (map, key) => {
 };
 
 // Simple: This handles safe number logic.
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 const safeNumber = (value, digits = 2) => {
   const parsed = Number(value || 0);
   if (!Number.isFinite(parsed)) {
@@ -103,6 +114,7 @@ const safeNumber = (value, digits = 2) => {
 };
 
 // Simple: This gets the range label.
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 const getRangeLabel = (startDate, endDate) => {
   const sameDay = startDate.toDateString() === endDate.toDateString();
 
@@ -115,7 +127,10 @@ const getRangeLabel = (startDate, endDate) => {
 
 /**
  * Get dashboard statistics
+ * Frontend connection: AdminDashboard page cards and overview widgets.
+ * Non-technical meaning: this is the "today and overall business snapshot" API.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.getDashboardStats = async (req, res) => {
   try {
     const today = new Date();
@@ -206,7 +221,10 @@ exports.getDashboardStats = async (req, res) => {
 
 /**
  * Get monthly sales report
+ * Frontend connection: SalesAnalytics page time-series charts.
+ * Non-technical meaning: shows daily sales totals for the selected month/date range.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.getMonthlySalesReport = async (req, res) => {
   try {
     const range = parseAnalyticsDateRange(req.query);
@@ -242,7 +260,10 @@ exports.getMonthlySalesReport = async (req, res) => {
 
 /**
  * Get best-selling items with proper parameterized queries
+ * Frontend connection: SalesAnalytics page "Top selling items" section.
+ * Non-technical meaning: lists menu/combo items customers buy most often.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.getBestSellingItems = async (req, res) => {
   try {
     const { limit = 10, startDate, endDate } = req.query;
@@ -313,7 +334,10 @@ exports.getBestSellingItems = async (req, res) => {
 
 /**
  * Get customer retention report for selected date range
+ * Frontend connection: SalesAnalytics page customer insights blocks.
+ * Non-technical meaning: tells how many customers return and order again.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.getCustomerRetentionReport = async (req, res) => {
   try {
     const range = parseAnalyticsDateRange(req.query);
@@ -366,7 +390,10 @@ exports.getCustomerRetentionReport = async (req, res) => {
 
 /**
  * Get consolidated business report for admin analytics, printing, and exports
+ * Frontend connection: SalesAnalytics page export/print-ready summary view.
+ * Non-technical meaning: one combined report for orders, revenue, delivery, stock, and feedback.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.getBusinessSummaryReport = async (req, res) => {
   try {
     const range = parseAnalyticsDateRange(req.query);
@@ -748,7 +775,11 @@ exports.getBusinessSummaryReport = async (req, res) => {
 
 /**
  * Create staff account with role restrictions
+ * Frontend connection: StaffManagement page "Add staff" form.
+ * Staff roles affected: Admin, Cashier, Kitchen, Delivery.
+ * Non-technical meaning: creates a new employee login with the selected job role.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.createStaff = async (req, res) => {
   try {
     const { name, email, phone, roleId, password } = req.body;
@@ -813,7 +844,11 @@ exports.createStaff = async (req, res) => {
 
 /**
  * Update staff account - CRITICAL: Prevent self-promotion to Admin
+ * Frontend connection: StaffManagement page "Edit staff" action.
+ * Staff roles affected: Admin, Cashier, Kitchen, Delivery.
+ * Non-technical meaning: updates employee details safely without privilege abuse.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.updateStaff = async (req, res) => {
   try {
     const { id } = req.params;
@@ -871,7 +906,10 @@ exports.updateStaff = async (req, res) => {
 
 /**
  * Delete staff account
+ * Frontend connection: StaffManagement page "Deactivate/Delete" action.
+ * Non-technical meaning: disables staff access (soft delete), keeps history data intact.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.deleteStaff = async (req, res) => {
   try {
     const { id } = req.params;
@@ -897,7 +935,10 @@ exports.deleteStaff = async (req, res) => {
 
 /**
  * Get all staff
+ * Frontend connection: StaffManagement page staff table/list.
+ * Non-technical meaning: loads all employee accounts and their current roles.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.getAllStaff = async (req, res) => {
   try {
     const staff = await Staff.findAll({
@@ -921,7 +962,10 @@ exports.getAllStaff = async (req, res) => {
 
 /**
  * Get all roles
+ * Frontend connection: StaffManagement page role dropdown/options.
+ * Non-technical meaning: returns allowed job roles admins can assign to staff.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.getAllRoles = async (req, res) => {
   try {
     const roles = await Role.findAll({
@@ -940,7 +984,11 @@ exports.getAllRoles = async (req, res) => {
 
 /**
  * Assign delivery staff to order
+ * Frontend connection: Admin order operations (OrderManagement / PreorderManagement workflows).
+ * Staff/customer impact: assigns a Delivery staff member and notifies both assigned rider and customer.
+ * Non-technical meaning: links one delivery person to one order and moves order to out-for-delivery.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.assignDeliveryStaff = async (req, res) => {
   const transaction = await sequelize.transaction({
     isolationLevel: sequelize.Transaction.ISOLATION_LEVELS.SERIALIZABLE
@@ -1213,7 +1261,10 @@ exports.assignDeliveryStaff = async (req, res) => {
 
 /**
  * Get admin system settings
+ * Frontend connection: Settings page load screen.
+ * Non-technical meaning: fetches current business/system configuration shown to admins.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.getSystemSettings = async (req, res) => {
   try {
     const settings = await systemSettingsService.getAdminSettings();
@@ -1234,7 +1285,10 @@ exports.getSystemSettings = async (req, res) => {
 
 /**
  * Update admin system settings
+ * Frontend connection: Settings page save action.
+ * Non-technical meaning: stores updated business/system rules entered by admin.
  */
+// Frontend connection: AdminDashboard, SalesAnalytics, StaffManagement, Settings, and admin order/delivery workflows (staff + customer impact).
 exports.updateSystemSettings = async (req, res) => {
   try {
     const updatedSettings = await systemSettingsService.updateAdminSettings(req.body, req.user?.id || null);

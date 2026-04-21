@@ -9,6 +9,7 @@ const ALLOWED_FOLDERS = ['menu', 'category', 'profile', 'combo'];
 const ROOT_FOLDER = process.env.CLOUDINARY_ROOT_FOLDER || 'voleena';
 
 // Simple: This cleans or formats the filename.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const sanitizeFilename = (filename) => {
     const extension = path.extname(filename || '').toLowerCase();
     const nameWithoutExt = path.basename(filename || 'image', extension);
@@ -24,6 +25,7 @@ const sanitizeFilename = (filename) => {
 };
 
 // Simple: This cleans or formats the target folder.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const resolveTargetFolder = (folder) => {
     if (!folder) {
         return 'menu';
@@ -33,6 +35,7 @@ const resolveTargetFolder = (folder) => {
 };
 
 // Simple: This checks whether allowed image signature is available.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const hasAllowedImageSignature = (buffer) => {
     if (!Buffer.isBuffer(buffer) || buffer.length < 12) {
         return false;
@@ -47,6 +50,7 @@ const hasAllowedImageSignature = (buffer) => {
 };
 
 // Simple: This handles upload buffer to cloudinary logic.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const uploadBufferToCloudinary = (buffer, uploadOptions) => {
     return new Promise((resolve, reject) => {
         const uploadStream = cloudinary.uploader.upload_stream(uploadOptions, (error, result) => {
@@ -61,6 +65,7 @@ const uploadBufferToCloudinary = (buffer, uploadOptions) => {
 };
 
 // Simple: This handles upload image file logic.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const uploadImageFile = async (file, folder = 'menu') => {
     assertCloudinaryConfigured();
 
@@ -101,6 +106,7 @@ const uploadImageFile = async (file, folder = 'menu') => {
 };
 
 // Simple: This handles extract public id from url logic.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const extractPublicIdFromUrl = (imageUrl) => {
     if (!imageUrl || typeof imageUrl !== 'string') {
         return null;
@@ -145,6 +151,7 @@ const extractPublicIdFromUrl = (imageUrl) => {
 };
 
 // Simple: This removes or clears the image by url.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const deleteImageByUrl = async (imageUrl) => {
     const publicId = extractPublicIdFromUrl(imageUrl);
     if (!publicId) {

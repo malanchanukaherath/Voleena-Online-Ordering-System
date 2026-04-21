@@ -18,21 +18,25 @@ const STRIPE_WEBHOOK_EVENTS = new Set([
 ]);
 
 // Simple: This cleans or formats the payment method.
+// Frontend connection: Checkout and payment confirmation flow for customer orders.
 function normalizePaymentMethod(paymentMethod) {
   return typeof paymentMethod === 'string' ? paymentMethod.trim().toUpperCase() : '';
 }
 
 // Simple: This checks whether configured stripe value is available.
+// Frontend connection: Checkout and payment confirmation flow for customer orders.
 function hasConfiguredStripeValue(value, prefix) {
   return typeof value === 'string' && value.trim().startsWith(prefix) && !value.includes('your_');
 }
 
 // Simple: This handles amounts match logic.
+// Frontend connection: Checkout and payment confirmation flow for customer orders.
 function amountsMatch(left, right) {
   return Math.abs(Number(left) - Number(right)) <= 0.01;
 }
 
 // Simple: This creates the gateway status.
+// Frontend connection: Checkout and payment confirmation flow for customer orders.
 function buildGatewayStatus(status, detail) {
   return [status, detail]
     .filter(Boolean)
@@ -149,6 +153,7 @@ async function findStripePaymentRecord(intent) {
 }
 
 // Simple: This checks if the pay here signature is correct.
+// Frontend connection: Checkout and payment confirmation flow for customer orders.
 function verifyPayHereSignature(payload) {
   const merchantSecret = process.env.PAYHERE_MERCHANT_SECRET;
   if (!merchantSecret) {
@@ -180,6 +185,7 @@ function verifyPayHereSignature(payload) {
   return crypto.timingSafeEqual(localBuffer, remoteBuffer);
 }
 
+// Frontend connection: Checkout and payment confirmation flow for customer orders.
 exports.initiatePayment = async (req, res) => {
   let order = null;
   let paymentMethod = '';
@@ -247,6 +253,7 @@ exports.initiatePayment = async (req, res) => {
   }
 };
 
+// Frontend connection: Checkout and payment confirmation flow for customer orders.
 exports.confirmCardPayment = async (req, res) => {
   try {
     const { orderId, paymentIntentId } = req.body;
@@ -356,6 +363,7 @@ exports.confirmCardPayment = async (req, res) => {
   }
 };
 
+// Frontend connection: Checkout and payment confirmation flow for customer orders.
 exports.payHereWebhook = async (req, res) => {
   try {
     const payload = req.body || {};
@@ -447,6 +455,7 @@ exports.payHereWebhook = async (req, res) => {
   }
 };
 
+// Frontend connection: Checkout and payment confirmation flow for customer orders.
 exports.stripeWebhook = async (req, res) => {
   try {
     if (!hasConfiguredStripeValue(process.env.STRIPE_SECRET_KEY, 'sk_') || !hasConfiguredStripeValue(process.env.STRIPE_WEBHOOK_SECRET, 'whsec_')) {

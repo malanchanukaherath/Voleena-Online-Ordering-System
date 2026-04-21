@@ -11,6 +11,7 @@ const appNotificationService = require('../services/appNotificationService');
 const { sendOrderStatusUpdateSMS } = require('../services/smsService');
 
 // Simple: This checks whether address table missing error is true.
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 const isAddressTableMissingError = (error) => {
   const mysqlCode = error?.original?.code || error?.parent?.code;
   const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -24,9 +25,11 @@ const isAddressTableMissingError = (error) => {
 };
 
 // Simple: This checks whether admin request is true.
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 const isAdminRequest = (req) => req.user?.type === 'Staff' && req.user?.role === 'Admin';
 
 // Simple: This handles parse pinned destination from notes logic.
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 const parsePinnedDestinationFromNotes = (rawNotes) => {
   const notes = String(rawNotes || '');
   const match = notes.match(/__VOLEENA_DEST_PIN__:\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
@@ -50,12 +53,14 @@ const parsePinnedDestinationFromNotes = (rawNotes) => {
 };
 
 // Simple: This cleans or formats the notification preference.
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 const normalizeNotificationPreference = (value) => {
   const normalized = String(value || 'BOTH').toUpperCase();
   return ['EMAIL', 'SMS', 'BOTH', 'NONE'].includes(normalized) ? normalized : 'BOTH';
 };
 
 // Simple: This checks whether send order status sms is allowed.
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 const canSendOrderStatusSms = (runtimeSettings, customerPhone, preferredNotification) => {
   if (!runtimeSettings?.smsNotifications || !runtimeSettings?.orderStatusUpdates || !customerPhone) {
     return false;
@@ -68,6 +73,7 @@ const canSendOrderStatusSms = (runtimeSettings, customerPhone, preferredNotifica
 /**
  * Get delivery dashboard statistics
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.getDashboardStats = async (req, res) => {
   try {
     const staffId = req.user.id;
@@ -132,6 +138,7 @@ exports.getDashboardStats = async (req, res) => {
 /**
  * Get assigned deliveries for this staff
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.getMyDeliveries = async (req, res) => {
   try {
     const staffId = req.user.id;
@@ -216,6 +223,7 @@ exports.getMyDeliveries = async (req, res) => {
  * Update delivery status
  * CRITICAL FIX: Now resets staff availability on DELIVERED/FAILED
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.updateDeliveryStatus = async (req, res) => {
   const transaction = await sequelize.transaction();
 
@@ -460,6 +468,7 @@ exports.updateDeliveryStatus = async (req, res) => {
 /**
  * Get delivery history
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.getDeliveryHistory = async (req, res) => {
   try {
     const staffId = req.user.id;
@@ -522,6 +531,7 @@ exports.getDeliveryHistory = async (req, res) => {
 /**
  * Update availability status
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.updateAvailability = async (req, res) => {
   try {
     const staffId = req.user.id;
@@ -553,6 +563,7 @@ exports.updateAvailability = async (req, res) => {
 /**
  * Get current availability status
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.getAvailability = async (req, res) => {
   try {
     const staffId = req.user.id;
@@ -588,6 +599,7 @@ exports.getAvailability = async (req, res) => {
 /**
  * Get delivery details by ID
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.getDeliveryById = async (req, res) => {
   try {
     const { deliveryId } = req.params;
@@ -651,6 +663,7 @@ exports.getDeliveryById = async (req, res) => {
  * 
  * POST /api/v1/delivery/validate-distance
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.validateDeliveryDistance = async (req, res) => {
   try {
     const { latitude, longitude, address } = req.body;
@@ -733,6 +746,7 @@ exports.validateDeliveryDistance = async (req, res) => {
 /**
  * Get available delivery staff (Admin/Operator endpoint)
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.getAvailableDeliveryStaff = async (req, res) => {
   try {
     const availableStaff = await DeliveryStaffAvailability.findAll({
@@ -776,6 +790,7 @@ exports.getAvailableDeliveryStaff = async (req, res) => {
  * POST /api/delivery/:deliveryId/location
  * Body: { lat: number, lng: number }
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.trackDeliveryLocation = async (req, res) => {
   try {
     const { deliveryId } = req.params;
@@ -846,6 +861,7 @@ exports.trackDeliveryLocation = async (req, res) => {
  * GET /api/delivery/:deliveryId/location
  * SECURITY FIX: Now checks authorization before returning location
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.getDeliveryLocation = async (req, res) => {
   try {
     const { deliveryId } = req.params;
@@ -932,6 +948,7 @@ exports.getDeliveryLocation = async (req, res) => {
  * 
  * GET /api/v1/delivery/fee-config
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.getDeliveryFeeConfig = async (req, res) => {
   try {
     const runtimeSettings = await systemSettingsService.getRuntimeSettings();
@@ -968,6 +985,7 @@ exports.getDeliveryFeeConfig = async (req, res) => {
  * POST /api/v1/delivery/calculate-fee
  * Body: { distanceKm: number }
  */
+// Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 exports.calculateDeliveryFee = async (req, res) => {
   try {
     const { distanceKm } = req.body;

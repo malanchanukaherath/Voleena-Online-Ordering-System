@@ -10,6 +10,7 @@ const RESTAURANT_LNG = parseFloat(process.env.RESTAURANT_LONGITUDE || '80.052501
 const DEFAULT_MAX_DISTANCE_KM = parseFloat(process.env.MAX_DELIVERY_DISTANCE_KM) || 15;
 
 // Simple: This gets the configured max distance km.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function getConfiguredMaxDistanceKm() {
     try {
         const settings = await systemSettingsService.getRuntimeSettings();
@@ -60,6 +61,7 @@ const SRI_LANKAN_CITIES = {
  * @returns {{lat: number, lng: number} | null} Coordinates or null if not found
  */
 // Simple: This gets the approximate city coordinates.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function getApproximateCityCoordinates(city) {
     if (!city) return null;
 
@@ -76,6 +78,7 @@ function getApproximateCityCoordinates(city) {
  * @returns {Promise<{isValid: boolean, distance: number, duration: number}>}
  */
 // Simple: This checks if the delivery distance is correct.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function validateDeliveryDistance(customerLat, customerLng) {
     if (!GOOGLE_MAPS_API_KEY) {
         throw new Error('Google Maps API key not configured');
@@ -144,6 +147,7 @@ async function validateDeliveryDistance(customerLat, customerLng) {
  * @returns {Promise<{lat: number, lng: number, formattedAddress: string, method: string}>}
  */
 // Simple: This handles geocode address logic.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function geocodeAddress(address, city) {
     // If Google Maps API key is not configured, try fallback geocoding
     if (!GOOGLE_MAPS_API_KEY) {
@@ -252,6 +256,7 @@ async function geocodeAddress(address, city) {
  * @returns {number} Distance in kilometers
  */
 // Simple: This calculates the straight line distance.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function calculateStraightLineDistance(lat1, lon1, lat2, lon2) {
     const R = 6371; // Earth's radius in kilometers
     const dLat = toRadians(lat2 - lat1);
@@ -269,6 +274,7 @@ function calculateStraightLineDistance(lat1, lon1, lat2, lon2) {
 }
 
 // Simple: This handles to radians logic.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 function toRadians(degrees) {
     return degrees * (Math.PI / 180);
 }
@@ -281,6 +287,7 @@ function toRadians(degrees) {
  * @returns {Promise<{isValid: boolean, distance: number, method: string}>}
  */
 // Simple: This checks if the delivery distance with fallback is correct.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function validateDeliveryDistanceWithFallback(customerLat, customerLng) {
     const maxDistanceKm = await getConfiguredMaxDistanceKm();
 

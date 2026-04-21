@@ -15,6 +15,7 @@ const { sendEmailVerificationLink } = require('../services/verificationEmailServ
 const { sendOTPSMS } = require('../services/smsService');
 
 // Simple: This cleans or formats the optional email.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const normalizeOptionalEmail = (email) => {
     if (email === undefined || email === null) {
         return null;
@@ -25,25 +26,33 @@ const normalizeOptionalEmail = (email) => {
 };
 
 // Simple: This cleans or formats the phone.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
 // Simple: This handles hash otp code logic.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const hashOtpCode = (otpCode, phoneContext = null) => {
     const otpPart = String(otpCode).trim();
     const phonePart = phoneContext ? `:${normalizePhone(phoneContext)}` : '';
     return crypto.createHash('sha256').update(`${otpPart}${phonePart}`).digest('hex');
 };
 // Simple: This creates the phone verification otp.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const generatePhoneVerificationOtp = () => crypto.randomInt(100000, 1000000).toString();
 
 // Simple: This checks whether valid profile name is true.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const isValidProfileName = (name) => typeof name === 'string' && name.trim().length >= 2;
 // Simple: This checks whether valid profile email is true.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const isValidProfileEmail = (email) => email === null || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 // Simple: This checks whether valid profile phone is true.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const isValidProfilePhone = (phone) => /^[+]?[0-9]{9,15}$/.test(phone);
 // Simple: This checks whether valid notification preference is true.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const isValidNotificationPreference = (value) => ['EMAIL', 'SMS', 'BOTH'].includes(value);
 // Simple: This checks whether successful otp delivery is true.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const isSuccessfulOtpDelivery = (deliveryResult) => {
     return Boolean(deliveryResult && deliveryResult.success === true && deliveryResult.skipped !== true);
 };
@@ -61,12 +70,14 @@ const PHONE_VERIFICATION_OTP_EXPIRY_MINUTES = parseInt(
 );
 
 // Simple: This creates the email change verification url.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const buildEmailChangeVerificationUrl = (token) => {
     const frontendBase = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
     return `${frontendBase}/verify-email?token=${encodeURIComponent(token)}`;
 };
 
 // Simple: This creates the customer email change token.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const buildCustomerEmailChangeToken = ({ customerId, currentEmail, newEmail }) => {
     return jwt.sign(
         {
@@ -81,6 +92,7 @@ const buildCustomerEmailChangeToken = ({ customerId, currentEmail, newEmail }) =
 };
 
 // Simple: This checks whether address table missing error is true.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const isAddressTableMissingError = (error) => {
     const mysqlCode = error?.original?.code || error?.parent?.code;
     const message = [error?.message, error?.original?.sqlMessage, error?.parent?.sqlMessage]
@@ -94,6 +106,7 @@ const isAddressTableMissingError = (error) => {
 };
 
 // Simple: This handles what happens when address table missing is triggered.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const handleAddressTableMissing = (res, error) => {
     if (!isAddressTableMissingError(error)) {
         return false;
@@ -105,6 +118,7 @@ const handleAddressTableMissing = (res, error) => {
 };
 
 // Simple: This gets the customer with optional addresses.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const findCustomerWithOptionalAddresses = async (customerId, attributes) => {
     try {
         const customer = await Customer.findByPk(customerId, {
@@ -138,6 +152,7 @@ const findCustomerWithOptionalAddresses = async (customerId, attributes) => {
 };
 
 // Simple: This creates the address for customer.
+// Frontend connection: Frontend pages call these API endpoints for this feature flow.
 const createAddressForCustomer = async (customerId, payload = {}) => {
     const { addressLine1, addressLine2, city, postalCode, district, latitude, longitude } = payload;
 
@@ -168,6 +183,7 @@ const createAddressForCustomer = async (customerId, payload = {}) => {
     }
 
     // Simple: This cleans or formats the coordinate.
+    // Frontend connection: Frontend pages call these API endpoints for this feature flow.
     const parseCoordinate = (value) => {
         if (value === undefined || value === null || String(value).trim() === '') {
             return null;

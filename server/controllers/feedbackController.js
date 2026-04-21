@@ -4,6 +4,7 @@
 const { Feedback, Order, Customer, Staff } = require('../models');
 
 // Simple: This gets the feedback error message.
+// Frontend connection: Feedback customer page and FeedbackManagement admin page (submit/review/respond).
 const getFeedbackErrorMessage = (error, fallback) => {
     return error?.message || error?.original?.sqlMessage || fallback;
 };
@@ -12,6 +13,7 @@ const ALLOWED_POSITIVE_TAGS = ['Good taste', 'Fast delivery'];
 const ALLOWED_ISSUE_TAGS = ['Late delivery', 'Wrong item', 'Poor packaging'];
 
 // Simple: This cleans or formats the tag array.
+// Frontend connection: Feedback customer page and FeedbackManagement admin page (submit/review/respond).
 const sanitizeTagArray = (value, allowed) => {
     if (!Array.isArray(value)) {
         return [];
@@ -22,6 +24,7 @@ const sanitizeTagArray = (value, allowed) => {
 };
 
 // Simple: This handles encode feedback payload logic.
+// Frontend connection: Feedback customer page and FeedbackManagement admin page (submit/review/respond).
 const encodeFeedbackPayload = ({ comment, positiveTags, issueTags }) => {
     return JSON.stringify({
         comment: String(comment || '').trim(),
@@ -31,6 +34,7 @@ const encodeFeedbackPayload = ({ comment, positiveTags, issueTags }) => {
 };
 
 // Simple: This handles decode feedback payload logic.
+// Frontend connection: Feedback customer page and FeedbackManagement admin page (submit/review/respond).
 const decodeFeedbackPayload = (rawComment) => {
     const fallback = {
         comment: rawComment || '',
@@ -59,6 +63,7 @@ const decodeFeedbackPayload = (rawComment) => {
 };
 
 // Simple: This handles to response feedback logic.
+// Frontend connection: Feedback customer page and FeedbackManagement admin page (submit/review/respond).
 const toResponseFeedback = (record) => {
     const plain = record?.get ? record.get({ plain: true }) : record;
     const decoded = decodeFeedbackPayload(plain.Comment);
@@ -71,6 +76,7 @@ const toResponseFeedback = (record) => {
     };
 };
 
+// Frontend connection: Feedback customer page and FeedbackManagement admin page (submit/review/respond).
 exports.submitFeedback = async (req, res) => {
     try {
         const customerId = req.user.id;
@@ -154,6 +160,7 @@ exports.submitFeedback = async (req, res) => {
     }
 };
 
+// Frontend connection: Feedback customer page and FeedbackManagement admin page (submit/review/respond).
 exports.getMyFeedback = async (req, res) => {
     try {
         const customerId = req.user.id;
@@ -188,6 +195,7 @@ exports.getMyFeedback = async (req, res) => {
     }
 };
 
+// Frontend connection: Feedback customer page and FeedbackManagement admin page (submit/review/respond).
 exports.getAdminFeedback = async (req, res) => {
     try {
         const feedbackList = await Feedback.findAll({
@@ -225,6 +233,7 @@ exports.getAdminFeedback = async (req, res) => {
     }
 };
 
+// Frontend connection: Feedback customer page and FeedbackManagement admin page (submit/review/respond).
 exports.respondToFeedback = async (req, res) => {
     try {
         const feedbackId = Number.parseInt(req.params.id, 10);

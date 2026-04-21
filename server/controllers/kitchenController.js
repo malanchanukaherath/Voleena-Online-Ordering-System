@@ -5,12 +5,14 @@ const { Order, OrderItem, MenuItem, DailyStock, OrderStatusHistory, Payment, seq
 const orderService = require('../services/orderService');
 
 // Simple: This checks whether configured stripe secret is available.
+// Frontend connection: KitchenDashboard, KitchenOrders, and kitchen stock operations (kitchen/admin workflow).
 const hasConfiguredStripeSecret = () => {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   return typeof secretKey === 'string' && secretKey.trim().startsWith('sk_') && !secretKey.includes('your_');
 };
 
 // Simple: This handles try sync card payment status logic.
+// Frontend connection: KitchenDashboard, KitchenOrders, and kitchen stock operations (kitchen/admin workflow).
 const trySyncCardPaymentStatus = async (payment) => {
   if (!payment || payment.Method !== 'CARD' || payment.Status === 'PAID' || !payment.TransactionID) {
     return false;
@@ -40,6 +42,7 @@ const trySyncCardPaymentStatus = async (payment) => {
 };
 
 // Simple: This handles requires settled payment logic.
+// Frontend connection: KitchenDashboard, KitchenOrders, and kitchen stock operations (kitchen/admin workflow).
 const requiresSettledPayment = (payment) => {
   return !!payment && ['CARD', 'ONLINE', 'WALLET'].includes(payment.Method);
 };
@@ -47,6 +50,7 @@ const requiresSettledPayment = (payment) => {
 /**
  * Get kitchen dashboard statistics
  */
+// Frontend connection: KitchenDashboard, KitchenOrders, and kitchen stock operations (kitchen/admin workflow).
 exports.getDashboardStats = async (req, res) => {
   try {
     const { Op } = sequelize.Sequelize;
@@ -120,6 +124,7 @@ exports.getDashboardStats = async (req, res) => {
 /**
  * Get assigned orders for kitchen
  */
+// Frontend connection: KitchenDashboard, KitchenOrders, and kitchen stock operations (kitchen/admin workflow).
 exports.getAssignedOrders = async (req, res) => {
   try {
     const { status } = req.query;
@@ -200,6 +205,7 @@ exports.getAssignedOrders = async (req, res) => {
  * Update order status (CONFIRMED -> PREPARING -> READY)
  * CRITICAL: Uses orderService to ensure notifications are sent to customer
  */
+// Frontend connection: KitchenDashboard, KitchenOrders, and kitchen stock operations (kitchen/admin workflow).
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { orderId } = req.params;
@@ -291,6 +297,7 @@ exports.updateOrderStatus = async (req, res) => {
 /**
  * Get daily stock for all menu items
  */
+// Frontend connection: KitchenDashboard, KitchenOrders, and kitchen stock operations (kitchen/admin workflow).
 exports.getDailyStock = async (req, res) => {
   try {
     const { date } = req.query;
@@ -324,6 +331,7 @@ exports.getDailyStock = async (req, res) => {
 /**
  * Update daily stock quantity
  */
+// Frontend connection: KitchenDashboard, KitchenOrders, and kitchen stock operations (kitchen/admin workflow).
 exports.updateDailyStock = async (req, res) => {
   try {
     const { menuItemId, openingQuantity, adjustedQuantity } = req.body;
@@ -370,6 +378,7 @@ exports.updateDailyStock = async (req, res) => {
 /**
  * Bulk update daily stock
  */
+// Frontend connection: KitchenDashboard, KitchenOrders, and kitchen stock operations (kitchen/admin workflow).
 exports.bulkUpdateDailyStock = async (req, res) => {
   try {
     const { items } = req.body; // Array of { menuItemId, openingQuantity, adjustedQuantity }
@@ -421,6 +430,7 @@ exports.bulkUpdateDailyStock = async (req, res) => {
 /**
  * Get all menu items for stock management
  */
+// Frontend connection: KitchenDashboard, KitchenOrders, and kitchen stock operations (kitchen/admin workflow).
 exports.getAllMenuItems = async (req, res) => {
   try {
     const menuItems = await MenuItem.findAll({

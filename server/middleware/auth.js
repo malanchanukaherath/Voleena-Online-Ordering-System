@@ -8,6 +8,7 @@ const { Customer, Staff, Role } = require('../models');
  * Authenticate JWT token and attach user to request
  */
 // Simple: This handles authenticate token logic.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 async function authenticateToken(req, res, next) {
   try {
     const authHeader = req.headers.authorization;
@@ -65,6 +66,7 @@ async function authenticateToken(req, res, next) {
  * Usage: requireRole('Admin', 'Cashier')
  */
 // Simple: This handles require role logic.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 function requireRole(...allowedRoles) {
   return (req, res, next) => {
     if (!req.user) {
@@ -112,6 +114,7 @@ function requireRole(...allowedRoles) {
  * Ensures customers can only access their own resources
  */
 // Simple: This checks if the ownership is correct.
+// Frontend connection: Applies shared security/validation rules across customer and staff flows.
 function verifyOwnership(resourceType) {
   return async (req, res, next) => {
     if (req.user.type !== 'Customer') {

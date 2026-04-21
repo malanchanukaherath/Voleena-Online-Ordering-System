@@ -6,6 +6,7 @@ const { uploadImageFile, ALLOWED_FOLDERS } = require('../services/uploadService'
 const STAFF_MANAGED_FOLDERS = new Set(['menu', 'category', 'combo']);
 
 // Simple: This gets the requested folder.
+// Frontend connection: Admin/staff image upload flows (menu/category/combo) and customer/staff profile image upload.
 const getRequestedFolder = (body) => {
     return typeof body?.folder === 'string' && body.folder.trim()
         ? body.folder.trim()
@@ -13,6 +14,7 @@ const getRequestedFolder = (body) => {
 };
 
 // Simple: This checks whether upload to folder is allowed.
+// Frontend connection: Admin/staff image upload flows (menu/category/combo) and customer/staff profile image upload.
 const canUploadToFolder = (user, folder) => {
     if (folder === 'profile') {
         return true;
@@ -22,6 +24,7 @@ const canUploadToFolder = (user, folder) => {
 };
 
 // Simple: This handles upload image logic.
+// Frontend connection: Admin/staff image upload flows (menu/category/combo) and customer/staff profile image upload.
 const uploadImage = async (req, res) => {
     try {
         if (!req.file) {
@@ -54,6 +57,7 @@ const uploadImage = async (req, res) => {
 };
 
 // Simple: This gets the upload folders.
+// Frontend connection: Admin/staff image upload flows (menu/category/combo) and customer/staff profile image upload.
 const getUploadFolders = (req, res) => {
     if (req.user?.type === 'Customer') {
         return res.json({
