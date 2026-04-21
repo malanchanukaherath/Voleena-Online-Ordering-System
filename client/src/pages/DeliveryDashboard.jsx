@@ -539,7 +539,7 @@ const DeliveryDashboard = () => {
                         ))}
                     </div>
                     <Link to="/delivery/active" className="block mt-4 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
-                        View All ->
+                        View All -&gt;
                     </Link>
                 </div>
 
@@ -562,4 +562,3 @@ const DeliveryDashboard = () => {
 };
 
 export default DeliveryDashboard;
-

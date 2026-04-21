@@ -58,15 +58,20 @@ const parseApiObject = (response) => {
     return {};
 };
 
+const parseFiniteNumber = (value, fallback = 0) => {
+    const numericValue = Number.parseFloat(value);
+    return Number.isFinite(numericValue) ? numericValue : fallback;
+};
+
 // Simple: This gets the menu item id.
 const getMenuItemId = (menuItem) => Number.parseInt(menuItem?.MenuItemID ?? menuItem?.menuItemId, 10);
 // Simple: This gets the menu item name.
 const getMenuItemName = (menuItem) => menuItem?.Name ?? menuItem?.name ?? 'Unknown Item';
 // Simple: This gets the menu item price.
-const getMenuItemPrice = (menuItem) => Number.parseFloat(menuItem?.Price ?? menuItem?.price ?? 0);
+const getMenuItemPrice = (menuItem) => parseFiniteNumber(menuItem?.Price ?? menuItem?.price, 0);
 // Simple: This gets the menu item stock quantity.
 const getMenuItemStockQuantity = (menuItem) => {
-    const stockQuantity = menuItem?.StockQuantity ?? menuItem?.stockQuantity;
+    const stockQuantity = parseFiniteNumber(menuItem?.StockQuantity ?? menuItem?.stockQuantity, null);
     return Number.isFinite(stockQuantity) ? stockQuantity : null;
 };
 
@@ -111,9 +116,9 @@ const normalizeComboPacksForPos = (comboResponse) => {
             ...combo,
             ComboID: getComboPackId(combo),
             Name: combo?.Name ?? combo?.name ?? 'Combo Pack',
-            Price: Number.parseFloat(combo?.Price ?? combo?.price ?? 0),
-            OriginalPrice: Number.parseFloat(combo?.OriginalPrice ?? combo?.originalPrice ?? 0),
-            DiscountPercentage: Number.parseFloat(combo?.DiscountPercentage ?? combo?.discountPercentage ?? 0),
+            Price: parseFiniteNumber(combo?.Price ?? combo?.price, 0),
+            OriginalPrice: parseFiniteNumber(combo?.OriginalPrice ?? combo?.originalPrice, 0),
+            DiscountPercentage: parseFiniteNumber(combo?.DiscountPercentage ?? combo?.discountPercentage, 0),
             IsActive: combo?.IsActive !== false
         }))
         .filter((combo) => Number.isInteger(combo.ComboID))
@@ -1182,7 +1187,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                         ))}
                     </div>
                     <Link to="/cashier/orders" className="block mt-4 text-primary-600 hover:text-primary-700">
-                        View All ->
+                        View All -&gt;
                     </Link>
                 </div>
 
@@ -1728,4 +1733,3 @@ const CashierDashboard = ({ posOnly = false }) => {
 };
 
 export default CashierDashboard;
-

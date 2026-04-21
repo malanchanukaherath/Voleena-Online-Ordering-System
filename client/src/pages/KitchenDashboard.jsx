@@ -147,7 +147,7 @@ const KitchenDashboard = () => {
                     ))}
                 </div>
                 <Link to="/kitchen/orders" className="block mt-4 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
-                    View All Orders ->
+                    View All Orders -&gt;
                 </Link>
             </div>
         </div>
@@ -155,4 +155,3 @@ const KitchenDashboard = () => {
 };
 
 export default KitchenDashboard;
-

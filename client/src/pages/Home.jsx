@@ -16,6 +16,11 @@ import { addToCart } from '../utils/cartStorage';
 import { toast } from 'react-toastify';
 import { resolveAssetUrl } from '../config/api';
 
+const parseFiniteNumber = (value, fallback = 0) => {
+    const numericValue = Number.parseFloat(value);
+    return Number.isFinite(numericValue) ? numericValue : fallback;
+};
+
 // Simple: This shows the home section.
 const Home = () => {
     const { isAuthenticated } = useAuth();
@@ -86,7 +91,7 @@ const Home = () => {
                         id: item.MenuItemID || item.ItemID,
                         name: item.Name,
                         description: item.Description || 'No description available',
-                        price: parseFloat(item.Price),
+                        price: parseFiniteNumber(item.Price, 0),
                         image: resolveImageUrl(item.ImageURL || item.Image_URL || null),
                         stockQuantity: item.StockQuantity ?? null,
                         isAvailable: item.IsAvailable !== undefined ? !!item.IsAvailable : !!item.IsActive
@@ -283,7 +288,7 @@ const Home = () => {
                                 <p className="text-gray-600 mt-1 dark:text-slate-400">Limited-time bundles at unbeatable prices</p>
                             </div>
                             <Link to="/menu" className="text-orange-600 hover:text-orange-700 font-medium">
-                                View All ->
+                                View All -&gt;
                             </Link>
                         </div>
                         {isLoadingCombos ? (
@@ -303,9 +308,9 @@ const Home = () => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {comboSpecials.map((combo) => {
                                     const imageUrl = resolveImageUrl(combo.ImageURL || combo.Image_URL || null);
-                                    const price = parseFloat(combo.Price);
-                                    const originalPrice = combo.OriginalPrice ? parseFloat(combo.OriginalPrice) : null;
-                                    const discount = combo.DiscountPercentage ? parseFloat(combo.DiscountPercentage) : 0;
+                                    const price = parseFiniteNumber(combo.Price, 0);
+                                    const originalPrice = combo.OriginalPrice ? parseFiniteNumber(combo.OriginalPrice, null) : null;
+                                    const discount = combo.DiscountPercentage ? parseFiniteNumber(combo.DiscountPercentage, 0) : 0;
                                     return (
                                         <div key={combo.ComboID || combo.ComboPackID} className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-orange-300 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow dark:from-slate-800 dark:to-slate-800 dark:border-orange-900/50">
                                             <div className="relative">
@@ -361,7 +366,7 @@ const Home = () => {
                             <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">Browse menu by what you feel like eating</p>
                         </div>
                         <Link to="/menu" className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors dark:text-primary-400 dark:hover:text-primary-300">
-                            View Full Menu ->
+                            View Full Menu -&gt;
                         </Link>
                     </div>
 
@@ -404,7 +409,7 @@ const Home = () => {
                                             <h3 className="font-bold text-gray-900 dark:text-slate-100">{category.name}</h3>
                                             <p className="text-xs text-gray-500 mt-0.5 dark:text-slate-400">{category.count} item{category.count > 1 ? 's' : ''}</p>
                                         </div>
-                                        <span className="text-primary-600 font-semibold text-sm dark:text-primary-400">Explore -></span>
+                                        <span className="text-primary-600 font-semibold text-sm dark:text-primary-400">Explore -&gt;</span>
                                     </div>
                                 </Link>
                             ))}
@@ -512,7 +517,7 @@ const Home = () => {
                     </p>
                     <Link to="/menu">
                         <Button size="lg" variant="secondary" className="font-bold shadow-lg">
-                            Order Now ->
+                            Order Now -&gt;
                         </Button>
                     </Link>
                 </div>
@@ -522,4 +527,3 @@ const Home = () => {
 };
 
 export default Home;
-

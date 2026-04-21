@@ -14,7 +14,6 @@ const { v2: cloudinary } = require('cloudinary');
 // PURPOSE: Backend module with request handling/business logic/data access.
 // SEARCH_HINT: Search by exported function name in this file.
 const { v2: cloudinary } = require('cloudinary');
-};
 // CODEMAP: BACKEND_SERVER_CONFIG_CLOUDINARY_JS
 // PURPOSE: Backend module with request handling/business logic/data access.
 // SEARCH_HINT: Search by exported function name in this file.
