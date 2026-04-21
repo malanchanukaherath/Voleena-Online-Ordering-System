@@ -1,23 +1,6 @@
-const DEFAULT_MINUTES_PER_KM = 3;
-
 // CODEMAP: BACKEND_SERVER_UTILS_DELIVERYETA_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const DEFAULT_MINUTES_PER_KM = 3;
-
-// CODEMAP: BACKEND_SERVER_UTILS_DELIVERYETA_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const DEFAULT_MINUTES_PER_KM = 3;
-
-// CODEMAP: BACKEND_SERVER_UTILS_DELIVERYETA_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const DEFAULT_MINUTES_PER_KM = 3;
-};
-// CODEMAP: BACKEND_SERVER_UTILS_DELIVERYETA_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
+// PURPOSE: Compute ETA based on distance or travel duration and order stage buffers.
+// SEARCH_HINT: Search calculateEstimatedDeliveryTime.
 const DEFAULT_MINUTES_PER_KM = 3;
 
 const STAGE_BUFFER_MINUTES = {

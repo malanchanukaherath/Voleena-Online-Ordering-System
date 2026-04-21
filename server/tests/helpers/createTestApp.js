@@ -1,24 +1,4 @@
-const express = require('express');
-
-// CODEMAP: BACKEND_SERVER_TESTS_HELPERS_CREATETESTAPP_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const express = require('express');
-
-// CODEMAP: BACKEND_SERVER_TESTS_HELPERS_CREATETESTAPP_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const express = require('express');
-
-// CODEMAP: BACKEND_SERVER_TESTS_HELPERS_CREATETESTAPP_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const express = require('express');
-module.exports = createTestApp;
-// CODEMAP: BACKEND_SERVER_TESTS_HELPERS_CREATETESTAPP_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const express = require('express');
+﻿const express = require('express');
 
 // Simple: This creates the test app.
 function createTestApp(prefix, router) {

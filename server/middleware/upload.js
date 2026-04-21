@@ -1,23 +1,6 @@
-const multer = require('multer');
-
 // CODEMAP: BACKEND_SERVER_MIDDLEWARE_UPLOAD_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const multer = require('multer');
-
-// CODEMAP: BACKEND_SERVER_MIDDLEWARE_UPLOAD_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const multer = require('multer');
-
-// CODEMAP: BACKEND_SERVER_MIDDLEWARE_UPLOAD_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const multer = require('multer');
-module.exports = upload;
-// CODEMAP: BACKEND_SERVER_MIDDLEWARE_UPLOAD_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
+// PURPOSE: Configure secure image upload handling (size/type checks + memory storage).
+// SEARCH_HINT: Search for fileFilter and upload multer instance.
 const multer = require('multer');
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;

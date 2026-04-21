@@ -1,23 +1,6 @@
-module.exports = {
-
 // CODEMAP: BACKEND_SERVER_JEST_CONFIG_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-module.exports = {
-
-// CODEMAP: BACKEND_SERVER_JEST_CONFIG_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-module.exports = {
-
-// CODEMAP: BACKEND_SERVER_JEST_CONFIG_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-module.exports = {
-};
-// CODEMAP: BACKEND_SERVER_JEST_CONFIG_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
+// PURPOSE: Configure Jest test runtime for the backend test suite.
+// SEARCH_HINT: Update testEnvironment/testMatch/setupFiles here.
 module.exports = {
   testEnvironment: 'node',
   clearMocks: true,

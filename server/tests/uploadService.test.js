@@ -1,24 +1,4 @@
-jest.mock('../config/cloudinary', () => ({
-
-// CODEMAP: BACKEND_SERVER_TESTS_UPLOADSERVICE_TEST_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-jest.mock('../config/cloudinary', () => ({
-
-// CODEMAP: BACKEND_SERVER_TESTS_UPLOADSERVICE_TEST_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-jest.mock('../config/cloudinary', () => ({
-
-// CODEMAP: BACKEND_SERVER_TESTS_UPLOADSERVICE_TEST_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-jest.mock('../config/cloudinary', () => ({
-});
-// CODEMAP: BACKEND_SERVER_TESTS_UPLOADSERVICE_TEST_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-jest.mock('../config/cloudinary', () => ({
+﻿jest.mock('../config/cloudinary', () => ({
   assertCloudinaryConfigured: jest.fn(),
   isCloudinaryConfigured: true,
   cloudinary: {

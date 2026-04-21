@@ -1,24 +1,4 @@
-process.env.NODE_ENV = 'test';
-
-// CODEMAP: BACKEND_SERVER_TESTS_SETUPENV_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-process.env.NODE_ENV = 'test';
-
-// CODEMAP: BACKEND_SERVER_TESTS_SETUPENV_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-process.env.NODE_ENV = 'test';
-
-// CODEMAP: BACKEND_SERVER_TESTS_SETUPENV_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-process.env.NODE_ENV = 'test';
-process.env.BASE_DELIVERY_FEE = process.env.BASE_DELIVERY_FEE || '100';
-// CODEMAP: BACKEND_SERVER_TESTS_SETUPENV_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-process.env.NODE_ENV = 'test';
+﻿process.env.NODE_ENV = 'test';
 process.env.FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 // Keep test defaults aligned with runtime security validation rules.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'TestJwtSecret!2026#ForCI@Secure$Key%';

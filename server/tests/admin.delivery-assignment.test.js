@@ -1,24 +1,4 @@
-const mockOrder = {
-
-// CODEMAP: BACKEND_SERVER_TESTS_ADMIN_DELIVERY_ASSIGNMENT_TEST_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const mockOrder = {
-
-// CODEMAP: BACKEND_SERVER_TESTS_ADMIN_DELIVERY_ASSIGNMENT_TEST_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const mockOrder = {
-
-// CODEMAP: BACKEND_SERVER_TESTS_ADMIN_DELIVERY_ASSIGNMENT_TEST_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const mockOrder = {
-});
-// CODEMAP: BACKEND_SERVER_TESTS_ADMIN_DELIVERY_ASSIGNMENT_TEST_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const mockOrder = {
+﻿const mockOrder = {
   findByPk: jest.fn(),
   update: jest.fn()
 };

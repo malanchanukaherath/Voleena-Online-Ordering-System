@@ -1,24 +1,4 @@
-const state = {
-
-// CODEMAP: BACKEND_SERVER_TESTS_HELPERS_MOCKAUTH_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const state = {
-
-// CODEMAP: BACKEND_SERVER_TESTS_HELPERS_MOCKAUTH_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const state = {
-
-// CODEMAP: BACKEND_SERVER_TESTS_HELPERS_MOCKAUTH_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const state = {
-};
-// CODEMAP: BACKEND_SERVER_TESTS_HELPERS_MOCKAUTH_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const state = {
+﻿const state = {
   mode: 'allow',
   user: {
     id: 1,
