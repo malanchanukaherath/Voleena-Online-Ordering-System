@@ -29,7 +29,7 @@ const KitchenOrders = () => {
         const normalized = String(rawValue || '').trim();
         return normalized || '';
     };
-
+    //kitchen order
     const loadOrders = useCallback(async () => {
         try {
             const response = await kitchenService.getAssignedOrders();
@@ -107,7 +107,7 @@ const KitchenOrders = () => {
             setError(err.message || 'Failed to update order status');
         },
     });
-
+    //kitchen order
     // Simple: This handles what happens when queue status update is triggered.
     const handleQueueStatusUpdate = (order) => {
         const nextStatus = getNextStatus(order.status);

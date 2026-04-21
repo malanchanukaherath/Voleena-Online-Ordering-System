@@ -14,7 +14,7 @@ const {
     getConfiguredAddOnIdsForMenuItem,
     setConfiguredAddOnIdsForMenuItem
 } = require('../utils/orderAddOnUtils');
-
+//menu management
 // Simple: This creates the menu item.
 // Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const createMenuItem = async (req, res) => {
@@ -163,7 +163,7 @@ const getMenuItem = async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch menu item' });
     }
 };
-
+//menu management update
 // Simple: This updates the menu item.
 // Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const updateMenuItem = async (req, res) => {
@@ -224,7 +224,7 @@ const updateMenuItem = async (req, res) => {
         res.status(500).json({ error: 'Failed to update menu item' });
     }
 };
-
+//menu management delete
 // Simple: This removes or clears the menu item.
 // Frontend connection: Menu, MenuItemDetail, Home listing, and MenuManagement admin page.
 const deleteMenuItem = async (req, res) => {

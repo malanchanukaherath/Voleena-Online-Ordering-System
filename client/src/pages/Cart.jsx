@@ -148,7 +148,7 @@ const Cart = () => {
         const nextItems = removeCartItem(id, type, cartItemKey);
         setCartItems(nextItems);
     };
-
+    //add to cart
     // Simple: This handles what happens when checkout is triggered.
     const handleCheckout = () => {
         if (hasStockIssues()) {

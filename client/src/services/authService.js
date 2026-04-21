@@ -108,7 +108,7 @@ class AuthService {
       };
     }
   }
-
+  //Register Customer
   // Register new customer
   async register(userData) {
     try {
@@ -127,7 +127,7 @@ class AuthService {
       };
     }
   }
-
+  //Login Customer
   // Login user (legacy - determines user type automatically)
   async login(credentials) {
     const { email, password, userType } = credentials;

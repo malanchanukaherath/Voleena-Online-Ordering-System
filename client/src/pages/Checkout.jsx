@@ -1118,7 +1118,7 @@ const Checkout = () => {
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-
+    //add to cart
     // Simple: Build final order payload and place order after validation succeeds.
     const handleSubmit = async (e) => {
         e.preventDefault();

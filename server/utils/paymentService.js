@@ -97,6 +97,7 @@ class PaymentService {
      * @param {string} paymentMethod - 'CASH', 'CARD', 'ONLINE', 'WALLET'
      * @returns {Promise<Object>} Payment details
      */
+    //add to cart
     async initializePayment(order, customer, paymentMethod = 'CASH', existingPayment = null) {
         let payment = existingPayment;
 

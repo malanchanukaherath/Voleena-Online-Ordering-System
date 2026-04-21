@@ -541,6 +541,7 @@ exports.staffLogin = async (req, res) => {
 /**
  * Customer Login
  */
+//Login Customer
 // Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.customerLogin = async (req, res) => {
   try {
@@ -605,6 +606,7 @@ exports.customerLogin = async (req, res) => {
 /**
  * Customer Register
  */
+//Register Customer
 // Frontend connection: Login, Register, VerifyEmail, ForgotPassword, and ResetPassword pages (customer and staff sign-in flows).
 exports.register = async (req, res) => {
   try {

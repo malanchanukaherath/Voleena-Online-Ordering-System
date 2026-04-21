@@ -56,7 +56,7 @@ export const calculateDeliveryFeeByDistance = async (distanceKm) => {
 /**
  * Order Management APIs
  */
-
+//add to cart
 // Simple: Place a new order (normal or preorder) from checkout payload.
 export const createOrder = async (payload) => {
   return backendApi.post('/api/v1/orders', payload);

@@ -56,7 +56,7 @@ const ImageUpload = ({
             handleFile(e.target.files[0]);
         }
     };
-
+    //menu management
     // Simple: This handles what happens when file is triggered.
     const handleFile = async (file) => {
         const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];

@@ -47,7 +47,7 @@ const MenuManagement = () => {
     });
 
     const [errors, setErrors] = useState({});
-
+    //menu management
     const fetchMenuItems = useCallback(async () => {
         try {
             setLoading(true);
@@ -91,7 +91,7 @@ const MenuManagement = () => {
     const showToast = (message, type = 'success') => {
         setToast({ show: true, message, type });
     };
-
+    //menu management
     // Simple: This handles what happens when open modal is triggered.
     const handleOpenModal = (item = null) => {
         if (item) {
@@ -243,7 +243,7 @@ const MenuManagement = () => {
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
-
+    //menu management
     // Simple: This handles what happens when submit is triggered.
     const handleSubmit = async (e) => {
         e.preventDefault();

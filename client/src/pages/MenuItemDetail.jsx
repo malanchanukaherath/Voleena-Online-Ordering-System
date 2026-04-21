@@ -275,7 +275,7 @@ const MenuItemDetail = () => {
             [addOnId]: normalizedNext
         }));
     };
-
+    //add to cart
     // Simple: This handles what happens when add to cart is triggered.
     const handleAddToCart = () => {
         if (!item?.isAvailable) {

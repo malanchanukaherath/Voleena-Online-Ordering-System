@@ -322,7 +322,7 @@ const Menu = () => {
         }
         return null;
     };
-
+     //add to cart
     // Simple: This handles what happens when add to cart is triggered.
     const handleAddToCart = (item) => {
         if (!item.isAvailable) {

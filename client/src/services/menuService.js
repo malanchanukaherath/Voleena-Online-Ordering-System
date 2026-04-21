@@ -85,7 +85,7 @@ export const menuItemService = {
         });
         return response.data;
     },
-
+    //menu management
     // This creates a new record in the backend.
     create: async (data) => {
         const response = await axios.post(`${API_BASE_URL}/menu`, data, {

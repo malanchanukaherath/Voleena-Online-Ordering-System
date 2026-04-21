@@ -110,7 +110,7 @@ const Register = () => {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
+  //Register Customer
   // Simple: This handles what happens when submit is triggered.
   const handleSubmit = async (e) => {
     e.preventDefault();

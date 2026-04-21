@@ -242,6 +242,7 @@ export const AuthProvider = ({ children }) => {
 
   // Login function
   // Simple: This handles login logic.
+  //Login Customer
   const login = async (credentials) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
 
@@ -261,7 +262,7 @@ export const AuthProvider = ({ children }) => {
       return { success: false, error: result.error, code: result.code };
     }
   };
-
+  //Register Customer
   // Register function
   // Simple: This handles register logic.
   const register = async (userData) => {

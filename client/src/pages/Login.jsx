@@ -127,6 +127,7 @@ const Login = () => {
   };
 
   // Simple: This handles what happens when submit is triggered.
+  //Login Customer
   const handleSubmit = async (e) => {
     e.preventDefault();
 
