@@ -16,6 +16,7 @@ import { addToCart } from '../utils/cartStorage';
 import { toast } from 'react-toastify';
 import { resolveAssetUrl } from '../config/api';
 
+// This turns a value into a safe number for prices and totals.
 const parseFiniteNumber = (value, fallback = 0) => {
     const numericValue = Number.parseFloat(value);
     return Number.isFinite(numericValue) ? numericValue : fallback;

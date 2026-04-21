@@ -87,6 +87,7 @@ module.exports = (sequelize) => {
         tableName: 'order_item',
         timestamps: false,
         validate: {
+            // This checks that an order item points to a menu item or a combo.
             eitherMenuItemOrCombo() {
                 if ((this.MenuItemID && this.ComboID) || (!this.MenuItemID && !this.ComboID)) {
                     throw new Error('Order item must have either MenuItemID or ComboID, but not both');

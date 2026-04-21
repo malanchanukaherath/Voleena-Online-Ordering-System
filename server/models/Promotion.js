@@ -72,6 +72,7 @@ module.exports = (sequelize) => {
             type: DataTypes.DATE,
             allowNull: false,
             validate: {
+                // This checks that the valid-until date is after the valid-from date.
                 isAfterValidFrom(value) {
                     if (value < this.ValidFrom) {
                         throw new Error('ValidUntil must be after ValidFrom');

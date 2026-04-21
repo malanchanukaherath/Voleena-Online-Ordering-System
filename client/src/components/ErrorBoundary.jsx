@@ -8,7 +8,9 @@
 // - Search text: ErrorBoundary.jsx
 import React from 'react';
 
+// This catches page errors so the app can show a helpful message.
 class ErrorBoundary extends React.Component {
+  // This sets up the starting state for this component.
   constructor(props) {
     super(props);
     this.state = { hasError: false, error: null, info: null };
@@ -18,12 +20,14 @@ class ErrorBoundary extends React.Component {
     return { hasError: true, error };
   }
 
+  // This records details when part of the page crashes.
   componentDidCatch(error, info) {
     this.setState({ error, info });
     // Also log to console for the dev server
     console.error('ErrorBoundary caught:', error, info);
   }
 
+  // This decides what this component should show on the page.
   render() {
     const { hasError, error, info } = this.state;
     const isDevelopment = import.meta.env.DEV;

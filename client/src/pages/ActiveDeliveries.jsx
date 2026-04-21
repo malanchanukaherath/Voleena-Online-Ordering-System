@@ -56,12 +56,14 @@ const ActiveDeliveries = () => {
         getPendingUpdate,
     } = useDelayedStatusUpdate({
         delayMs: 5000,
+        // This runs after a delayed change is confirmed.
         onCommit: async (update) => {
             await deliveryService.updateDeliveryStatus(update.itemId, { status: update.toStatus });
             setDeliveries((prev) => prev.map((delivery) => (
                 delivery.id === update.itemId ? { ...delivery, status: update.toStatus } : delivery
             )));
         },
+        // This shows the error when a delayed change fails.
         onError: (err) => {
             setError(err.message || 'Failed to update delivery status');
         }

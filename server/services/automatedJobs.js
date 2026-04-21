@@ -13,6 +13,7 @@ const orderService = require('../services/orderService');
  * Implements FR19, FR25, and system maintenance tasks
  */
 class AutomatedJobsService {
+    // This sets up this service before it is used.
     constructor() {
         this.jobs = [];
     }

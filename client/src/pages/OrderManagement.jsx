@@ -168,6 +168,7 @@ const OrderManagement = () => {
         getPendingUpdate,
     } = useDelayedStatusUpdate({
         delayMs: 5000,
+        // This runs after a delayed change is confirmed.
         onCommit: async (update) => {
             await handleStatusUpdate(update.itemId, update.toStatus);
             setDraftStatuses((prev) => {
@@ -180,6 +181,7 @@ const OrderManagement = () => {
                 return next;
             });
         },
+        // This shows the error when a delayed change fails.
         onError: (err) => {
             setError(err.response?.data?.message || err.message || 'Failed to update status');
         },

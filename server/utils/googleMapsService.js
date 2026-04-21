@@ -25,6 +25,7 @@ const axios = require('axios');
  * Validates delivery locations are within 15km radius (FR09)
  */
 class GoogleMapsService {
+    // This sets up this service before it is used.
     constructor() {
         this.apiKey = process.env.GOOGLE_MAPS_API_KEY;
         this.restaurantLat = process.env.RESTAURANT_LATITUDE || '7.0000000';
@@ -150,6 +151,7 @@ class GoogleMapsService {
         };
     }
 
+    // This changes degrees into radians for distance math.
     toRad(value) {
         return (value * Math.PI) / 180;
     }

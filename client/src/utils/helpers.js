@@ -116,6 +116,7 @@ export const storage = {
     }
   },
   
+  // This saves a value for later use.
   set: (key, value) => {
     try {
       localStorage.setItem(key, JSON.stringify(value));
@@ -124,6 +125,7 @@ export const storage = {
     }
   },
   
+  // This removes a saved value.
   remove: (key) => {
     try {
       localStorage.removeItem(key);

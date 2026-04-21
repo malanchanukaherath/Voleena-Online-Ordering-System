@@ -16,6 +16,7 @@ const { Transaction, Op } = require('sequelize');
  * - Comprehensive audit trail via stock_movement table
  */
 class StockService {
+    // This updates whether a menu item can be ordered.
     async syncMenuItemAvailability(menuItemId, closingQuantity, transaction = null) {
         await MenuItem.update(
             { IsAvailable: closingQuantity > 0 },

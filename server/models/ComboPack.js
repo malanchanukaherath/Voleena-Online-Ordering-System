@@ -71,6 +71,7 @@ module.exports = (sequelize) => {
             type: DataTypes.DATEONLY,
             allowNull: false,
             validate: {
+                // This checks that the end date is not before the start date.
                 isAfterStart(value) {
                     if (value < this.ScheduleStartDate) {
                         throw new Error('End date must be after start date');

@@ -193,9 +193,11 @@ module.exports = (sequelize) => {
         underscored: false,
         // Add getter/setter to expose timestamps as PascalCase
         getterMethods: {
+            // This stores when this order was created.
             CreatedAt() {
                 return this.getDataValue('created_at');
             },
+            // This stores when this order was last updated.
             UpdatedAt() {
                 return this.getDataValue('updated_at');
             }

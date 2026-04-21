@@ -104,6 +104,7 @@ function createApp() {
   // Body parsing
   app.use(express.json({
     limit: '10mb',
+    // This checks that the app is responding.
     verify: (req, res, buf) => {
       req.rawBody = buf;
     }

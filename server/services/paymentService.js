@@ -9,6 +9,7 @@ const { Payment, Order } = require('../models');
  * PayHere Payment Gateway Integration (FR30, FR31)
  */
 class PayHereService {
+    // This sets up this service before it is used.
     constructor() {
         this.merchantId = process.env.PAYHERE_MERCHANT_ID;
         this.merchantSecret = process.env.PAYHERE_MERCHANT_SECRET;
@@ -178,6 +179,7 @@ class PayHereService {
  * Stripe Payment Gateway Integration (FR30, FR31)
  */
 class StripeService {
+    // This sets up this service before it is used.
     constructor() {
         this.stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
     }

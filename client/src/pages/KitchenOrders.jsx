@@ -97,10 +97,12 @@ const KitchenOrders = () => {
         getPendingUpdate,
     } = useDelayedStatusUpdate({
         delayMs: 5000,
+        // This runs after a delayed change is confirmed.
         onCommit: async (update) => {
             await kitchenService.updateOrderStatus(update.itemId, update.toStatus);
             await loadOrders();
         },
+        // This shows the error when a delayed change fails.
         onError: (err) => {
             setError(err.message || 'Failed to update order status');
         },

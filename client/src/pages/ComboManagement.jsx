@@ -18,6 +18,7 @@ import ImageUpload from '../components/ImageUpload';
 import { comboPackService, menuItemService } from '../services/menuService';
 import { resolveAssetUrl } from '../config/api';
 
+// This gets today's date in the format used by date inputs.
 const getTodayDateOnlyString = () => {
     const now = new Date();
     const year = now.getFullYear();

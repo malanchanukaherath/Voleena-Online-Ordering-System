@@ -18,6 +18,7 @@ const getAuthHeader = () => {
 };
 
 export const menuItemService = {
+    // This gets a list of records from the backend.
     getAll: async (params = {}) => {
         const response = await axios.get(`${API_BASE_URL}/menu`, {
             headers: getAuthHeader(),
@@ -26,6 +27,7 @@ export const menuItemService = {
         return response.data;
     },
 
+    // This gets one record from the backend by its ID.
     getById: async (id) => {
         const response = await axios.get(`${API_BASE_URL}/menu/${id}`, {
             headers: getAuthHeader()
@@ -33,6 +35,7 @@ export const menuItemService = {
         return response.data;
     },
 
+    // This gets the add-on choices saved for one menu item.
     getAddOnConfig: async (id) => {
         const response = await axios.get(`${API_BASE_URL}/menu/${id}/addons-config`, {
             headers: getAuthHeader()
@@ -40,6 +43,7 @@ export const menuItemService = {
         return response.data;
     },
 
+    // This gets the full list of add-ons that can be used.
     getAddOnCatalog: async (params = {}) => {
         const response = await axios.get(`${API_BASE_URL}/menu/addons/catalog`, {
             headers: getAuthHeader(),
@@ -48,6 +52,7 @@ export const menuItemService = {
         return response.data;
     },
 
+    // This creates a new add-on option.
     createAddOnCatalogItem: async (payload) => {
         const response = await axios.post(`${API_BASE_URL}/menu/addons/catalog`, payload, {
             headers: getAuthHeader()
@@ -55,6 +60,7 @@ export const menuItemService = {
         return response.data;
     },
 
+    // This updates one add-on option.
     updateAddOnCatalogItem: async (id, payload) => {
         const response = await axios.put(`${API_BASE_URL}/menu/addons/catalog/${id}`, payload, {
             headers: getAuthHeader()
@@ -62,6 +68,7 @@ export const menuItemService = {
         return response.data;
     },
 
+    // This removes one add-on option.
     deleteAddOnCatalogItem: async (id) => {
         const response = await axios.delete(`${API_BASE_URL}/menu/addons/catalog/${id}`, {
             headers: getAuthHeader()
@@ -69,6 +76,7 @@ export const menuItemService = {
         return response.data;
     },
 
+    // This saves which add-ons belong to a menu item.
     updateAddOnConfig: async (id, addOnIds) => {
         const response = await axios.put(`${API_BASE_URL}/menu/${id}/addons-config`, {
             addOnIds
@@ -78,6 +86,7 @@ export const menuItemService = {
         return response.data;
     },
 
+    // This creates a new record in the backend.
     create: async (data) => {
         const response = await axios.post(`${API_BASE_URL}/menu`, data, {
             headers: getAuthHeader()
@@ -85,6 +94,7 @@ export const menuItemService = {
         return response.data;
     },
 
+    // This updates an existing record in the backend.
     update: async (id, data) => {
         const response = await axios.put(`${API_BASE_URL}/menu/${id}`, data, {
             headers: getAuthHeader()
@@ -99,6 +109,7 @@ export const menuItemService = {
         return response.data;
     },
 
+    // This uploads an image for this record.
     uploadImage: async (id, file) => {
         const formData = new FormData();
         formData.append('image', file);
@@ -114,6 +125,7 @@ export const menuItemService = {
 };
 
 export const comboPackService = {
+    // This gets a list of records from the backend.
     getAll: async (params = {}) => {
         const response = await axios.get(`${API_BASE_URL}/combos`, {
             headers: getAuthHeader(),
@@ -122,6 +134,7 @@ export const comboPackService = {
         return response.data;
     },
 
+    // This gets only the records that are active right now.
     getActive: async (params = {}) => {
         const response = await axios.get(`${API_BASE_URL}/combos/active`, {
             headers: getAuthHeader(),
@@ -130,6 +143,7 @@ export const comboPackService = {
         return response.data;
     },
 
+    // This gets one record from the backend by its ID.
     getById: async (id) => {
         const response = await axios.get(`${API_BASE_URL}/combos/${id}`, {
             headers: getAuthHeader()
@@ -137,6 +151,7 @@ export const comboPackService = {
         return response.data;
     },
 
+    // This creates a new record in the backend.
     create: async (data) => {
         const response = await axios.post(`${API_BASE_URL}/combos`, data, {
             headers: getAuthHeader()
@@ -144,6 +159,7 @@ export const comboPackService = {
         return response.data;
     },
 
+    // This updates an existing record in the backend.
     update: async (id, data) => {
         const response = await axios.put(`${API_BASE_URL}/combos/${id}`, data, {
             headers: getAuthHeader()
@@ -158,6 +174,7 @@ export const comboPackService = {
         return response.data;
     },
 
+    // This uploads an image for this record.
     uploadImage: async (id, file) => {
         const formData = new FormData();
         formData.append('image', file);
@@ -173,6 +190,7 @@ export const comboPackService = {
 };
 
 export const categoryService = {
+    // This gets a list of records from the backend.
     getAll: async (params = {}) => {
         const response = await axios.get(`${API_BASE_URL}/categories`, {
             headers: getAuthHeader(),
@@ -181,6 +199,7 @@ export const categoryService = {
         return response.data;
     },
 
+    // This creates a new record in the backend.
     create: async (data) => {
         const response = await axios.post(`${API_BASE_URL}/categories`, data, {
             headers: getAuthHeader()
@@ -188,6 +207,7 @@ export const categoryService = {
         return response.data;
     },
 
+    // This updates an existing record in the backend.
     update: async (id, data) => {
         const response = await axios.put(`${API_BASE_URL}/categories/${id}`, data, {
             headers: getAuthHeader()
@@ -204,6 +224,7 @@ export const categoryService = {
 };
 
 export const imageUploadService = {
+    // This uploads an image for this record.
     uploadImage: async (file, folder = 'menu') => {
         const formData = new FormData();
         formData.append('image', file);

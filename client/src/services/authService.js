@@ -9,7 +9,9 @@
 import { realApi } from './backendApi';
 import { API_BASE_URL } from '../config/api';
 
+// This keeps login and account actions in one place.
 class AuthService {
+  // This reads when the login token will expire.
   getTokenExpiry() {
     const raw = localStorage.getItem('tokenExpiry');
     if (!raw) {
@@ -19,6 +21,7 @@ class AuthService {
     return Number.isFinite(parsed) ? parsed : null;
   }
 
+  // This checks whether the login token is already expired.
   isTokenExpired() {
     const expiry = this.getTokenExpiry();
     if (!expiry) {
@@ -27,6 +30,7 @@ class AuthService {
     return Date.now() > expiry;
   }
 
+  // This saves when the login token will expire.
   setTokenExpiry(expiresInSeconds) {
     const parsed = Number(expiresInSeconds);
     const expiresMs = Number.isFinite(parsed)

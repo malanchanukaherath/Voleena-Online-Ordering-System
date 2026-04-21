@@ -193,6 +193,7 @@ const getAllowedAddOnsForCombo = async (comboId, transaction) => {
  * Implements complete order lifecycle with atomic operations
  */
 class OrderService {
+    // This prepares stock changes from the items in an order.
     async buildStockItemsFromOrderItems(orderItems, transaction) {
         const requiredByMenuItem = new Map();
 

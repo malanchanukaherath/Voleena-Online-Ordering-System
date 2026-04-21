@@ -45,7 +45,9 @@ const normalizePriority = (priority = 'MEDIUM') => {
     return ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].includes(normalized) ? normalized : 'MEDIUM';
 };
 
+// This keeps in-app notification actions in one place.
 class AppNotificationService {
+    // This prepares the person who should receive a notification.
     buildRecipientFromUser(user) {
         return {
             recipientType: toRecipientType(user.type),
@@ -54,6 +56,7 @@ class AppNotificationService {
         };
     }
 
+    // This gets notifications for one user.
     async listForUser(user, options = {}) {
         if (!AppNotification) {
             return {
@@ -93,6 +96,7 @@ class AppNotificationService {
         };
     }
 
+    // This counts unread notifications for one user.
     async countUnreadForUser(user) {
         if (!AppNotification) {
             return 0;
@@ -109,6 +113,7 @@ class AppNotificationService {
         });
     }
 
+    // This marks one notification as read.
     async markAsReadForUser(user, notificationId) {
         if (!AppNotification) {
             return false;
@@ -131,6 +136,7 @@ class AppNotificationService {
         return updated > 0;
     }
 
+    // This marks all notifications as read for one user.
     async markAllAsReadForUser(user) {
         if (!AppNotification) {
             return 0;
@@ -152,6 +158,7 @@ class AppNotificationService {
         return updated;
     }
 
+    // This deletes one notification for one user.
     async deleteOneForUser(user, notificationId) {
         if (!AppNotification) {
             return false;
@@ -170,6 +177,7 @@ class AppNotificationService {
         return deleted > 0;
     }
 
+    // This deletes all notifications for one user.
     async clearAllForUser(user) {
         if (!AppNotification) {
             return 0;
@@ -238,6 +246,7 @@ class AppNotificationService {
         }
     }
 
+    // This sends a notification to one user.
     async notifyUser(user, payload) {
         const recipient = this.buildRecipientFromUser(user);
 
@@ -249,6 +258,7 @@ class AppNotificationService {
         });
     }
 
+    // This sends a notification to one customer.
     async notifyCustomer(customerId, payload) {
         const normalizedCustomerId = Number.parseInt(customerId, 10);
         if (!Number.isInteger(normalizedCustomerId)) {
@@ -263,6 +273,7 @@ class AppNotificationService {
         });
     }
 
+    // This sends a notification to one staff member.
     async notifyStaffById(staffId, payload) {
         const normalizedStaffId = Number.parseInt(staffId, 10);
         if (!Number.isInteger(normalizedStaffId)) {
@@ -276,6 +287,7 @@ class AppNotificationService {
         });
     }
 
+    // This sends a notification to staff with matching roles.
     async notifyStaffRoles(roleNames, payload) {
         if (!Staff || !Role) {
             return 0;

@@ -31,6 +31,7 @@ const notificationService = require('./notificationService');
  * - Two-factor authentication
  */
 class OTPService {
+    // This sets up this service before it is used.
     constructor() {
         this.otpLength = 6;
         this.otpExpiry = 15; // minutes
@@ -43,6 +44,7 @@ class OTPService {
         return crypto.randomInt(100000, 999999).toString();
     }
 
+    // This hides the OTP before storing or comparing it.
     hashOTP(otpCode) {
         return crypto.createHash('sha256').update(String(otpCode).trim()).digest('hex');
     }

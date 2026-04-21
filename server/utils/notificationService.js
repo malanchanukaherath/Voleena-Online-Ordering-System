@@ -30,12 +30,14 @@ const { Notification } = require('../models');
  * - Payment notifications
  */
 class NotificationService {
+    // This sets up this service before it is used.
     constructor() {
         this.emailTransporter = this.createEmailTransporter();
         this.smsProvider = process.env.SMS_PROVIDER || 'console'; // 'twilio', 'console'
         this.hasLoggedEmailFallbackWarning = false;
     }
 
+    // This creates a message that can be saved in the activity log.
     getAuditableMessage(message, containsSensitiveContent = false) {
         if (containsSensitiveContent) {
             return '[REDACTED] Sensitive notification content';
@@ -389,6 +391,7 @@ class NotificationService {
         `;
     }
 
+    // This creates the plain-text order confirmation message.
     generateOrderConfirmationText(order, customer) {
         return `
 VOLEENA FOODS - Order Confirmation
@@ -411,6 +414,7 @@ Voleena Foods Team
         `;
     }
 
+    // This creates the payment-success email content.
     generatePaymentSuccessHTML(order, customer, payment) {
         return `
             <h2>Ã¢Å“â€¦ Payment Successful</h2>
@@ -426,6 +430,7 @@ Voleena Foods Team
         `;
     }
 
+    // This creates the payment-failure email content.
     generatePaymentFailureHTML(order, customer, payment) {
         return `
             <h2>Ã¢ÂÅ’ Payment Failed</h2>

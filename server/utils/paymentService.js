@@ -76,6 +76,7 @@ function buildGatewayStatus(status, detail) {
  * Supports: PayHere, Stripe, Cash on Delivery
  */
 class PaymentService {
+    // This sets up this service before it is used.
     constructor() {
         this.payHereConfig = {
             merchantId: process.env.PAYHERE_MERCHANT_ID,

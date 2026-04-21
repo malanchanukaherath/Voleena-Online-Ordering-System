@@ -30,6 +30,7 @@ try {
 function makeRedisStore(prefix) {
     if (!redisClient) return undefined;
     return new RedisStore({
+        // This checks or prepares the request before the main code runs.
         sendCommand: (...args) => redisClient.sendCommand(args),
         prefix
     });
@@ -173,6 +174,7 @@ const paymentLimiter = rateLimit({
         success: false,
         error: 'Too many payment requests, please slow down'
     },
+    // This checks or prepares the request before the main code runs.
     skip: (req) => {
         // Skip limiting for webhook endpoints (public safety)
         if (req.path.includes('webhook')) {

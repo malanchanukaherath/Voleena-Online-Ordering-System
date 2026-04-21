@@ -53,11 +53,13 @@ const validStatusTransitions = {
     CANCELLED: [],
 };
 
+// This chooses the next statuses that are allowed for an order.
 const getStatusOptionsForOrder = (status) => {
     const allowedStatuses = new Set([status, ...(validStatusTransitions[status] || [])]);
     return orderStatusOptions.filter((option) => allowedStatuses.has(option.value));
 };
 
+// This formats a saved date so people can read it easily.
 const formatDateTime = (value) => {
     if (!value) return 'Not scheduled';
 
@@ -67,6 +69,7 @@ const formatDateTime = (value) => {
     return parsed.toLocaleString();
 };
 
+// This turns preorder items into a short readable summary.
 const getPreorderItemsSummary = (items) => {
     if (!Array.isArray(items) || items.length === 0) {
         return 'No items';
@@ -81,6 +84,7 @@ const getPreorderItemsSummary = (items) => {
         .join(', ');
 };
 
+// This checks whether an order is a preorder.
 const isPreorderRecord = (order) => {
     return Boolean(order.IsPreorder || order.isPreorder || order.is_preorder)
         || String(order.Status || '').startsWith('PREORDER_')
@@ -146,6 +150,7 @@ const PreorderManagement = () => {
     useEffect(() => {
         let isActive = true;
 
+        // This loads preorders only while this page is still open.
         const loadPreordersSafely = async (options = {}) => {
             if (!isActive) return;
             await loadPreorders(options);
@@ -186,12 +191,14 @@ const PreorderManagement = () => {
 
     const hasActiveFilters = Boolean(searchTerm || statusFilter || approvalFilter);
 
+    // This clears all filters and shows the full list again.
     const clearFilters = () => {
         setSearchTerm('');
         setStatusFilter('');
         setApprovalFilter('');
     };
 
+    // This sends an order status change to the backend.
     const handleStatusUpdate = async (orderId, newStatus) => {
         try {
             await backendApi.patch(`/api/v1/orders/${orderId}/status`, { status: newStatus });
@@ -213,6 +220,7 @@ const PreorderManagement = () => {
         getPendingUpdate,
     } = useDelayedStatusUpdate({
         delayMs: 5000,
+        // This runs after a delayed change is confirmed.
         onCommit: async (update) => {
             await handleStatusUpdate(update.itemId, update.toStatus);
             setDraftStatuses((prev) => {
@@ -225,17 +233,20 @@ const PreorderManagement = () => {
                 return next;
             });
         },
+        // This shows the error when a delayed change fails.
         onError: (err) => {
             setError(err.response?.data?.message || err.message || 'Failed to update status');
         },
     });
 
+    // This gets the status currently selected for an order.
     const getSelectedStatus = (order) => {
         const pending = getPendingUpdate(order.id);
         if (pending) return pending.toStatus;
         return draftStatuses[order.id] || order.status;
     };
 
+    // This saves the status the user picked before sending it.
     const handleDraftStatusChange = (orderId, status) => {
         setDraftStatuses((prev) => ({
             ...prev,
@@ -243,6 +254,7 @@ const PreorderManagement = () => {
         }));
     };
 
+    // This resets a changed status back to the saved order status.
     const resetDraftStatus = (order) => {
         setDraftStatuses((prev) => {
             if (!Object.prototype.hasOwnProperty.call(prev, order.id)) {
@@ -255,6 +267,7 @@ const PreorderManagement = () => {
         });
     };
 
+    // This waits briefly before sending an order status change.
     const queueOrderStatusUpdate = (order) => {
         const selectedStatus = getSelectedStatus(order);
         if (!selectedStatus || selectedStatus === order.status) return;
