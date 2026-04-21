@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_ROUTES_PROTECTEDROUTE_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for ProtectedRoute.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: routes/ProtectedRoute.jsx
+// - Search text: ProtectedRoute.jsx
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -39,3 +47,4 @@ const ProtectedRoute = ({ children, requireAdmin = false, allowedRoles = null })
 };
 
 export default ProtectedRoute;
+

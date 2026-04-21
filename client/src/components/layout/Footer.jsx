@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_LAYOUT_FOOTER_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for Footer.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/layout/Footer.jsx
+// - Search text: Footer.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { FaPhone, FaEnvelope, FaMapMarkerAlt } from 'react-icons/fa';
@@ -118,7 +126,7 @@ const Footer = () => {
 
                 {/* Bottom Bar */}
                 <div className="border-t border-slate-800 mt-8 pt-8 flex flex-col sm:flex-row justify-between items-center text-sm gap-3 dark:border-slate-700">
-                    <p>© {currentYear} {restaurantName}. All rights reserved.</p>
+                    <p>Â© {currentYear} {restaurantName}. All rights reserved.</p>
                     <div className="flex space-x-6 mt-4 sm:mt-0">
                         <Link to="/privacy" className="hover:text-primary-300 transition-colors">
                             Privacy Policy
@@ -134,3 +142,4 @@ const Footer = () => {
 };
 
 export default Footer;
+

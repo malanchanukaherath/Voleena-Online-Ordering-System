@@ -1,4 +1,24 @@
 const nodemailer = require('nodemailer');
+
+// CODEMAP: BACKEND_SERVER_UTILS_NOTIFICATIONSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const nodemailer = require('nodemailer');
+
+// CODEMAP: BACKEND_SERVER_UTILS_NOTIFICATIONSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const nodemailer = require('nodemailer');
+
+// CODEMAP: BACKEND_SERVER_UTILS_NOTIFICATIONSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const nodemailer = require('nodemailer');
+module.exports = new NotificationService();
+// CODEMAP: BACKEND_SERVER_UTILS_NOTIFICATIONSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const nodemailer = require('nodemailer');
 const { Notification } = require('../models');
 
 /**
@@ -64,11 +84,11 @@ class NotificationService {
 
             if (!this.emailTransporter) {
                 if (!this.hasLoggedEmailFallbackWarning) {
-                    console.warn('⚠️  Email SMTP is not configured. Notification emails will be logged to console.');
+                    console.warn('Ã¢Å¡Â Ã¯Â¸Â  Email SMTP is not configured. Notification emails will be logged to console.');
                     this.hasLoggedEmailFallbackWarning = true;
                 }
 
-                console.log('📧 Email skipped (provider not configured):', to, subject);
+                console.log('Ã°Å¸â€œÂ§ Email skipped (provider not configured):', to, subject);
 
                 await notification.update({
                     Status: 'FAILED',
@@ -96,11 +116,11 @@ class NotificationService {
                 SentAt: new Date()
             });
 
-            console.log(`✅ Email sent to ${to}: ${info.messageId}`);
+            console.log(`Ã¢Å“â€¦ Email sent to ${to}: ${info.messageId}`);
             return { success: true, messageId: info.messageId };
 
         } catch (error) {
-            console.error('❌ Email sending failed:', error.message);
+            console.error('Ã¢ÂÅ’ Email sending failed:', error.message);
 
             if (notification) {
                 await notification.update({
@@ -152,7 +172,7 @@ class NotificationService {
                 return { success: true, sid: sms.sid };
             } else {
                 // Fallback: Console logging
-                console.log('📱 SMS skipped (provider not configured):', to, containsSensitiveContent ? '[REDACTED]' : message);
+                console.log('Ã°Å¸â€œÂ± SMS skipped (provider not configured):', to, containsSensitiveContent ? '[REDACTED]' : message);
 
                 await notification.update({
                     Status: 'FAILED',
@@ -167,7 +187,7 @@ class NotificationService {
             }
 
         } catch (error) {
-            console.error('❌ SMS sending failed:', error.message);
+            console.error('Ã¢ÂÅ’ SMS sending failed:', error.message);
             return { success: false, error: error.message };
         }
     }
@@ -338,7 +358,7 @@ class NotificationService {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>🍔 Voleena Foods</h1>
+                        <h1>Ã°Å¸Ââ€ Voleena Foods</h1>
                         <p>Order Confirmation</p>
                     </div>
                     <div class="content">
@@ -393,7 +413,7 @@ Voleena Foods Team
 
     generatePaymentSuccessHTML(order, customer, payment) {
         return `
-            <h2>✅ Payment Successful</h2>
+            <h2>Ã¢Å“â€¦ Payment Successful</h2>
             <p>Hello ${customer.Name},</p>
             <p>Your payment has been successfully processed.</p>
             <div style="background-color: #f0f9ff; padding: 15px; margin: 15px 0;">
@@ -408,7 +428,7 @@ Voleena Foods Team
 
     generatePaymentFailureHTML(order, customer, payment) {
         return `
-            <h2>❌ Payment Failed</h2>
+            <h2>Ã¢ÂÅ’ Payment Failed</h2>
             <p>Hello ${customer.Name},</p>
             <p>Unfortunately, your payment could not be processed.</p>
             <div style="background-color: #fef2f2; padding: 15px; margin: 15px 0;">
@@ -423,3 +443,6 @@ Voleena Foods Team
 }
 
 module.exports = new NotificationService();
+
+
+

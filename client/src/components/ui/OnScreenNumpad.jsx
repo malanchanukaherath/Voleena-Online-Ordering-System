@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_UI_ONSCREENNUMPAD_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for OnScreenNumpad.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ui/OnScreenNumpad.jsx
+// - Search text: OnScreenNumpad.jsx
 import React from 'react';
 import Modal from './Modal';
 import Button from './Button';
@@ -94,3 +102,4 @@ const OnScreenNumpad = ({
 };
 
 export default OnScreenNumpad;
+

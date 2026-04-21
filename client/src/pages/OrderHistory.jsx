@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_ORDERHISTORY
+// WHAT_THIS_IS: This page renders the OrderHistory screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/OrderHistory.jsx
+// - Search text: const OrderHistory
 import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaEye, FaRedo, FaComments } from 'react-icons/fa';
@@ -157,7 +165,7 @@ const OrderHistory = () => {
                                             <StatusBadge status={order.status} type="order" />
                                         </div>
                                         <p className="text-sm text-gray-600 dark:text-slate-400">
-                                            {order.date} at {order.time} · {order.orderType}
+                                            {order.date} at {order.time} ?? {order.orderType}
                                         </p>
                                         {order.isPreorder && order.scheduledDatetime && (
                                             <p className="text-xs text-indigo-700 mt-1 dark:text-indigo-400">
@@ -238,3 +246,4 @@ const OrderHistory = () => {
 };
 
 export default OrderHistory;
+

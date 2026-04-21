@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_PAYMENTGATEWAYMODAL_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for PaymentGatewayModal.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/PaymentGatewayModal.jsx
+// - Search text: PaymentGatewayModal.jsx
 import React, { useState } from 'react';
 import Modal from './ui/Modal';
 import Button from './ui/Button';
@@ -78,8 +86,8 @@ const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFa
     };
 
     const gatewayLogos = {
-        'PayHere': '💳',
-        'Stripe': '💠'
+        'PayHere': 'ðŸ’³',
+        'Stripe': 'ðŸ’ '
     };
 
     return (
@@ -208,3 +216,4 @@ const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFa
 };
 
 export default PaymentGatewayModal;
+

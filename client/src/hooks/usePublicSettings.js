@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_HOOKS_USEPUBLICSETTINGS_JS
+// WHAT_THIS_IS: This file supports frontend behavior for usePublicSettings.js.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: hooks/usePublicSettings.js
+// - Search text: usePublicSettings.js
 import { useEffect, useState } from 'react';
 import { getDefaultPublicSettings, getPublicSettings } from '../services/publicSettingsApi';
 
@@ -53,3 +61,4 @@ export const usePublicSettings = () => {
 };
 
 export default usePublicSettings;
+

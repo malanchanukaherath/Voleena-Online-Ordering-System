@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_CONTEXTS_AUTHCONTEXT_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for AuthContext.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: contexts/AuthContext.jsx
+// - Search text: AuthContext.jsx
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import authService from '../services/authService';
@@ -355,3 +363,4 @@ export const useAuth = () => {
 };
 
 export default AuthContext;
+

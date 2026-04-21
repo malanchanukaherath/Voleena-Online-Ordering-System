@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_UI_LOADINGSKELETON_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for LoadingSkeleton.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ui/LoadingSkeleton.jsx
+// - Search text: LoadingSkeleton.jsx
 import React from 'react';
 
 // Simple: This shows the loading skeleton section.
@@ -99,3 +107,4 @@ const LoadingSkeleton = ({ type = 'card', count = 1, rows = 5 }) => {
 };
 
 export default LoadingSkeleton;
+

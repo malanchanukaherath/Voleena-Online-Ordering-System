@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_MENUMANAGEMENT
+// WHAT_THIS_IS: This page renders the MenuManagement screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/MenuManagement.jsx
+// - Search text: const MenuManagement
 import React, { useCallback, useState, useEffect } from 'react';
 import { FaSearch, FaEdit, FaTrash, FaPlus, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import Button from '../components/ui/Button';
@@ -600,3 +608,4 @@ const MenuManagement = () => {
 };
 
 export default MenuManagement;
+

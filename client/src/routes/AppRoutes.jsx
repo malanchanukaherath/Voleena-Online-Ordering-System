@@ -1,6 +1,10 @@
 // CODEMAP: FRONTEND_ROUTE_MAP
 // PURPOSE: Map URL paths to pages and protect routes by role.
 // SEARCH_HINT: Review this file to explain user/staff navigation flow.
+// WHERE_CONNECTED:
+// - Loaded by App.jsx through <AppRoutes />.
+// - Each path here opens one page from client/src/pages.
+// - Route guards use components/ProtectedRoute to allow/deny access by role.
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import ProtectedRoute, { PublicRoute } from '../components/ProtectedRoute';
@@ -46,6 +50,7 @@ import StaticPage from '../pages/StaticPage';
 const AppRoutes = () => {
   return (
     <Routes>
+      {/* Public pages everyone can open without login */}
       {/* Public Routes */}
       <Route path="/" element={<Home />} />
       <Route path="/menu" element={<Menu />} />
@@ -56,6 +61,7 @@ const AppRoutes = () => {
       <Route path="/privacy" element={<StaticPage page="privacy" />} />
       <Route path="/terms" element={<StaticPage page="terms" />} />
 
+      {/* Login and account recovery pages */}
       {/* Auth Routes - redirect if already logged in */}
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
       <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
@@ -63,6 +69,7 @@ const AppRoutes = () => {
       <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
       <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
 
+      {/* Customer checkout and account pages (customer login required) */}
       {/* Customer Protected Routes */}
       <Route path="/cart" element={<Cart />} />
       <Route
@@ -114,6 +121,7 @@ const AppRoutes = () => {
         }
       />
 
+      {/* Admin dashboard and management pages */}
       {/* Admin Protected Routes */}
       <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['Admin']}><AdminDashboard /></ProtectedRoute>} />
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
@@ -130,6 +138,7 @@ const AppRoutes = () => {
       <Route path="/admin/analytics" element={<ProtectedRoute allowedRoles={['Admin']}><SalesAnalytics /></ProtectedRoute>} />
       <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['Admin']}><Settings /></ProtectedRoute>} />
 
+      {/* Cashier pages (cashier or admin can access) */}
       {/* Cashier Protected Routes */}
       <Route path="/cashier/dashboard" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CashierDashboard /></ProtectedRoute>} />
       <Route path="/cashier/pos" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CashierDashboard posOnly /></ProtectedRoute>} />
@@ -137,12 +146,14 @@ const AppRoutes = () => {
       <Route path="/cashier/orders" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CashierOrders /></ProtectedRoute>} />
       <Route path="/cashier/customers/new" element={<ProtectedRoute allowedRoles={['Cashier', 'Admin']}><CustomerRegistration /></ProtectedRoute>} />
 
+      {/* Kitchen pages for kitchen workflow */}
       {/* Kitchen Protected Routes */}
       <Route path="/kitchen/dashboard" element={<ProtectedRoute allowedRoles={['Kitchen', 'Admin']}><KitchenDashboard /></ProtectedRoute>} />
       <Route path="/kitchen" element={<Navigate to="/kitchen/dashboard" replace />} />
       <Route path="/kitchen/orders" element={<ProtectedRoute allowedRoles={['Kitchen', 'Admin']}><KitchenOrders /></ProtectedRoute>} />
       <Route path="/kitchen/stock" element={<ProtectedRoute allowedRoles={['Kitchen', 'Admin']}><StockManagement /></ProtectedRoute>} />
 
+      {/* Delivery pages for delivery staff */}
       {/* Delivery Protected Routes */}
       <Route path="/delivery/dashboard" element={<ProtectedRoute allowedRoles={['Delivery', 'Admin']}><DeliveryDashboard /></ProtectedRoute>} />
       <Route path="/delivery" element={<Navigate to="/delivery/dashboard" replace />} />

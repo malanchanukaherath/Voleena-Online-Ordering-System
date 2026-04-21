@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_SERVICES_STAFFCUSTOMERAPI_JS
+// WHAT_THIS_IS: This file supports frontend behavior for staffCustomerApi.js.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: services/staffCustomerApi.js
+// - Search text: staffCustomerApi.js
 import axios from 'axios';
 import { API_BASE_URL } from '../config/api';
 
@@ -96,3 +104,4 @@ export const customerApi = {
 };
 
 export default api;
+

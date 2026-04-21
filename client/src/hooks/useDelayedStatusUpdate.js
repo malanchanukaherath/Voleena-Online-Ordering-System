@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_HOOKS_USEDELAYEDSTATUSUPDATE_JS
+// WHAT_THIS_IS: This file supports frontend behavior for useDelayedStatusUpdate.js.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: hooks/useDelayedStatusUpdate.js
+// - Search text: useDelayedStatusUpdate.js
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 const DEFAULT_DELAY_MS = 5000;
@@ -128,3 +136,4 @@ export const useDelayedStatusUpdate = ({
 };
 
 export default useDelayedStatusUpdate;
+

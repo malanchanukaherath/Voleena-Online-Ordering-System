@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_ORDERMANAGEMENT
+// WHAT_THIS_IS: This page renders the OrderManagement screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/OrderManagement.jsx
+// - Search text: const OrderManagement
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import Button from '../components/ui/Button';
@@ -381,3 +389,4 @@ const OrderManagement = () => {
 };
 
 export default OrderManagement;
+

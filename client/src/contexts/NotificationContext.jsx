@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_CONTEXTS_NOTIFICATIONCONTEXT_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for NotificationContext.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: contexts/NotificationContext.jsx
+// - Search text: NotificationContext.jsx
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import backendApi from '../services/backendApi';
@@ -180,3 +188,4 @@ export const useNotifications = () => {
 
   return context;
 };
+

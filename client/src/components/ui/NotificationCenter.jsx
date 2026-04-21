@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_UI_NOTIFICATIONCENTER_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for NotificationCenter.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ui/NotificationCenter.jsx
+// - Search text: NotificationCenter.jsx
 import React, { useState } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import Button from './Button';
@@ -180,3 +188,4 @@ const NotificationCenter = () => {
 };
 
 export default NotificationCenter;
+

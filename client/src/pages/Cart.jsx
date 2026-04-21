@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_CART
+// WHAT_THIS_IS: This page renders the Cart screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/Cart.jsx
+// - Search text: const Cart
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaTrash, FaMinus, FaPlus } from 'react-icons/fa';
@@ -368,7 +376,7 @@ const Cart = () => {
                     {/* Continue Shopping */}
                     <div className="mt-6">
                         <Link to="/menu">
-                            <Button variant="outline">← Continue Shopping</Button>
+                            <Button variant="outline">??? Continue Shopping</Button>
                         </Link>
                     </div>
                 </div>
@@ -431,3 +439,4 @@ const Cart = () => {
 };
 
 export default Cart;
+

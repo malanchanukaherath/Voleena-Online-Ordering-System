@@ -1,5 +1,25 @@
 'use strict';
 
+// CODEMAP: BACKEND_SERVER_MODELS_INDEX_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+'use strict';
+
+// CODEMAP: BACKEND_SERVER_MODELS_INDEX_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+'use strict';
+
+// CODEMAP: BACKEND_SERVER_MODELS_INDEX_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+'use strict';
+module.exports = db;
+// CODEMAP: BACKEND_SERVER_MODELS_INDEX_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+'use strict';
+
 const fs = require('fs');
 const path = require('path');
 const Sequelize = require('sequelize');
@@ -32,3 +52,6 @@ db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 module.exports = db;
+
+
+

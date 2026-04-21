@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_ADDSTAFFMODAL_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for AddStaffModal.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/AddStaffModal.jsx
+// - Search text: AddStaffModal.jsx
 import React, { useEffect, useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 import Button from './ui/Button';
@@ -225,3 +233,4 @@ const AddStaffModal = ({ isOpen, onClose, onSubmit, roles }) => {
 };
 
 export default AddStaffModal;
+

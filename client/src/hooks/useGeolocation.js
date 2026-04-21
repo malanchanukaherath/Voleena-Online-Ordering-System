@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_HOOKS_USEGEOLOCATION_JS
+// WHAT_THIS_IS: This file supports frontend behavior for useGeolocation.js.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: hooks/useGeolocation.js
+// - Search text: useGeolocation.js
 import { useState, useEffect, useCallback } from 'react';
 
 /**
@@ -95,3 +103,4 @@ export const useGeolocation = (options = {}) => {
 };
 
 export default useGeolocation;
+

@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_CUSTOMERREGISTRATION
+// WHAT_THIS_IS: This page renders the CustomerRegistration screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/CustomerRegistration.jsx
+// - Search text: const CustomerRegistration
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Input from '../components/ui/Input';
@@ -264,4 +272,5 @@ const CustomerRegistration = () => {
 };
 
 export default CustomerRegistration;
+
 

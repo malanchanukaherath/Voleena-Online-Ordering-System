@@ -1,5 +1,25 @@
 const request = require('supertest');
 
+// CODEMAP: BACKEND_SERVER_TESTS_CATEGORIES_ROUTES_TEST_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const request = require('supertest');
+
+// CODEMAP: BACKEND_SERVER_TESTS_CATEGORIES_ROUTES_TEST_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const request = require('supertest');
+
+// CODEMAP: BACKEND_SERVER_TESTS_CATEGORIES_ROUTES_TEST_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const request = require('supertest');
+});
+// CODEMAP: BACKEND_SERVER_TESTS_CATEGORIES_ROUTES_TEST_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const request = require('supertest');
+
 const mockCategory = {
   findAll: jest.fn(),
   findOne: jest.fn(),
@@ -96,3 +116,6 @@ describe('category routes', () => {
     expect(deleteImageByUrl).toHaveBeenCalledWith('https://old.example/rice.png');
   });
 });
+
+
+

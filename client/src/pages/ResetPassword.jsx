@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_RESETPASSWORD
+// WHAT_THIS_IS: This page renders the ResetPassword screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/ResetPassword.jsx
+// - Search text: const ResetPassword
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
@@ -187,7 +195,7 @@ const ResetPassword = () => {
 
                         <div className="text-center text-sm">
                             <Link to="/forgot-password" className="text-primary-600 hover:text-primary-700">
-                                ← Back
+                                ??? Back
                             </Link>
                         </div>
                     </form>
@@ -263,3 +271,4 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
+

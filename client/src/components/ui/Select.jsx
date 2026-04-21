@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_UI_SELECT_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for Select.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ui/Select.jsx
+// - Search text: Select.jsx
 import React from 'react';
 
 const Select = ({
@@ -66,3 +74,4 @@ const Select = ({
 };
 
 export default Select;
+

@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_HOME
+// WHAT_THIS_IS: This page renders the Home screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/Home.jsx
+// - Search text: const Home
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -132,7 +140,7 @@ const Home = () => {
                 price: parseFloat(combo.Price),
                 image: resolveImageUrl(combo.ImageURL || combo.Image_URL || null)
             }, 1);
-            toast.success(`✓ ${combo.Name} added to cart!`);
+            toast.success(`??? ${combo.Name} added to cart!`);
         } catch (error) {
             toast.error(error.message || 'Unable to add combo to cart');
         }
@@ -158,7 +166,7 @@ const Home = () => {
                 isAvailable: item.isAvailable
             }, 1);
 
-            toast.success(`✓ ${item.name} added to cart!`);
+            toast.success(`??? ${item.name} added to cart!`);
         } catch (error) {
             toast.error(error.message || 'Unable to add item to cart');
         }
@@ -219,7 +227,7 @@ const Home = () => {
                             {!isAuthenticated && (
                                 <Link to="/register">
                                     <Button size="lg" variant="outline" className="w-full sm:w-auto border-white/60 text-white hover:bg-white/10 hover:border-white">
-                                        Sign Up — It's Free
+                                        Sign Up ??? It's Free
                                     </Button>
                                 </Link>
                             )}
@@ -271,11 +279,11 @@ const Home = () => {
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                         <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-8">
                             <div>
-                                <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100">🔥 Combo Specials</h2>
+                                <h2 className="text-3xl font-bold text-gray-900 dark:text-slate-100">???? Combo Specials</h2>
                                 <p className="text-gray-600 mt-1 dark:text-slate-400">Limited-time bundles at unbeatable prices</p>
                             </div>
                             <Link to="/menu" className="text-orange-600 hover:text-orange-700 font-medium">
-                                View All →
+                                View All ???
                             </Link>
                         </div>
                         {isLoadingCombos ? (
@@ -353,7 +361,7 @@ const Home = () => {
                             <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">Browse menu by what you feel like eating</p>
                         </div>
                         <Link to="/menu" className="text-sm font-semibold text-primary-600 hover:text-primary-700 transition-colors dark:text-primary-400 dark:hover:text-primary-300">
-                            View Full Menu →
+                            View Full Menu ???
                         </Link>
                     </div>
 
@@ -396,7 +404,7 @@ const Home = () => {
                                             <h3 className="font-bold text-gray-900 dark:text-slate-100">{category.name}</h3>
                                             <p className="text-xs text-gray-500 mt-0.5 dark:text-slate-400">{category.count} item{category.count > 1 ? 's' : ''}</p>
                                         </div>
-                                        <span className="text-primary-600 font-semibold text-sm dark:text-primary-400">Explore →</span>
+                                        <span className="text-primary-600 font-semibold text-sm dark:text-primary-400">Explore ???</span>
                                     </div>
                                 </Link>
                             ))}
@@ -445,7 +453,7 @@ const Home = () => {
                             <p className="mt-1 text-sm text-gray-500 dark:text-slate-400">Our most-loved menu items</p>
                         </div>
                         <Link to="/menu" className="text-sm font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1 transition-colors dark:text-primary-400 dark:hover:text-primary-300">
-                            View All <span aria-hidden="true">→</span>
+                            View All <span aria-hidden="true">???</span>
                         </Link>
                     </div>
                     {isLoadingFeatured ? (
@@ -504,7 +512,7 @@ const Home = () => {
                     </p>
                     <Link to="/menu">
                         <Button size="lg" variant="secondary" className="font-bold shadow-lg">
-                            Order Now →
+                            Order Now ???
                         </Button>
                     </Link>
                 </div>
@@ -514,3 +522,4 @@ const Home = () => {
 };
 
 export default Home;
+

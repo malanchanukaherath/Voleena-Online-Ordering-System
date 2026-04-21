@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_FEEDBACKMANAGEMENT
+// WHAT_THIS_IS: This page renders the FeedbackManagement screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/FeedbackManagement.jsx
+// - Search text: const FeedbackManagement
 import React, { useEffect, useMemo, useState } from 'react';
 import { FaStar, FaReply } from 'react-icons/fa';
 import Textarea from '../components/ui/Textarea';
@@ -209,3 +217,4 @@ const FeedbackManagement = () => {
 };
 
 export default FeedbackManagement;
+

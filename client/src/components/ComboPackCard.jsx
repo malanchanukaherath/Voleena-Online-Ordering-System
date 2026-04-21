@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_COMBOPACKCARD_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for ComboPackCard.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ComboPackCard.jsx
+// - Search text: ComboPackCard.jsx
 import React from 'react';
 import { FaTag, FaClock } from 'react-icons/fa';
 import Button from './ui/Button';
@@ -109,3 +117,4 @@ const ComboPackCard = ({ combo, onAddToCart }) => {
 };
 
 export default ComboPackCard;
+

@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_ADMINDASHBOARD
+// WHAT_THIS_IS: This page renders the AdminDashboard screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/AdminDashboard.jsx
+// - Search text: const AdminDashboard
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { adminService } from '../services/dashboardService';
@@ -78,39 +86,39 @@ const AdminDashboard = () => {
     }, [loadDashboard]);
 
     const stats = useMemo(() => ([
-        {
-            title: 'Total Orders',
-            value: statsData?.totalOrders ?? 0,
-            change: statsData?.todayOrders ? `+${statsData.todayOrders} today` : '—',
-            icon: FaClipboardList,
-            color: 'bg-blue-500',
-            link: '/admin/orders',
-        },
-        {
-            title: 'Active Customers',
-            value: statsData?.activeCustomers ?? 0,
-            change: '—',
-            icon: FaUsers,
-            color: 'bg-green-500',
-            link: '/admin/customers',
-        },
-        {
-            title: 'Total Revenue',
-            value: `LKR ${(statsData?.totalRevenue ?? 0).toLocaleString()}`,
-            change: statsData?.todayRevenue ? `+LKR ${statsData.todayRevenue.toLocaleString()} today` : '—',
-            icon: RevenueCurrencyIcon,
-            color: 'bg-yellow-500',
-            link: '/admin/analytics',
-        },
-        {
-            title: 'Staff Members',
-            value: statsData?.totalStaff ?? 0,
-            change: '—',
-            icon: FaUserTie,
-            color: 'bg-purple-500',
-            link: '/admin/staff',
-        },
-    ]), [statsData]);
+    {
+        title: 'Total Orders',
+        value: statsData?.totalOrders ?? 0,
+        change: statsData?.todayOrders ? `+${statsData.todayOrders} today` : 'No new orders today',
+        icon: FaClipboardList,
+        color: 'bg-blue-500',
+        link: '/admin/orders',
+    },
+    {
+        title: 'Active Customers',
+        value: statsData?.activeCustomers ?? 0,
+        change: 'Current active customer count',
+        icon: FaUsers,
+        color: 'bg-green-500',
+        link: '/admin/customers',
+    },
+    {
+        title: 'Total Revenue',
+        value: `LKR ${(statsData?.totalRevenue ?? 0).toLocaleString()}`,
+        change: statsData?.todayRevenue ? `+LKR ${statsData.todayRevenue.toLocaleString()} today` : 'No revenue recorded today',
+        icon: RevenueCurrencyIcon,
+        color: 'bg-yellow-500',
+        link: '/admin/analytics',
+    },
+    {
+        title: 'Staff Members',
+        value: statsData?.totalStaff ?? 0,
+        change: 'Current active staff count',
+        icon: FaUserTie,
+        color: 'bg-purple-500',
+        link: '/admin/staff',
+    },
+]), [statsData]);
 
     // Simple: This gets the status icon.
     const getStatusIcon = (status) => {
@@ -248,3 +256,4 @@ const AdminDashboard = () => {
 };
 
 export default AdminDashboard;
+

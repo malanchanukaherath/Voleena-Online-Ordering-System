@@ -1,4 +1,24 @@
 /**
+
+// CODEMAP: BACKEND_SERVER_INIT_DELIVERY_STAFF_AVAILABILITY_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_INIT_DELIVERY_STAFF_AVAILABILITY_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_INIT_DELIVERY_STAFF_AVAILABILITY_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+module.exports = { initializeDeliveryStaffAvailability };
+// CODEMAP: BACKEND_SERVER_INIT_DELIVERY_STAFF_AVAILABILITY_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
  * Initialize Delivery Staff Availability
  * 
  * This script ensures all delivery staff have availability records.
@@ -12,7 +32,7 @@ const { sequelize, Staff, Role } = require('./models');
 // Simple: This creates the delivery staff availability.
 async function initializeDeliveryStaffAvailability() {
     try {
-        console.log('🚚 Initializing delivery staff availability...\n');
+        console.log('Ã°Å¸Å¡Å¡ Initializing delivery staff availability...\n');
 
         // Find Delivery role
         const deliveryRole = await Role.findOne({
@@ -20,7 +40,7 @@ async function initializeDeliveryStaffAvailability() {
         });
 
         if (!deliveryRole) {
-            console.log('❌ Delivery role not found. Please run seed_roles_and_staff.js first.');
+            console.log('Ã¢ÂÅ’ Delivery role not found. Please run seed_roles_and_staff.js first.');
             process.exit(1);
         }
 
@@ -33,12 +53,12 @@ async function initializeDeliveryStaffAvailability() {
         });
 
         if (deliveryStaff.length === 0) {
-            console.log('⚠️  No active delivery staff found.');
+            console.log('Ã¢Å¡Â Ã¯Â¸Â  No active delivery staff found.');
             console.log('   Please create delivery staff accounts first.');
             process.exit(0);
         }
 
-        console.log(`📋 Found ${deliveryStaff.length} delivery staff member(s)\n`);
+        console.log(`Ã°Å¸â€œâ€¹ Found ${deliveryStaff.length} delivery staff member(s)\n`);
 
         // Initialize availability for each staff
         for (const staff of deliveryStaff) {
@@ -55,13 +75,13 @@ async function initializeDeliveryStaffAvailability() {
                 }
             );
 
-            console.log(`✅ Initialized availability for: ${staff.Name} (ID: ${staff.StaffID})`);
+            console.log(`Ã¢Å“â€¦ Initialized availability for: ${staff.Name} (ID: ${staff.StaffID})`);
             console.log(`   Email: ${staff.Email}`);
             console.log(`   Status: Available\n`);
         }
 
         // Display current availability status
-        console.log('\n📊 Current Availability Status:');
+        console.log('\nÃ°Å¸â€œÅ  Current Availability Status:');
         const availabilityStatus = await sequelize.query(
             `SELECT 
         s.staff_id,
@@ -82,19 +102,19 @@ async function initializeDeliveryStaffAvailability() {
             ID: row.staff_id,
             Name: row.name,
             Email: row.email,
-            Available: row.is_available ? '✅ Yes' : '❌ No',
+            Available: row.is_available ? 'Ã¢Å“â€¦ Yes' : 'Ã¢ÂÅ’ No',
             'Current Order': row.current_order_id || '-',
             'Last Updated': row.last_updated ? new Date(row.last_updated).toLocaleString() : '-'
         })));
 
-        console.log('\n✨ Initialization completed successfully!');
-        console.log('\n💡 Tips:');
-        console.log('   • Delivery staff can toggle availability via the dashboard');
-        console.log('   • Auto-assignment will only assign to available staff');
-        console.log('   • Staff become unavailable when assigned an order\n');
+        console.log('\nÃ¢Å“Â¨ Initialization completed successfully!');
+        console.log('\nÃ°Å¸â€™Â¡ Tips:');
+        console.log('   Ã¢â‚¬Â¢ Delivery staff can toggle availability via the dashboard');
+        console.log('   Ã¢â‚¬Â¢ Auto-assignment will only assign to available staff');
+        console.log('   Ã¢â‚¬Â¢ Staff become unavailable when assigned an order\n');
 
     } catch (error) {
-        console.error('❌ Error initializing delivery staff availability:', error);
+        console.error('Ã¢ÂÅ’ Error initializing delivery staff availability:', error);
         process.exit(1);
     } finally {
         await sequelize.close();
@@ -107,3 +127,6 @@ if (require.main === module) {
 }
 
 module.exports = { initializeDeliveryStaffAvailability };
+
+
+

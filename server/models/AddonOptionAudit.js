@@ -1,5 +1,25 @@
 const { DataTypes } = require('sequelize');
 
+// CODEMAP: BACKEND_SERVER_MODELS_ADDONOPTIONAUDIT_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { DataTypes } = require('sequelize');
+
+// CODEMAP: BACKEND_SERVER_MODELS_ADDONOPTIONAUDIT_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { DataTypes } = require('sequelize');
+
+// CODEMAP: BACKEND_SERVER_MODELS_ADDONOPTIONAUDIT_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { DataTypes } = require('sequelize');
+};
+// CODEMAP: BACKEND_SERVER_MODELS_ADDONOPTIONAUDIT_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { DataTypes } = require('sequelize');
+
 // Frontend connection: Defines database structure used by customer/staff/admin features.
 module.exports = (sequelize) => {
     const AddonOptionAudit = sequelize.define('AddonOptionAudit', {
@@ -70,3 +90,6 @@ module.exports = (sequelize) => {
 
     return AddonOptionAudit;
 };
+
+
+

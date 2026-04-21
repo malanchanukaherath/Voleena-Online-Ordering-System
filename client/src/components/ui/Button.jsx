@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_UI_BUTTON_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for Button.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ui/Button.jsx
+// - Search text: Button.jsx
 import React from 'react';
 
 const Button = ({ 
@@ -52,3 +60,4 @@ const Button = ({
 };
 
 export default Button;
+

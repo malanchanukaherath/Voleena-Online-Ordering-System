@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_UI_TOAST_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for Toast.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ui/Toast.jsx
+// - Search text: Toast.jsx
 import React, { useEffect, useState } from 'react';
 
 const Toast = ({ 
@@ -89,3 +97,4 @@ const Toast = ({
 };
 
 export default Toast;
+

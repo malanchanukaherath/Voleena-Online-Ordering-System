@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_LAYOUT_HEADER_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for Header.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/layout/Header.jsx
+// - Search text: Header.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -27,6 +35,16 @@ import {
 import NotificationCenter from '../ui/NotificationCenter';
 import { usePublicSettings } from '../../hooks/usePublicSettings';
 
+// CODEMAP: FRONTEND_HEADER
+// WHAT_THIS_IS: The top bar shown on most pages (logo, links, cart, user actions).
+// WHERE_CONNECTED:
+// - Rendered by MainLayout.
+// - Reads login/session data from AuthContext.
+// - Reads theme mode from ThemeContext.
+// - Reads public restaurant name from usePublicSettings.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/components/layout/Header.jsx
+// - Search text: const Header = ({
 const Header = ({
     showSidebarToggle = false,
     isSidebarVisible = true,
@@ -42,7 +60,8 @@ const Header = ({
     const userRole = user?.role || user?.staffRole;
     const shouldShowCart = !isAuthenticated || userRole === 'Customer';
 
-    // Load cart count on mount and listen for updates
+    // Load cart count on mount and listen for updates.
+    // Non-technical meaning: keep the cart number near the icon always in sync.
     useEffect(() => {
         // Simple: This updates the cart count.
         const updateCartCount = () => {
@@ -69,7 +88,8 @@ const Header = ({
     // Simple: This checks whether active is true.
     const isActive = (path) => location.pathname === path;
 
-    // Navigation items based on user role
+    // Navigation items based on user role.
+    // Non-technical meaning: each staff type sees only links relevant to their job.
     // Simple: This gets the navigation items.
     const getNavigationItems = () => {
         if (!isAuthenticated) {
@@ -173,6 +193,7 @@ const Header = ({
                     </div>
 
                     {/* Desktop Navigation */}
+                    {/* These links are based on getNavigationItems() and current logged-in role. */}
                     <nav className={`${showSidebarToggle ? 'hidden' : 'hidden md:flex'} space-x-1 rounded-xl bg-slate-50/80 p-1 border border-slate-200/80 dark:bg-slate-800/80 dark:border-slate-700`}>
                         {navigationItems.map((item) => {
                             const Icon = item.icon;
@@ -225,6 +246,7 @@ const Header = ({
 
                         {isAuthenticated && (
                             <>
+                                {/* Bell icon and popup list for app notifications */}
                                 <NotificationCenter />
 
                                 <div className="flex items-center space-x-3">
@@ -289,3 +311,4 @@ const Header = ({
 };
 
 export default Header;
+

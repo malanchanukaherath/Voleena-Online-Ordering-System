@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_VERIFYACCOUNT
+// WHAT_THIS_IS: This page renders the VerifyAccount screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/VerifyAccount.jsx
+// - Search text: const VerifyAccount
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import Button from '../components/ui/Button';
@@ -199,7 +207,7 @@ const VerifyAccount = () => {
 
                     <div className="text-center text-sm">
                         <Link to="/register" className="text-primary-600 hover:text-primary-700">
-                            ← Back to Registration
+                            ??? Back to Registration
                         </Link>
                     </div>
                 </div>
@@ -217,3 +225,4 @@ const VerifyAccount = () => {
 };
 
 export default VerifyAccount;
+

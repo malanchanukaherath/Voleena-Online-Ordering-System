@@ -1,5 +1,25 @@
 const bcrypt = require('bcryptjs');
 
+// CODEMAP: BACKEND_SERVER_MODELS_STAFF_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const bcrypt = require('bcryptjs');
+
+// CODEMAP: BACKEND_SERVER_MODELS_STAFF_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const bcrypt = require('bcryptjs');
+
+// CODEMAP: BACKEND_SERVER_MODELS_STAFF_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const bcrypt = require('bcryptjs');
+};
+// CODEMAP: BACKEND_SERVER_MODELS_STAFF_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const bcrypt = require('bcryptjs');
+
 // Frontend connection: Defines database structure used by customer/staff/admin features.
 module.exports = (sequelize, DataTypes) => {
   const Staff = sequelize.define('Staff', {
@@ -102,3 +122,6 @@ module.exports = (sequelize, DataTypes) => {
 
   return Staff;
 };
+
+
+

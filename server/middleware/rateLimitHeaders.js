@@ -1,4 +1,24 @@
 /**
+
+// CODEMAP: BACKEND_SERVER_MIDDLEWARE_RATELIMITHEADERS_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_MIDDLEWARE_RATELIMITHEADERS_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_MIDDLEWARE_RATELIMITHEADERS_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+module.exports = rateLimitHeadersMiddleware;
+// CODEMAP: BACKEND_SERVER_MIDDLEWARE_RATELIMITHEADERS_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
  * Rate Limit Headers Middleware
  * Ensures all responses include RFC 6585 standard rate limit headers
  * even when express-rate-limit doesn't set them
@@ -49,3 +69,6 @@ function rateLimitHeadersMiddleware(req, res, next) {
 }
 
 module.exports = rateLimitHeadersMiddleware;
+
+
+

@@ -1,4 +1,24 @@
 /**
+
+// CODEMAP: BACKEND_SERVER_SEED_ROLES_AND_STAFF_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_SEED_ROLES_AND_STAFF_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_SEED_ROLES_AND_STAFF_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+seedRolesAndAccounts();
+// CODEMAP: BACKEND_SERVER_SEED_ROLES_AND_STAFF_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
  * Seed roles and known login accounts for a fresh deployment.
  *
  * Usage: node server/seed_roles_and_staff.js
@@ -175,3 +195,6 @@ async function seedRolesAndAccounts() {
 }
 
 seedRolesAndAccounts();
+
+
+

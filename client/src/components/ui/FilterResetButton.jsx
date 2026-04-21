@@ -1,13 +1,30 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_UI_FILTERRESETBUTTON_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for FilterResetButton.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ui/FilterResetButton.jsx
+// - Search text: FilterResetButton.jsx
 import React from 'react';
 import { FaTimes } from 'react-icons/fa';
 import Button from './Button';
 
+// CODEMAP: FILTER_RESET_BUTTON
+// WHAT_THIS_IS: A small reusable "clear filter" button used in list pages.
+// WHERE_CONNECTED:
+// - Imported by pages that show filter controls (for example Menu, Order Management, Staff Management).
+// - Uses shared Button styles from components/ui/Button so it looks consistent with other buttons.
+// HOW_TO_FIND_IN_FRONTEND:
+// - Search text: FilterResetButton
+// - File path: client/src/components/ui/FilterResetButton.jsx
 const FilterResetButton = ({
     onClick,
     disabled = false,
     label = 'Clear Filters',
     className = ''
 }) => {
+    // If parent page says there are no active filters, hide this action button.
     if (disabled) {
         return null;
     }

@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_VERIFYEMAIL
+// WHAT_THIS_IS: This page renders the VerifyEmail screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/VerifyEmail.jsx
+// - Search text: const VerifyEmail
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Card from '../components/ui/Card';
@@ -125,3 +133,4 @@ const VerifyEmail = () => {
 };
 
 export default VerifyEmail;
+

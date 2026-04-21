@@ -1,5 +1,25 @@
 const db = require('./models');
 
+// CODEMAP: BACKEND_SERVER_CHECK_AND_SEED_ROLES_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const db = require('./models');
+
+// CODEMAP: BACKEND_SERVER_CHECK_AND_SEED_ROLES_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const db = require('./models');
+
+// CODEMAP: BACKEND_SERVER_CHECK_AND_SEED_ROLES_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const db = require('./models');
+checkAndSeedRoles();
+// CODEMAP: BACKEND_SERVER_CHECK_AND_SEED_ROLES_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const db = require('./models');
+
 // Simple: This checks if the and seed roles is correct.
 async function checkAndSeedRoles() {
     try {
@@ -20,9 +40,9 @@ async function checkAndSeedRoles() {
             });
 
             if (created) {
-                console.log(`✅ Created missing role: ${roleName}`);
+                console.log(`Ã¢Å“â€¦ Created missing role: ${roleName}`);
             } else {
-                console.log(`ℹ️ Role already exists: ${roleName}`);
+                console.log(`Ã¢â€žÂ¹Ã¯Â¸Â Role already exists: ${roleName}`);
             }
         }
 
@@ -35,3 +55,6 @@ async function checkAndSeedRoles() {
 }
 
 checkAndSeedRoles();
+
+
+

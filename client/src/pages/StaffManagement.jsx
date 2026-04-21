@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_STAFFMANAGEMENT
+// WHAT_THIS_IS: This page renders the StaffManagement screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/StaffManagement.jsx
+// - Search text: const StaffManagement
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaUserPlus, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import Button from '../components/ui/Button';
@@ -260,9 +268,9 @@ const StaffManagement = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {member.IsActive ? (
-                                                <span className="text-green-600 text-sm">● Active</span>
+                                                <span className="text-green-600 text-sm">??? Active</span>
                                             ) : (
-                                                <span className="text-gray-400 text-sm">● Inactive</span>
+                                                <span className="text-gray-400 text-sm">??? Inactive</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -300,3 +308,4 @@ const StaffManagement = () => {
 };
 
 export default StaffManagement;
+

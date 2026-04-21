@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_CATEGORYMANAGEMENT
+// WHAT_THIS_IS: This page renders the CategoryManagement screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/CategoryManagement.jsx
+// - Search text: const CategoryManagement
 import React, { useEffect, useMemo, useState } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import Button from '../components/ui/Button';
@@ -334,3 +342,4 @@ const CategoryManagement = () => {
 };
 
 export default CategoryManagement;
+

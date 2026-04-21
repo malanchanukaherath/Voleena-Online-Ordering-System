@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_REGISTER
+// WHAT_THIS_IS: This page renders the Register screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/Register.jsx
+// - Search text: const Register
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -285,3 +293,4 @@ const Register = () => {
 };
 
 export default Register;
+

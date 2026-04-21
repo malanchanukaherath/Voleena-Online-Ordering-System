@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_LOGIN
+// WHAT_THIS_IS: This page renders the Login screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/Login.jsx
+// - Search text: const Login
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -171,9 +179,9 @@ const Login = () => {
 
           <div className="mt-10 flex flex-col gap-4">
             {[
-              { icon: '🍛', text: 'Traditional Sri Lankan meals' },
-              { icon: '🎁', text: 'Special Sunday combo offers' },
-              { icon: '🚚', text: 'Delivery within 15km radius' },
+              { icon: '????', text: 'Traditional Sri Lankan meals' },
+              { icon: '????', text: 'Special Sunday combo offers' },
+              { icon: '????', text: 'Delivery within 15km radius' },
             ].map((item) => (
               <div key={item.text} className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center text-lg shrink-0">
@@ -188,7 +196,7 @@ const Login = () => {
         {/* Bottom tagline */}
         <div className="relative z-10">
           <p className="text-primary-200 text-sm">
-            © {new Date().getFullYear()} Voleena Foods. All rights reserved.
+            ?? {new Date().getFullYear()} Voleena Foods. All rights reserved.
           </p>
         </div>
       </div>
@@ -256,7 +264,7 @@ const Login = () => {
                   onChange={handleInputChange}
                   error={errors.password}
                   required
-                  placeholder="••••••••"
+                  placeholder="????????????????????????"
                 />
                 <button
                   type="button"
@@ -313,3 +321,4 @@ const Login = () => {
 };
 
 export default Login;
+

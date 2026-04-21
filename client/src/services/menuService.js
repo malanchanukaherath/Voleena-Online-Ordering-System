@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_SERVICES_MENUSERVICE_JS
+// WHAT_THIS_IS: This file supports frontend behavior for menuService.js.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: services/menuService.js
+// - Search text: menuService.js
 import axios from 'axios';
 import { API_BASE_URL as API_ROOT_URL, API_V1_BASE_URL } from '../config/api';
 
@@ -211,3 +219,4 @@ export const imageUploadService = {
         return response.data;
     }
 };
+

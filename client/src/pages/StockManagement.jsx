@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_STOCKMANAGEMENT
+// WHAT_THIS_IS: This page renders the StockManagement screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/StockManagement.jsx
+// - Search text: const StockManagement
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { FaSyncAlt, FaExclamationTriangle } from 'react-icons/fa';
 import { useAuth } from '../contexts/AuthContext';
@@ -383,7 +391,7 @@ const StockManagement = () => {
                                                 </span>
                                             ) : (
                                                 <span className="inline-flex px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
-                                                    ✓ In Stock
+                                                    ??? In Stock
                                                 </span>
                                             )}
                                         </td>
@@ -470,3 +478,4 @@ const StockManagement = () => {
 };
 
 export default StockManagement;
+

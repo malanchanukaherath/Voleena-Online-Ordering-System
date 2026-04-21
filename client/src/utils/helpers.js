@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_UTILS_HELPERS_JS
+// WHAT_THIS_IS: This file supports frontend behavior for helpers.js.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: utils/helpers.js
+// - Search text: helpers.js
 // Utility functions for the application
 
 // Format currency
@@ -171,3 +179,4 @@ export const getOrderStatusText = (status) => {
   };
   return texts[status] || status;
 };
+

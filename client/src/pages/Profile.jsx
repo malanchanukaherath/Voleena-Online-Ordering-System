@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_PROFILE
+// WHAT_THIS_IS: This page renders the Profile screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/Profile.jsx
+// - Search text: const Profile
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import Input from '../components/ui/Input';
@@ -481,7 +489,7 @@ const Profile = () => {
     const [stats, setStats] = useState({
         totalOrders: 0,
         totalSpent: 0,
-        memberSince: '—'
+        memberSince: '???'
     });
 
     useEffect(() => {
@@ -569,7 +577,7 @@ const Profile = () => {
                     setStats({
                         totalOrders,
                         totalSpent,
-                        memberSince: memberSinceDate ? new Date(memberSinceDate).toLocaleDateString() : '—'
+                        memberSince: memberSinceDate ? new Date(memberSinceDate).toLocaleDateString() : '???'
                     });
                 }
             } catch {
@@ -923,4 +931,5 @@ const Profile = () => {
 };
 
 export default Profile;
+
 

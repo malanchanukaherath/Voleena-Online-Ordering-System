@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_KITCHENORDERS
+// WHAT_THIS_IS: This page renders the KitchenOrders screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/KitchenOrders.jsx
+// - Search text: const KitchenOrders
 import React, { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/ui/StatusBadge';
 import Button from '../components/ui/Button';
@@ -176,3 +184,4 @@ const KitchenOrders = () => {
 };
 
 export default KitchenOrders;
+

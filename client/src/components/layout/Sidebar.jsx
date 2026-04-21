@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_LAYOUT_SIDEBAR_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for Sidebar.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/layout/Sidebar.jsx
+// - Search text: Sidebar.jsx
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -18,6 +26,14 @@ import {
     FaCashRegister,
 } from 'react-icons/fa';
 
+// CODEMAP: FRONTEND_SIDEBAR
+// WHAT_THIS_IS: Left menu for dashboard users (Admin/Cashier/Kitchen/Delivery).
+// WHERE_CONNECTED:
+// - Rendered by MainLayout when current route is a dashboard path.
+// - Uses logged-in user role from AuthContext to decide menu items.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/components/layout/Sidebar.jsx
+// - Search text: const Sidebar = ({ className = '', onNavigate })
 // Simple: This shows the sidebar section.
 const Sidebar = ({ className = '', onNavigate }) => {
     const { user } = useAuth();
@@ -27,6 +43,7 @@ const Sidebar = ({ className = '', onNavigate }) => {
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
     // Simple: This gets the menu items.
+    // Non-technical meaning: this is the "menu list by job role" map.
     const getMenuItems = () => {
         const role = user?.role || user?.staffRole;
 
@@ -78,6 +95,7 @@ const Sidebar = ({ className = '', onNavigate }) => {
     const menuItems = getMenuItems();
 
     if (menuItems.length === 0) {
+        // Customers and guests do not need the dashboard sidebar.
         return null; // Don't show sidebar for customers or unauthenticated users
     }
 
@@ -101,6 +119,7 @@ const Sidebar = ({ className = '', onNavigate }) => {
                             )}
                             <Link
                                 to={item.path}
+                                // onNavigate is used by mobile view to close sidebar after clicking a link.
                                 onClick={onNavigate}
                                 className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl border-l-2 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-900 ${active
                                     ? 'bg-primary-50 border-l-primary-600 text-primary-700 font-semibold dark:bg-primary-900/30 dark:border-l-primary-400 dark:text-primary-300'
@@ -119,3 +138,4 @@ const Sidebar = ({ className = '', onNavigate }) => {
 };
 
 export default Sidebar;
+

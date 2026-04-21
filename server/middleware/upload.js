@@ -1,5 +1,25 @@
 const multer = require('multer');
 
+// CODEMAP: BACKEND_SERVER_MIDDLEWARE_UPLOAD_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const multer = require('multer');
+
+// CODEMAP: BACKEND_SERVER_MIDDLEWARE_UPLOAD_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const multer = require('multer');
+
+// CODEMAP: BACKEND_SERVER_MIDDLEWARE_UPLOAD_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const multer = require('multer');
+module.exports = upload;
+// CODEMAP: BACKEND_SERVER_MIDDLEWARE_UPLOAD_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const multer = require('multer');
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const ALLOWED_EXTENSIONS = /\.jpe?g|\.png|\.webp$/i;
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -31,3 +51,6 @@ const upload = multer({
 });
 
 module.exports = upload;
+
+
+

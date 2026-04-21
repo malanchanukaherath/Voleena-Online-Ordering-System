@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_FORGOTPASSWORD
+// WHAT_THIS_IS: This page renders the ForgotPassword screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/ForgotPassword.jsx
+// - Search text: const ForgotPassword
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Button from '../components/ui/Button';
@@ -104,7 +112,7 @@ const ForgotPassword = () => {
 
                         <div className="text-center text-sm">
                             <Link to="/login" className="text-primary-600 hover:text-primary-700">
-                                ← Back to Login
+                                ??? Back to Login
                             </Link>
                         </div>
                     </form>
@@ -149,3 +157,4 @@ const ForgotPassword = () => {
 };
 
 export default ForgotPassword;
+

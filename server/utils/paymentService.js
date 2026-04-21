@@ -1,4 +1,24 @@
 const { Payment } = require('../models');
+
+// CODEMAP: BACKEND_SERVER_UTILS_PAYMENTSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { Payment } = require('../models');
+
+// CODEMAP: BACKEND_SERVER_UTILS_PAYMENTSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { Payment } = require('../models');
+
+// CODEMAP: BACKEND_SERVER_UTILS_PAYMENTSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { Payment } = require('../models');
+module.exports = new PaymentService();
+// CODEMAP: BACKEND_SERVER_UTILS_PAYMENTSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { Payment } = require('../models');
 const notificationService = require('./notificationService');
 const crypto = require('crypto');
 
@@ -142,11 +162,11 @@ class PaymentService {
                         GatewayStatus: buildGatewayStatus('INIT_FAILED', paymentMethod)
                     });
                 } catch (updateError) {
-                    console.error('❌ Failed to persist payment initialization failure:', updateError.message);
+                    console.error('Ã¢ÂÅ’ Failed to persist payment initialization failure:', updateError.message);
                 }
             }
 
-            console.error('❌ Payment initialization failed:', error.message);
+            console.error('Ã¢ÂÅ’ Payment initialization failed:', error.message);
             throw error;
         }
     }
@@ -273,7 +293,7 @@ class PaymentService {
                     };
                 }
             } catch (retrieveError) {
-                console.warn(`⚠️ Failed to reuse Stripe payment intent ${payment.TransactionID}:`, retrieveError.message);
+                console.warn(`Ã¢Å¡Â Ã¯Â¸Â Failed to reuse Stripe payment intent ${payment.TransactionID}:`, retrieveError.message);
             }
         }
 
@@ -338,7 +358,7 @@ class PaymentService {
 
             if (isSuccess) {
                 await notificationService.sendPaymentNotification(order, customer, payment);
-                console.log(`✅ Payment successful for Order #${order.OrderNumber}`);
+                console.log(`Ã¢Å“â€¦ Payment successful for Order #${order.OrderNumber}`);
             } else {
                 await notificationService.sendPaymentNotification(order, customer, payment);
                 if (order && !['CANCELLED', 'DELIVERED'].includes(order.Status)) {
@@ -350,7 +370,7 @@ class PaymentService {
                         'SYSTEM'
                     );
                 }
-                console.log(`❌ Payment failed for Order #${order.OrderNumber}`);
+                console.log(`Ã¢ÂÅ’ Payment failed for Order #${order.OrderNumber}`);
             }
 
             return {
@@ -359,7 +379,7 @@ class PaymentService {
             };
 
         } catch (error) {
-            console.error('❌ Payment callback processing failed:', error.message);
+            console.error('Ã¢ÂÅ’ Payment callback processing failed:', error.message);
             throw error;
         }
     }
@@ -411,7 +431,7 @@ class PaymentService {
 
             await notificationService.sendRefundNotification(order, customer, payment.Amount);
 
-            console.log(`✅ Refund processed for Order #${order.OrderNumber}: LKR ${payment.Amount}`);
+            console.log(`Ã¢Å“â€¦ Refund processed for Order #${order.OrderNumber}: LKR ${payment.Amount}`);
 
             return {
                 success: true,
@@ -420,7 +440,7 @@ class PaymentService {
             };
 
         } catch (error) {
-            console.error('❌ Refund processing failed:', error.message);
+            console.error('Ã¢ÂÅ’ Refund processing failed:', error.message);
             throw error;
         }
     }
@@ -485,7 +505,7 @@ class PaymentService {
      * Mock payment flow for development
      */
     async mockPaymentFlow(payment, method) {
-        console.log(`💳 Mock ${method} payment initialized`);
+        console.log(`Ã°Å¸â€™Â³ Mock ${method} payment initialized`);
         
         return {
             success: true,
@@ -499,3 +519,6 @@ class PaymentService {
 }
 
 module.exports = new PaymentService();
+
+
+

@@ -1,4 +1,24 @@
 // Frontend connection: Defines database structure used by customer/staff/admin features.
+
+// CODEMAP: BACKEND_SERVER_MODELS_ROLE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+// Frontend connection: Defines database structure used by customer/staff/admin features.
+
+// CODEMAP: BACKEND_SERVER_MODELS_ROLE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+// Frontend connection: Defines database structure used by customer/staff/admin features.
+
+// CODEMAP: BACKEND_SERVER_MODELS_ROLE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+// Frontend connection: Defines database structure used by customer/staff/admin features.
+};
+// CODEMAP: BACKEND_SERVER_MODELS_ROLE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+// Frontend connection: Defines database structure used by customer/staff/admin features.
 module.exports = (sequelize, DataTypes) => {
     const Role = sequelize.define('Role', {
         RoleID: {
@@ -37,3 +57,6 @@ module.exports = (sequelize, DataTypes) => {
 
     return Role;
 };
+
+
+

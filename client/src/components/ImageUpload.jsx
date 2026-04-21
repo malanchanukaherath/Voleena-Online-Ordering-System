@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_IMAGEUPLOAD_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for ImageUpload.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ImageUpload.jsx
+// - Search text: ImageUpload.jsx
 import React, { useEffect, useRef, useState } from 'react';
 import { FaCloudUploadAlt, FaTimes } from 'react-icons/fa';
 import { imageUploadService } from '../services/menuService';
@@ -185,3 +193,4 @@ const ImageUpload = ({
 };
 
 export default ImageUpload;
+

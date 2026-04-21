@@ -1,4 +1,24 @@
 /**
+
+// CODEMAP: BACKEND_SERVER_CHECK_MENU_AVAILABILITY_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_CHECK_MENU_AVAILABILITY_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_CHECK_MENU_AVAILABILITY_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+checkMenuAvailability();
+// CODEMAP: BACKEND_SERVER_CHECK_MENU_AVAILABILITY_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
  * Check Menu Item Availability
  * This script checks which menu items have IsActive or IsAvailable set to false
  * and provides SQL to fix them.
@@ -23,12 +43,12 @@ async function checkMenuAvailability() {
         const unavailableItems = allItems.filter(item => !item.IsActive || !item.IsAvailable);
 
         if (unavailableItems.length === 0) {
-            console.log('✓ All menu items are active and available!\n');
+            console.log('Ã¢Å“â€œ All menu items are active and available!\n');
         } else {
-            console.log(`⚠ Found ${unavailableItems.length} unavailable menu items:\n`);
+            console.log(`Ã¢Å¡Â  Found ${unavailableItems.length} unavailable menu items:\n`);
 
             unavailableItems.forEach(item => {
-                console.log(`  • ID ${item.MenuItemID}: ${item.Name}`);
+                console.log(`  Ã¢â‚¬Â¢ ID ${item.MenuItemID}: ${item.Name}`);
                 console.log(`    - IsActive: ${item.IsActive}`);
                 console.log(`    - IsAvailable: ${item.IsAvailable}`);
                 console.log('');
@@ -53,13 +73,13 @@ async function checkMenuAvailability() {
             console.log(`  IsAvailable: ${menuItem2.IsAvailable}`);
 
             if (!menuItem2.IsActive || !menuItem2.IsAvailable) {
-                console.log('\n  ⚠ This is causing the "Menu item 2 is not available" error!');
+                console.log('\n  Ã¢Å¡Â  This is causing the "Menu item 2 is not available" error!');
                 console.log(`\n  Fix with: UPDATE menu_items SET is_active = true, is_available = true WHERE menu_item_id = 2;`);
             } else {
-                console.log('\n  ✓ This menu item is available');
+                console.log('\n  Ã¢Å“â€œ This menu item is available');
             }
         } else {
-            console.log('⚠ Menu Item 2 does not exist in the database!');
+            console.log('Ã¢Å¡Â  Menu Item 2 does not exist in the database!');
         }
 
         await sequelize.close();
@@ -70,3 +90,6 @@ async function checkMenuAvailability() {
 }
 
 checkMenuAvailability();
+
+
+

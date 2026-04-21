@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_CASHIERORDERS
+// WHAT_THIS_IS: This page renders the CashierOrders screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/CashierOrders.jsx
+// - Search text: const CashierOrders
 import React, { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/ui/StatusBadge';
 import { cashierService } from '../services/dashboardService';
@@ -282,3 +290,4 @@ const CashierOrders = () => {
 };
 
 export default CashierOrders;
+

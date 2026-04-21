@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_SALESANALYTICS
+// WHAT_THIS_IS: This page renders the SalesAnalytics screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/SalesAnalytics.jsx
+// - Search text: const SalesAnalytics
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     FaChartLine,
@@ -804,3 +812,4 @@ const SalesAnalytics = () => {
 };
 
 export default SalesAnalytics;
+

@@ -1,4 +1,24 @@
 const { OTPVerification } = require('../models');
+
+// CODEMAP: BACKEND_SERVER_UTILS_OTPSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { OTPVerification } = require('../models');
+
+// CODEMAP: BACKEND_SERVER_UTILS_OTPSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { OTPVerification } = require('../models');
+
+// CODEMAP: BACKEND_SERVER_UTILS_OTPSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { OTPVerification } = require('../models');
+module.exports = new OTPService();
+// CODEMAP: BACKEND_SERVER_UTILS_OTPSERVICE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { OTPVerification } = require('../models');
 const crypto = require('crypto');
 const notificationService = require('./notificationService');
 
@@ -58,7 +78,7 @@ class OTPService {
             // Send OTP via email/SMS
             await notificationService.sendOTPVerification(email, phone, otpCode, purpose);
 
-            console.log(`✅ OTP generated for ${userType} ${userID}: ${otpCode} (expires in ${this.otpExpiry}min)`);
+            console.log(`Ã¢Å“â€¦ OTP generated for ${userType} ${userID}: ${otpCode} (expires in ${this.otpExpiry}min)`);
 
             return {
                 success: true,
@@ -68,7 +88,7 @@ class OTPService {
             };
 
         } catch (error) {
-            console.error('❌ OTP generation failed:', error.message);
+            console.error('Ã¢ÂÅ’ OTP generation failed:', error.message);
             throw new Error('Failed to generate verification code');
         }
     }
@@ -117,7 +137,7 @@ class OTPService {
                 UsedAt: now
             });
 
-            console.log(`✅ OTP verified for ${userType} ${userID}`);
+            console.log(`Ã¢Å“â€¦ OTP verified for ${userType} ${userID}`);
 
             return {
                 success: true,
@@ -126,7 +146,7 @@ class OTPService {
             };
 
         } catch (error) {
-            console.error('❌ OTP verification failed:', error.message);
+            console.error('Ã¢ÂÅ’ OTP verification failed:', error.message);
             return {
                 success: false,
                 message: 'Verification failed. Please try again.'
@@ -148,11 +168,11 @@ class OTPService {
                 }
             });
 
-            console.log(`🧹 Cleaned up ${deleted} expired OTP records`);
+            console.log(`Ã°Å¸Â§Â¹ Cleaned up ${deleted} expired OTP records`);
             return deleted;
 
         } catch (error) {
-            console.error('❌ OTP cleanup failed:', error.message);
+            console.error('Ã¢ÂÅ’ OTP cleanup failed:', error.message);
             return 0;
         }
     }
@@ -180,3 +200,6 @@ class OTPService {
 }
 
 module.exports = new OTPService();
+
+
+

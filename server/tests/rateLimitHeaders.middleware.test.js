@@ -1,5 +1,25 @@
 const rateLimitHeadersMiddleware = require('../middleware/rateLimitHeaders');
 
+// CODEMAP: BACKEND_SERVER_TESTS_RATELIMITHEADERS_MIDDLEWARE_TEST_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const rateLimitHeadersMiddleware = require('../middleware/rateLimitHeaders');
+
+// CODEMAP: BACKEND_SERVER_TESTS_RATELIMITHEADERS_MIDDLEWARE_TEST_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const rateLimitHeadersMiddleware = require('../middleware/rateLimitHeaders');
+
+// CODEMAP: BACKEND_SERVER_TESTS_RATELIMITHEADERS_MIDDLEWARE_TEST_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const rateLimitHeadersMiddleware = require('../middleware/rateLimitHeaders');
+});
+// CODEMAP: BACKEND_SERVER_TESTS_RATELIMITHEADERS_MIDDLEWARE_TEST_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const rateLimitHeadersMiddleware = require('../middleware/rateLimitHeaders');
+
 describe('rateLimitHeaders middleware', () => {
   // Simple: This creates the response harness.
   function buildResponseHarness() {
@@ -55,3 +75,6 @@ describe('rateLimitHeaders middleware', () => {
     expect(headers['X-RateLimit-Reset']).toBe(Math.ceil(new Date('2026-04-04T13:00:00.000Z').getTime() / 1000));
   });
 });
+
+
+

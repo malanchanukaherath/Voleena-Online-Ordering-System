@@ -1,4 +1,24 @@
 const { Sequelize } = require('sequelize');
+
+// CODEMAP: BACKEND_SERVER_CONFIG_DATABASE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { Sequelize } = require('sequelize');
+
+// CODEMAP: BACKEND_SERVER_CONFIG_DATABASE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { Sequelize } = require('sequelize');
+
+// CODEMAP: BACKEND_SERVER_CONFIG_DATABASE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { Sequelize } = require('sequelize');
+module.exports = sequelize;
+// CODEMAP: BACKEND_SERVER_CONFIG_DATABASE_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const { Sequelize } = require('sequelize');
 require('dotenv').config();
 const crypto = require('crypto');
 
@@ -61,3 +81,6 @@ const sequelize = new Sequelize(
 // Export sequelize instance
 // Connection will be tested when server starts
 module.exports = sequelize;
+
+
+

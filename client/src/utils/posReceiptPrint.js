@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_UTILS_POSRECEIPTPRINT_JS
+// WHAT_THIS_IS: This file supports frontend behavior for posReceiptPrint.js.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: utils/posReceiptPrint.js
+// - Search text: posReceiptPrint.js
 const DEFAULT_STORE = {
   name: import.meta.env.VITE_POS_STORE_NAME || 'Voleena Foods',
   address: import.meta.env.VITE_POS_STORE_ADDRESS || 'Store Address Not Configured',
@@ -328,3 +336,4 @@ export const openReceiptPrintWindow = (receiptInput) => {
   printWindow.document.write(html);
   printWindow.document.close();
 };
+

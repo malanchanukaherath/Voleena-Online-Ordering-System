@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_UI_TEXTAREA_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for Textarea.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ui/Textarea.jsx
+// - Search text: Textarea.jsx
 import React from 'react';
 
 const Textarea = ({
@@ -67,3 +75,4 @@ const Textarea = ({
 };
 
 export default Textarea;
+

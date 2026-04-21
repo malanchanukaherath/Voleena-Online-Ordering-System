@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_MENUITEMDETAIL
+// WHAT_THIS_IS: This page renders the MenuItemDetail screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/MenuItemDetail.jsx
+// - Search text: const MenuItemDetail
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -291,7 +299,7 @@ const MenuItemDetail = () => {
                 isAvailable: item.isAvailable
             }, 1);
 
-            toast.success(`✓ ${item.name} added to cart!`);
+            toast.success(`??? ${item.name} added to cart!`);
         } catch (error) {
             toast.error(error.message || 'Unable to add item to cart');
         }
@@ -409,3 +417,4 @@ const MenuItemDetail = () => {
 };
 
 export default MenuItemDetail;
+

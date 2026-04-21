@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_ACTIVEDELIVERIES
+// WHAT_THIS_IS: This page renders the ActiveDeliveries screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/ActiveDeliveries.jsx
+// - Search text: const ActiveDeliveries
 import React, { useEffect, useState } from 'react';
 import { FaMapMarkedAlt, FaPhone, FaExternalLinkAlt, FaMapMarkerAlt } from 'react-icons/fa';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -245,3 +253,4 @@ const ActiveDeliveries = () => {
 };
 
 export default ActiveDeliveries;
+

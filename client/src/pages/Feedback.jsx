@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_FEEDBACK
+// WHAT_THIS_IS: This page renders the Feedback screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/Feedback.jsx
+// - Search text: const Feedback
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Textarea from '../components/ui/Textarea';
@@ -186,13 +194,13 @@ const Feedback = () => {
                 <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6 dark:bg-slate-800 dark:shadow-slate-900/50">
                     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:bg-slate-700 dark:border-slate-600">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-200">Order Context</h2>
-                        <p className="text-sm text-gray-600 mt-1 dark:text-slate-400">Order ID: #{order.OrderID} · {new Date(order.CreatedAt).toLocaleString()}</p>
+                        <p className="text-sm text-gray-600 mt-1 dark:text-slate-400">Order ID: #{order.OrderID} ?? {new Date(order.CreatedAt).toLocaleString()}</p>
                         {renderOrderItems()}
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">
-                            ⭐ Rate your order <span className="text-red-500">*</span>
+                            ??? Rate your order <span className="text-red-500">*</span>
                         </label>
                         <div className="flex items-center gap-2">
                             {[1, 2, 3, 4, 5].map((star) => (
@@ -214,7 +222,7 @@ const Feedback = () => {
                     </div>
 
                     <Textarea
-                        label="💬 Write your feedback (optional)"
+                        label="???? Write your feedback (optional)"
                         name="comment"
                         value={formData.comment}
                         onChange={(e) => setFormData((prev) => ({ ...prev, comment: e.target.value }))}
@@ -224,7 +232,7 @@ const Feedback = () => {
                     />
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">👍 What did you like? (optional)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">???? What did you like? (optional)</label>
                         <div className="flex flex-wrap gap-2">
                             {POSITIVE_TAGS.map((tag) => (
                                 <label key={tag} className="inline-flex items-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm dark:border-slate-600 dark:text-slate-300">
@@ -240,7 +248,7 @@ const Feedback = () => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">👎 Issues? (optional)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-slate-300">???? Issues? (optional)</label>
                         <div className="flex flex-wrap gap-2">
                             {ISSUE_TAGS.map((tag) => (
                                 <label key={tag} className="inline-flex items-center gap-2 rounded border border-gray-300 px-3 py-2 text-sm dark:border-slate-600 dark:text-slate-300">
@@ -277,3 +285,4 @@ const Feedback = () => {
 };
 
 export default Feedback;
+

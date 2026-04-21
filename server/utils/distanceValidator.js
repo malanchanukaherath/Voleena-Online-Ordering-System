@@ -1,4 +1,24 @@
 /**
+
+// CODEMAP: BACKEND_SERVER_UTILS_DISTANCEVALIDATOR_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_UTILS_DISTANCEVALIDATOR_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_UTILS_DISTANCEVALIDATOR_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+};
+// CODEMAP: BACKEND_SERVER_UTILS_DISTANCEVALIDATOR_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
  * Distance Validator Utility
  * Validates delivery distances using Google Maps API with fallback
  * Implements FR09: Delivery location validation
@@ -341,3 +361,6 @@ module.exports = {
     RESTAURANT_LNG,
     MAX_DISTANCE_KM: DEFAULT_MAX_DISTANCE_KM
 };
+
+
+

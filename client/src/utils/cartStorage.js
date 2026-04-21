@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_UTILS_CARTSTORAGE_JS
+// WHAT_THIS_IS: This file supports frontend behavior for cartStorage.js.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: utils/cartStorage.js
+// - Search text: cartStorage.js
 /**
  * Cart Storage Utility
  * Manages shopping cart persistence using localStorage
@@ -337,4 +345,5 @@ export const getCartTotal = (orderType = 'DELIVERY') => {
     total: parseFloat(total.toFixed(2))
   };
 };
+
 

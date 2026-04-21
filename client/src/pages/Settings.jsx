@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_SETTINGS
+// WHAT_THIS_IS: This page renders the Settings screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/Settings.jsx
+// - Search text: const Settings
 import React, { useEffect, useState } from 'react';
 import { FaCog, FaStore, FaBell, FaCreditCard, FaTruck, FaSave, FaClock } from 'react-icons/fa';
 import { adminService } from '../services/dashboardService';
@@ -570,3 +578,4 @@ const Settings = () => {
 };
 
 export default Settings;
+

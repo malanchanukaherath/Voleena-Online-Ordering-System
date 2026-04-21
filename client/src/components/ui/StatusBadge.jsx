@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_UI_STATUSBADGE_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for StatusBadge.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ui/StatusBadge.jsx
+// - Search text: StatusBadge.jsx
 import React from 'react';
 
 // Simple: This shows the status badge section.
@@ -77,3 +85,4 @@ const StatusBadge = ({ status, type = 'order' }) => {
 };
 
 export default StatusBadge;
+

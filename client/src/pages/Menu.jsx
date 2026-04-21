@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_MENU
+// WHAT_THIS_IS: This page renders the Menu screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/Menu.jsx
+// - Search text: const Menu
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FaSearch, FaTimes, FaTag, FaExclamationTriangle } from 'react-icons/fa';
@@ -335,7 +343,7 @@ const Menu = () => {
                 isAvailable: item.isAvailable
             }, 1);
 
-            toast.success(`✓ ${item.name} added to cart!`);
+            toast.success(`??? ${item.name} added to cart!`);
         } catch (error) {
             toast.error(error.message || 'Unable to add item to cart');
         }
@@ -553,3 +561,4 @@ const Menu = () => {
 };
 
 export default Menu;
+

@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_SERVICES_PUBLICSETTINGSAPI_JS
+// WHAT_THIS_IS: This file supports frontend behavior for publicSettingsApi.js.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: services/publicSettingsApi.js
+// - Search text: publicSettingsApi.js
 import { API_BASE_URL } from '../config/api';
 
 const CACHE_TTL_MS = 60 * 1000;
@@ -101,3 +109,4 @@ export const invalidatePublicSettingsCache = () => {
 
 // Simple: This gets the default public settings.
 export const getDefaultPublicSettings = () => normalizePublicSettings();
+

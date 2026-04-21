@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_KITCHENDASHBOARD
+// WHAT_THIS_IS: This page renders the KitchenDashboard screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/KitchenDashboard.jsx
+// - Search text: const KitchenDashboard
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaClipboardList, FaBoxes, FaClock, FaExclamationTriangle } from 'react-icons/fa';
@@ -125,7 +133,7 @@ const KitchenDashboard = () => {
                                         )}
                                     </div>
                                     <p className="text-sm text-gray-600 dark:text-slate-400">
-                                        {order.items} items • {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
+                                        {order.items} items ??? {order.time ? new Date(order.time).toLocaleString() : 'N/A'}
                                     </p>
                                     {order.specialInstructions && (
                                         <p className="mt-1 text-xs text-amber-800 dark:text-amber-400 break-words">
@@ -139,7 +147,7 @@ const KitchenDashboard = () => {
                     ))}
                 </div>
                 <Link to="/kitchen/orders" className="block mt-4 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
-                    View All Orders →
+                    View All Orders ???
                 </Link>
             </div>
         </div>
@@ -147,3 +155,4 @@ const KitchenDashboard = () => {
 };
 
 export default KitchenDashboard;
+

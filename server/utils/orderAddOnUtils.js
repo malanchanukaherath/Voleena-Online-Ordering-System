@@ -1,4 +1,24 @@
 const fs = require('fs');
+
+// CODEMAP: BACKEND_SERVER_UTILS_ORDERADDONUTILS_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const fs = require('fs');
+
+// CODEMAP: BACKEND_SERVER_UTILS_ORDERADDONUTILS_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const fs = require('fs');
+
+// CODEMAP: BACKEND_SERVER_UTILS_ORDERADDONUTILS_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const fs = require('fs');
+};
+// CODEMAP: BACKEND_SERVER_UTILS_ORDERADDONUTILS_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const fs = require('fs');
 const path = require('path');
 const { Op } = require('sequelize');
 const { AddonOption, MenuItemAddonOption, AddonOptionAudit, sequelize } = require('../models');
@@ -969,3 +989,6 @@ module.exports = {
     buildOrderItemAddOnState,
     toMoney
 };
+
+
+

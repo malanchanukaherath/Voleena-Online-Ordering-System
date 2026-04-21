@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_STATICPAGE
+// WHAT_THIS_IS: This page renders the StaticPage screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/StaticPage.jsx
+// - Search text: const StaticPage
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -104,3 +112,4 @@ const StaticPage = ({ page }) => {
 };
 
 export default StaticPage;
+

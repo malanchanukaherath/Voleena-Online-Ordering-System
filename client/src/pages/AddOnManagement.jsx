@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_ADDONMANAGEMENT
+// WHAT_THIS_IS: This page renders the AddOnManagement screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/AddOnManagement.jsx
+// - Search text: const AddOnManagement
 import React, { useEffect, useState } from 'react';
 import { FaPlus, FaEdit, FaTrash, FaToggleOn, FaToggleOff } from 'react-icons/fa';
 import Button from '../components/ui/Button';
@@ -394,3 +402,4 @@ const AddOnManagement = () => {
 };
 
 export default AddOnManagement;
+

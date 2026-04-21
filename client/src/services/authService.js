@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_SERVICES_AUTHSERVICE_JS
+// WHAT_THIS_IS: This file supports frontend behavior for authService.js.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: services/authService.js
+// - Search text: authService.js
 import { realApi } from './backendApi';
 import { API_BASE_URL } from '../config/api';
 
@@ -384,4 +392,5 @@ class AuthService {
 }
 
 export default new AuthService();
+
 

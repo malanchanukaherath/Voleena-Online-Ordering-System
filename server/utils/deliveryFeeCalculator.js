@@ -1,4 +1,24 @@
 /**
+
+// CODEMAP: BACKEND_SERVER_UTILS_DELIVERYFEECALCULATOR_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_UTILS_DELIVERYFEECALCULATOR_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+
+// CODEMAP: BACKEND_SERVER_UTILS_DELIVERYFEECALCULATOR_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
+};
+// CODEMAP: BACKEND_SERVER_UTILS_DELIVERYFEECALCULATOR_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+/**
  * Delivery Fee Calculator
  * Implements dynamic delivery fee calculation based on distance
  * 
@@ -139,3 +159,6 @@ module.exports = {
     getDeliveryFeeConfig,
     estimateDeliveryFee
 };
+
+
+

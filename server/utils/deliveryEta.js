@@ -1,5 +1,25 @@
 const DEFAULT_MINUTES_PER_KM = 3;
 
+// CODEMAP: BACKEND_SERVER_UTILS_DELIVERYETA_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const DEFAULT_MINUTES_PER_KM = 3;
+
+// CODEMAP: BACKEND_SERVER_UTILS_DELIVERYETA_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const DEFAULT_MINUTES_PER_KM = 3;
+
+// CODEMAP: BACKEND_SERVER_UTILS_DELIVERYETA_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const DEFAULT_MINUTES_PER_KM = 3;
+};
+// CODEMAP: BACKEND_SERVER_UTILS_DELIVERYETA_JS
+// PURPOSE: Backend module with request handling/business logic/data access.
+// SEARCH_HINT: Search by exported function name in this file.
+const DEFAULT_MINUTES_PER_KM = 3;
+
 const STAGE_BUFFER_MINUTES = {
     CONFIRMED: 15,
     PREPARING: 10,
@@ -45,3 +65,6 @@ module.exports = {
     getTravelMinutes,
     getStageBufferMinutes
 };
+
+
+

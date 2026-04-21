@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_DELIVERYDASHBOARD
+// WHAT_THIS_IS: This page renders the DeliveryDashboard screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/DeliveryDashboard.jsx
+// - Search text: const DeliveryDashboard
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { FaTruck, FaMapMarkedAlt, FaCheckCircle, FaClock, FaMapMarkerAlt, FaToggleOn, FaToggleOff, FaPhone, FaExternalLinkAlt } from 'react-icons/fa';
@@ -531,7 +539,7 @@ const DeliveryDashboard = () => {
                         ))}
                     </div>
                     <Link to="/delivery/active" className="block mt-4 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
-                        View All →
+                        View All ???
                     </Link>
                 </div>
 
@@ -554,3 +562,4 @@ const DeliveryDashboard = () => {
 };
 
 export default DeliveryDashboard;
+

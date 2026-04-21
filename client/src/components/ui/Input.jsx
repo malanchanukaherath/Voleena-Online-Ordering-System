@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_UI_INPUT_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for Input.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ui/Input.jsx
+// - Search text: Input.jsx
 import React from 'react';
 
 const Input = ({
@@ -67,3 +75,4 @@ const Input = ({
 };
 
 export default Input;
+

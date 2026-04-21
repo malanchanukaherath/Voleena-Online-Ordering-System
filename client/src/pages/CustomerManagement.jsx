@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_CUSTOMERMANAGEMENT
+// WHAT_THIS_IS: This page renders the CustomerManagement screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/CustomerManagement.jsx
+// - Search text: const CustomerManagement
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaEdit, FaUserPlus } from 'react-icons/fa';
 import Button from '../components/ui/Button';
@@ -460,18 +468,18 @@ const CustomerManagement = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {customer.AccountStatus === 'ACTIVE' ? (
-                                                <span className="text-green-600 text-sm">● Active</span>
+                                                <span className="text-green-600 text-sm">??? Active</span>
                                             ) : (
-                                                <span className="text-gray-400 text-sm">● {customer.AccountStatus}</span>
+                                                <span className="text-gray-400 text-sm">??? {customer.AccountStatus}</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                                             <div className="flex flex-col gap-1">
                                                 {customer.IsEmailVerified && (
-                                                    <span className="text-xs text-green-600">✓ Email</span>
+                                                    <span className="text-xs text-green-600">??? Email</span>
                                                 )}
                                                 {customer.IsPhoneVerified && (
-                                                    <span className="text-xs text-green-600">✓ Phone</span>
+                                                    <span className="text-xs text-green-600">??? Phone</span>
                                                 )}
                                                 {!customer.IsEmailVerified && !customer.IsPhoneVerified && (
                                                     <span className="text-xs text-gray-400">Not verified</span>
@@ -730,3 +738,4 @@ const CustomerManagement = () => {
 };
 
 export default CustomerManagement;
+

@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_PAYMENT_STRIPEPAYMENTMODAL_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for StripePaymentModal.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/payment/StripePaymentModal.jsx
+// - Search text: StripePaymentModal.jsx
 import React, { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
@@ -161,7 +169,7 @@ const StripePaymentForm = ({ clientSecret, total, billingDetails, onSuccess, onC
             </div>
 
             <p className="text-xs text-gray-500 text-center">
-                🔒 Secured by Stripe. Your card details are encrypted.
+                ðŸ”’ Secured by Stripe. Your card details are encrypted.
             </p>
         </form>
     );
@@ -203,7 +211,7 @@ export const StripePaymentModal = ({
             <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
                 <h2 className="text-2xl font-bold mb-2">Complete Payment</h2>
                 <p className="text-gray-600 text-sm mb-6">
-                    Order #{orderId} • <span className="font-semibold">LKR {total.toFixed(2)}</span>
+                    Order #{orderId} â€¢ <span className="font-semibold">LKR {total.toFixed(2)}</span>
                 </p>
 
                 {clientSecret && stripeElementsPromise ? (
@@ -230,3 +238,4 @@ export const StripePaymentModal = ({
 };
 
 export default StripePaymentModal;
+

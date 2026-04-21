@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_ORDERTRACKING
+// WHAT_THIS_IS: This page renders the OrderTracking screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/OrderTracking.jsx
+// - Search text: const OrderTracking
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -796,7 +804,7 @@ const OrderTracking = () => {
                                             )}
                                         </div>
 
-                                        {/* Price — fixed width so it never overlaps */}
+                                        {/* Price ??? fixed width so it never overlaps */}
                                         <div className="shrink-0 min-w-[80px] text-right">
                                             <p className="text-sm font-bold tabular-nums text-gray-900 dark:text-slate-100">
                                                 LKR {item.lineTotal.toFixed(2)}
@@ -1011,3 +1019,4 @@ const OrderTracking = () => {
 };
 
 export default OrderTracking;
+

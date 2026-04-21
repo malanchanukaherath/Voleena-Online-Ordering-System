@@ -1,3 +1,11 @@
+// CODEMAP: FRONTEND_PAGE_PREORDERMANAGEMENT
+// WHAT_THIS_IS: This page renders the PreorderManagement screen in the frontend.
+// WHERE_CONNECTED:
+// - Route mapping is defined in client/src/routes/AppRoutes.jsx.
+// - This page is displayed inside client/src/components/layout/MainLayout.jsx for normal app routes.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: client/src/pages/PreorderManagement.jsx
+// - Search text: const PreorderManagement
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { FaSearch } from 'react-icons/fa';
 import Button from '../components/ui/Button';
@@ -434,3 +442,4 @@ const PreorderManagement = () => {
 };
 
 export default PreorderManagement;
+

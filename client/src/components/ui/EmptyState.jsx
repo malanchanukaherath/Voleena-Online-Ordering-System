@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_COMPONENTS_UI_EMPTYSTATE_JSX
+// WHAT_THIS_IS: This file supports frontend behavior for EmptyState.jsx.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: components/ui/EmptyState.jsx
+// - Search text: EmptyState.jsx
 import React from 'react';
 import { FaInbox, FaExclamationCircle, FaSearch } from 'react-icons/fa';
 
@@ -50,3 +58,4 @@ const EmptyState = ({
 };
 
 export default EmptyState;
+

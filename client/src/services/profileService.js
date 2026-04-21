@@ -1,3 +1,11 @@
+﻿// CODEMAP: FRONTEND_SERVICES_PROFILESERVICE_JS
+// WHAT_THIS_IS: This file supports frontend behavior for profileService.js.
+// WHERE_CONNECTED:
+// - Used by frontend pages and routes through imports.
+// - Main entry flow starts at client/src/main.jsx and client/src/App.jsx.
+// HOW_TO_FIND_IN_FRONTEND:
+// - File path: services/profileService.js
+// - Search text: profileService.js
 import backendApi from './backendApi';
 
 // Simple: This gets the customer profile.
@@ -44,3 +52,4 @@ export const requestPhoneVerificationOTP = async () => {
 export const verifyPhoneVerificationOTP = async (otp) => {
   return backendApi.post('/api/v1/customers/me/phone-verification/verify', { otp });
 };
+
