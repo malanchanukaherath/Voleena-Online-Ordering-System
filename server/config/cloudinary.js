@@ -1,24 +1,4 @@
 const { v2: cloudinary } = require('cloudinary');
-
-// CODEMAP: BACKEND_SERVER_CONFIG_CLOUDINARY_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { v2: cloudinary } = require('cloudinary');
-
-// CODEMAP: BACKEND_SERVER_CONFIG_CLOUDINARY_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { v2: cloudinary } = require('cloudinary');
-
-// CODEMAP: BACKEND_SERVER_CONFIG_CLOUDINARY_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { v2: cloudinary } = require('cloudinary');
-// CODEMAP: BACKEND_SERVER_CONFIG_CLOUDINARY_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { v2: cloudinary } = require('cloudinary');
-
 const requiredCloudinaryEnvVars = [
     'CLOUDINARY_CLOUD_NAME',
     'CLOUDINARY_API_KEY',
@@ -58,6 +38,3 @@ module.exports = {
     assertCloudinaryConfigured,
     isCloudinaryConfigured
 };
-
-
-

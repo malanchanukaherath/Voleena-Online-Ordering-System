@@ -1,24 +1,4 @@
 const nodemailer = require('nodemailer');
-
-// CODEMAP: BACKEND_SERVER_UTILS_NOTIFICATIONSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const nodemailer = require('nodemailer');
-
-// CODEMAP: BACKEND_SERVER_UTILS_NOTIFICATIONSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const nodemailer = require('nodemailer');
-
-// CODEMAP: BACKEND_SERVER_UTILS_NOTIFICATIONSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const nodemailer = require('nodemailer');
-module.exports = new NotificationService();
-// CODEMAP: BACKEND_SERVER_UTILS_NOTIFICATIONSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const nodemailer = require('nodemailer');
 const { Notification } = require('../models');
 
 /**
@@ -448,6 +428,3 @@ Voleena Foods Team
 }
 
 module.exports = new NotificationService();
-
-
-

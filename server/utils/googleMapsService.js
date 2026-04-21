@@ -1,25 +1,4 @@
 const axios = require('axios');
-
-// CODEMAP: BACKEND_SERVER_UTILS_GOOGLEMAPSSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const axios = require('axios');
-
-// CODEMAP: BACKEND_SERVER_UTILS_GOOGLEMAPSSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const axios = require('axios');
-
-// CODEMAP: BACKEND_SERVER_UTILS_GOOGLEMAPSSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const axios = require('axios');
-module.exports = new GoogleMapsService();
-// CODEMAP: BACKEND_SERVER_UTILS_GOOGLEMAPSSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const axios = require('axios');
-
 /**
  * Google Maps Distance Matrix Service
  * Validates delivery locations are within 15km radius (FR09)
@@ -190,6 +169,3 @@ class GoogleMapsService {
 }
 
 module.exports = new GoogleMapsService();
-
-
-

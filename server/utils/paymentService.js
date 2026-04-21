@@ -1,24 +1,4 @@
 const { Payment } = require('../models');
-
-// CODEMAP: BACKEND_SERVER_UTILS_PAYMENTSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { Payment } = require('../models');
-
-// CODEMAP: BACKEND_SERVER_UTILS_PAYMENTSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { Payment } = require('../models');
-
-// CODEMAP: BACKEND_SERVER_UTILS_PAYMENTSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { Payment } = require('../models');
-module.exports = new PaymentService();
-// CODEMAP: BACKEND_SERVER_UTILS_PAYMENTSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { Payment } = require('../models');
 const notificationService = require('./notificationService');
 const crypto = require('crypto');
 
@@ -295,7 +275,7 @@ class PaymentService {
                     };
                 }
             } catch (retrieveError) {
-                console.warn(`Ã¢Å¡Â Ã¯Â¸Â Failed to reuse Stripe payment intent ${payment.TransactionID}:`, retrieveError.message);
+                console.warn(`Failed to reuse Stripe payment intent ${payment.TransactionID}:`, retrieveError.message);
             }
         }
 
@@ -521,6 +501,3 @@ class PaymentService {
 }
 
 module.exports = new PaymentService();
-
-
-

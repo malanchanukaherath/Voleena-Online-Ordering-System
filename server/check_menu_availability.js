@@ -45,7 +45,7 @@ async function checkMenuAvailability() {
         if (unavailableItems.length === 0) {
             console.log('Ã¢Å“â€œ All menu items are active and available!\n');
         } else {
-            console.log(`Ã¢Å¡Â  Found ${unavailableItems.length} unavailable menu items:\n`);
+            console.log(`Ã¢Å¡Â  Found ${unavailableItems.length} unavailable menu items:\n`);
 
             unavailableItems.forEach(item => {
                 console.log(`  Ã¢â‚¬Â¢ ID ${item.MenuItemID}: ${item.Name}`);
@@ -73,13 +73,13 @@ async function checkMenuAvailability() {
             console.log(`  IsAvailable: ${menuItem2.IsAvailable}`);
 
             if (!menuItem2.IsActive || !menuItem2.IsAvailable) {
-                console.log('\n  Ã¢Å¡Â  This is causing the "Menu item 2 is not available" error!');
+                console.log('\n  Ã¢Å¡Â  This is causing the "Menu item 2 is not available" error!');
                 console.log(`\n  Fix with: UPDATE menu_items SET is_active = true, is_available = true WHERE menu_item_id = 2;`);
             } else {
                 console.log('\n  Ã¢Å“â€œ This menu item is available');
             }
         } else {
-            console.log('Ã¢Å¡Â  Menu Item 2 does not exist in the database!');
+            console.log('Ã¢Å¡Â  Menu Item 2 does not exist in the database!');
         }
 
         await sequelize.close();

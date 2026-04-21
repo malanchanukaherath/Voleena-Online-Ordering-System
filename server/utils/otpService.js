@@ -1,24 +1,4 @@
 const { OTPVerification } = require('../models');
-
-// CODEMAP: BACKEND_SERVER_UTILS_OTPSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { OTPVerification } = require('../models');
-
-// CODEMAP: BACKEND_SERVER_UTILS_OTPSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { OTPVerification } = require('../models');
-
-// CODEMAP: BACKEND_SERVER_UTILS_OTPSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { OTPVerification } = require('../models');
-module.exports = new OTPService();
-// CODEMAP: BACKEND_SERVER_UTILS_OTPSERVICE_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { OTPVerification } = require('../models');
 const crypto = require('crypto');
 const notificationService = require('./notificationService');
 
@@ -202,6 +182,3 @@ class OTPService {
 }
 
 module.exports = new OTPService();
-
-
-

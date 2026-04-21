@@ -1,25 +1,4 @@
 const { v4: uuidv4 } = require('uuid');
-
-// CODEMAP: BACKEND_SERVER_MIDDLEWARE_REQUESTID_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { v4: uuidv4 } = require('uuid');
-
-// CODEMAP: BACKEND_SERVER_MIDDLEWARE_REQUESTID_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { v4: uuidv4 } = require('uuid');
-
-// CODEMAP: BACKEND_SERVER_MIDDLEWARE_REQUESTID_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { v4: uuidv4 } = require('uuid');
-module.exports = requestIdMiddleware;
-// CODEMAP: BACKEND_SERVER_MIDDLEWARE_REQUESTID_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { v4: uuidv4 } = require('uuid');
-
 /**
  * Request ID Middleware
  * Adds a unique request ID for distributed tracing and debugging
@@ -74,6 +53,3 @@ function requestIdMiddleware(req, res, next) {
 }
 
 module.exports = requestIdMiddleware;
-
-
-

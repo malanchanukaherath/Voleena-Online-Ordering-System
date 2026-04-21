@@ -1,25 +1,4 @@
 const { ActivityLog } = require('../models');
-
-// CODEMAP: BACKEND_SERVER_UTILS_AUDITLOGGER_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { ActivityLog } = require('../models');
-
-// CODEMAP: BACKEND_SERVER_UTILS_AUDITLOGGER_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { ActivityLog } = require('../models');
-
-// CODEMAP: BACKEND_SERVER_UTILS_AUDITLOGGER_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { ActivityLog } = require('../models');
-};
-// CODEMAP: BACKEND_SERVER_UTILS_AUDITLOGGER_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const { ActivityLog } = require('../models');
-
 /**
  * Log activity to the activity_log table
  * @param {Object} params - Activity log parameters
@@ -123,6 +102,3 @@ module.exports = {
     logCustomerCreation,
     logStaffCreation
 };
-
-
-

@@ -1,24 +1,4 @@
 const fs = require('fs');
-
-// CODEMAP: BACKEND_SERVER_SCRIPTS_GENERATE_API_ARTIFACTS_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const fs = require('fs');
-
-// CODEMAP: BACKEND_SERVER_SCRIPTS_GENERATE_API_ARTIFACTS_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const fs = require('fs');
-
-// CODEMAP: BACKEND_SERVER_SCRIPTS_GENERATE_API_ARTIFACTS_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const fs = require('fs');
-console.log('Generated API docs, audit plan, checklist, and Postman collection.');
-// CODEMAP: BACKEND_SERVER_SCRIPTS_GENERATE_API_ARTIFACTS_JS
-// PURPOSE: Backend module with request handling/business logic/data access.
-// SEARCH_HINT: Search by exported function name in this file.
-const fs = require('fs');
 const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '..', '..');
@@ -403,6 +383,3 @@ writeFile(path.join(docsDir, 'FEATURE_TEST_CHECKLIST.md'), buildFeatureChecklist
 writeFile(path.join(postmanDir, 'Voleena_API_Audit.postman_collection.json'), buildCollection());
 
 console.log('Generated API docs, audit plan, checklist, and Postman collection.');
-
-
-
