@@ -366,7 +366,7 @@ const Menu = () => {
     return (
         <div className="max-w-7xl mx-auto">
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight dark:text-slate-100">Our Menu</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight dark:text-slate-100">Our Menu</h1>
                 <p className="text-gray-500 text-sm mt-1 dark:text-slate-400">Browse our delicious selection of food items</p>
                 {comboPacks.length > 0 && (
                     <div className="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-xs font-semibold text-orange-700 dark:bg-orange-950/30 dark:border-orange-900/50 dark:text-orange-400">
@@ -393,7 +393,7 @@ const Menu = () => {
             </div>
 
             {/* Search and Filter Bar */}
-            <div className="card p-4 mb-8">
+            <div className="card p-4 sm:p-5 mb-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div className="md:col-span-2">
                         <label className="block text-xs font-bold text-gray-600 uppercase tracking-wide mb-1.5 dark:text-slate-400">
@@ -406,6 +406,7 @@ const Menu = () => {
                                 placeholder="Search menu items..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                aria-label="Search menu items"
                                 className="w-full pl-10 pr-9 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-400 focus:border-primary-400 hover:border-gray-300 bg-white transition-all duration-150 placeholder-gray-400 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-primary-500 dark:focus:border-primary-500 dark:hover:border-slate-500"
                             />
                             {searchTerm && (
@@ -439,6 +440,16 @@ const Menu = () => {
                     )}
                 </div>
             </div>
+            <div className="mb-6 flex items-center justify-between gap-3">
+                <p className="text-sm text-gray-600 dark:text-slate-400">
+                    Showing <span className="font-semibold text-gray-900 dark:text-slate-200">{filteredItems.length}</span> item{filteredItems.length === 1 ? '' : 's'}
+                </p>
+                {hasActiveFilters && (
+                    <span className="text-xs font-medium text-primary-700 bg-primary-50 border border-primary-200 rounded-full px-2.5 py-1 dark:text-primary-300 dark:bg-primary-900/30 dark:border-primary-900/50">
+                        Filters active
+                    </span>
+                )}
+            </div>
 
             {/* Menu Items Grid */}
             {loading ? (
@@ -453,6 +464,7 @@ const Menu = () => {
                                 className={`card overflow-hidden motion-surface cursor-pointer ${!item.isAvailable || item.stockQuantity === 0 ? 'opacity-60' : ''}`}
                                 role="button"
                                 tabIndex={0}
+                                aria-label={`View details for ${item.name}`}
                                 onClick={() => handleOpenItemDetails(item)}
                                 onKeyDown={(event) => {
                                     if (event.key === 'Enter' || event.key === ' ') {

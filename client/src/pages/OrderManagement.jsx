@@ -224,14 +224,14 @@ const OrderManagement = () => {
     };
 
     return (
-        <div className="p-6">
+        <div className="px-0 py-1 sm:py-2">
             <div className="mb-8">
-                <h1 className="text-3xl font-bold mb-2">Order Management</h1>
-                <p className="text-gray-600 dark:text-slate-400">View and manage all customer orders</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-slate-100 mb-2">Order Management</h1>
+                <p className="text-sm text-gray-600 dark:text-slate-400">View and manage all customer orders</p>
             </div>
 
             {/* Search and Filter Bar */}
-            <div className="card p-4 mb-6">
+            <div className="card p-4 sm:p-5 mb-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div className="md:col-span-2">
                         <Input
@@ -258,7 +258,7 @@ const OrderManagement = () => {
             </div>
 
             {error && (
-                <div className="mb-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:border-red-800 dark:text-red-400" role="alert">
+                <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:border-red-800 dark:text-red-400" role="alert">
                     {error}
                 </div>
             )}
@@ -268,7 +268,12 @@ const OrderManagement = () => {
                 <LoadingSkeleton type="table" rows={10} />
             ) : filteredOrders.length > 0 ? (
                 <div className="card overflow-hidden">
-                    <div className="overflow-x-auto">
+                    <div className="px-4 sm:px-6 py-3 border-b border-gray-100 dark:border-slate-700/70 bg-slate-50/60 dark:bg-slate-800/40">
+                        <p className="text-xs sm:text-sm text-gray-600 dark:text-slate-400">
+                            {filteredOrders.length} order{filteredOrders.length === 1 ? '' : 's'} found
+                        </p>
+                    </div>
+                    <div className="overflow-x-auto custom-scrollbar">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
                             <thead className="bg-gray-50 dark:bg-slate-700/50">
                                 <tr>
@@ -317,7 +322,7 @@ const OrderManagement = () => {
                                                     value={getSelectedStatus(order)}
                                                     onChange={(e) => handleDraftStatusChange(order.id, e.target.value)}
                                                     options={getStatusOptionsForOrder(order.status)}
-                                                    className="text-xs"
+                                                    className="text-xs min-w-[180px]"
                                                     disabled={!!getPendingUpdate(order.id)}
                                                 />
                                                 {getPendingUpdate(order.id) ? (

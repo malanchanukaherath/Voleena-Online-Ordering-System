@@ -45,11 +45,11 @@ const Select = ({
                 aria-invalid={error ? 'true' : undefined}
                 aria-describedby={describedBy}
                 className={`
-                block w-full px-3 py-2.5 border rounded-xl shadow-sm bg-white
+                block w-full px-3 py-2.5 border rounded-xl shadow-sm bg-white text-sm
           focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-          disabled:bg-gray-100 disabled:cursor-not-allowed
+          hover:border-gray-400 disabled:bg-gray-100 disabled:cursor-not-allowed
           dark:bg-slate-800 dark:border-slate-600 dark:text-slate-100
-          dark:focus:ring-primary-500 dark:focus:border-primary-500
+          dark:focus:ring-primary-500 dark:focus:border-primary-500 dark:hover:border-slate-500
           dark:disabled:bg-slate-700 dark:disabled:text-slate-500
           ${error ? 'border-red-500 dark:border-red-500' : 'border-gray-300'}
           ${className}

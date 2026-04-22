@@ -135,9 +135,9 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className="p-6">
+        <div className="px-0 py-1 sm:py-2">
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-gray-900 tracking-tight dark:text-slate-100">Admin Dashboard</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight dark:text-slate-100">Admin Dashboard</h1>
                 <p className="text-gray-500 text-sm mt-1 dark:text-slate-400">Welcome back! Here's what's happening today.</p>
             </div>
 
@@ -181,7 +181,7 @@ const AdminDashboard = () => {
                         {recentOrders.length === 0 ? (
                             <div className="p-8 text-center text-sm text-gray-400">No recent orders yet.</div>
                         ) : recentOrders.map((order) => (
-                            <div key={order.id} className="px-5 py-3.5 hover:bg-slate-50/60 transition-colors dark:hover:bg-slate-700/40">
+                            <div key={order.id} className="px-4 sm:px-5 py-3.5 hover:bg-slate-50/60 transition-colors dark:hover:bg-slate-700/40">
                                 <div className="flex items-center justify-between gap-3">
                                     <div className="flex items-center gap-3 min-w-0">
                                         <div className="w-8 h-8 flex items-center justify-center bg-gray-50 rounded-xl border border-gray-100 shrink-0 dark:bg-slate-700 dark:border-slate-600">
@@ -203,9 +203,9 @@ const AdminDashboard = () => {
                 </div>
 
                 {/* Quick Actions */}
-                <div className="card p-6">
+                <div className="card p-5 sm:p-6">
                     <h2 className="text-base font-bold text-gray-900 mb-4 dark:text-slate-100">Quick Actions</h2>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         {[
                             { to: '/admin/menu', icon: FaShoppingBag, label: 'Manage Menu' },
                             { to: '/admin/addons', icon: FaTags, label: 'Manage Add-ons' },
@@ -231,7 +231,7 @@ const AdminDashboard = () => {
             </div>
 
             {/* Today's Summary */}
-            <div className="mt-6 bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 rounded-2xl text-white p-6" style={{ boxShadow: '0 4px 24px -4px rgba(220,38,38,0.25)' }}>
+            <div className="mt-6 bg-gradient-to-br from-primary-700 via-primary-600 to-primary-800 rounded-2xl text-white p-5 sm:p-6" style={{ boxShadow: '0 4px 24px -4px rgba(220,38,38,0.25)' }}>
                 <div className="flex items-center justify-between mb-5">
                     <h2 className="text-base font-bold">Today's Summary</h2>
                     <span className="text-xs text-primary-200 font-medium">{new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</span>

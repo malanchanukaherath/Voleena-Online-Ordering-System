@@ -205,7 +205,7 @@ const Login = () => {
       </div>
 
       {/* === Right Form Panel === */}
-      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 bg-white lg:bg-slate-50/60 dark:bg-slate-900 dark:lg:bg-slate-900">
+      <div className="flex-1 flex flex-col justify-center items-center px-4 sm:px-6 py-10 sm:py-12 bg-white lg:bg-slate-50/60 dark:bg-slate-900 dark:lg:bg-slate-900">
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="lg:hidden flex items-center justify-center gap-2 mb-8">
@@ -243,7 +243,7 @@ const Login = () => {
           )}
 
           {/* Form Card */}
-          <div className="bg-white rounded-2xl border border-gray-100 p-7 dark:bg-slate-800 dark:border-slate-700" style={{ boxShadow: '0 4px 24px -4px rgba(0,0,0,0.08)' }}>
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 sm:p-7 dark:bg-slate-800 dark:border-slate-700" style={{ boxShadow: '0 4px 24px -4px rgba(0,0,0,0.08)' }}>
             <form className="space-y-5" onSubmit={handleSubmit}>
               <Input
                 label="Email address"
@@ -272,8 +272,7 @@ const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 focus:outline-none p-1 dark:text-slate-500 dark:hover:text-slate-300"
-                  tabIndex={-1}
+                  className="absolute right-3 top-8 text-gray-400 hover:text-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-2 rounded-md p-1 dark:text-slate-500 dark:hover:text-slate-300 dark:focus-visible:ring-offset-slate-800"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <FaEyeSlash size={16} /> : <FaEye size={16} />}

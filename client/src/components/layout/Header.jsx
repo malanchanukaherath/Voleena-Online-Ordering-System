@@ -182,12 +182,12 @@ const Header = ({
                             </>
                         )}
 
-                        <Link to="/" className="flex items-center space-x-2">
+                        <Link to="/" className="flex items-center space-x-2 min-w-0">
                             <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl shadow-sm flex items-center justify-center">
                                 <span className="text-white font-bold text-xl">{(publicSettings.restaurantName || 'V').charAt(0).toUpperCase()}</span>
                             </div>
-                            <span className="text-xl font-bold text-gray-900 hidden sm:block dark:text-slate-100">
-                                {publicSettings.restaurantName}
+                            <span className="text-xl font-bold text-gray-900 hidden sm:block dark:text-slate-100 truncate">
+                                {publicSettings.restaurantName || 'Voleena Foods'}
                             </span>
                         </Link>
                     </div>
@@ -201,6 +201,7 @@ const Header = ({
                                 <Link
                                     key={item.path}
                                     to={item.path}
+                                    aria-current={isActive(item.path) ? 'page' : undefined}
                                     className={`px-3 py-2 rounded-lg text-sm font-medium flex items-center space-x-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 focus-visible:ring-offset-1 dark:focus-visible:ring-offset-slate-900 ${isActive(item.path)
                                         ? 'bg-white text-primary-700 shadow-sm dark:bg-slate-700 dark:text-primary-400'
                                         : 'text-gray-700 hover:bg-white/80 dark:text-slate-300 dark:hover:bg-slate-700/80'
@@ -293,6 +294,7 @@ const Header = ({
                                 <Link
                                     key={item.path}
                                     to={item.path}
+                                    aria-current={isActive(item.path) ? 'page' : undefined}
                                     className={`px-3 py-2 rounded-xl text-xs font-medium flex items-center space-x-1 border transition-colors ${isActive(item.path)
                                         ? 'bg-primary-50 border-primary-200 text-primary-700 dark:bg-primary-900/30 dark:border-primary-800 dark:text-primary-400'
                                         : 'text-gray-700 bg-white border-gray-200 hover:bg-gray-50 dark:text-slate-300 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700'
