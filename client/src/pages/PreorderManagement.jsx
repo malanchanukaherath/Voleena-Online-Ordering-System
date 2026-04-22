@@ -284,7 +284,7 @@ const PreorderManagement = () => {
                 </p>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-4 mb-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+            <div className="card p-4 mb-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-6">
                     <div className="md:col-span-2">
                         <Input
@@ -332,7 +332,7 @@ const PreorderManagement = () => {
             {loading ? (
                 <LoadingSkeleton type="table" rows={8} />
             ) : filteredPreorders.length > 0 ? (
-                <div className="bg-white rounded-lg shadow overflow-hidden dark:bg-slate-800 dark:shadow-slate-900/50">
+                <div className="card overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
                             <thead className="bg-gray-50 dark:bg-slate-700/50">

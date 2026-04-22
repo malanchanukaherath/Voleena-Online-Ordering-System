@@ -1,4 +1,4 @@
-﻿// CODEMAP: FRONTEND_COMPONENTS_ADDSTAFFMODAL_JSX
+// CODEMAP: FRONTEND_COMPONENTS_ADDSTAFFMODAL_JSX
 // WHAT_THIS_IS: This file supports frontend behavior for AddStaffModal.jsx.
 // WHERE_CONNECTED:
 // - Used by frontend pages and routes through imports.
@@ -116,22 +116,23 @@ const AddStaffModal = ({ isOpen, onClose, onSubmit, roles }) => {
 
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-                <div className="flex justify-between items-center p-6 border-b">
-                    <h2 className="text-2xl font-bold">Add Staff Member</h2>
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-[2px] flex items-center justify-center z-[60] p-4">
+            <div className="bg-white dark:bg-slate-800 border border-gray-100 dark:border-slate-700 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center p-6 border-b border-gray-100 dark:border-slate-700">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Add Staff Member</h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:text-slate-500 dark:hover:text-slate-200 dark:hover:bg-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
                         disabled={loading}
+                        aria-label="Close dialog"
                     >
-                        <FaTimes size={24} />
+                        <FaTimes size={16} />
                     </button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="p-6 space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                             Full Name *
                         </label>
                         <Input
@@ -145,7 +146,7 @@ const AddStaffModal = ({ isOpen, onClose, onSubmit, roles }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                             Email *
                         </label>
                         <Input
@@ -160,7 +161,7 @@ const AddStaffModal = ({ isOpen, onClose, onSubmit, roles }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                             Phone *
                         </label>
                         <Input
@@ -175,7 +176,7 @@ const AddStaffModal = ({ isOpen, onClose, onSubmit, roles }) => {
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">
                             Password *
                         </label>
                         <Input
@@ -203,7 +204,7 @@ const AddStaffModal = ({ isOpen, onClose, onSubmit, roles }) => {
                     </div>
 
                     {errors.submit && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                        <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm">
                             {errors.submit}
                         </div>
                     )}

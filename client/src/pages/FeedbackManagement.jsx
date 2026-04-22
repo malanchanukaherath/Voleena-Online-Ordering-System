@@ -99,17 +99,17 @@ const FeedbackManagement = () => {
 
             <div className="space-y-4">
                 {isLoading && (
-                    <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+                    <div className="card p-6 text-sm text-gray-500 dark:text-slate-400">
                         Loading feedback records...
                     </div>
                 )}
 
                 {filteredFeedback.length === 0 ? (
-                    <div className="bg-white rounded-lg shadow p-6 text-sm text-gray-500 dark:bg-slate-800 dark:text-slate-400">
+                    <div className="card p-6 text-sm text-gray-500 dark:text-slate-400">
                         No feedback records available yet.
                     </div>
                 ) : !isLoading && filteredFeedback.map(feedback => (
-                    <div key={feedback.FeedbackID} className={`bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50 ${!feedback.AdminResponse ? 'border-l-4 border-yellow-400' : ''}`}>
+                    <div key={feedback.FeedbackID} className={`card p-6 ${!feedback.AdminResponse ? 'border-l-4 border-amber-400 dark:border-amber-500' : ''}`}>
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <div className="flex items-center gap-3 mb-2">

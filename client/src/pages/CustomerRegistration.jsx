@@ -158,8 +158,8 @@ const CustomerRegistration = () => {
 
     return (
         <div className="p-6 max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Register New Customer</h1>
-            <div className="bg-white rounded-lg shadow p-6">
+            <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-slate-100">Register New Customer</h1>
+            <div className="card p-6">
                 <form className="space-y-4" onSubmit={handleSubmit}>
                     <Input
                         label="Customer Name"
@@ -199,8 +199,8 @@ const CustomerRegistration = () => {
                         required
                     />
 
-                    <div className="border-t pt-4 mt-2">
-                        <h2 className="text-lg font-semibold mb-3">Address (Optional)</h2>
+                    <div className="border-t border-gray-100 dark:border-slate-700 pt-4 mt-2">
+                        <h2 className="text-lg font-semibold mb-3 text-gray-900 dark:text-slate-100">Address (Optional)</h2>
                         <div className="space-y-3">
                             <Input
                                 label="Address Line 1"

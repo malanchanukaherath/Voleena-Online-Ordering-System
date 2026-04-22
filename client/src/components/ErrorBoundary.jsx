@@ -1,4 +1,4 @@
-﻿// CODEMAP: FRONTEND_COMPONENTS_ERRORBOUNDARY_JSX
+// CODEMAP: FRONTEND_COMPONENTS_ERRORBOUNDARY_JSX
 // WHAT_THIS_IS: This file supports frontend behavior for ErrorBoundary.jsx.
 // WHERE_CONNECTED:
 // - Used by frontend pages and routes through imports.
@@ -34,19 +34,19 @@ class ErrorBoundary extends React.Component {
 
     if (hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
-          <div className="max-w-3xl w-full bg-white rounded-lg shadow-md p-6">
-            <h1 className="text-2xl font-bold mb-4 text-red-600">An error occurred</h1>
-            <p className="text-sm text-gray-700">
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-slate-900 p-6">
+          <div className="card max-w-3xl w-full p-6">
+            <h1 className="text-2xl font-bold mb-4 text-red-600 dark:text-red-400">An error occurred</h1>
+            <p className="text-sm text-gray-700 dark:text-slate-300">
               Something went wrong while loading this page. Please refresh and try again.
             </p>
             {isDevelopment && (
-              <pre className="mt-4 text-sm text-gray-800 whitespace-pre-wrap break-words">
+              <pre className="mt-4 text-sm text-gray-800 dark:text-slate-300 whitespace-pre-wrap break-words">
                 {String(error && (error.stack || error.message || error))}
               </pre>
             )}
             {isDevelopment && info && info.componentStack && (
-              <details className="mt-4 text-xs text-gray-600">
+              <details className="mt-4 text-xs text-gray-500 dark:text-slate-400">
                 <summary>Component stack</summary>
                 <pre className="whitespace-pre-wrap">{info.componentStack}</pre>
               </details>

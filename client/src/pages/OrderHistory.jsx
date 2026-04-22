@@ -134,7 +134,7 @@ const OrderHistory = () => {
             </div>
 
             {/* Filter */}
-            <div className="bg-white rounded-lg shadow p-4 mb-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+            <div className="card p-4 mb-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end">
                     <div className="w-full md:max-w-xs">
                         <Select
@@ -150,13 +150,13 @@ const OrderHistory = () => {
 
             {/* Orders List */}
             {loading ? (
-                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:text-slate-300">Loading orders...</div>
+                <div className="card p-6 text-gray-500 dark:text-slate-400">Loading orders...</div>
             ) : error ? (
-                <div className="bg-white rounded-lg shadow p-6 text-red-600 dark:bg-slate-800 dark:text-red-400">{error}</div>
+                <div className="card p-6 text-red-600 dark:text-red-400">{error}</div>
             ) : filteredOrders.length > 0 ? (
                 <div className="space-y-4">
                     {filteredOrders.map((order) => (
-                        <div key={order.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow dark:bg-slate-800 dark:shadow-slate-900/50">
+                        <div key={order.id} className="card hover:shadow-lg transition-shadow">
                             <div className="p-6">
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
                                     <div>

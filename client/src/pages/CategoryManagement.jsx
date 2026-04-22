@@ -232,7 +232,7 @@ const CategoryManagement = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {categories.map(category => (
-                        <div key={category.CategoryID} className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                        <div key={category.CategoryID} className="card p-6">
                             {(category.ImageURL || category.Image_URL) && (
                                 <img
                                     src={resolveAssetUrl(category.ImageURL || category.Image_URL)}

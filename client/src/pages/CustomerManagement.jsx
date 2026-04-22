@@ -380,7 +380,7 @@ const CustomerManagement = () => {
             )}
 
             {/* Search Bar */}
-            <div className="bg-white rounded-lg shadow p-4 mb-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+            <div className="card p-4 mb-6">
                 <div className="flex flex-col gap-4 md:flex-row md:items-end">
                     <div className="flex-1">
                         <Input
@@ -400,17 +400,17 @@ const CustomerManagement = () => {
 
             {/* Statistics Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                <div className="card p-6">
                     <p className="text-sm text-gray-600 mb-1 dark:text-slate-400">Total Customers</p>
                     <p className="text-3xl font-bold text-primary-600">{customers.length}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                <div className="card p-6">
                     <p className="text-sm text-gray-600 mb-1 dark:text-slate-400">Active Customers</p>
                     <p className="text-3xl font-bold text-green-600">
                         {customers.filter(c => c.AccountStatus === 'ACTIVE').length}
                     </p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                <div className="card p-6">
                     <p className="text-sm text-gray-600 mb-1 dark:text-slate-400">Email Verified</p>
                     <p className="text-3xl font-bold text-blue-600">
                         {customers.filter(c => c.IsEmailVerified).length}
@@ -422,7 +422,7 @@ const CustomerManagement = () => {
             {loading ? (
                 <LoadingSkeleton type="table" rows={10} />
             ) : filteredCustomers.length > 0 ? (
-                <div className="bg-white rounded-lg shadow overflow-hidden dark:bg-slate-800 dark:shadow-slate-900/50">
+                <div className="card overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
                             <thead className="bg-gray-50 dark:bg-slate-700/50">

@@ -1140,22 +1140,22 @@ const CashierDashboard = ({ posOnly = false }) => {
             {!posOnly && (
                 <>
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+                <div className="card p-6">
                     <FaClipboardList className="w-8 h-8 text-blue-600 mb-2" />
                     <p className="text-sm text-gray-600 dark:text-slate-400">Today's Orders</p>
                     <p className="text-3xl font-bold">{stats.todayOrders}</p>
                 </div>
-                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+                <div className="card p-6">
                     <FaMoneyBillWave className="w-8 h-8 text-green-600 mb-2" />
                     <p className="text-sm text-gray-600 dark:text-slate-400">Today's Revenue</p>
                     <p className="text-3xl font-bold">LKR {Number(stats.todayRevenue || 0).toFixed(2)}</p>
                 </div>
-                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+                <div className="card p-6">
                     <FaCashRegister className="w-8 h-8 text-orange-600 mb-2" />
                     <p className="text-sm text-gray-600 dark:text-slate-400">Walk-in Orders</p>
                     <p className="text-3xl font-bold">{stats.walkInOrders}</p>
                 </div>
-                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+                <div className="card p-6">
                     <FaUsers className="w-8 h-8 text-purple-600 mb-2" />
                     <p className="text-sm text-gray-600 dark:text-slate-400">Online Orders</p>
                     <p className="text-3xl font-bold">{stats.onlineOrders}</p>
@@ -1163,7 +1163,7 @@ const CashierDashboard = ({ posOnly = false }) => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+                <div className="card p-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center">
                         Recent Orders
                     </h3>
@@ -1192,7 +1192,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                     </Link>
                 </div>
 
-                <div className="bg-white dark:bg-slate-800 rounded-lg shadow p-6">
+                <div className="card p-6">
                     <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
                     <div className="grid grid-cols-2 gap-4">
                         <Link to="/cashier/orders" className="p-4 border-2 dark:border-slate-600 rounded-lg hover:border-primary-500 dark:hover:border-primary-500 text-center">
@@ -1214,7 +1214,7 @@ const CashierDashboard = ({ posOnly = false }) => {
             )}
 
             {posOnly && (
-                <div className="mt-6 bg-white dark:bg-slate-800 rounded-lg shadow p-3 sm:p-4 xl:p-6">
+                <div className="mt-6 card p-3 sm:p-4 xl:p-6">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
                         <h3 className="text-lg font-semibold">Walk-In POS</h3>
                         <div className="flex items-center gap-3">
@@ -1656,7 +1656,7 @@ const CashierDashboard = ({ posOnly = false }) => {
                             {walkInError && <p className="text-sm text-red-600 mt-3">{walkInError}</p>}
                             {walkInSuccess && <p className="text-sm text-green-700 mt-3">{walkInSuccess}</p>}
 
-                            <div className="mt-4 sticky bottom-0 bg-white pt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="mt-4 sticky bottom-0 bg-white dark:bg-slate-800 pt-2 grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <button
                                     type="button"
                                     onClick={clearWalkInOrder}
@@ -1688,7 +1688,7 @@ const CashierDashboard = ({ posOnly = false }) => {
 
             {!posOnly && (
                 <div className="mt-8">
-                    <div className="bg-white rounded-lg shadow p-6 max-w-4xl">
+                    <div className="card p-6 max-w-4xl">
                         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
                             <FaCalculator className="text-primary-600" /> Regular Calculator
                         </h3>

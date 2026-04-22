@@ -603,17 +603,17 @@ const Profile = () => {
 
             {/* Account Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                <div className="card p-6">
                     <FaClipboardList className="w-8 h-8 text-primary-600 mb-2" />
                     <p className="text-sm text-gray-600 dark:text-slate-400">Total Orders</p>
                     <p className="text-2xl font-bold">{stats.totalOrders}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                <div className="card p-6">
                     <FaUser className="w-8 h-8 text-primary-600 mb-2" />
                     <p className="text-sm text-gray-600 dark:text-slate-400">Total Spent</p>
                     <p className="text-2xl font-bold">LKR {stats.totalSpent.toFixed(2)}</p>
                 </div>
-                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                <div className="card p-6">
                     <FaUser className="w-8 h-8 text-primary-600 mb-2" />
                     <p className="text-sm text-gray-600 dark:text-slate-400">Member Since</p>
                     <p className="text-2xl font-bold">{stats.memberSince}</p>
@@ -622,7 +622,7 @@ const Profile = () => {
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Profile Information */}
-                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                <div className="card p-6">
                     <h2 className="text-xl font-semibold mb-6">Profile Information</h2>
                     {isProfileLoading && (
                         <p className="text-sm text-gray-500 mb-4 dark:text-slate-400">Loading profile...</p>
@@ -750,7 +750,7 @@ const Profile = () => {
                 </div>
 
                 {/* Change Password */}
-                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                <div className="card p-6">
                     <h2 className="text-xl font-semibold mb-6">Change Password</h2>
                     <form onSubmit={handlePasswordSubmit} className="space-y-4">
                         <Input
@@ -791,7 +791,7 @@ const Profile = () => {
                 </div>
             </div>
 
-            <div className="mt-8 bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+            <div className="mt-8 card p-6">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold flex items-center gap-2">
                         <FaMapMarkedAlt className="text-primary-600" />

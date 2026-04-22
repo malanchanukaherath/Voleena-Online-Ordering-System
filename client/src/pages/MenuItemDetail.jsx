@@ -321,19 +321,19 @@ const MenuItemDetail = () => {
 
     return (
         <div className="max-w-4xl mx-auto">
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                <div className="h-96 bg-gray-200 flex items-center justify-center">
+            <div className="card overflow-hidden">
+                <div className="h-96 bg-gray-200 dark:bg-slate-700 flex items-center justify-center">
                     {item.image ? (
                         <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
                     ) : (
-                        <span className="text-gray-400">No image available</span>
+                        <span className="text-gray-400 dark:text-slate-500">No image available</span>
                     )}
                 </div>
                 <div className="p-8">
                     <div className="mb-6">
-                        <span className="text-sm text-gray-500 mb-2 block">{item.categoryName}</span>
-                        <h1 className="text-4xl font-bold mb-4">{item.name}</h1>
-                        <p className="text-xl text-gray-700 mb-6">{item.description}</p>
+                        <span className="text-sm text-gray-500 dark:text-slate-400 mb-2 block">{item.categoryName}</span>
+                        <h1 className="text-4xl font-bold mb-4 text-gray-900 dark:text-slate-100">{item.name}</h1>
+                        <p className="text-xl text-gray-700 dark:text-slate-300 mb-6">{item.description}</p>
                         {item.type === 'combo' && item.originalPrice ? (
                             <div className="mb-2">
                                 <span className="text-lg text-gray-400 line-through">LKR {item.originalPrice.toFixed(2)}</span>
@@ -342,14 +342,14 @@ const MenuItemDetail = () => {
                         ) : null}
                         <p className="text-3xl font-bold text-primary-600">LKR {effectiveUnitPrice.toFixed(2)}</p>
                         {addOnsPerUnit > 0 && (
-                            <p className="mt-2 text-sm text-gray-600">
+                            <p className="mt-2 text-sm text-gray-600 dark:text-slate-400">
                                 Base LKR {(item.basePrice || item.price).toFixed(2)} + Add-ons LKR {addOnsPerUnit.toFixed(2)}
                             </p>
                         )}
                     </div>
 
-                    <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-3">Customize Add-ons</h2>
+                    <div className="mb-6 rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-700/40 p-4">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-100 mb-3">Customize Add-ons</h2>
                         {availableAddOns.length > 0 ? (
                             <div className="space-y-3">
                                 {availableAddOns.map((addOn) => {
@@ -357,7 +357,7 @@ const MenuItemDetail = () => {
                                     const isEnabled = currentQty > 0;
 
                                     return (
-                                        <div key={addOn.id} className="rounded border border-gray-200 bg-white p-3">
+                                        <div key={addOn.id} className="rounded-xl border border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-800/60 p-3">
                                             <div className="flex items-start justify-between gap-3">
                                                 <label className="flex items-start gap-2">
                                                     <input
@@ -373,18 +373,18 @@ const MenuItemDetail = () => {
                                                 </label>
 
                                                 {isEnabled && (
-                                                    <div className="flex items-center rounded border border-gray-300">
+                                                    <div className="flex items-center rounded-xl border border-gray-300 dark:border-slate-600 overflow-hidden">
                                                         <button
                                                             type="button"
-                                                            className="px-3 py-1 hover:bg-gray-100"
+                                                            className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 transition-colors"
                                                             onClick={() => adjustAddOnQuantity(addOn.id, currentQty - 1, addOn.maxQuantity)}
                                                         >
                                                             -
                                                         </button>
-                                                        <span className="border-x border-gray-300 px-3 py-1 text-sm">{currentQty}</span>
+                                                        <span className="border-x border-gray-300 dark:border-slate-600 px-3 py-1 text-sm font-medium text-gray-900 dark:text-slate-100">{currentQty}</span>
                                                         <button
                                                             type="button"
-                                                            className="px-3 py-1 hover:bg-gray-100"
+                                                            className="px-3 py-1 hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-700 dark:text-slate-300 transition-colors disabled:opacity-40"
                                                             onClick={() => adjustAddOnQuantity(addOn.id, currentQty + 1, addOn.maxQuantity)}
                                                             disabled={currentQty >= Number(addOn.maxQuantity || 1)}
                                                         >
@@ -398,14 +398,14 @@ const MenuItemDetail = () => {
                                 })}
                             </div>
                         ) : (
-                            <div className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                            <div className="rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50 dark:bg-amber-900/20 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
                                 No add-ons are configured for this item right now.
                             </div>
                         )}
                     </div>
                     <button
                         onClick={handleAddToCart}
-                        className="w-full bg-primary-600 text-white py-3 rounded-lg font-semibold hover:bg-primary-700 disabled:opacity-50"
+                        className="w-full bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white py-3 rounded-xl font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         disabled={!item.isAvailable}
                     >
                         {item.isAvailable ? 'Add to Cart' : 'Out of Stock'}

@@ -1,4 +1,4 @@
-﻿// CODEMAP: FRONTEND_COMPONENTS_LAYOUT_SIDEBAR_JSX
+// CODEMAP: FRONTEND_COMPONENTS_LAYOUT_SIDEBAR_JSX
 // WHAT_THIS_IS: This file supports frontend behavior for Sidebar.jsx.
 // WHERE_CONNECTED:
 // - Used by frontend pages and routes through imports.
@@ -113,7 +113,7 @@ const Sidebar = ({ className = '', onNavigate }) => {
                     return (
                         <React.Fragment key={item.path}>
                             {showGroup && (
-                                <div className="px-3 pt-5 pb-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 first:pt-2 dark:text-slate-600">
+                                <div className="px-3 pt-5 pb-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400 first:pt-2 dark:text-slate-500">
                                     {item.group}
                                 </div>
                             )}

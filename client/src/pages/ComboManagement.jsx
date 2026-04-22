@@ -398,7 +398,7 @@ const ComboManagement = () => {
                 </Button>
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden dark:bg-slate-800 dark:shadow-slate-900/50">
+            <div className="card overflow-hidden">
                 {isLoading ? (
                     <div className="p-6 text-gray-600 dark:text-slate-400">Loading combo packs...</div>
                 ) : combos.length === 0 ? (

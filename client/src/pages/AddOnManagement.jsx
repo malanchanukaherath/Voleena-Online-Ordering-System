@@ -262,7 +262,7 @@ const AddOnManagement = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {addOns.map((addOn) => (
-                        <div key={addOn.id} className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                        <div key={addOn.id} className="card p-6">
                             <div className="flex items-start justify-between gap-3">
                                 <div>
                                     <h3 className="text-xl font-semibold mb-1">{addOn.name}</h3>

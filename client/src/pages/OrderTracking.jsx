@@ -627,7 +627,7 @@ const OrderTracking = () => {
     if (!order) {
         return (
             <div className="max-w-4xl mx-auto">
-                <div className="bg-white rounded-lg shadow p-6">Loading order details...</div>
+                <div className="card p-6 text-gray-500 dark:text-slate-400">Loading order details...</div>
             </div>
         );
     }
@@ -638,19 +638,19 @@ const OrderTracking = () => {
                 <Link to="/orders" className="text-primary-600 hover:text-primary-700 mb-4 inline-block">
                     {'<'} Back to Orders
                 </Link>
-                <h1 className="text-3xl font-bold mb-2">Track Your Order</h1>
-                <p className="text-gray-600">Order #{order.orderNumber}</p>
+                <h1 className="text-3xl font-bold mb-2 text-gray-900 dark:text-slate-100">Track Your Order</h1>
+                <p className="text-gray-500 dark:text-slate-400">Order #{order.orderNumber}</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-6">
-                    <div className={`${order.status === 'CANCELLED' ? 'bg-red-50 border-red-500' : 'bg-primary-50 border-primary-500'} border-2 rounded-lg p-6`}>
+                    <div className={`${order.status === 'CANCELLED' ? 'bg-red-50 dark:bg-red-950/40 border-red-500 dark:border-red-700' : 'bg-primary-50 dark:bg-primary-950/30 border-primary-500 dark:border-primary-700'} border-2 rounded-2xl p-6`}>
                         <div className="flex items-center justify-between mb-4">
                             <div>
-                                <h2 className={`text-xl font-semibold ${order.status === 'CANCELLED' ? 'text-red-900' : 'text-primary-900'}`}>
+                                <h2 className={`text-xl font-semibold ${order.status === 'CANCELLED' ? 'text-red-900 dark:text-red-300' : 'text-primary-900 dark:text-primary-300'}`}>
                                     Current Status
                                 </h2>
-                                <p className={order.status === 'CANCELLED' ? 'text-red-700' : 'text-primary-700'}>
+                                <p className={order.status === 'CANCELLED' ? 'text-red-700 dark:text-red-400' : 'text-primary-700 dark:text-primary-400'}>
                                     {order.status === 'CANCELLED' ? 'Your order has been cancelled' :
                                         order.status === 'PREORDER_PENDING' ? 'Your preorder is awaiting staff approval' :
                                             order.status === 'PREORDER_CONFIRMED' ? 'Your preorder is approved and scheduled' :
@@ -665,36 +665,36 @@ const OrderTracking = () => {
                             <StatusBadge status={order.status} type="order" />
                         </div>
                         {order.isPreorder && order.scheduledDatetime && order.status !== 'CANCELLED' && (
-                            <div className="text-sm text-primary-800 mb-2">
+                            <div className="text-sm text-primary-800 dark:text-primary-300 mb-2">
                                 Scheduled for: <span className="font-semibold">{new Date(order.scheduledDatetime).toLocaleString()}</span>
                             </div>
                         )}
                         {order.status === 'DELIVERED' && order.orderType === 'DELIVERY' && order.deliveredAt && (
-                            <div className="text-sm text-green-800 bg-green-50 p-2 rounded mt-3">
+                            <div className="text-sm text-green-800 dark:text-green-300 bg-green-50 dark:bg-green-900/30 p-2 rounded-lg mt-3">
                                 <p>Delivered on: <span className="font-semibold">{new Date(order.deliveredAt).toLocaleString()}</span></p>
                             </div>
                         )}
                         {order.status !== 'CANCELLED' && order.status !== 'DELIVERED' && order.orderType === 'DELIVERY' && (
-                            <div className="text-sm text-primary-800">
+                            <div className="text-sm text-primary-800 dark:text-primary-300">
                                 <p>{getDeliveryEtaText() || 'Estimated delivery updating'}</p>
                             </div>
                         )}
                     </div>
 
                     {canCancelOrder() && (
-                        <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className="text-lg font-semibold mb-4">Order Cancellation</h3>
+                        <div className="card p-6">
+                            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-slate-100">Order Cancellation</h3>
 
                             <div className="space-y-4">
-                                <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
-                                    <p className="text-sm text-yellow-800">
+                                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-3">
+                                    <p className="text-sm text-amber-800 dark:text-amber-300">
                                         You can cancel this order before preparation starts.
                                     </p>
                                 </div>
                                 <Button
                                     variant="outline"
                                     onClick={() => setShowCancelModal(true)}
-                                    className="text-red-600 border-red-600 hover:bg-red-50 w-full"
+                                    className="text-red-600 border-red-600 hover:bg-red-50 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-950/30 w-full"
                                 >
                                     <FaBan className="inline mr-2" />
                                     Cancel Order
@@ -704,12 +704,12 @@ const OrderTracking = () => {
                     )}
 
                     {order.status === 'CANCELLED' && (
-                        <div className="bg-green-50 border-2 border-green-500 rounded-lg p-6">
+                        <div className="card border-2 border-green-500 dark:border-green-600 p-6">
                             <div className="flex items-start gap-3">
-                                <FaMoneyBillWave className="text-green-600 text-2xl mt-1" />
+                                <FaMoneyBillWave className="text-green-600 dark:text-green-400 text-2xl mt-1" />
                                 <div className="flex-1">
-                                    <h3 className="text-lg font-semibold text-green-900 mb-2">Refund Status</h3>
-                                    <div className="space-y-2 text-sm text-green-800">
+                                    <h3 className="text-lg font-semibold text-green-900 dark:text-green-300 mb-2">Refund Status</h3>
+                                    <div className="space-y-2 text-sm text-green-800 dark:text-green-400">
                                         {order.paymentMethod === 'CASH' ? (
                                             <p>Order cancelled successfully.</p>
                                         ) : (
@@ -721,8 +721,8 @@ const OrderTracking = () => {
                         </div>
                     )}
 
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <h3 className="text-lg font-semibold mb-6">Order Progress</h3>
+                    <div className="card p-6">
+                        <h3 className="text-lg font-semibold mb-6 text-gray-900 dark:text-slate-100">Order Progress</h3>
                         <div className="space-y-6">
                             {trackingSteps.map((step, index) => {
                                 const Icon = step.icon;
@@ -730,7 +730,7 @@ const OrderTracking = () => {
                                     <div key={index} className="relative flex items-start">
                                         {index < trackingSteps.length - 1 && (
                                             <div
-                                                className={`absolute left-5 top-12 bottom-0 w-0.5 ${step.completed ? 'bg-primary-500' : 'bg-gray-300'}`}
+                                                className={`absolute left-5 top-12 bottom-0 w-0.5 ${step.completed ? 'bg-primary-500' : 'bg-gray-300 dark:bg-slate-600'}`}
                                                 style={{ height: 'calc(100% + 1.5rem)' }}
                                             />
                                         )}
@@ -738,18 +738,18 @@ const OrderTracking = () => {
                                         <div
                                             className={`relative z-10 flex items-center justify-center w-10 h-10 rounded-full ${step.completed
                                                 ? step.status === 'CANCELLED' ? 'bg-red-500 text-white' : 'bg-primary-500 text-white'
-                                                : 'bg-gray-200 text-gray-500'
-                                                } ${step.current ? 'ring-4 ring-primary-100' : ''}`}
+                                                : 'bg-gray-200 dark:bg-slate-700 text-gray-500 dark:text-slate-400'
+                                                } ${step.current ? 'ring-4 ring-primary-100 dark:ring-primary-900/60' : ''}`}
                                         >
                                             <Icon className="w-5 h-5" />
                                         </div>
 
                                         <div className="ml-4 flex-1">
-                                            <h4 className={`font-semibold ${step.current ? 'text-primary-600' : step.completed ? 'text-gray-900' : 'text-gray-500'}`}>
+                                            <h4 className={`font-semibold ${step.current ? 'text-primary-600 dark:text-primary-400' : step.completed ? 'text-gray-900 dark:text-slate-100' : 'text-gray-500 dark:text-slate-500'}`}>
                                                 {step.label}
                                             </h4>
                                             {step.time && (
-                                                <p className="text-sm text-gray-500 mt-1">{step.time}</p>
+                                                <p className="text-sm text-gray-500 dark:text-slate-400 mt-1">{step.time}</p>
                                             )}
                                         </div>
                                     </div>
@@ -760,8 +760,8 @@ const OrderTracking = () => {
                 </div>
 
                 <div className="space-y-6">
-                    <div className="bg-white rounded-lg shadow p-6">
-                        <h3 className="font-semibold mb-4">Order Details</h3>
+                    <div className="card p-6">
+                        <h3 className="font-semibold mb-4 text-gray-900 dark:text-slate-100">Order Details</h3>
                         <div className="space-y-3 text-sm">
                             {order.items.map((item) => {
                                 const selectedAddOns = item.selectedAddOns || [];
@@ -817,44 +817,44 @@ const OrderTracking = () => {
                                 );
                             })}
 
-                            <div className="border-t pt-3 space-y-1">
-                                <div className="flex justify-between text-xs text-gray-600">
+                            <div className="border-t border-gray-100 dark:border-slate-700 pt-3 space-y-1">
+                                <div className="flex justify-between text-xs text-gray-600 dark:text-slate-400">
                                     <span>Subtotal</span>
                                     <span>LKR {order.subtotal.toFixed(2)}</span>
                                 </div>
-                                <div className="flex justify-between text-xs text-gray-600">
+                                <div className="flex justify-between text-xs text-gray-600 dark:text-slate-400">
                                     <span>Discount</span>
                                     <span>- LKR {order.discountAmount.toFixed(2)}</span>
                                 </div>
-                                <div className="flex justify-between text-xs text-gray-600">
+                                <div className="flex justify-between text-xs text-gray-600 dark:text-slate-400">
                                     <span>Delivery Fee</span>
                                     <span>LKR {order.deliveryFee.toFixed(2)}</span>
                                 </div>
                             </div>
 
-                            <div className="border-t pt-3 flex justify-between font-semibold">
+                            <div className="border-t border-gray-100 dark:border-slate-700 pt-3 flex justify-between font-semibold text-gray-900 dark:text-slate-100">
                                 <span>Final Amount</span>
-                                <span className="text-primary-600">LKR {order.finalAmount.toFixed(2)}</span>
+                                <span className="text-primary-600 dark:text-primary-400">LKR {order.finalAmount.toFixed(2)}</span>
                             </div>
-                            <div className="border-t pt-3">
-                                <p className="text-gray-600">Payment Method:</p>
-                                <p className="font-medium">{paymentMethodLabel(order.paymentMethod)}</p>
+                            <div className="border-t border-gray-100 dark:border-slate-700 pt-3">
+                                <p className="text-gray-600 dark:text-slate-400">Payment Method:</p>
+                                <p className="font-medium text-gray-900 dark:text-slate-100">{paymentMethodLabel(order.paymentMethod)}</p>
                                 {order.paymentStatus && (
-                                    <p className="text-xs text-gray-500">Status: {order.paymentStatus}</p>
+                                    <p className="text-xs text-gray-500 dark:text-slate-400">Status: {order.paymentStatus}</p>
                                 )}
                             </div>
                         </div>
                     </div>
 
                     {order.orderType === 'DELIVERY' && order.status !== 'CANCELLED' && order.deliveryAddress && (
-                        <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className="font-semibold mb-4">Delivery Information</h3>
+                        <div className="card p-6">
+                            <h3 className="font-semibold mb-4 text-gray-900 dark:text-slate-100">Delivery Information</h3>
                             <div className="space-y-3 text-sm">
                                 <div className="flex items-start">
                                     <FaMapMarkerAlt className="text-primary-600 mt-1 mr-2" />
                                     <div>
-                                        <p className="font-medium">Delivery Address</p>
-                                        <p className="text-gray-600">
+                                        <p className="font-medium text-gray-900 dark:text-slate-100">Delivery Address</p>
+                                        <p className="text-gray-500 dark:text-slate-400">
                                             {order.deliveryAddress.line1}<br />
                                             {order.deliveryAddress.city}, {order.deliveryAddress.district}
                                         </p>
@@ -864,9 +864,9 @@ const OrderTracking = () => {
                                     <div className="flex items-start">
                                         <FaPhone className="text-primary-600 mt-1 mr-2" />
                                         <div>
-                                            <p className="font-medium">Delivery Person</p>
-                                            <p className="text-gray-600">{order.deliveryPerson.name}</p>
-                                            <p className="text-gray-600">{order.deliveryPerson.phone}</p>
+                                            <p className="font-medium text-gray-900 dark:text-slate-100">Delivery Person</p>
+                                            <p className="text-gray-500 dark:text-slate-400">{order.deliveryPerson.name}</p>
+                                            <p className="text-gray-500 dark:text-slate-400">{order.deliveryPerson.phone}</p>
                                         </div>
                                     </div>
                                 )}

@@ -325,7 +325,7 @@ const DeliveryMap = () => {
         return (
             <div className="p-4 sm:p-6">
                 <h1 className="mb-6 text-xl font-bold sm:text-2xl">Delivery Map</h1>
-                <div className="rounded-lg bg-white p-4 shadow sm:p-6">
+                <div className="card p-4 sm:p-6">
                     <div className="flex items-center justify-center h-96">
                         <div className="text-center">
                             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
@@ -380,7 +380,7 @@ const DeliveryMap = () => {
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 {/* Map Section */}
                 <div className="lg:col-span-2">
-                    <div className="bg-white rounded-lg shadow overflow-hidden">
+                    <div className="card overflow-hidden">
                         {locationError && (
                             <div className="flex flex-col gap-3 border-b border-yellow-200 bg-yellow-50 p-3 sm:flex-row sm:items-center sm:justify-between">
                                 <p className="text-sm text-yellow-800">{locationError}</p>
@@ -554,7 +554,7 @@ const DeliveryMap = () => {
                     </div>
 
                     {/* Map Legend */}
-                    <div className="bg-white rounded-lg shadow p-4 mt-4">
+                    <div className="card p-4 mt-4">
                         <h3 className="font-semibold mb-3">Status Legend</h3>
                         <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 sm:gap-4">
                             <div className="flex items-center">
@@ -637,7 +637,7 @@ const DeliveryMap = () => {
                         </div>
                     )}
 
-                    <div className="rounded-lg bg-white p-4 shadow sm:p-6">
+                    <div className="card p-4 sm:p-6">
                         <h3 className="font-semibold mb-4 flex items-center">
                             <FaTruck className="mr-2 text-primary-600" />
                             Active Deliveries ({deliveries.length})
@@ -747,7 +747,7 @@ const DeliveryMap = () => {
                             </p>
                         </div>
                     )}
-                    <div className="mt-4 rounded-lg bg-white p-4 shadow sm:p-6">
+                    <div className="mt-4 card p-4 sm:p-6">
                         <h3 className="font-semibold mb-3 flex items-center">
                             <FaMapMarkerAlt className="mr-2 text-red-600" />
                             Restaurant

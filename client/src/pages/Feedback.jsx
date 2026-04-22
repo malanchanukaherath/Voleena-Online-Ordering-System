@@ -162,14 +162,14 @@ const Feedback = () => {
     if (submitted) {
         return (
             <div className="max-w-3xl mx-auto">
-                <div className="bg-green-50 border-2 border-green-500 rounded-lg p-8 text-center">
+                <div className="card border-2 border-green-500 dark:border-green-600 p-8 text-center">
                     <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h2 className="text-2xl font-bold text-green-700 mb-2">Thank You!</h2>
-                    <p className="text-green-600 mb-4">Your feedback has been submitted successfully.</p>
+                    <h2 className="text-2xl font-bold text-green-700 dark:text-green-400 mb-2">Thank You!</h2>
+                    <p className="text-green-600 dark:text-green-500 mb-4">Your feedback has been submitted successfully.</p>
                     <Button onClick={() => navigate('/orders')}>Back to Orders</Button>
                 </div>
             </div>
@@ -184,14 +184,14 @@ const Feedback = () => {
             </div>
 
             {isLoadingOrder ? (
-                <div className="bg-white rounded-lg shadow p-6 dark:bg-slate-800 dark:text-slate-300">Loading order details...</div>
+                <div className="card p-6 text-gray-500 dark:text-slate-400">Loading order details...</div>
             ) : orderError ? (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-6 dark:bg-red-950/40 dark:border-red-800">
                     <p className="text-red-700 mb-4 dark:text-red-400">{orderError}</p>
                     <Button variant="outline" onClick={() => navigate('/orders')}>Back to Orders</Button>
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6 space-y-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+                <form onSubmit={handleSubmit} className="card p-6 space-y-6">
                     <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 dark:bg-slate-700 dark:border-slate-600">
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-slate-200">Order Context</h2>
                         <p className="text-sm text-gray-600 mt-1 dark:text-slate-400">Order ID: #{order.OrderID} - {new Date(order.CreatedAt).toLocaleString()}</p>
@@ -277,7 +277,7 @@ const Feedback = () => {
                         </Button>
                     </div>
 
-                    {submitError && <p className="text-sm text-red-600">{submitError}</p>}
+                    {submitError && <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>}
                 </form>
             )}
         </div>

@@ -322,7 +322,7 @@ const MenuManagement = () => {
                 <p className="text-gray-600 dark:text-slate-400">Manage your menu items</p>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6 dark:bg-slate-800 dark:shadow-slate-900/50">
+            <div className="card p-6 mb-6">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
                     <div className="lg:col-span-2">
                         <Input
@@ -391,7 +391,7 @@ const MenuManagement = () => {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredItems.map(item => (
-                        <div key={item.MenuItemID} className="bg-white rounded-lg shadow-sm overflow-hidden hover:shadow-md transition-shadow dark:bg-slate-800 dark:shadow-slate-900/50">
+                        <div key={item.MenuItemID} className="card overflow-hidden hover:shadow-md transition-shadow">
                             {(item.ImageURL || item.Image_URL) ? (
                                 <img
                                     src={resolveAssetUrl(item.ImageURL || item.Image_URL)}
