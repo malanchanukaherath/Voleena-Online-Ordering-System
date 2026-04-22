@@ -108,6 +108,8 @@ const ResetPassword = () => {
             newErrors.newPassword = 'Password is required';
         } else if (formData.newPassword.length < 8) {
             newErrors.newPassword = 'Password must be at least 8 characters';
+        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(formData.newPassword)) {
+            newErrors.newPassword = 'Password must contain uppercase, lowercase, number, and special character (@$!%*?&)';
         }
         if (!formData.confirmPassword) {
             newErrors.confirmPassword = 'Please confirm your password';
@@ -249,6 +251,7 @@ const ResetPassword = () => {
                                 <li>At least 8 characters long</li>
                                 <li>Contains uppercase and lowercase letters</li>
                                 <li>Contains at least one number</li>
+                                <li>Contains at least one special character (@$!%*?&)</li>
                             </ul>
                         </div>
 

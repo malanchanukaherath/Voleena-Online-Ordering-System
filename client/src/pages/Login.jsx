@@ -112,14 +112,16 @@ const Login = () => {
 
     if (!formData.email.trim()) {
       newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
 
     if (!formData.password.trim()) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Password must be at least 8 characters';
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(formData.password)) {
+      newErrors.password = 'Password must contain uppercase, lowercase, number, and special character (@$!%*?&)';
     }
 
     setErrors(newErrors);

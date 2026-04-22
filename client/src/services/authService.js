@@ -344,8 +344,10 @@ class AuthService {
         headers: {
           Authorization: `Bearer ${token}`
         }
-      }).catch(() => {
+      }).catch((err) => {
         // Local logout should still succeed if the API is unavailable.
+        // Log for debugging purposes (no sensitive data exposed).
+        console.warn('Logout API call failed, proceeding with local logout:', err?.message || 'Network error');
       });
     }
 

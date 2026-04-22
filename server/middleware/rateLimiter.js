@@ -69,7 +69,7 @@ const authLimiter = rateLimit({
         : (process.env.NODE_ENV === 'production' ? 10 : 100),
     message: {
         success: false,
-        error: 'Too many login attempts, please try again after 15 minutes'
+        error: 'Too many login attempts, please try again later'
     },
     skipSuccessfulRequests: true,
     // Safe override for development environments (e.g., EC2 dev boxes).
@@ -89,7 +89,7 @@ const otpLimiter = rateLimit({
     max: 3, // 3 OTP requests per window
     message: {
         success: false,
-        error: 'Too many OTP requests, please try again after 15 minutes'
+        error: 'Too many OTP requests, please try again later'
     },
     // Disable OTP throttling in non-production by default for easier local/dev testing.
     skip: () => disableOtpRateLimit,
@@ -158,7 +158,7 @@ const passwordResetLimiter = rateLimit({
     max: 3, // 3 attempts per hour
     message: {
         success: false,
-        error: 'Too many password reset attempts, please try again after 1 hour'
+        error: 'Too many password reset attempts, please try again later'
     },
     store: makeRedisStore('rl:reset:')
 });

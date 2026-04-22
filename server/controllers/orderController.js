@@ -446,7 +446,8 @@ exports.cancelOrder = async (req, res) => {
         }
 
         // Log cancellation attempt for auditing
-        console.log(`[AUDIT] Order cancellation attempt - OrderID: ${id}, User: ${req.user.id}, Type: ${cancelledByType}, Reason: ${reason.substring(0, 50)}...`);
+        const safeReason = reason && typeof reason === 'string' ? reason.substring(0, 50) : 'No reason provided';
+        console.log(`[AUDIT] Order cancellation attempt - OrderID: ${id}, User: ${req.user.id}, Type: ${cancelledByType}, Reason: ${safeReason}...`);
 
         const order = await orderService.cancelOrder(id, reason, req.user.id, cancelledByType);
 

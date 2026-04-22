@@ -330,19 +330,28 @@ export const isCartEmpty = () => {
 /**
  * Get cart total for a specific order type
  * @param {string} orderType - 'DELIVERY' or 'TAKEAWAY'
+ * @param {number} deliveryFeeOverride - Optional delivery fee from backend config. If not provided, uses safe estimate.
  * @returns {Object} Total breakdown
  */
 // Simple: This gets the cart total.
-export const getCartTotal = (orderType = 'DELIVERY') => {
+export const getCartTotal = (orderType = 'DELIVERY', deliveryFeeOverride = null) => {
   const items = getCart();
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const deliveryFee = orderType === 'DELIVERY' ? 150 : 0;
+
+  // Use provided delivery fee from backend config, or safe estimate fallback
+  // NOTE: Actual delivery fee is calculated at checkout based on distance
+  const safeEstimateFee = 150; // Fallback estimate only when backend config unavailable
+  const deliveryFee = orderType === 'DELIVERY'
+    ? (deliveryFeeOverride !== null ? deliveryFeeOverride : safeEstimateFee)
+    : 0;
+
   const total = subtotal + deliveryFee;
 
   return {
     subtotal: parseFloat(subtotal.toFixed(2)),
     deliveryFee: parseFloat(deliveryFee.toFixed(2)),
-    total: parseFloat(total.toFixed(2))
+    total: parseFloat(total.toFixed(2)),
+    isDeliveryFeeEstimate: orderType === 'DELIVERY' && deliveryFeeOverride === null
   };
 };
 

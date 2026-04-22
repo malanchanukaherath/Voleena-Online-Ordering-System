@@ -10,6 +10,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import MainLayout from './components/layout/MainLayout';
 import AppRoutes from './routes/AppRoutes';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Inner component so it can access ThemeContext for the toast theme
 // Simple: This shows the app inner section.
@@ -17,9 +18,11 @@ const AppInner = () => {
   const { theme } = useTheme();
   return (
     <>
-      <MainLayout>
-        <AppRoutes />
-      </MainLayout>
+      <ErrorBoundary>
+        <MainLayout>
+          <AppRoutes />
+        </MainLayout>
+      </ErrorBoundary>
       <ToastContainer
         position="bottom-right"
         autoClose={3000}

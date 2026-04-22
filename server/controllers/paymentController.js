@@ -340,6 +340,19 @@ exports.confirmCardPayment = async (req, res) => {
       return res.status(400).json({ error: 'Payment verification failed due to currency or amount mismatch' });
     }
 
+    // Re-check payment status immediately before update to prevent race conditions
+    const currentPayment = await Payment.findByPk(payment.PaymentID);
+    if (currentPayment.Status === 'PAID') {
+      return res.json({
+        success: true,
+        duplicate: true,
+        data: {
+          paymentId: payment.PaymentID,
+          status: 'PAID'
+        }
+      });
+    }
+
     await payment.update({
       Status: 'PAID',
       PaidAt: new Date(),
