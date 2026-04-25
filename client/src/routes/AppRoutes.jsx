@@ -18,6 +18,7 @@ import Menu from '../pages/Menu';
 import MenuItemDetail from '../pages/MenuItemDetail';
 import Cart from '../pages/Cart';
 import Checkout from '../pages/Checkout';
+import PreorderRequest from '../pages/PreorderRequest';
 import OrderConfirmation from '../pages/OrderConfirmation';
 import OrderHistory from '../pages/OrderHistory';
 import OrderTracking from '../pages/OrderTracking';
@@ -77,6 +78,14 @@ const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['Customer']}>
             <Checkout />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/preorder-request"
+        element={
+          <ProtectedRoute allowedRoles={['Customer']}>
+            <PreorderRequest />
           </ProtectedRoute>
         }
       />
@@ -183,4 +192,3 @@ const AppRoutes = () => {
 };
 
 export default AppRoutes;
-

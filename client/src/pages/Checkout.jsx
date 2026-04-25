@@ -1,5 +1,5 @@
 // CODEMAP: FRONTEND_PAGE_CHECKOUT
-// PURPOSE: Customer checkout screen for order type, address, preorder schedule, payment, and final order placement.
+// PURPOSE: Customer checkout screen for immediate order type, address, payment, and final order placement.
 // SEARCH_HINT: Start here for color/text changes on checkout UI and all checkout form validation behavior.
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -186,8 +186,6 @@ const Checkout = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({
         orderType: 'DELIVERY',
-        isPreorder: false,
-        scheduledDatetime: '',
         name: '',
         email: '',
         phone: '',
@@ -1049,19 +1047,6 @@ const Checkout = () => {
         if (!formData.phone.trim()) newErrors.phone = 'Phone is required';
         else if (phoneDigits.length < 9 || phoneDigits.length > 15) newErrors.phone = 'Enter a valid phone number';
 
-        if (formData.isPreorder) {
-            if (!formData.scheduledDatetime) {
-                newErrors.scheduledDatetime = 'Please choose a preorder time';
-            } else {
-                const scheduled = new Date(formData.scheduledDatetime);
-                if (Number.isNaN(scheduled.getTime())) {
-                    newErrors.scheduledDatetime = 'Invalid preorder time';
-                } else if (scheduled.getTime() < Date.now() + 15 * 60 * 1000) {
-                    newErrors.scheduledDatetime = 'Preorder time must be at least 15 minutes from now';
-                }
-            }
-        }
-
         if (formData.orderType === 'DELIVERY') {
             if (savedAddresses.length === 0) {
                 newErrors.savedAddressId = 'Add at least one saved address in your profile before placing a delivery order.';
@@ -1205,10 +1190,6 @@ const Checkout = () => {
                 addressId,
                 paymentMethod: formData.paymentMethod,
                 contactPhone: formData.phone.trim(),
-                isPreorder: Boolean(formData.isPreorder),
-                scheduledDatetime: formData.isPreorder && formData.scheduledDatetime
-                    ? new Date(formData.scheduledDatetime).toISOString()
-                    : null,
                 specialInstructions: formData.specialInstructions,
                 items: cartItems.map((item) => ({
                     menuItemId: item.type === 'menu' ? item.menuItemId || item.id : null,
@@ -1351,46 +1332,21 @@ const Checkout = () => {
                         </div>
 
                         <div className="bg-white rounded-lg shadow p-6">
-                            <h2 className="text-xl font-semibold mb-4">Schedule</h2>
+                            <h2 className="text-xl font-semibold mb-4">Processing</h2>
                             <div className="mb-4 rounded border border-indigo-200 bg-indigo-50 p-3 text-sm text-indigo-800">
-                                <p className="font-semibold">Preorder and Bulk Orders</p>
+                                <p className="font-semibold">Immediate Order Checkout</p>
                                 <p className="mt-1">
-                                    Planning ahead or ordering in larger quantities? Use preorder scheduling and add your bulk details in Special Instructions.
-                                </p>
-                                <p className="mt-1">
-                                    If current stock is not enough for immediate processing, you can still place it as a scheduled preorder.
+                                    This checkout is only for normal orders that should move straight into the existing order workflow after placement.
                                 </p>
                             </div>
-                            <label className="flex items-center gap-3 mb-4">
-                                <input
-                                    type="checkbox"
-                                    checked={formData.isPreorder}
-                                    onChange={(e) => setFormData((prev) => ({
-                                        ...prev,
-                                        isPreorder: e.target.checked,
-                                        scheduledDatetime: e.target.checked ? prev.scheduledDatetime : ''
-                                    }))}
-                                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                                />
-                                <span className="text-sm font-medium text-gray-800">Place this as a preorder</span>
-                            </label>
-
-                            {formData.isPreorder && (
-                                <Input
-                                    label="Preorder Date & Time"
-                                    name="scheduledDatetime"
-                                    type="datetime-local"
-                                    value={formData.scheduledDatetime}
-                                    onChange={handleChange}
-                                    error={errors.scheduledDatetime}
-                                    min={new Date(Date.now() + 15 * 60 * 1000).toISOString().slice(0, 16)}
-                                    required
-                                />
-                            )}
-
-                            {!formData.isPreorder && (
-                                <p className="text-sm text-gray-500">Order will be processed immediately after placement.</p>
-                            )}
+                            <p className="text-sm text-gray-500">
+                                Need a future-dated, bulk, or custom request instead? Use the separate preorder request page before checkout.
+                            </p>
+                            <div className="mt-4">
+                                <Link to="/preorder-request">
+                                    <Button type="button" variant="outline">Go to Preorder Request</Button>
+                                </Link>
+                            </div>
                         </div>
 
                         {/* Contact Information */}
@@ -1741,7 +1697,7 @@ const Checkout = () => {
                         <div className="bg-white rounded-lg shadow p-6">
                             <h2 className="text-xl font-semibold mb-4">Special Instructions</h2>
                             <p className="text-sm text-gray-500 mb-3">
-                                For bulk or special-event preorders, include preferred packaging, quantity notes, and timing details here.
+                                Add order-specific notes for this immediate checkout only.
                             </p>
                             <Textarea
                                 name="specialInstructions"

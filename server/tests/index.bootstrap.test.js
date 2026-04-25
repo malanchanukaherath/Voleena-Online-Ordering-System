@@ -35,6 +35,7 @@ jest.mock('../routes/staff', () => mockCreateRouter());
 jest.mock('../routes/menuItems', () => mockCreateRouter());
 jest.mock('../routes/categories', () => mockCreateRouter());
 jest.mock('../routes/orders', () => mockCreateRouter());
+jest.mock('../routes/preorderRequests', () => mockCreateRouter());
 jest.mock('../routes/comboPacks', () => mockCreateRouter());
 jest.mock('../routes/cart', () => mockCreateRouter());
 jest.mock('../routes/stock', () => mockCreateRouter());

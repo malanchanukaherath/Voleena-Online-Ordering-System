@@ -257,10 +257,10 @@ const Home = () => {
                                 <span className="inline-block text-xs font-bold uppercase tracking-wider text-indigo-600 mb-2 dark:text-indigo-400">Bulk &amp; Preorders</span>
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-slate-100">Preorder and Bulk Ordering Available</h2>
                                 <p className="text-gray-600 mt-2 text-sm leading-relaxed dark:text-slate-400">
-                                    Need food in advance or for larger groups? Place scheduled preorders with bulk quantity notes.
+                                    Need food in advance or for larger groups? Submit a separate preorder request with your schedule, item list, and event details.
                                 </p>
                                 <p className="text-xs text-indigo-600 mt-1.5 dark:text-indigo-400">
-                                    Low on stock? Submit as preorder with your preferred date.
+                                    Your request stays outside checkout until admin reviews it clearly.
                                 </p>
                                 <p className="text-xs text-indigo-600 mt-1 dark:text-indigo-400">
                                     or contact us +94 11 234 5678
@@ -270,7 +270,7 @@ const Home = () => {
                                 <Link to="/menu">
                                     <Button variant="outline">Browse Menu</Button>
                                 </Link>
-                                <Link to="/checkout">
+                                <Link to="/preorder-request">
                                     <Button>Place a Preorder</Button>
                                 </Link>
                             </div>

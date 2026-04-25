@@ -136,6 +136,24 @@ describe('order routes', () => {
     expect(mockOrderService.createOrder).not.toHaveBeenCalled();
   });
 
+  test('rejects preorder payloads on normal order creation', async () => {
+    setAuthUser({ id: 25, type: 'Customer', role: 'Customer' });
+
+    const response = await request(app)
+      .post('/api/v1/orders')
+      .send({
+        items: [{ menuItemId: 1, quantity: 1 }],
+        orderType: 'TAKEAWAY',
+        isPreorder: true,
+        scheduledDatetime: new Date(Date.now() + 3600000).toISOString()
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.success).toBe(false);
+    expect(response.body.message).toMatch(/preorder request page/i);
+    expect(mockOrderService.createOrder).not.toHaveBeenCalled();
+  });
+
   test('filters GET /orders to the current customer', async () => {
     setAuthUser({ id: 88, type: 'Customer', role: 'Customer' });
     mockOrder.findAll.mockResolvedValue([]);

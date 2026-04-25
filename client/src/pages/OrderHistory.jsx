@@ -15,6 +15,7 @@ import EmptyState from '../components/ui/EmptyState';
 import Button from '../components/ui/Button';
 import FilterResetButton from '../components/ui/FilterResetButton';
 import { getOrders } from '../services/orderApi';
+import { getPreorderRequests } from '../services/preorderRequestApi';
 
 // Simple: This shows the order history section.
 const OrderHistory = () => {
@@ -23,6 +24,7 @@ const OrderHistory = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [preorderRequests, setPreorderRequests] = useState([]);
 
     const fetchOrders = useCallback(async ({ showLoading = false } = {}) => {
         try {
@@ -30,7 +32,10 @@ const OrderHistory = () => {
                 setLoading(true);
             }
 
-            const response = await getOrders();
+            const [response, preorderResponse] = await Promise.all([
+                getOrders(),
+                getPreorderRequests({ limit: 50, offset: 0 })
+            ]);
             // Simple: This handles mapped logic.
             const mapped = (response.data?.data || []).map((order) => {
                 // Handle both CreatedAt (PascalCase) and createdAt (camelCase) for compatibility
@@ -56,6 +61,18 @@ const OrderHistory = () => {
             });
 
             setOrders(mapped);
+            setPreorderRequests((preorderResponse.data?.data || []).map((request) => ({
+                id: request.PreorderRequestID,
+                requestNumber: request.RequestNumber,
+                requestedFor: request.RequestedFor,
+                status: request.Status,
+                requestDetails: request.RequestDetails,
+                contactName: request.ContactName,
+                items: Array.isArray(request.items) ? request.items.map((item) => ({
+                    name: item.menuItem?.Name || item.combo?.Name || item.RequestedName || 'Custom item',
+                    quantity: item.Quantity || item.quantity || 1
+                })) : []
+            })));
             setError(null);
         } catch (err) {
             console.error('Failed to load orders:', err);
@@ -126,11 +143,64 @@ const OrderHistory = () => {
 
             <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6 dark:bg-indigo-950/40 dark:border-indigo-800">
                 <p className="text-sm text-indigo-800 dark:text-indigo-300">
-                    <span className="font-semibold">Need advance or bulk ordering?</span> Use preorder at checkout and add quantity/event notes in Special Instructions.
+                    <span className="font-semibold">Need advance or bulk ordering?</span> Use the separate preorder request flow so admin can review your request before anything enters the normal order workflow.
                 </p>
                 <p className="text-xs text-indigo-700 mt-1 dark:text-indigo-400">
-                    If immediate stock is unavailable for your requested quantity, place it as a scheduled preorder.
+                    Preorder requests stay outside checkout until they are reviewed.
                 </p>
+                <div className="mt-3">
+                    <Link to="/preorder-request">
+                        <Button size="sm">New Preorder Request</Button>
+                    </Link>
+                </div>
+            </div>
+
+            <div className="card p-6 mb-6">
+                <div className="flex items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h2 className="text-xl font-semibold">My Preorder Requests</h2>
+                        <p className="text-sm text-gray-500 dark:text-slate-400">
+                            These requests are tracked separately from normal orders.
+                        </p>
+                    </div>
+                    <Link to="/preorder-request">
+                        <Button variant="outline" size="sm">Create Request</Button>
+                    </Link>
+                </div>
+                {preorderRequests.length > 0 ? (
+                    <div className="space-y-3">
+                        {preorderRequests.map((request) => (
+                            <div key={request.id} className="rounded-xl border border-gray-200 p-4 dark:border-slate-700">
+                                <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                                    <div>
+                                        <p className="font-semibold text-gray-900 dark:text-slate-100">{request.requestNumber}</p>
+                                        <p className="text-sm text-gray-600 dark:text-slate-400">
+                                            Requested for {request.requestedFor ? new Date(request.requestedFor).toLocaleString() : 'Not set'}
+                                        </p>
+                                    </div>
+                                    <span className="inline-flex rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700 dark:border-indigo-800 dark:bg-indigo-950/30 dark:text-indigo-300">
+                                        {request.status}
+                                    </span>
+                                </div>
+                                <p className="mt-3 text-sm text-gray-700 dark:text-slate-300 whitespace-pre-wrap">{request.requestDetails}</p>
+                                {request.items.length > 0 && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {request.items.map((item, index) => (
+                                            <span
+                                                key={`${request.id}-${item.name}-${index}`}
+                                                className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300"
+                                            >
+                                                {item.quantity}x {item.name}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-500 dark:text-slate-400">No preorder requests submitted yet.</p>
+                )}
             </div>
 
             {/* Filter */}

@@ -92,6 +92,14 @@ exports.createOrder = async (req, res) => {
         const normalizedContactPhone = contactPhone === undefined || contactPhone === null
             ? null
             : normalizePhone(contactPhone);
+        const requestedPreorder = Boolean(isPreorder) || Boolean(scheduledDatetime);
+
+        if (requestedPreorder) {
+            return res.status(400).json({
+                success: false,
+                message: 'Preorders are no longer created through checkout. Please use the preorder request page instead.'
+            });
+        }
 
         if (!items || items.length === 0) {
             return res.status(400).json({

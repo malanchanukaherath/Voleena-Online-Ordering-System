@@ -104,6 +104,13 @@ jest.mock('../controllers/notificationController', () => ({
   clearAll: mockOkHandler
 }));
 
+jest.mock('../controllers/preorderRequestController', () => ({
+  createPreorderRequest: mockOkHandler,
+  getPreorderRequests: mockOkHandler,
+  getPreorderRequestById: mockOkHandler,
+  updatePreorderRequestStatus: mockOkHandler
+}));
+
 const { resetAuthState, setAuthMode, setAuthUser } = require('./helpers/mockAuth');
 const createTestApp = require('./helpers/createTestApp');
 
@@ -204,6 +211,16 @@ const routerDefinitions = [
     ]
   },
   {
+    prefix: '/api/v1/preorder-requests',
+    router: require('../routes/preorderRequests'),
+    protectedEndpoints: [
+      ['post', '/', { id: 4, type: 'Customer', role: 'Customer', email: 'customer@test.local' }],
+      ['get', '/'],
+      ['get', '/1'],
+      ['patch', '/1/status']
+    ]
+  },
+  {
     prefix: '/api/v1/upload',
     router: require('../routes/uploadRoutes'),
     protectedEndpoints: [
@@ -232,9 +249,12 @@ describe('route contracts', () => {
   });
 
   test.each(routerDefinitions.flatMap((definition) =>
-    definition.protectedEndpoints.map(([method, path]) => [definition, method, path])
-  ))('allows protected endpoint %s %s for authorized users', async (definition, method, path) => {
+    definition.protectedEndpoints.map(([method, path, authUser]) => [definition, method, path, authUser])
+  ))('allows protected endpoint %s %s for authorized users', async (definition, method, path, authUser) => {
     const app = createTestApp(definition.prefix, definition.router);
+    if (authUser) {
+      setAuthUser(authUser);
+    }
     const response = await request(app)[method](`${definition.prefix}${path}`).send({});
 
     expect(response.status).toBe(200);

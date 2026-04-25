@@ -43,6 +43,7 @@ async function waitForDatabaseConnection() {
 // Simple: This creates the app.
 function createApp() {
   const app = express();
+  app.disable('etag');
 
   // Simple: This handles safe require route logic.
   const safeRequireRoute = (routePath) => {
@@ -154,12 +155,18 @@ function createApp() {
   });
 
   // API version 1 routes
+  app.use('/api', (req, res, next) => {
+    res.set('Cache-Control', 'no-store');
+    next();
+  });
+
   app.use('/api/v1/auth', require('./routes/authRoutes'));
   app.use('/api/v1/customers', require('./routes/customers'));
   app.use('/api/v1/staff', require('./routes/staff'));
   app.use('/api/v1/menu', require('./routes/menuItems'));
   app.use('/api/v1/categories', require('./routes/categories'));
   app.use('/api/v1/orders', require('./routes/orders'));
+  app.use('/api/v1/preorder-requests', require('./routes/preorderRequests'));
   app.use('/api/v1/combos', require('./routes/comboPacks'));
   app.use('/api/v1/cart', require('./routes/cart'));
   app.use('/api/v1/stock', require('./routes/stock'));
@@ -187,6 +194,7 @@ function createApp() {
   app.use('/api/menu', deprecationMiddleware('/menu'), require('./routes/menuItems'));
   app.use('/api/categories', deprecationMiddleware('/categories'), require('./routes/categories'));
   app.use('/api/orders', deprecationMiddleware('/orders'), require('./routes/orders'));
+  app.use('/api/preorder-requests', deprecationMiddleware('/preorder-requests'), require('./routes/preorderRequests'));
   app.use('/api/combos', deprecationMiddleware('/combos'), require('./routes/comboPacks'));
   app.use('/api/cart', deprecationMiddleware('/cart'), require('./routes/cart'));
   app.use('/api/stock', deprecationMiddleware('/stock'), require('./routes/stock'));
