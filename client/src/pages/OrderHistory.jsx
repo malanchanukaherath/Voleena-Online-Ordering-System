@@ -235,7 +235,7 @@ const OrderHistory = () => {
                                             <StatusBadge status={order.status} type="order" />
                                         </div>
                                         <p className="text-sm text-gray-600 dark:text-slate-400">
-                                            {order.date} at {order.time} ?? {order.orderType}
+                                            {order.date} at {order.time} | {order.orderType}
                                         </p>
                                         {order.isPreorder && order.scheduledDatetime && (
                                             <p className="text-xs text-indigo-700 mt-1 dark:text-indigo-400">

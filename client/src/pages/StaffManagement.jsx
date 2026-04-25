@@ -268,9 +268,9 @@ const StaffManagement = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {member.IsActive ? (
-                                                <span className="text-green-600 text-sm">??? Active</span>
+                                                <span className="text-green-600 text-sm">Active</span>
                                             ) : (
-                                                <span className="text-gray-400 text-sm">??? Inactive</span>
+                                                <span className="text-gray-400 text-sm">Inactive</span>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm">

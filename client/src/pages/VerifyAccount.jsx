@@ -207,7 +207,7 @@ const VerifyAccount = () => {
 
                     <div className="text-center text-sm">
                         <Link to="/register" className="text-primary-600 hover:text-primary-700">
-                            ??? Back to Registration
+                            Back to Registration
                         </Link>
                     </div>
                 </div>

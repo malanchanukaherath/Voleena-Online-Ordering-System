@@ -9,6 +9,7 @@
 import React, { useEffect, useState } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { FaLock } from 'react-icons/fa';
 
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY?.trim();
 const isStripeConfigured = Boolean(
@@ -168,8 +169,9 @@ const StripePaymentForm = ({ clientSecret, total, billingDetails, onSuccess, onC
                 </button>
             </div>
 
-            <p className="text-xs text-gray-500 text-center">
-                ðŸ”’ Secured by Stripe. Your card details are encrypted.
+            <p className="text-xs text-gray-500 text-center flex items-center justify-center gap-2">
+                <FaLock className="text-green-600" />
+                <span>Secured by Stripe. Your card details are encrypted.</span>
             </p>
         </form>
     );
@@ -211,7 +213,7 @@ export const StripePaymentModal = ({
             <div className="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
                 <h2 className="text-2xl font-bold mb-2">Complete Payment</h2>
                 <p className="text-gray-600 text-sm mb-6">
-                    Order #{orderId} â€¢ <span className="font-semibold">LKR {total.toFixed(2)}</span>
+                    Order #{orderId} | <span className="font-semibold">LKR {total.toFixed(2)}</span>
                 </p>
 
                 {clientSecret && stripeElementsPromise ? (

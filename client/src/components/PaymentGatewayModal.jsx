@@ -85,18 +85,13 @@ const PaymentGatewayModal = ({ isOpen, onClose, gateway, amount, onSuccess, onFa
         return value.replace(/\s/g, '').replace(/(\d{4})/g, '$1 ').trim();
     };
 
-    const gatewayLogos = {
-        'PayHere': 'ðŸ’³',
-        'Stripe': 'ðŸ’ '
-    };
-
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={`${gateway} Payment`}>
             <div className="space-y-6">
                 {/* Gateway Header */}
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-3">
-                        <span className="text-3xl">{gatewayLogos[gateway]}</span>
+                        <FaCreditCard className="text-3xl text-primary-600" />
                         <div>
                             <p className="font-semibold">{gateway}</p>
                             <p className="text-sm text-gray-600">Secure Payment</p>

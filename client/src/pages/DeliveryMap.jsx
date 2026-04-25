@@ -351,7 +351,7 @@ const DeliveryMap = () => {
                             </svg>
                         </div>
                         <div className="flex-1">
-                            <h2 className="text-red-800 font-bold text-lg mb-2">?????? Configuration Error</h2>
+                            <h2 className="text-red-800 font-bold text-lg mb-2">Configuration Error</h2>
                             <p className="text-red-700 mb-4">
                                 Google Maps API key is not configured. The delivery map cannot be displayed without a valid API key.
                             </p>
@@ -457,13 +457,13 @@ const DeliveryMap = () => {
                                                 {showCurrentLocation && (
                                                     <InfoWindow onCloseClick={() => setShowCurrentLocation(false)}>
                                                         <div className="p-2">
-                                                            <p className="font-bold text-sm">???? Your Current Location</p>
+                                                            <p className="font-bold text-sm">Your Current Location</p>
                                                             <p className="text-xs text-gray-600 mt-1">
-                                                                Lat: {currentLocation.lat.toFixed(4)}??<br/>
-                                                                Lng: {currentLocation.lng.toFixed(4)}??
+                                                                Lat: {currentLocation.lat.toFixed(4)}<br/>
+                                                                Lng: {currentLocation.lng.toFixed(4)}
                                                             </p>
                                                             <p className="text-xs text-gray-500 mt-2">
-                                                                Status: {locationPermission === 'granted' ? '??? Live' : '??? Not Live'}
+                                                                Status: {locationPermission === 'granted' ? 'Live' : 'Not live'}
                                                             </p>
                                                         </div>
                                                     </InfoWindow>
@@ -606,7 +606,7 @@ const DeliveryMap = () => {
                                 <div className="bg-white rounded p-2">
                                     <p className="text-xs text-gray-600"><strong>Status:</strong></p>
                                     <p className={`text-sm font-medium ${locationPermission === 'granted' ? 'text-green-600' : 'text-red-600'}`}>
-                                        {locationPermission === 'granted' ? '???? Live Tracking Active' : '???? Tracking Disabled'}
+                                        {locationPermission === 'granted' ? 'Live Tracking Active' : 'Tracking Disabled'}
                                     </p>
                                 </div>
                                 <button
@@ -739,7 +739,7 @@ const DeliveryMap = () => {
                     {currentLocation && locationPermission === 'granted' && (
                         <div className="bg-green-50 rounded-lg shadow p-4 mt-4 border border-green-200">
                             <h3 className="font-semibold mb-2 flex items-center text-green-900">
-                                <span className="animate-pulse text-lg mr-2">????</span>
+                                <span className="animate-pulse text-lg mr-2">Live</span>
                                 Live Location Active
                             </h3>
                             <p className="text-xs text-green-800">

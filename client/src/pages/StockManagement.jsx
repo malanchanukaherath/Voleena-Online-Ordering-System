@@ -391,7 +391,7 @@ const StockManagement = () => {
                                                 </span>
                                             ) : (
                                                 <span className="inline-flex px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700">
-                                                    ??? In Stock
+                                                    In Stock
                                                 </span>
                                             )}
                                         </td>

@@ -197,7 +197,7 @@ const ResetPassword = () => {
 
                         <div className="text-center text-sm">
                             <Link to="/forgot-password" className="text-primary-600 hover:text-primary-700">
-                                ??? Back
+                                Back
                             </Link>
                         </div>
                     </form>
@@ -274,4 +274,3 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
-

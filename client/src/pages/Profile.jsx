@@ -489,7 +489,7 @@ const Profile = () => {
     const [stats, setStats] = useState({
         totalOrders: 0,
         totalSpent: 0,
-        memberSince: '???'
+        memberSince: 'N/A'
     });
 
     useEffect(() => {
@@ -577,7 +577,7 @@ const Profile = () => {
                     setStats({
                         totalOrders,
                         totalSpent,
-                        memberSince: memberSinceDate ? new Date(memberSinceDate).toLocaleDateString() : '???'
+                        memberSince: memberSinceDate ? new Date(memberSinceDate).toLocaleDateString() : 'N/A'
                     });
                 }
             } catch {
