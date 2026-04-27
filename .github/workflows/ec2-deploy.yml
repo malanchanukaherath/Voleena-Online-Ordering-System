@@ -25,6 +25,11 @@ on:
         required: false
         default: false
         type: boolean
+      run_v28_preorder_request_migration:
+        description: Apply v2.8 preorder request split migration on EC2 before restarting app
+        required: false
+        default: false
+        type: boolean
 
 concurrency:
   group: ec2-production-deploy
@@ -97,6 +102,7 @@ jobs:
           RUN_DB_SYNC: ${{ github.event.inputs.run_db_sync || 'false' }}
           RUN_DB_MIGRATION_V26: ${{ github.event.inputs.run_v26_preorder_migration || 'false' }}
           RUN_DB_MIGRATION_V27: ${{ github.event.inputs.run_v27_addon_migration || 'false' }}
+          RUN_DB_MIGRATION_V28: ${{ github.event.inputs.run_v28_preorder_request_migration || 'false' }}
           TARGET_BRANCH: main
         run: |
           set -euo pipefail

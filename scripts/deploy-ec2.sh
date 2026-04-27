@@ -13,6 +13,8 @@ RUN_DB_MIGRATION_V26="${RUN_DB_MIGRATION_V26:-false}"
 MIGRATION_V26_FILE="${MIGRATION_V26_FILE:-database/migration_v2.6_preorder_addons_resume_safe.sql}"
 RUN_DB_MIGRATION_V27="${RUN_DB_MIGRATION_V27:-false}"
 MIGRATION_V27_FILE="${MIGRATION_V27_FILE:-database/migration_v2.7_addon_admin_safety_baseline.sql}"
+RUN_DB_MIGRATION_V28="${RUN_DB_MIGRATION_V28:-false}"
+MIGRATION_V28_FILE="${MIGRATION_V28_FILE:-database/migration_v2.8_preorder_request_split.sql}"
 
 export DOCKER_CLIENT_TIMEOUT="${DOCKER_CLIENT_TIMEOUT:-900}"
 export COMPOSE_HTTP_TIMEOUT="${COMPOSE_HTTP_TIMEOUT:-900}"
@@ -275,7 +277,21 @@ else
   echo "8) Skipping v2.7 add-on migration. Set RUN_DB_MIGRATION_V27=true to apply it during this deploy."
 fi
 
-echo "9) Updating and restarting app containers..."
+if [ "${RUN_DB_MIGRATION_V28}" = "true" ]; then
+  echo "9) Applying v2.8 preorder-request split migration because RUN_DB_MIGRATION_V28=true..."
+
+  if [ ! -f "${MIGRATION_V28_FILE}" ]; then
+    echo "STOP: Migration file not found at '${MIGRATION_V28_FILE}'."
+    exit 1
+  fi
+
+  docker exec -i mysql_db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < "${MIGRATION_V28_FILE}"
+  echo "OK: v2.8 preorder-request split migration applied (idempotent; safe to re-run)."
+else
+  echo "9) Skipping v2.8 preorder-request split migration. Set RUN_DB_MIGRATION_V28=true to apply it during this deploy."
+fi
+
+echo "10) Updating and restarting app containers..."
 case "${DEPLOY_STRATEGY}" in
   pull)
     if [ -z "${DOCKERHUB_USERNAME:-}" ]; then
@@ -313,19 +329,19 @@ case "${DEPLOY_STRATEGY}" in
 esac
 
 if [ "${RUN_ACCOUNT_SEED:-false}" = "true" ]; then
-  echo "10) Seeding login accounts because RUN_ACCOUNT_SEED=true..."
+  echo "11) Seeding login accounts because RUN_ACCOUNT_SEED=true..."
   docker compose --profile init run --rm --no-deps backend_seed
 else
-  echo "10) Skipping login account seed. Set RUN_ACCOUNT_SEED=true for first-time EC2 setup."
+  echo "11) Skipping login account seed. Set RUN_ACCOUNT_SEED=true for first-time EC2 setup."
 fi
 
-echo "11) Checking containers..."
+echo "12) Checking containers..."
 docker compose ps
 
-echo "12) Checking backend logs..."
+echo "13) Checking backend logs..."
 docker logs --tail=80 backend_app
 
-echo "13) Checking key database tables..."
+echo "14) Checking key database tables..."
 docker exec mysql_db sh -c 'mysql -uroot -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE" -e "SHOW TABLES LIKE '\''activity_log'\''; SHOW TABLES LIKE '\''otp_verification'\''; SHOW TABLES LIKE '\''app_notification'\''; SELECT COUNT(*) AS customers FROM customer;"'
 
 echo "DONE: deploy completed safely."
