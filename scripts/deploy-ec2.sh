@@ -26,10 +26,66 @@ dump_app_start_diagnostics() {
   docker logs --tail=120 frontend_app || true
 }
 
+dump_docker_host_diagnostics() {
+  echo "---- disk usage ----"
+  df -h || true
+  echo "---- docker system df ----"
+  docker system df || true
+  echo "---- docker images (voleena) ----"
+  docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}' | grep 'voleena-' || true
+}
+
+pull_image_with_retries() {
+  local image="$1"
+  local attempts="${2:-3}"
+  local attempt=1
+
+  while [ "${attempt}" -le "${attempts}" ]; do
+    echo "Pull attempt ${attempt}/${attempts}: ${image}"
+    if docker pull "${image}"; then
+      echo "OK: Pulled ${image}"
+      return 0
+    fi
+
+    echo "WARN: Failed to pull ${image} on attempt ${attempt}/${attempts}."
+    if [ "${attempt}" -lt "${attempts}" ]; then
+      sleep $((attempt * 5))
+    fi
+    attempt=$((attempt + 1))
+  done
+
+  echo "ERROR: Unable to pull ${image} after ${attempts} attempts."
+  dump_docker_host_diagnostics
+  return 1
+}
+
+rollback_app_services() {
+  if [ -z "${PREVIOUS_BACKEND_IMAGE:-}" ] || [ -z "${PREVIOUS_FRONTEND_IMAGE:-}" ]; then
+    echo "No previous backend/frontend image pair recorded. Skipping rollback attempt."
+    return 1
+  fi
+
+  echo "Attempting rollback to last known images..."
+  echo "BACKEND_IMAGE=${PREVIOUS_BACKEND_IMAGE}"
+  echo "FRONTEND_IMAGE=${PREVIOUS_FRONTEND_IMAGE}"
+
+  BACKEND_IMAGE="${PREVIOUS_BACKEND_IMAGE}" \
+  FRONTEND_IMAGE="${PREVIOUS_FRONTEND_IMAGE}" \
+  docker compose up -d --no-build backend frontend
+}
+
 start_app_services() {
   if ! docker compose up -d --no-build backend frontend; then
     echo "ERROR: Failed to start backend/frontend containers. Collecting diagnostics..."
     dump_app_start_diagnostics
+    if rollback_app_services; then
+      echo "Rollback started. Verifying service state..."
+      docker compose ps || true
+    else
+      echo "Rollback was not possible or did not succeed."
+      dump_docker_host_diagnostics
+      exit 1
+    fi
     exit 1
   fi
 }
@@ -157,6 +213,8 @@ case "${DEPLOY_STRATEGY}" in
 
     export BACKEND_IMAGE="${BACKEND_IMAGE:-${DOCKERHUB_USERNAME}/voleena-backend:${IMAGE_TAG}}"
     export FRONTEND_IMAGE="${FRONTEND_IMAGE:-${DOCKERHUB_USERNAME}/voleena-frontend:${IMAGE_TAG}}"
+    PREVIOUS_BACKEND_IMAGE="$(docker inspect -f '{{.Config.Image}}' backend_app 2>/dev/null || true)"
+    PREVIOUS_FRONTEND_IMAGE="$(docker inspect -f '{{.Config.Image}}' frontend_app 2>/dev/null || true)"
 
     if [ -n "${DOCKERHUB_TOKEN:-}" ]; then
       echo "Logging in to Docker Hub..."
@@ -164,7 +222,8 @@ case "${DEPLOY_STRATEGY}" in
     fi
 
     echo "Pulling ${BACKEND_IMAGE} and ${FRONTEND_IMAGE}..."
-    docker compose pull backend frontend
+    pull_image_with_retries "${BACKEND_IMAGE}"
+    pull_image_with_retries "${FRONTEND_IMAGE}"
     start_app_services
     ;;
   build)
