@@ -171,7 +171,7 @@ npm run test:a11y
 - EC2 helper script: `scripts/deploy-ec2.sh`
 - Container definitions: `client/Dockerfile`, `server/Dockerfile`
 - GitHub Actions deploy builds and pushes `voleena-backend` and `voleena-frontend` first, then EC2 pulls the exact `sha-<commit>` images to avoid slow production builds.
-- The EC2 deploy script now pulls backend/frontend images individually with retries, prints Docker host diagnostics on pull failure, and attempts rollback to the previously running image pair if container startup fails.
+- The EC2 deploy script now checks Docker disk headroom before pulls, safely prunes builder cache plus dangling images when space is tight, pulls backend/frontend images individually with retries, prints Docker host diagnostics on pull failure, and attempts rollback to the previously running image pair if container startup fails.
 - Manual EC2 deploy with local builds: `TARGET_BRANCH=main ./deploy-ec2.sh`
 - Manual EC2 deploy with prebuilt Docker Hub images: `DEPLOY_STRATEGY=pull DOCKERHUB_USERNAME=<dockerhub-user> IMAGE_TAG=latest TARGET_BRANCH=main ./deploy-ec2.sh` (`DOCKERHUB_TOKEN` is optional for private images)
 - Full EC2 rebuild guide: `docs/ec2-rebuild.md`

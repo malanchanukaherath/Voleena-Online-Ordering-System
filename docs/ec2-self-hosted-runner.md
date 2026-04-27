@@ -147,7 +147,7 @@ Important DB safety note:
 
 - The deploy script pins MySQL data to persistent volume `voleena_mysql_data` (or `DB_VOLUME_NAME` override).
 - Avoid `docker compose down -v` on EC2, because `-v` removes DB volumes and resets data.
-- The deploy script now retries Docker Hub image pulls, prints `df -h` plus `docker system df` if pulls fail, and attempts a rollback to the previously running backend/frontend images if startup fails after a pull.
+- The deploy script now checks Docker free space before pulls, safely prunes builder cache plus dangling images when needed, retries Docker Hub image pulls, prints `df -h` plus `docker system df` if pulls fail, and attempts a rollback to the previously running backend/frontend images if startup fails after a pull.
 
 ## Manual fallback
 

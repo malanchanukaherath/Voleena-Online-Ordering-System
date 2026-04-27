@@ -8,6 +8,7 @@ COMPOSE_FILE_CHECK="${COMPOSE_FILE_CHECK:-/tmp/voleena-compose-check.yml}"
 DEPLOY_STRATEGY="${DEPLOY_STRATEGY:-auto}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 DB_VOLUME_NAME="${DB_VOLUME_NAME:-voleena_mysql_data}"
+MIN_FREE_SPACE_MB="${MIN_FREE_SPACE_MB:-2048}"
 RUN_DB_MIGRATION_V26="${RUN_DB_MIGRATION_V26:-false}"
 MIGRATION_V26_FILE="${MIGRATION_V26_FILE:-database/migration_v2.6_preorder_addons_resume_safe.sql}"
 RUN_DB_MIGRATION_V27="${RUN_DB_MIGRATION_V27:-false}"
@@ -35,19 +36,90 @@ dump_docker_host_diagnostics() {
   docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}' | grep 'voleena-' || true
 }
 
+docker_storage_path() {
+  if [ -d /var/lib/containerd ]; then
+    printf '%s\n' /var/lib/containerd
+    return 0
+  fi
+
+  docker info --format '{{.DockerRootDir}}' 2>/dev/null || printf '%s\n' /var/lib/docker
+}
+
+available_kb_for_path() {
+  local target_path="$1"
+  df -Pk "${target_path}" | awk 'NR==2 {print $4}'
+}
+
+reclaim_docker_pull_space() {
+  echo "Reclaiming safe Docker cache space before retry..."
+  echo "Keeping running containers and named volumes intact."
+  docker system df || true
+  docker builder prune -af || true
+  docker image prune -f || true
+  echo "Docker disk usage after cleanup:"
+  docker system df || true
+}
+
+ensure_docker_pull_headroom() {
+  local required_kb=$((MIN_FREE_SPACE_MB * 1024))
+  local storage_path
+  local available_kb
+
+  storage_path="$(docker_storage_path)"
+  available_kb="$(available_kb_for_path "${storage_path}")"
+
+  echo "Docker storage path: ${storage_path}"
+  echo "Free space before pull: $((available_kb / 1024)) MB"
+
+  if [ "${available_kb}" -ge "${required_kb}" ]; then
+    return 0
+  fi
+
+  echo "WARN: Less than ${MIN_FREE_SPACE_MB} MB is free for Docker image extraction."
+  reclaim_docker_pull_space
+  available_kb="$(available_kb_for_path "${storage_path}")"
+  echo "Free space after cleanup: $((available_kb / 1024)) MB"
+
+  if [ "${available_kb}" -lt "${required_kb}" ]; then
+    echo "STOP: Docker host still has less than ${MIN_FREE_SPACE_MB} MB free at ${storage_path}."
+    echo "Expand the EC2 disk or manually clean unused data before retrying deploy."
+    dump_docker_host_diagnostics
+    return 1
+  fi
+}
+
 pull_image_with_retries() {
   local image="$1"
   local attempts="${2:-3}"
   local attempt=1
+  local reclaimed_for_space="false"
+
+  ensure_docker_pull_headroom
 
   while [ "${attempt}" -le "${attempts}" ]; do
     echo "Pull attempt ${attempt}/${attempts}: ${image}"
-    if docker pull "${image}"; then
+    local pull_log
+    pull_log="$(mktemp)"
+
+    if docker pull "${image}" >"${pull_log}" 2>&1; then
+      cat "${pull_log}"
+      rm -f "${pull_log}"
       echo "OK: Pulled ${image}"
       return 0
     fi
 
+    cat "${pull_log}"
     echo "WARN: Failed to pull ${image} on attempt ${attempt}/${attempts}."
+    if grep -q "no space left on device" "${pull_log}"; then
+      if [ "${reclaimed_for_space}" = "false" ]; then
+        reclaim_docker_pull_space
+        reclaimed_for_space="true"
+      else
+        echo "WARN: Pull still failed for lack of space after safe Docker cleanup."
+      fi
+    fi
+    rm -f "${pull_log}"
+
     if [ "${attempt}" -lt "${attempts}" ]; then
       sleep $((attempt * 5))
     fi
