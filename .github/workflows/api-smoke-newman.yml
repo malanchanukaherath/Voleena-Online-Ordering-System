@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node -e "const fs=require('fs');const p='postman/voleena-local.postman_environment.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));const target=j.values.find(v=>v.key==='baseUrl');if(target){target.value=process.env.POSTMAN_BASE_URL;}fs.writeFileSync(p,JSON.stringify(j,null,2));"
+          node -e "const fs=require('fs');const p='postman/orderflow-local.postman_environment.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));const target=j.values.find(v=>v.key==='baseUrl');if(target){target.value=process.env.POSTMAN_BASE_URL;}fs.writeFileSync(p,JSON.stringify(j,null,2));"
 
       - name: Run Newman smoke collection
-        run: npx --yes newman run postman/voleena-api-smoke.postman_collection.json -e postman/voleena-local.postman_environment.json --bail
+        run: npx --yes newman run postman/orderflow-api-smoke.postman_collection.json -e postman/orderflow-local.postman_environment.json --bail
