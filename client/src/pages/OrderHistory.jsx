@@ -25,6 +25,7 @@ const OrderHistory = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [preorderRequests, setPreorderRequests] = useState([]);
+    const [preorderError, setPreorderError] = useState('');
 
     const fetchOrders = useCallback(async ({ showLoading = false } = {}) => {
         try {
@@ -32,10 +33,7 @@ const OrderHistory = () => {
                 setLoading(true);
             }
 
-            const [response, preorderResponse] = await Promise.all([
-                getOrders(),
-                getPreorderRequests({ limit: 50, offset: 0 })
-            ]);
+            const response = await getOrders();
             // Simple: This handles mapped logic.
             const mapped = (response.data?.data || []).map((order) => {
                 // Handle both CreatedAt (PascalCase) and createdAt (camelCase) for compatibility
@@ -61,19 +59,28 @@ const OrderHistory = () => {
             });
 
             setOrders(mapped);
-            setPreorderRequests((preorderResponse.data?.data || []).map((request) => ({
-                id: request.PreorderRequestID,
-                requestNumber: request.RequestNumber,
-                requestedFor: request.RequestedFor,
-                status: request.Status,
-                requestDetails: request.RequestDetails,
-                contactName: request.ContactName,
-                items: Array.isArray(request.items) ? request.items.map((item) => ({
-                    name: item.menuItem?.Name || item.combo?.Name || item.RequestedName || 'Custom item',
-                    quantity: item.Quantity || item.quantity || 1
-                })) : []
-            })));
             setError(null);
+
+            try {
+                const preorderResponse = await getPreorderRequests({ limit: 50, offset: 0 });
+                setPreorderRequests((preorderResponse.data?.data || []).map((request) => ({
+                    id: request.PreorderRequestID,
+                    requestNumber: request.RequestNumber,
+                    requestedFor: request.RequestedFor,
+                    status: request.Status,
+                    requestDetails: request.RequestDetails,
+                    contactName: request.ContactName,
+                    items: Array.isArray(request.items) ? request.items.map((item) => ({
+                        name: item.menuItem?.Name || item.combo?.Name || item.RequestedName || 'Custom item',
+                        quantity: item.Quantity || item.quantity || 1
+                    })) : []
+                })));
+                setPreorderError(null);
+            } catch (preorderRequestError) {
+                console.error('Failed to load preorder requests:', preorderRequestError);
+                setPreorderRequests([]);
+                setPreorderError(preorderRequestError.response?.data?.message || 'Preorder requests are temporarily unavailable.');
+            }
         } catch (err) {
             console.error('Failed to load orders:', err);
             setError('Failed to load orders');
@@ -167,6 +174,11 @@ const OrderHistory = () => {
                         <Button variant="outline" size="sm">Create Request</Button>
                     </Link>
                 </div>
+                {preorderError && (
+                    <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
+                        {preorderError}
+                    </div>
+                )}
                 {preorderRequests.length > 0 ? (
                     <div className="space-y-3">
                         {preorderRequests.map((request) => (

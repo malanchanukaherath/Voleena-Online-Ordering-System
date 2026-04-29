@@ -506,6 +506,57 @@ SET @sql := IF(
 );
 PREPARE stmt FROM @sql; EXECUTE stmt; DEALLOCATE PREPARE stmt;
 
+CREATE TABLE IF NOT EXISTS `preorder_request` (
+  `preorder_request_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `request_number` VARCHAR(24) NOT NULL,
+  `customer_id` INT UNSIGNED NOT NULL,
+  `contact_name` VARCHAR(120) NOT NULL,
+  `contact_phone` VARCHAR(20) NOT NULL,
+  `contact_email` VARCHAR(255) NOT NULL,
+  `requested_for` DATETIME NOT NULL,
+  `request_details` TEXT NOT NULL,
+  `admin_notes` TEXT DEFAULT NULL,
+  `status` ENUM('SUBMITTED','APPROVED','REJECTED','CANCELLED') NOT NULL DEFAULT 'SUBMITTED',
+  `approved_by` INT UNSIGNED DEFAULT NULL,
+  `approved_at` DATETIME DEFAULT NULL,
+  `rejected_by` INT UNSIGNED DEFAULT NULL,
+  `rejected_at` DATETIME DEFAULT NULL,
+  `rejected_reason` VARCHAR(500) DEFAULT NULL,
+  `linked_order_id` INT UNSIGNED DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`preorder_request_id`),
+  UNIQUE KEY `uq_preorder_request_number` (`request_number`),
+  KEY `idx_preorder_request_customer` (`customer_id`),
+  KEY `idx_preorder_request_status` (`status`),
+  KEY `idx_preorder_request_requested_for` (`requested_for`),
+  KEY `idx_preorder_request_approved_by` (`approved_by`),
+  KEY `idx_preorder_request_rejected_by` (`rejected_by`),
+  KEY `idx_preorder_request_linked_order` (`linked_order_id`),
+  CONSTRAINT `fk_preorder_request_customer` FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
+  CONSTRAINT `fk_preorder_request_approved_by` FOREIGN KEY (`approved_by`) REFERENCES `staff` (`staff_id`),
+  CONSTRAINT `fk_preorder_request_rejected_by` FOREIGN KEY (`rejected_by`) REFERENCES `staff` (`staff_id`),
+  CONSTRAINT `fk_preorder_request_linked_order` FOREIGN KEY (`linked_order_id`) REFERENCES `order` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `preorder_request_item` (
+  `preorder_request_item_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `preorder_request_id` INT UNSIGNED NOT NULL,
+  `menu_item_id` INT UNSIGNED DEFAULT NULL,
+  `combo_id` INT UNSIGNED DEFAULT NULL,
+  `requested_name` VARCHAR(255) DEFAULT NULL,
+  `quantity` INT UNSIGNED NOT NULL DEFAULT 1,
+  `notes` TEXT DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`preorder_request_item_id`),
+  KEY `idx_preorder_request_item_request` (`preorder_request_id`),
+  KEY `idx_preorder_request_item_menu` (`menu_item_id`),
+  KEY `idx_preorder_request_item_combo` (`combo_id`),
+  CONSTRAINT `fk_preorder_request_item_request` FOREIGN KEY (`preorder_request_id`) REFERENCES `preorder_request` (`preorder_request_id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_preorder_request_item_menu` FOREIGN KEY (`menu_item_id`) REFERENCES `menu_item` (`menu_item_id`),
+  CONSTRAINT `fk_preorder_request_item_combo` FOREIGN KEY (`combo_id`) REFERENCES `combo_pack` (`combo_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
 
 -- =====================================================
@@ -527,5 +578,13 @@ WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'role';
 SELECT 'app_notification table exists' AS check_name, COUNT(*) AS ok
 FROM information_schema.TABLES
 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'app_notification';
+
+SELECT 'preorder_request table exists' AS check_name, COUNT(*) AS ok
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'preorder_request';
+
+SELECT 'preorder_request_item table exists' AS check_name, COUNT(*) AS ok
+FROM information_schema.TABLES
+WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'preorder_request_item';
 
 SELECT role_name FROM role ORDER BY role_name;
