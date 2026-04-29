@@ -1,7 +1,7 @@
 {
   "scripts": {
     "test": "npm --prefix server test",
-    "api:smoke": "npx --yes newman run postman/voleena-api-smoke.postman_collection.json -e postman/voleena-local.postman_environment.json --bail"
+    "api:smoke": "npx --yes newman run postman/orderflow-api-smoke.postman_collection.json -e postman/orderflow-local.postman_environment.json --bail"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",

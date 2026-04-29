@@ -325,7 +325,7 @@ async function startServer() {
     // Start server
     const server = app.listen(PORT, () => {
       console.log('='.repeat(50));
-      console.log(`🚀 Voleena Foods API Server`);
+      console.log(`🚀 OrderFlow API Server`);
       console.log(`📍 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🌐 Server running on port ${PORT}`);
       console.log(`🔗 API Base URL: http://localhost:${PORT}/api/v1`);

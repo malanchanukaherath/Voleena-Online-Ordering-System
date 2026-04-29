@@ -161,7 +161,7 @@ async function sendEmail(to, subject, html, relatedOrderId = null, options = {})
 
   try {
     const info = await transporter.sendMail({
-      from: `"Voleena Foods" <${process.env.SMTP_FROM}>`,
+      from: `"OrderFlow" <${process.env.SMTP_FROM}>`,
       to,
       subject,
       html
@@ -244,10 +244,10 @@ async function sendOrderConfirmationEmail(order, customer) {
           </div>
           
           <p>You will receive updates as your order progresses.</p>
-          <p>Thank you for choosing Voleena Foods!</p>
+          <p>Thank you for choosing OrderFlow!</p>
         </div>
         <div class="footer">
-          <p>Voleena Foods | Kalagedihena, Gampaha District, Sri Lanka</p>
+          <p>OrderFlow | Kalagedihena, Gampaha District, Sri Lanka</p>
           <p>This is an automated email. Please do not reply.</p>
         </div>
       </div>
@@ -307,7 +307,7 @@ async function sendOrderStatusUpdateEmail(order, customer, newStatus) {
           <p>Thank you for your patience!</p>
         </div>
         <div class="footer">
-          <p>Voleena Foods | Kalagedihena, Gampaha District, Sri Lanka</p>
+          <p>OrderFlow | Kalagedihena, Gampaha District, Sri Lanka</p>
         </div>
       </div>
     </body>
@@ -361,7 +361,7 @@ async function sendOTPEmail(email, otp, purpose) {
           <p>If you didn't request this code, please ignore this email.</p>
         </div>
         <div class="footer">
-          <p>Voleena Foods | Kalagedihena, Gampaha District, Sri Lanka</p>
+          <p>OrderFlow | Kalagedihena, Gampaha District, Sri Lanka</p>
         </div>
       </div>
     </body>
@@ -411,7 +411,7 @@ async function sendPasswordResetEmail(email, resetToken) {
           <p>If you didn't request this, please ignore this email and your password will remain unchanged.</p>
         </div>
         <div class="footer">
-          <p>Voleena Foods | Kalagedihena, Gampaha District, Sri Lanka</p>
+          <p>OrderFlow | Kalagedihena, Gampaha District, Sri Lanka</p>
         </div>
       </div>
     </body>
@@ -429,7 +429,7 @@ async function sendPasswordResetEmail(email, resetToken) {
 // Simple: This sends or records the welcome email.
 // Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendWelcomeEmail(customer) {
-  const subject = 'Welcome to Voleena Foods!';
+  const subject = 'Welcome to OrderFlow!';
   const html = `
     <!DOCTYPE html>
     <html>
@@ -445,17 +445,17 @@ async function sendWelcomeEmail(customer) {
     <body>
       <div class="container">
         <div class="header">
-          <h1>Welcome to Voleena Foods!</h1>
+          <h1>Welcome to OrderFlow!</h1>
         </div>
         <div class="content">
           <p>Dear ${customer.Name},</p>
-          <p>Thank you for registering with Voleena Foods!</p>
+          <p>Thank you for registering with OrderFlow!</p>
           <p>We're excited to serve you delicious Sri Lankan meals, combo packs, and catering services.</p>
           <p>Start browsing our menu and place your first order today!</p>
-          <p>Best regards,<br>The Voleena Foods Team</p>
+          <p>Best regards,<br>The OrderFlow Team</p>
         </div>
         <div class="footer">
-          <p>Voleena Foods | Kalagedihena, Gampaha District, Sri Lanka</p>
+          <p>OrderFlow | Kalagedihena, Gampaha District, Sri Lanka</p>
         </div>
       </div>
     </body>
@@ -544,10 +544,10 @@ async function sendAdminCriticalAlert(alertType, details, errorMessage = null) {
             </ul>
           </div>
           
-          <p><strong>This is an automated alert from Voleena Online Ordering System.</strong></p>
+          <p><strong>This is an automated alert from OrderFlow Online Ordering System.</strong></p>
         </div>
         <div class="footer">
-          <p>Voleena Foods Operations System</p>
+          <p>OrderFlow Operations System</p>
           <p>Server: ${process.env.SERVER_HOST || 'localhost'} | Environment: ${process.env.NODE_ENV || 'development'}</p>
         </div>
       </div>

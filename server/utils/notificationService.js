@@ -86,7 +86,7 @@ class NotificationService {
 
             // Send actual email
             const info = await this.emailTransporter.sendMail({
-                from: `"Voleena Foods" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+                from: `"OrderFlow" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
                 to: to,
                 subject: subject,
                 text: textBody,
@@ -196,7 +196,7 @@ class NotificationService {
         if (customer.PreferredNotification === 'SMS' || customer.PreferredNotification === 'BOTH') {
             await this.sendSMS({
                 to: customer.Phone,
-                message: `Voleena Foods: Your order #${order.OrderNumber} has been confirmed! Total: LKR ${order.FinalAmount}. Track at: https://voleena.lk/track/${order.OrderNumber}`,
+                message: `OrderFlow: Your order #${order.OrderNumber} has been confirmed! Total: LKR ${order.FinalAmount}. Track at: https://orderflow.app/track/${order.OrderNumber}`,
                 relatedOrderID: order.OrderID
             });
         }
@@ -223,9 +223,9 @@ class NotificationService {
             <p>${message}</p>
             <p><strong>Order Number:</strong> ${order.OrderNumber}</p>
             <p><strong>Status:</strong> ${newStatus}</p>
-            <p><a href="https://voleena.lk/track/${order.OrderNumber}">Track your order</a></p>
+            <p><a href="https://orderflow.app/track/${order.OrderNumber}">Track your order</a></p>
             <br>
-            <p>Thank you for choosing Voleena Foods!</p>
+            <p>Thank you for choosing OrderFlow!</p>
         `;
 
         await this.sendEmail({
@@ -273,7 +273,7 @@ class NotificationService {
         if (phone) {
             await this.sendSMS({
                 to: phone,
-                message: `Voleena Foods: Your verification code is ${otpCode}. Valid for 15 minutes. Do not share this code.`,
+                message: `OrderFlow: Your verification code is ${otpCode}. Valid for 15 minutes. Do not share this code.`,
                 containsSensitiveContent: true
             });
         }
@@ -340,7 +340,7 @@ class NotificationService {
             <body>
                 <div class="container">
                     <div class="header">
-                        <h1>Ã°Å¸Ââ€ Voleena Foods</h1>
+                        <h1>Ã°Å¸Ââ€ OrderFlow</h1>
                         <p>Order Confirmation</p>
                     </div>
                     <div class="content">
@@ -356,13 +356,13 @@ class NotificationService {
                         </div>
 
                         <div style="text-align: center;">
-                            <a href="https://voleena.lk/track/${order.OrderNumber}" class="button">Track Your Order</a>
+                            <a href="https://orderflow.app/track/${order.OrderNumber}" class="button">Track Your Order</a>
                         </div>
 
                         <p>We'll send you updates as your order progresses.</p>
                     </div>
                     <div class="footer">
-                        <p>&copy; 2026 Voleena Foods. All rights reserved.</p>
+                        <p>&copy; 2026 OrderFlow. All rights reserved.</p>
                         <p>Kalagedihena, Gampaha District, Sri Lanka</p>
                     </div>
                 </div>
@@ -374,7 +374,7 @@ class NotificationService {
     // This creates the plain-text order confirmation message.
     generateOrderConfirmationText(order, customer) {
         return `
-VOLEENA FOODS - Order Confirmation
+ORDERFLOW - Order Confirmation
 
 Hello ${customer.Name},
 
@@ -385,12 +385,12 @@ Order Type: ${order.OrderType}
 Total Amount: LKR ${order.FinalAmount}
 Status: ${order.Status}
 
-Track your order at: https://voleena.lk/track/${order.OrderNumber}
+Track your order at: https://orderflow.app/track/${order.OrderNumber}
 
 We'll keep you updated on your order status.
 
 Best regards,
-Voleena Foods Team
+OrderFlow Team
         `;
     }
 
@@ -422,7 +422,7 @@ Voleena Foods Team
                 <p><strong>Payment Method:</strong> ${payment.Method}</p>
             </div>
             <p>Please try again or choose a different payment method.</p>
-            <a href="https://voleena.lk/orders/${order.OrderNumber}/payment" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Retry Payment</a>
+            <a href="https://orderflow.app/orders/${order.OrderNumber}/payment" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Retry Payment</a>
         `;
     }
 }

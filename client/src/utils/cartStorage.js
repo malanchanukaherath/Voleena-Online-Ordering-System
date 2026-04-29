@@ -12,7 +12,7 @@
  * Supports both menu items and combo packs
  */
 
-const STORAGE_KEY = 'voleena_cart';
+const STORAGE_KEY = 'orderflow_cart';
 
 // Simple: This checks whether finite stock limit is available.
 const hasFiniteStockLimit = (item) => Number.isFinite(item?.stockQuantity) && item.stockQuantity >= 0;
@@ -354,5 +354,4 @@ export const getCartTotal = (orderType = 'DELIVERY', deliveryFeeOverride = null)
     isDeliveryFeeEstimate: orderType === 'DELIVERY' && deliveryFeeOverride === null
   };
 };
-
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Voleena Login Test</title>
+    <title>OrderFlow Login Test</title>
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
         .section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 8px; }
@@ -14,7 +14,7 @@
     </style>
 </head>
 <body>
-    <h1>🔐 Voleena Login Test Tool</h1>
+    <h1>🔐 OrderFlow Login Test Tool</h1>
     
     <div class="section">
         <h2>Step 1: Initialize Demo Accounts</h2>
@@ -61,16 +61,16 @@
                 if (window.mockApi && window.mockApi.resetDemoData) {
                     await window.mockApi.resetDemoData();
                 } else {
-                    localStorage.removeItem('voleena_staff');
-                    localStorage.removeItem('voleena_customers');
+                    localStorage.removeItem('orderflow_staff');
+                    localStorage.removeItem('orderflow_customers');
                 }
 
                 if (window.mockApi && window.mockApi.ensureDemoData) {
                     await window.mockApi.ensureDemoData();
                 }
 
-                const staff = JSON.parse(localStorage.getItem('voleena_staff') || '[]');
-                const customers = JSON.parse(localStorage.getItem('voleena_customers') || '[]');
+                const staff = JSON.parse(localStorage.getItem('orderflow_staff') || '[]');
+                const customers = JSON.parse(localStorage.getItem('orderflow_customers') || '[]');
 
                 output.innerHTML = '<span class="success">✅ Accounts initialized successfully!</span>\n\n';
                 output.innerHTML += 'Staff Accounts:\n';
@@ -99,7 +99,7 @@
                 output.innerHTML += `Hashed password: ${hashedPassword}\n\n`;
 
                 // Check staff
-                const staff = JSON.parse(localStorage.getItem('voleena_staff') || '[]');
+                const staff = JSON.parse(localStorage.getItem('orderflow_staff') || '[]');
                 const foundStaff = staff.find(s => s.email === email);
 
                 if (foundStaff) {
@@ -117,7 +117,7 @@
                 }
 
                 // Check customers
-                const customers = JSON.parse(localStorage.getItem('voleena_customers') || '[]');
+                const customers = JSON.parse(localStorage.getItem('orderflow_customers') || '[]');
                 const foundCustomer = customers.find(c => c.email === email);
 
                 if (foundCustomer) {
@@ -143,13 +143,13 @@
 
         function viewStaff() {
             const output = document.getElementById('view-output');
-            const staff = JSON.parse(localStorage.getItem('voleena_staff') || '[]');
+            const staff = JSON.parse(localStorage.getItem('orderflow_staff') || '[]');
             output.innerHTML = 'Staff Accounts:\n' + JSON.stringify(staff, null, 2);
         }
 
         function viewCustomers() {
             const output = document.getElementById('view-output');
-            const customers = JSON.parse(localStorage.getItem('voleena_customers') || '[]');
+            const customers = JSON.parse(localStorage.getItem('orderflow_customers') || '[]');
             output.innerHTML = 'Customer Accounts:\n' + JSON.stringify(customers, null, 2);
         }
 

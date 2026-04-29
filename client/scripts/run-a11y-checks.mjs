@@ -24,7 +24,7 @@ const THRESHOLDS = {
 
 const OUTPUT_DIR = path.resolve('.lighthouseci');
 const TEMP_BASE_DIR = path.resolve(process.env.TEMP || process.env.TMP || '.');
-const LIGHTHOUSE_TEMP_DIR = path.resolve(TEMP_BASE_DIR, 'voleena-lhci');
+const LIGHTHOUSE_TEMP_DIR = path.resolve(TEMP_BASE_DIR, 'orderflow-lhci');
 const PROFILE_DIR = path.resolve(LIGHTHOUSE_TEMP_DIR, 'chrome-profile');
 
 const toSlug = (url) => {

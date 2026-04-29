@@ -13,8 +13,8 @@ import { invalidatePublicSettingsCache } from '../services/publicSettingsApi';
 
 const DEFAULT_SETTINGS = {
     // General Settings
-    restaurantName: 'Voleena Foods',
-    email: 'contact@voleenafoods.com',
+    restaurantName: 'OrderFlow',
+    email: 'contact@orderflow.com',
     phone: '+94 11 234 5678',
     address: '123 Main Street, Colombo, Sri Lanka',
     timezone: 'Asia/Colombo',

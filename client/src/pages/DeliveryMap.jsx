@@ -27,7 +27,7 @@ const DeliveryMap = () => {
     const restaurantLocation = {
         lat: 7.120035696626918,
         lng: 80.05250172082567,
-        name: 'Voleena Foods',
+        name: 'OrderFlow',
         address: 'Kalagedihena'
     };
 

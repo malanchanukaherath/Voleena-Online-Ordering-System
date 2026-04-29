@@ -2,12 +2,12 @@
 
 set -Eeuo pipefail
 
-REPO_DIR="${REPO_DIR:-$HOME/Voleena-Online-Ordering-System}"
+REPO_DIR="${REPO_DIR:-$HOME/OrderFlow-Online-Ordering-System}"
 TARGET_BRANCH="${TARGET_BRANCH:-main}"
-COMPOSE_FILE_CHECK="${COMPOSE_FILE_CHECK:-/tmp/voleena-compose-check.yml}"
+COMPOSE_FILE_CHECK="${COMPOSE_FILE_CHECK:-/tmp/orderflow-compose-check.yml}"
 DEPLOY_STRATEGY="${DEPLOY_STRATEGY:-auto}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
-DB_VOLUME_NAME="${DB_VOLUME_NAME:-voleena_mysql_data}"
+DB_VOLUME_NAME="${DB_VOLUME_NAME:-orderflow_mysql_data}"
 MIN_FREE_SPACE_MB="${MIN_FREE_SPACE_MB:-2048}"
 RUN_DB_MIGRATION_V26="${RUN_DB_MIGRATION_V26:-false}"
 MIGRATION_V26_FILE="${MIGRATION_V26_FILE:-database/migration_v2.6_preorder_addons_resume_safe.sql}"
@@ -34,8 +34,8 @@ dump_docker_host_diagnostics() {
   df -h || true
   echo "---- docker system df ----"
   docker system df || true
-  echo "---- docker images (voleena) ----"
-  docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}' | grep 'voleena-' || true
+  echo "---- docker images (orderflow) ----"
+  docker images --format 'table {{.Repository}}\t{{.Tag}}\t{{.ID}}\t{{.Size}}' | grep 'orderflow-' || true
 }
 
 docker_storage_path() {
@@ -176,7 +176,7 @@ if [ "${DEPLOY_STRATEGY}" = "auto" ]; then
   else
     RUNNING_BACKEND_IMAGE="$(docker inspect -f '{{.Config.Image}}' backend_app 2>/dev/null || true)"
     case "${RUNNING_BACKEND_IMAGE}" in
-      */voleena-backend:*)
+      */orderflow-backend:*)
         DOCKERHUB_USERNAME="${RUNNING_BACKEND_IMAGE%%/*}"
         DEPLOY_STRATEGY="pull"
         echo "==> Inferred Docker Hub user from backend_app image: ${DOCKERHUB_USERNAME}"
@@ -193,7 +193,7 @@ echo "==> DB volume: ${DB_VOLUME_NAME}"
 
 echo "1) Backing up database..."
 mkdir -p backups
-BACKUP="backups/voleena_foods_db_$(date +%Y%m%d_%H%M%S).sql"
+BACKUP="backups/orderflow_db_$(date +%Y%m%d_%H%M%S).sql"
 if docker ps --format '{{.Names}}' | grep -qx 'mysql_db'; then
   docker exec mysql_db sh -c 'mysqldump -uroot -p"$MYSQL_ROOT_PASSWORD" --single-transaction --routines --triggers --databases "$MYSQL_DATABASE"' > "${BACKUP}"
   test -s "${BACKUP}"
@@ -299,8 +299,8 @@ case "${DEPLOY_STRATEGY}" in
       exit 1
     fi
 
-    export BACKEND_IMAGE="${BACKEND_IMAGE:-${DOCKERHUB_USERNAME}/voleena-backend:${IMAGE_TAG}}"
-    export FRONTEND_IMAGE="${FRONTEND_IMAGE:-${DOCKERHUB_USERNAME}/voleena-frontend:${IMAGE_TAG}}"
+    export BACKEND_IMAGE="${BACKEND_IMAGE:-${DOCKERHUB_USERNAME}/orderflow-backend:${IMAGE_TAG}}"
+    export FRONTEND_IMAGE="${FRONTEND_IMAGE:-${DOCKERHUB_USERNAME}/orderflow-frontend:${IMAGE_TAG}}"
     PREVIOUS_BACKEND_IMAGE="$(docker inspect -f '{{.Config.Image}}' backend_app 2>/dev/null || true)"
     PREVIOUS_FRONTEND_IMAGE="$(docker inspect -f '{{.Config.Image}}' frontend_app 2>/dev/null || true)"
 

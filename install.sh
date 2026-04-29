@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "=========================================="
-echo "Voleena Foods - Installation Script"
+echo "OrderFlow - Installation Script"
 echo "=========================================="
 echo ""
 
@@ -43,8 +43,8 @@ echo "   - Edit server/.env (Database, Google Maps API, SMTP)"
 echo ""
 echo "2. Import the database:"
 echo "   mysql -u root -p"
-echo "   CREATE DATABASE voleena_foods_db;"
-echo "   USE voleena_foods_db;"
+echo "   CREATE DATABASE orderflow_db;"
+echo "   USE orderflow_db;"
 echo "   SOURCE current\ database.sql;"
 echo "   EXIT;"
 echo ""

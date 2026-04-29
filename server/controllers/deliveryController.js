@@ -32,7 +32,7 @@ const isAdminRequest = (req) => req.user?.type === 'Staff' && req.user?.role ===
 // Frontend connection: DeliveryDashboard, ActiveDeliveries, DeliveryMap, and customer order tracking/checkout delivery fee flow.
 const parsePinnedDestinationFromNotes = (rawNotes) => {
   const notes = String(rawNotes || '');
-  const match = notes.match(/__VOLEENA_DEST_PIN__:\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+  const match = notes.match(/__[^:]+_DEST_PIN__:\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
 
   if (!match) {
     return null;

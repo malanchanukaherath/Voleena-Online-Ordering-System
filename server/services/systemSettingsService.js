@@ -9,8 +9,8 @@ let cachedAdminSettings = null;
 let cachedAt = 0;
 
 const DEFAULT_SETTINGS = Object.freeze({
-    restaurantName: 'Voleena Foods',
-    email: 'contact@voleenafoods.com',
+    restaurantName: 'OrderFlow',
+    email: 'contact@orderflow.com',
     phone: '+94 11 234 5678',
     address: '123 Main Street, Colombo, Sri Lanka',
     timezone: 'Asia/Colombo',

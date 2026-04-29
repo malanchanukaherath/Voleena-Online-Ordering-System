@@ -1,8 +1,8 @@
 {
   "info": {
-    "name": "Voleena API Smoke",
+    "name": "OrderFlow API Smoke",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Basic smoke checks for public Voleena API endpoints."
+    "description": "Basic smoke checks for public OrderFlow API endpoints."
   },
   "item": [
     {

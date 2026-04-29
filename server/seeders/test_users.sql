@@ -1,12 +1,12 @@
 -- ============================================================
--- VOLEENA FOODS - SECURE TEST USER SEED DATA
+-- ORDERFLOW - SECURE TEST USER SEED DATA
 -- ============================================================
 -- Purpose: Create test users for authentication and RBAC testing
 -- Security: All passwords are bcrypt-hashed (10 rounds)
 -- Plain password for all users: Test@123
 -- ============================================================
 
-USE voleena_foods_db;
+USE orderflow_db;
 
 -- Ensure Customer role exists
 INSERT IGNORE INTO Role (RoleName, Description) VALUES

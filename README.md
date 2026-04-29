@@ -1,16 +1,16 @@
-# Voleena Foods Online Ordering System
+# OrderFlow Online Ordering System
 
-[![Live Website](https://img.shields.io/badge/Live%20Website-voleenafoods.app-0A7A3B?style=for-the-badge)](https://www.voleenafoods.app)
+[![Live Website](https://img.shields.io/badge/Live%20Website-orderflow.app-0A7A3B?style=for-the-badge)](https://www.orderflow.app)
 
 ## Live Demo
 
-## [https://www.voleenafoods.app](https://www.voleenafoods.app)
+## [https://www.orderflow.app](https://www.orderflow.app)
 
 Production site is available at the link above.
 
 ## Overview
 
-Voleena Foods is a full-stack online ordering platform with separate frontend and backend applications, plus a MySQL database layer. The system supports customer ordering workflows and operational flows for staff roles.
+OrderFlow is a full-stack online ordering platform with separate frontend and backend applications, plus a MySQL database layer. The system supports customer ordering workflows and operational flows for staff roles.
 
 ## Repository Structure
 
@@ -87,7 +87,7 @@ Do not put server secrets such as Cloudinary API secrets, database credentials, 
 
 Set up the database:
 
-1. Create a MySQL database named `voleena_foods_db`.
+1. Create a MySQL database named `orderflow_db`.
 2. Import the schema from `database/safe_schema_full_completion_v2_4.sql`.
 3. (Optional) Run sync updates from `database/safe_schema_sync_v2_4.sql`.
 
@@ -170,7 +170,7 @@ npm run test:a11y
 
 - EC2 helper script: `scripts/deploy-ec2.sh`
 - Container definitions: `client/Dockerfile`, `server/Dockerfile`
-- GitHub Actions deploy builds and pushes `voleena-backend` and `voleena-frontend` first, then EC2 pulls the exact `sha-<commit>` images to avoid slow production builds.
+- GitHub Actions deploy builds and pushes `orderflow-backend` and `orderflow-frontend` first, then EC2 pulls the exact `sha-<commit>` images to avoid slow production builds.
 - The EC2 deploy script now checks Docker disk headroom before pulls, safely prunes builder cache plus dangling images when space is tight, pulls backend/frontend images individually with retries, prints Docker host diagnostics on pull failure, and attempts rollback to the previously running image pair if container startup fails.
 - Manual EC2 deploy with local builds: `TARGET_BRANCH=main ./deploy-ec2.sh`
 - Manual EC2 deploy with prebuilt Docker Hub images: `DEPLOY_STRATEGY=pull DOCKERHUB_USERNAME=<dockerhub-user> IMAGE_TAG=latest TARGET_BRANCH=main ./deploy-ec2.sh` (`DOCKERHUB_TOKEN` is optional for private images)
@@ -180,7 +180,7 @@ npm run test:a11y
 ## Testing
 
 - Backend tests use Jest and coverage output under `server/coverage/`.
-- API smoke tests are in `postman/voleena-api-smoke.postman_collection.json` and can be run via `npm run api:smoke`.
+- API smoke tests are in `postman/orderflow-api-smoke.postman_collection.json` and can be run via `npm run api:smoke`.
 - Frontend accessibility checks run through Lighthouse CI config at `client/lighthouserc.json` and can be run via `npm --prefix client run test:a11y`.
 - CI automation:
   - `.github/workflows/api-smoke-newman.yml` runs Postman/Newman smoke checks.

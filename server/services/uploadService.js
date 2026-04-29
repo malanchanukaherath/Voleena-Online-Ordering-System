@@ -6,7 +6,7 @@ const path = require('path');
 const { cloudinary, assertCloudinaryConfigured, isCloudinaryConfigured } = require('../config/cloudinary');
 
 const ALLOWED_FOLDERS = ['menu', 'category', 'profile', 'combo'];
-const ROOT_FOLDER = process.env.CLOUDINARY_ROOT_FOLDER || 'voleena';
+const ROOT_FOLDER = process.env.CLOUDINARY_ROOT_FOLDER || 'orderflow';
 
 // Simple: This cleans or formats the filename.
 // Frontend connection: Supports business logic behind customer/staff/admin page actions.

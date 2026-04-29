@@ -167,7 +167,7 @@ const Login = () => {
             <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border border-white/30">
               <FaUtensils className="w-6 h-6 text-white" />
             </div>
-            <span className="text-white font-bold text-xl tracking-tight">Voleena Foods</span>
+            <span className="text-white font-bold text-xl tracking-tight">OrderFlow</span>
           </div>
         </div>
 
@@ -199,7 +199,7 @@ const Login = () => {
         {/* Bottom tagline */}
         <div className="relative z-10">
           <p className="text-primary-200 text-sm">
-            (c) {new Date().getFullYear()} Voleena Foods. All rights reserved.
+            (c) {new Date().getFullYear()} OrderFlow. All rights reserved.
           </p>
         </div>
       </div>
@@ -212,7 +212,7 @@ const Login = () => {
             <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
               <FaUtensils className="w-5 h-5 text-white" />
             </div>
-            <span className="text-gray-900 font-bold text-xl dark:text-slate-100">Voleena Foods</span>
+            <span className="text-gray-900 font-bold text-xl dark:text-slate-100">OrderFlow</span>
           </div>
 
           {/* Heading */}
@@ -323,4 +323,3 @@ const Login = () => {
 };
 
 export default Login;
-

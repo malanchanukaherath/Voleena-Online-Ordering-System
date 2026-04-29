@@ -30,7 +30,8 @@ import { comboPackService, menuItemService } from '../services/menuService';
 import { addToCart } from '../utils/cartStorage';
 import { resolveAssetUrl } from '../config/api';
 
-const ORDER_ADDON_NOTES_PREFIX = '__VOLEENA_ADDONS__:';
+const ORDER_ADDON_NOTES_PREFIX = '__ORDERFLOW_ADDONS__:';
+const ORDER_ADDON_NOTES_PATTERN = /^__[^:]+_ADDONS__:/;
 
 // Simple: This handles to money logic.
 const toMoney = (value) => {
@@ -55,7 +56,7 @@ const toFiniteNumber = (value, fallback = null) => {
 // Simple: This handles parse pinned destination from notes logic.
 const parsePinnedDestinationFromNotes = (rawNotes) => {
     const notes = String(rawNotes || '');
-    const match = notes.match(/__VOLEENA_DEST_PIN__:\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+    const match = notes.match(/__[^:]+_DEST_PIN__:\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
 
     if (!match) {
         return null;
@@ -76,7 +77,7 @@ const parseOrderItemAddOnsFromNotes = (rawNotes, fallbackUnitPrice) => {
     const notes = String(rawNotes || '').trim();
     const safeFallback = toMoney(fallbackUnitPrice);
 
-    if (!notes || !notes.startsWith(ORDER_ADDON_NOTES_PREFIX)) {
+    if (!notes || !ORDER_ADDON_NOTES_PATTERN.test(notes)) {
         return {
             baseUnitPrice: safeFallback,
             selectedAddOns: []
@@ -84,7 +85,7 @@ const parseOrderItemAddOnsFromNotes = (rawNotes, fallbackUnitPrice) => {
     }
 
     try {
-        const payload = JSON.parse(notes.slice(ORDER_ADDON_NOTES_PREFIX.length));
+        const payload = JSON.parse(notes.slice(notes.indexOf(':') + 1));
         const selectedAddOns = Array.isArray(payload?.addOns)
             ? payload.addOns
                 .map((entry) => ({

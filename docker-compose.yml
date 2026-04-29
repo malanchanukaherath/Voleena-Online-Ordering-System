@@ -6,9 +6,9 @@ services:
     restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-voleena_foods_db}
-      MYSQL_USER: ${MYSQL_USER:-voleena_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-voleena}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-orderflow_db}
+      MYSQL_USER: ${MYSQL_USER:-orderflow_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-orderflow}
     ports:
       - "127.0.0.1:3306:3306"
     volumes:
@@ -22,7 +22,7 @@ services:
       start_period: 20s
 
   backend:
-    image: ${BACKEND_IMAGE:-voleena-backend:local}
+    image: ${BACKEND_IMAGE:-orderflow-backend:local}
     build: ./server
     container_name: backend_app
     restart: always
@@ -47,7 +47,7 @@ services:
         condition: service_healthy
 
   frontend:
-    image: ${FRONTEND_IMAGE:-voleena-frontend:local}
+    image: ${FRONTEND_IMAGE:-orderflow-frontend:local}
     build:
       context: ./client
       args:
@@ -77,9 +77,9 @@ services:
       db:
         condition: service_healthy
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-voleena_foods_db}
-      MYSQL_USER: ${MYSQL_USER:-voleena_user}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-voleena}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-orderflow_db}
+      MYSQL_USER: ${MYSQL_USER:-orderflow_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-orderflow}
     volumes:
       - ./database:/database:ro
     command: >
@@ -90,7 +90,7 @@ services:
       "
 
   backend_seed:
-    image: ${BACKEND_IMAGE:-voleena-backend:local}
+    image: ${BACKEND_IMAGE:-orderflow-backend:local}
     build: ./server
     container_name: backend_seed_job
     profiles: ["init"]
@@ -112,4 +112,4 @@ services:
 
 volumes:
   db_data:
-    name: ${DB_VOLUME_NAME:-voleena_mysql_data}
+    name: ${DB_VOLUME_NAME:-orderflow_mysql_data}

@@ -130,7 +130,7 @@ const auditFindings = [
 const endpoints = [
   { folder: 'Health', method: 'GET', path: '/health', auth: 'Public', query: '-', body: '-', success: '200 { status, timestamp, uptime, environment }', errors: '500', sampleBody: null },
 
-  { folder: 'Auth', method: 'POST', path: '/api/v1/auth/staff/login', auth: 'Public', query: '-', body: 'email, password', success: '200 { success, token, refreshToken, user, expiresIn }', errors: '400, 401, 500', sampleBody: { email: 'admin@voleena.com', password: 'Admin@123' } },
+  { folder: 'Auth', method: 'POST', path: '/api/v1/auth/staff/login', auth: 'Public', query: '-', body: 'email, password', success: '200 { success, token, refreshToken, user, expiresIn }', errors: '400, 401, 500', sampleBody: { email: 'admin@orderflow.com', password: 'Admin@123' } },
   { folder: 'Auth', method: 'POST', path: '/api/v1/auth/customer/login', auth: 'Public', query: '-', body: 'email, password', success: '200 { success, token, refreshToken, user, expiresIn }', errors: '400, 401, 403 EMAIL_NOT_VERIFIED, 500', sampleBody: { email: 'customer@example.com', password: 'Secret123' } },
   { folder: 'Auth', method: 'POST', path: '/api/v1/auth/register', auth: 'Public', query: '-', body: 'name, email, phone, password, profileImageUrl?', success: '201 { success, requiresEmailVerification, emailSent, message }', errors: '400, 409, 500', sampleBody: { name: 'Jane Customer', email: 'jane@example.com', phone: '+94771234567', password: 'Secret123' } },
   { folder: 'Auth', method: 'POST', path: '/api/v1/auth/verify-email', auth: 'Public', query: '-', body: 'token', success: '200 { success, message }', errors: '400 invalid/used/expired token, 500', sampleBody: { token: '64-char-hex-token' } },
@@ -355,7 +355,7 @@ function buildCollection() {
 
   return JSON.stringify({
     info: {
-      name: 'Voleena API Audit Collection',
+      name: 'OrderFlow API Audit Collection',
       schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
       description: 'Generated from server/scripts/generate-api-artifacts.js for API audit and regression coverage.'
     },
@@ -380,6 +380,6 @@ function buildCollection() {
 writeFile(path.join(docsDir, 'API_DOCUMENTATION.md'), buildApiDocumentation());
 writeFile(path.join(docsDir, 'TEST_PLAN_AND_AUDIT.md'), buildTestPlanAndAudit());
 writeFile(path.join(docsDir, 'FEATURE_TEST_CHECKLIST.md'), buildFeatureChecklist());
-writeFile(path.join(postmanDir, 'Voleena_API_Audit.postman_collection.json'), buildCollection());
+writeFile(path.join(postmanDir, 'OrderFlow_API_Audit.postman_collection.json'), buildCollection());
 
 console.log('Generated API docs, audit plan, checklist, and Postman collection.');

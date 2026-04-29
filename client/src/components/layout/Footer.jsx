@@ -36,7 +36,7 @@ const formatBusinessHour = (value) => {
 const Footer = () => {
     const currentYear = new Date().getFullYear();
     const { settings } = usePublicSettings();
-    const restaurantName = settings.restaurantName || 'Voleena Foods';
+    const restaurantName = settings.restaurantName || 'OrderFlow';
     const businessHours = settings.businessHours || {};
 
     return (
@@ -142,4 +142,3 @@ const Footer = () => {
 };
 
 export default Footer;
-

@@ -4,7 +4,7 @@
     id: 1,
     type: 'Staff',
     role: 'Admin',
-    email: 'admin@voleena.test'
+    email: 'admin@orderflow.test'
   },
   token: 'test-token'
 };
@@ -61,7 +61,7 @@ function resetAuthState() {
     id: 1,
     type: 'Staff',
     role: 'Admin',
-    email: 'admin@voleena.test'
+    email: 'admin@orderflow.test'
   };
   state.token = 'test-token';
 }

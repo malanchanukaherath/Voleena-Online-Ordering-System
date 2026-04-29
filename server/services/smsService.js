@@ -266,7 +266,7 @@ async function sendOTPSMS(phone, otp, purpose, metadata = {}) {
         LOGIN: 'login'
     };
 
-    const message = `Your Voleena Foods ${purposeMessages[purpose] || 'verification'} code is: ${otp}. Valid for 10 minutes.`;
+    const message = `Your OrderFlow ${purposeMessages[purpose] || 'verification'} code is: ${otp}. Valid for 10 minutes.`;
 
     return sendSMS(phone, message, null, {
         containsSensitiveContent: true,
@@ -281,7 +281,7 @@ async function sendOTPSMS(phone, otp, purpose, metadata = {}) {
 // Simple: This sends or records the order confirmation sms.
 // Frontend connection: Supports business logic behind customer/staff/admin page actions.
 async function sendOrderConfirmationSMS(phone, orderNumber, metadata = {}) {
-    const message = `Your Voleena Foods order #${orderNumber} has been confirmed. You will receive updates as it progresses. Thank you!`;
+    const message = `Your OrderFlow order #${orderNumber} has been confirmed. You will receive updates as it progresses. Thank you!`;
 
     return sendSMS(phone, message, metadata.relatedOrderId ?? null, {
         recipientId: metadata.recipientId,
@@ -304,7 +304,7 @@ async function sendOrderStatusUpdateSMS(phone, orderNumber, status, metadata = {
         CANCELLED: 'cancelled'
     };
 
-    const message = `Order #${orderNumber} is now ${statusMessages[status]}. Thank you for choosing Voleena Foods!`;
+    const message = `Order #${orderNumber} is now ${statusMessages[status]}. Thank you for choosing OrderFlow!`;
 
     return sendSMS(phone, message, metadata.relatedOrderId ?? null, {
         recipientId: metadata.recipientId,

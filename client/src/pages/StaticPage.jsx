@@ -11,7 +11,7 @@ import { Link } from 'react-router-dom';
 
 const pageContent = {
   about: {
-    title: 'About Voleena Foods',
+    title: 'About OrderFlow',
     intro: 'Traditional Sri Lankan meals prepared for quick ordering, takeaway, and delivery around Gampaha.',
     sections: [
       {
@@ -26,7 +26,7 @@ const pageContent = {
   },
   contact: {
     title: 'Contact Us',
-    intro: 'Reach Voleena Foods for order help, catering questions, or menu updates.',
+    intro: 'Reach OrderFlow for order help, support questions, or platform updates.',
     sections: [
       {
         heading: 'Location',
@@ -38,7 +38,7 @@ const pageContent = {
       },
       {
         heading: 'Email',
-        body: 'info@voleenafoods.lk'
+        body: 'info@orderflow.com'
       }
     ]
   },
@@ -58,7 +58,7 @@ const pageContent = {
   },
   terms: {
     title: 'Terms of Service',
-    intro: 'By using Voleena Foods ordering, customers agree to provide accurate order and contact details.',
+    intro: 'By using OrderFlow, customers agree to provide accurate order and contact details.',
     sections: [
       {
         heading: 'Orders',
@@ -79,7 +79,7 @@ const StaticPage = ({ page }) => {
   return (
     <div className="max-w-3xl mx-auto py-10">
       <div className="mb-8">
-        <p className="text-sm font-semibold text-primary-600 uppercase">Voleena Foods</p>
+        <p className="text-sm font-semibold text-primary-600 uppercase">OrderFlow</p>
         <h1 className="mt-2 text-3xl font-bold text-gray-900">{content.title}</h1>
         <p className="mt-4 text-lg text-gray-700">{content.intro}</p>
       </div>

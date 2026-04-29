@@ -84,7 +84,7 @@ async function geocodeAddressWithNominatim(address, city) {
                 addressdetails: 0
             },
             headers: {
-                'User-Agent': 'Voleena-Online-Ordering-System/1.0'
+                'User-Agent': 'OrderFlow-Online-Ordering-System/1.0'
             },
             timeout: 8000
         }

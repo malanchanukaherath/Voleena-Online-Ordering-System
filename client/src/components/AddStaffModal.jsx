@@ -154,7 +154,7 @@ const AddStaffModal = ({ isOpen, onClose, onSubmit, roles }) => {
                             name="email"
                             value={formData.email}
                             onChange={handleChange}
-                            placeholder="john@voleena.lk"
+                            placeholder="john@orderflow.com"
                             error={errors.email}
                             disabled={loading}
                         />

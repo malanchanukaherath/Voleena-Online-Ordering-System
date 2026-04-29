@@ -10,7 +10,7 @@ import React, { createContext, useCallback, useContext, useEffect, useState } fr
 
 const ThemeContext = createContext(null);
 
-const STORAGE_KEY = 'voleena-theme';
+const STORAGE_KEY = 'orderflow-theme';
 
 // Simple: This gets the initial theme.
 const getInitialTheme = () => {
@@ -96,4 +96,3 @@ export const useTheme = () => {
     }
     return context;
 };
-

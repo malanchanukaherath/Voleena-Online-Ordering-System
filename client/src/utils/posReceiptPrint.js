@@ -7,7 +7,7 @@
 // - File path: utils/posReceiptPrint.js
 // - Search text: posReceiptPrint.js
 const DEFAULT_STORE = {
-  name: import.meta.env.VITE_POS_STORE_NAME || 'Voleena Foods',
+  name: import.meta.env.VITE_POS_STORE_NAME || 'OrderFlow',
   address: import.meta.env.VITE_POS_STORE_ADDRESS || 'Store Address Not Configured',
   contact: import.meta.env.VITE_POS_STORE_CONTACT || 'N/A'
 };

@@ -5,7 +5,8 @@ foreach ($file in $files) {
         $content = Get-Content $file.FullName -Raw
         if ([string]::IsNullOrWhiteSpace($content)) { $lines = @() } else { $lines = $content -split '\r?\n' }
         $modified = $false
-        $relPath = $file.FullName.Replace("C:\Git Projects\Voleena-Online-Ordering-System\", "")
+        $repoRoot = (Get-Location).Path.TrimEnd('\') + "\"
+        $relPath = $file.FullName.Replace($repoRoot, "")
         $codemapTag = "BACKEND_" + ($relPath.ToUpper() -replace '[^A-Z0-9]', '_')
         $firstIdx = -1
         for ($i=0; $i -lt $lines.Count; $i++) { if ($lines[$i].Trim() -ne "") { $firstIdx = $i; break } }

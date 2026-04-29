@@ -44,7 +44,7 @@ const markAddressUnavailableError = (error) => {
 };
 
 const CUSTOMER_PAYMENT_METHODS = new Set(['CASH', 'CARD', 'ONLINE']);
-const DELIVERY_DESTINATION_PIN_PREFIX = '__VOLEENA_DEST_PIN__:';
+const DELIVERY_DESTINATION_PIN_PREFIX = '__ORDERFLOW_DEST_PIN__:';
 // Simple: This cleans or formats the phone.
 // Frontend connection: Supports business logic behind customer/staff/admin page actions.
 const normalizePhone = (phone) => String(phone || '').replace(/\s/g, '');
@@ -1215,11 +1215,11 @@ class OrderService {
      */
     async generateOrderNumber() {
         const runtimeSettings = await systemSettingsService.getRuntimeSettings();
-        const normalizedPrefix = String(runtimeSettings.orderPrefix || 'VF')
+        const normalizedPrefix = String(runtimeSettings.orderPrefix || 'OF')
             .toUpperCase()
             .replace(/[^A-Z0-9]/g, '')
             .slice(0, 6);
-        const prefix = normalizedPrefix.length >= 2 ? normalizedPrefix : 'VF';
+        const prefix = normalizedPrefix.length >= 2 ? normalizedPrefix : 'OF';
 
         const date = new Date();
         const year = date.getFullYear().toString().slice(-2);

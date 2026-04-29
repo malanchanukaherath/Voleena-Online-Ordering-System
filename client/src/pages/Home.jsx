@@ -218,7 +218,7 @@ const Home = () => {
                             Now accepting online orders
                         </div>
                         <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-6 break-words max-w-[18rem] sm:max-w-none mx-auto leading-tight">
-                            Welcome to Voleena Foods
+                            Welcome to OrderFlow
                         </h1>
                         <p className="text-lg sm:text-xl mb-8 max-w-[20rem] sm:max-w-3xl mx-auto leading-relaxed text-primary-100">
                             Authentic Sri Lankan cuisine delivered fresh to your doorstep.

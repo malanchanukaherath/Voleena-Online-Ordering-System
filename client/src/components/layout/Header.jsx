@@ -187,7 +187,7 @@ const Header = ({
                                 <span className="text-white font-bold text-xl">{(publicSettings.restaurantName || 'V').charAt(0).toUpperCase()}</span>
                             </div>
                             <span className="text-xl font-bold text-gray-900 hidden sm:block dark:text-slate-100 truncate">
-                                {publicSettings.restaurantName || 'Voleena Foods'}
+                                {publicSettings.restaurantName || 'OrderFlow'}
                             </span>
                         </Link>
                     </div>
@@ -313,4 +313,3 @@ const Header = ({
 };
 
 export default Header;
-

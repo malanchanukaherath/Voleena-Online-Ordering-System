@@ -58,10 +58,10 @@ async function sendEmailVerificationLink(email, customerName, verificationUrl) {
   const payload = {
     from: getFromAddress(),
     to: email,
-    subject: 'Verify your Voleena Foods account',
+    subject: 'Verify your OrderFlow account',
     html: `
       <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.5;">
-        <h2>Welcome to Voleena Foods, ${safeName}!</h2>
+        <h2>Welcome to OrderFlow, ${safeName}!</h2>
         <p>Thanks for creating your account. Please verify your email to activate login.</p>
         <p>
           <a href="${verificationUrl}" style="display: inline-block; padding: 10px 16px; background: #ea580c; color: #ffffff; text-decoration: none; border-radius: 6px;">

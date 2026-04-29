@@ -1,7 +1,7 @@
 {
-  "name": "voleena-foods-backend",
+  "name": "orderflow-backend",
   "version": "2.0.0",
-  "description": "Voleena Foods Online Ordering System - Production Backend",
+  "description": "OrderFlow Online Ordering System - Production Backend",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",

@@ -7,7 +7,7 @@ const crypto = require('crypto');
 const orderService = require('../services/orderService');
 const appNotificationService = require('../services/appNotificationService');
 
-const DEFAULT_STORE_NAME = process.env.POS_STORE_NAME || 'Voleena Foods';
+const DEFAULT_STORE_NAME = process.env.POS_STORE_NAME || 'OrderFlow';
 const DEFAULT_STORE_ADDRESS = process.env.POS_STORE_ADDRESS || 'Store Address Not Configured';
 const DEFAULT_STORE_CONTACT = process.env.POS_STORE_CONTACT || 'N/A';
 const DEFAULT_TERMINAL_ID = process.env.POS_TERMINAL_ID || 'WEB-POS-1';

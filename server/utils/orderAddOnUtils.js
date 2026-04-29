@@ -3,7 +3,8 @@ const path = require('path');
 const { Op } = require('sequelize');
 const { AddonOption, MenuItemAddonOption, AddonOptionAudit, sequelize } = require('../models');
 
-const ORDER_ADDON_NOTES_PREFIX = '__VOLEENA_ADDONS__:';
+const ORDER_ADDON_NOTES_PREFIX = '__ORDERFLOW_ADDONS__:';
+const ORDER_ADDON_NOTES_PATTERN = /^__[^:]+_ADDONS__:/;
 const MENU_ADDON_CONFIG_PATH = path.join(__dirname, '..', 'config', 'menu-addons.json');
 
 const DEFAULT_MENU_ADDON_CATALOG = [
@@ -815,7 +816,7 @@ const parseOrderItemNotes = (rawNotes) => {
         };
     }
 
-    if (!notes.startsWith(ORDER_ADDON_NOTES_PREFIX)) {
+    if (!ORDER_ADDON_NOTES_PATTERN.test(notes)) {
         return {
             customerNotes: notes,
             baseUnitPrice: null,
@@ -823,7 +824,7 @@ const parseOrderItemNotes = (rawNotes) => {
         };
     }
 
-    const payload = notes.slice(ORDER_ADDON_NOTES_PREFIX.length);
+    const payload = notes.slice(notes.indexOf(':') + 1);
 
     try {
         const parsed = JSON.parse(payload);

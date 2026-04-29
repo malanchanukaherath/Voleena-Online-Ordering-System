@@ -23,7 +23,7 @@ const ProtectedRoute = ({ children, requireAdmin = false, allowedRoles = null })
   if (requireAdmin && !isAdmin()) {
     // Set a small flag to show a friendly message on next page (lightweight)
     try {
-      localStorage.setItem('voleena_message', JSON.stringify({ type: 'info', text: 'Admin access required' }));
+      localStorage.setItem('orderflow_message', JSON.stringify({ type: 'info', text: 'Admin access required' }));
     } catch {
       // Non-blocking fallback when localStorage is unavailable.
     }
@@ -35,7 +35,7 @@ const ProtectedRoute = ({ children, requireAdmin = false, allowedRoles = null })
     const role = user?.role || null;
     if (!role || !allowedRoles.includes(role)) {
       try {
-        localStorage.setItem('voleena_message', JSON.stringify({ type: 'info', text: 'You do not have permission to view that page' }));
+        localStorage.setItem('orderflow_message', JSON.stringify({ type: 'info', text: 'You do not have permission to view that page' }));
       } catch {
         // Non-blocking fallback when localStorage is unavailable.
       }
