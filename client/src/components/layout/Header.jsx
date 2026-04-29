@@ -184,7 +184,7 @@ const Header = ({
 
                         <Link to="/" className="flex items-center space-x-2 min-w-0">
                             <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl shadow-sm flex items-center justify-center">
-                                <span className="text-white font-bold text-xl">{(publicSettings.restaurantName || 'V').charAt(0).toUpperCase()}</span>
+                                <span className="text-white font-bold text-xl">{(publicSettings.restaurantName || 'O').charAt(0).toUpperCase()}</span>
                             </div>
                             <span className="text-xl font-bold text-gray-900 hidden sm:block dark:text-slate-100 truncate">
                                 {publicSettings.restaurantName || 'OrderFlow'}

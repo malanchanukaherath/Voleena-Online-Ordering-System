@@ -1,5 +1,5 @@
 -- =====================================================
--- Voleena Foods - Safe Schema Sync (up to v2.4)
+-- OrderFlow - Safe Schema Sync (up to v2.4)
 -- Non-destructive, idempotent, Workbench-friendly
 -- =====================================================
 -- Purpose:

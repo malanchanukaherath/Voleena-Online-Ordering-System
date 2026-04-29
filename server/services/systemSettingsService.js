@@ -45,6 +45,7 @@ const DEFAULT_SETTINGS = Object.freeze({
 });
 
 const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const LEGACY_BRAND_PATTERN = /voleena/i;
 
 // Simple: This handles clone default settings logic.
 // Frontend connection: Supports business logic behind customer/staff/admin page actions.
@@ -61,6 +62,32 @@ function normalizeString(value, fallback) {
 
     const trimmed = value.trim();
     return trimmed || fallback;
+}
+
+// Simple: This checks whether legacy brand value is true.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
+function isLegacyBrandValue(value) {
+    return typeof value === 'string' && LEGACY_BRAND_PATTERN.test(value);
+}
+
+// Simple: This cleans or formats the restaurant name.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
+function normalizeRestaurantName(value, fallback) {
+    if (isLegacyBrandValue(value)) {
+        return fallback;
+    }
+
+    return normalizeString(value, fallback);
+}
+
+// Simple: This cleans or formats the email.
+// Frontend connection: Supports business logic behind customer/staff/admin page actions.
+function normalizeEmail(value, fallback) {
+    if (isLegacyBrandValue(value)) {
+        return fallback;
+    }
+
+    return normalizeString(value, fallback);
 }
 
 // Simple: This cleans or formats the order prefix.
@@ -140,8 +167,8 @@ function normalizeSettings(rawSettings) {
     const source = rawSettings && typeof rawSettings === 'object' ? rawSettings : {};
 
     return {
-        restaurantName: normalizeString(source.restaurantName, defaults.restaurantName),
-        email: normalizeString(source.email, defaults.email),
+        restaurantName: normalizeRestaurantName(source.restaurantName, defaults.restaurantName),
+        email: normalizeEmail(source.email, defaults.email),
         phone: normalizeString(source.phone, defaults.phone),
         address: normalizeString(source.address, defaults.address),
         timezone: normalizeString(source.timezone, defaults.timezone),

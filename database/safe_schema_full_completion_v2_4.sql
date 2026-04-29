@@ -1,5 +1,5 @@
 -- =====================================================
--- Voleena Foods - Safe Full Schema Completion (v2.4)
+-- OrderFlow - Safe Full Schema Completion (v2.4)
 -- Non-destructive, idempotent, data-preserving
 -- =====================================================
 

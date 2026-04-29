@@ -12,6 +12,7 @@ const CACHE_TTL_MS = 60 * 1000;
 
 let cachedSettings = null;
 let cachedAt = 0;
+const LEGACY_BRAND_PATTERN = /voleena/i;
 
 const DEFAULT_PUBLIC_SETTINGS = {
     restaurantName: 'OrderFlow',
@@ -61,10 +62,19 @@ const mergeBusinessHours = (incomingHours = {}) => {
     }, {});
 };
 
+// Simple: This checks whether legacy brand value is true.
+const isLegacyBrandValue = (value) => typeof value === 'string' && LEGACY_BRAND_PATTERN.test(value);
+
 // Simple: This cleans or formats the public settings.
 export const normalizePublicSettings = (incoming = {}) => ({
     ...DEFAULT_PUBLIC_SETTINGS,
     ...incoming,
+    restaurantName: isLegacyBrandValue(incoming.restaurantName)
+        ? DEFAULT_PUBLIC_SETTINGS.restaurantName
+        : (incoming.restaurantName || DEFAULT_PUBLIC_SETTINGS.restaurantName),
+    email: isLegacyBrandValue(incoming.email)
+        ? DEFAULT_PUBLIC_SETTINGS.email
+        : (incoming.email || DEFAULT_PUBLIC_SETTINGS.email),
     order: {
         ...DEFAULT_PUBLIC_SETTINGS.order,
         ...(incoming.order || {})
